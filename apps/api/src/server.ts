@@ -15,6 +15,7 @@ const auth = createAuth({
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     webOrigin: env.WEB_ORIGIN,
+    rateLimit: env.NODE_ENV !== 'test',
   },
   email:
     env.EMAIL_OUTBOX_DIR && env.NODE_ENV !== 'production'

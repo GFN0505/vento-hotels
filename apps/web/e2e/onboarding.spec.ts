@@ -199,3 +199,53 @@ test('the password checklist appears on typing and ticks each rule as it is met'
   await password.fill('Kora-Hotel1')
   for (const rule of await rules.all()) await expect(rule).toContainText('(done)')
 })
+
+test.describe('field behaviour', () => {
+  test('suggests a fix for a mistyped email provider', async ({ page }) => {
+    await page.goto('/get-started')
+    const email = page.getByLabel('Work email')
+    await email.fill('ada@gmial.com')
+    await page.getByLabel('Create a password', { exact: true }).focus()
+    await page.getByRole('button', { name: 'ada@gmail.com' }).click()
+    await expect(email).toHaveValue('ada@gmail.com')
+  })
+
+  test('checks a field on leaving it, and clears the message once fixed', async ({ page }) => {
+    await page.goto('/get-started')
+    const email = page.getByLabel('Work email')
+    await email.fill('ada@')
+    await page.getByLabel('Create a password', { exact: true }).focus()
+    await expect(page.getByText('Enter a valid email')).toBeVisible()
+    await email.fill('ada@korahotels.ng')
+    await expect(page.getByText('Enter a valid email')).toHaveCount(0)
+  })
+
+  test('shows when the passwords match', async ({ page }) => {
+    await page.goto('/get-started')
+    await page.getByLabel('Create a password', { exact: true }).fill(PASSWORD)
+    const confirm = page.getByLabel('Confirm password', { exact: true })
+    await confirm.fill('Correct-horse')
+    await page.getByLabel('Full name').focus()
+    await expect(page.getByText("Passwords don't match.")).toBeVisible()
+    await confirm.fill(PASSWORD)
+    await expect(page.getByText('Passwords match')).toBeVisible()
+  })
+
+  test('moves focus to the first field with a problem', async ({ page }) => {
+    await page.goto('/sign-in')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page.getByLabel('Work email')).toBeFocused()
+    await page.getByLabel('Work email').fill('ada@korahotels.ng')
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(page.getByLabel('Password', { exact: true })).toBeFocused()
+  })
+
+  test('uses 16px text on phones so iPhones do not zoom into fields', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'Phone-only rule')
+    await page.goto('/sign-in')
+    await expect(page.getByLabel('Work email')).toHaveCSS('font-size', '16px')
+  })
+})

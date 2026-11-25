@@ -1,27 +1,31 @@
 // Onboarding step 1 (design 19): the owner creates their account, then confirms their email.
+
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { isStrongPassword } from '@vento/shared'
 import { type FormEvent, useState } from 'react'
-import { AuthCard } from '@/components/auth-card'
+import { AuthCard, AuthFootnote } from '@/components/auth-card'
 import { PasswordRules } from '@/components/password-rules'
 import { Button } from '@/components/ui/button'
+import { EmailField } from '@/components/ui/email-field'
 import { Field } from '@/components/ui/field'
 import { authClient } from '@/lib/auth'
+import { emailProblem } from '@/lib/email'
+import { focusFirstProblem } from '@/lib/forms'
 import { checkNewPassword } from '@/lib/password'
 
 export const Route = createFileRoute('/get-started')({
   component: GetStarted,
 })
 
-type Errors = { name?: string; email?: string; password?: string; confirm?: string }
-
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-function validate(name: string, email: string, password: string, confirm: string): Errors {
-  const errors: Errors = checkNewPassword(password, confirm)
-  if (name.length < 2) errors.name = 'Enter your full name.'
-  if (!EMAIL.test(email)) errors.email = 'Enter a valid email, like ada@yourhotel.com.'
-  return errors
+type Errors = {
+  name?: string | undefined
+  email?: string | undefined
+  password?: string | undefined
+  confirm?: string | undefined
 }
+
+const nameProblem = (value: string) =>
+  value.trim().length < 2 ? 'Enter your full name.' : undefined
 
 function GetStarted() {
   const [sentTo, setSentTo] = useState<string>()
@@ -29,23 +33,31 @@ function GetStarted() {
   const [fieldErrors, setFieldErrors] = useState<Errors>({})
   const [pending, setPending] = useState(false)
   const [newPassword, setNewPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const form = new FormData(event.currentTarget)
+    const formElement = event.currentTarget
+    const form = new FormData(formElement)
     const name = String(form.get('name')).trim()
     const email = String(form.get('email')).trim()
-    const password = String(form.get('password'))
-    const errors = validate(name, email, password, String(form.get('confirm')))
+    const errors: Errors = {
+      ...checkNewPassword(newPassword, confirm),
+      ...(nameProblem(name) ? { name: nameProblem(name) } : {}),
+      ...(emailProblem(email) ? { email: emailProblem(email) } : {}),
+    }
     setFieldErrors(errors)
     setError(undefined)
-    if (Object.keys(errors).length > 0) return
+    if (Object.keys(errors).length > 0) {
+      focusFirstProblem(formElement, ['name', 'email', 'password', 'confirm'], errors)
+      return
+    }
 
     setPending(true)
     const { error: failure } = await authClient.signUp.email({
       name,
       email,
-      password,
+      password: newPassword,
       callbackURL: `${window.location.origin}/setup`,
     })
     setPending(false)
@@ -56,7 +68,9 @@ function GetStarted() {
           ? 'There is already an account with this email. Sign in instead.'
           : failure.code === 'PASSWORD_TOO_WEAK' || failure.code === 'PASSWORD_TOO_SHORT'
             ? "Your password doesn't meet every rule yet."
-            : "We couldn't create your account. Check the details and try again.",
+            : failure.status === 429
+              ? 'Too many attempts from this network. Wait a few minutes, then try again.'
+              : "We couldn't create your account. Check the details and try again.",
       )
       return
     }
@@ -76,6 +90,9 @@ function GetStarted() {
     )
   }
 
+  const passwordsMatch =
+    confirm.length > 0 && confirm === newPassword && isStrongPassword(newPassword)
+
   return (
     <AuthCard title="Set up your hotel group" subtitle="Takes about 5 minutes.">
       <form onSubmit={onSubmit} className="flex flex-col gap-[18px]" noValidate>
@@ -88,18 +105,13 @@ function GetStarted() {
           label="Full name"
           name="name"
           autoComplete="name"
+          autoCapitalize="words"
           required
           autoFocus
+          validate={nameProblem}
           error={fieldErrors.name}
         />
-        <Field
-          label="Work email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          error={fieldErrors.email}
-        />
+        <EmailField autoComplete="email" error={fieldErrors.email} />
         <Field
           label="Create a password"
           name="password"
@@ -121,17 +133,23 @@ function GetStarted() {
           autoComplete="new-password"
           required
           revealable
+          value={confirm}
+          onChange={(event) => setConfirm(event.target.value)}
+          validate={(value) =>
+            value.length > 0 && value !== newPassword ? "Passwords don't match." : undefined
+          }
+          success={passwordsMatch ? 'Passwords match' : undefined}
           error={fieldErrors.confirm}
         />
-        <Button type="submit" variant="primary" size="lg" disabled={pending}>
+        <Button type="submit" variant="primary" size="lg" loading={pending}>
           {pending ? 'Creating your account…' : 'Create account'}
         </Button>
-        <span className="text-sm text-text-2">
-          Already using Vento?{' '}
-          <Link to="/sign-in" className="text-pri-ink hover:underline">
-            Sign in
-          </Link>
-        </span>
+        <AuthFootnote>
+          By creating an account, you agree to Vento's Terms and Privacy Policy (NDPA 2023).
+        </AuthFootnote>
+        <AuthFootnote>
+          Already using Vento? <Link to="/sign-in">Sign in</Link>
+        </AuthFootnote>
       </form>
     </AuthCard>
   )

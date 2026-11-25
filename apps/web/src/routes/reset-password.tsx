@@ -1,5 +1,6 @@
 // Where the reset link lands: choose a new password, then sign in with it.
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { isStrongPassword } from '@vento/shared'
 import { type FormEvent, useState } from 'react'
 import { z } from 'zod'
 import { AuthCard } from '@/components/auth-card'
@@ -21,6 +22,7 @@ function ResetPassword() {
   const [failure, setFailure] = useState<string>()
   const [pending, setPending] = useState(false)
   const [newPassword, setNewPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
 
   if (!token || linkError) {
     return (
@@ -96,9 +98,19 @@ function ResetPassword() {
           autoComplete="new-password"
           required
           revealable
+          value={confirm}
+          onChange={(event) => setConfirm(event.target.value)}
+          validate={(value) =>
+            value.length > 0 && value !== newPassword ? "Passwords don't match." : undefined
+          }
+          success={
+            confirm.length > 0 && confirm === newPassword && isStrongPassword(newPassword)
+              ? 'Passwords match'
+              : undefined
+          }
           error={errors.confirm}
         />
-        <Button type="submit" variant="primary" size="lg" disabled={pending}>
+        <Button type="submit" variant="primary" size="lg" loading={pending}>
           {pending ? 'Saving…' : 'Change password'}
         </Button>
       </form>

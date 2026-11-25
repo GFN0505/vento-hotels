@@ -4,14 +4,23 @@ import { type FormEvent, useState } from 'react'
 import { AuthCard, AuthFootnote } from '@/components/auth-card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { EmailField } from '@/components/ui/email-field'
 import { Field } from '@/components/ui/field'
 import { authClient } from '@/lib/auth'
+import { emailProblem } from '@/lib/email'
+import { focusFirstProblem } from '@/lib/forms'
 
 export const Route = createFileRoute('/sign-in')({
   component: SignIn,
 })
 
-function messageFor(code: string | undefined): string {
+// Matches the sign-in limit set in the API (apps/api/src/auth/auth.ts).
+const PAUSE_MINUTES = 10
+
+function messageFor(code: string | undefined, status: number): string {
+  if (status === 429) {
+    return `Too many sign-in attempts. For your security, wait ${PAUSE_MINUTES} minutes, then try again.`
+  }
   if (code === 'EMAIL_NOT_VERIFIED') {
     return 'Confirm your email first. We sent you a link when you signed up.'
   }
@@ -24,20 +33,36 @@ function SignIn() {
   const navigate = useNavigate()
   const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string | undefined
+    password?: string | undefined
+  }>({})
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    setPending(true)
+    const formElement = event.currentTarget
+    const form = new FormData(formElement)
+    const email = String(form.get('email')).trim()
+    const password = String(form.get('password'))
+    const errors = {
+      ...(emailProblem(email) ? { email: emailProblem(email) } : {}),
+      ...(password === '' ? { password: 'Enter your password.' } : {}),
+    }
+    setFieldErrors(errors)
     setError(undefined)
+    if (Object.keys(errors).length > 0) {
+      focusFirstProblem(formElement, ['email', 'password'], errors)
+      return
+    }
+    setPending(true)
     const { error: failure } = await authClient.signIn.email({
-      email: String(form.get('email')).trim(),
-      password: String(form.get('password')),
+      email,
+      password,
       rememberMe: form.get('remember') === 'on',
     })
     setPending(false)
     if (failure) {
-      setError(messageFor(failure.code))
+      setError(messageFor(failure.code, failure.status))
       return
     }
     await navigate({ to: '/' })
@@ -51,14 +76,7 @@ function SignIn() {
             {error}
           </p>
         ) : null}
-        <Field
-          label="Work email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          autoFocus
-        />
+        <EmailField autoComplete="username" autoFocus error={fieldErrors.email} />
         <div className="flex flex-col gap-1.5">
           <Field
             label="Password"
@@ -67,6 +85,7 @@ function SignIn() {
             autoComplete="current-password"
             required
             revealable
+            error={fieldErrors.password}
           />
           <Link
             to="/forgot-password"
@@ -85,7 +104,7 @@ function SignIn() {
             </span>
           </span>
         </label>
-        <Button type="submit" variant="primary" size="lg" disabled={pending}>
+        <Button type="submit" variant="primary" size="lg" loading={pending}>
           {pending ? 'Signing in…' : 'Sign in'}
         </Button>
         <AuthFootnote>

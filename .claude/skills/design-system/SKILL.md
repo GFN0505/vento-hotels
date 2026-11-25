@@ -59,6 +59,15 @@ The hex values here are for defining tokens in `styles.css` only. Port them from
 - Forms: one column on mobile, two columns from `md`, using container queries inside dialogs.
 - POS and housekeeping use their own full-screen touch shells (no sidebar).
 
+## Form fields
+Use `Field` (and `EmailField` for email) from `@/components/ui`; never a bare `<input>` in a form. They give every form the same behaviour:
+- Checked when the person moves on to another field (`validate`), re-checked live once a message shows, cleared the moment it's fixed. Never on tapping a button: a message appearing then pushes the button away mid-tap.
+- Submit errors show until the field is edited; on submit, focus moves to the first field with a problem (`focusFirstProblem`).
+- Password fields (`revealable`): show/hide button (44px on phones) and a Caps Lock warning; new passwords show the live rule checklist once typing starts, and confirm fields show "Passwords match".
+- Email fields: `inputMode="email"`, no auto-capitalise or autocorrect, `autoComplete="username"` on sign-in and `"email"` on sign-up, and a "Did you mean …?" fix for mistyped providers.
+- 16px text on phones (iPhones zoom into smaller fields), labels above, never placeholder-only.
+- Buttons that start an action take `loading` (spinner + disabled).
+
 ## Components (shadcn only, from `@/components/ui`)
 Button (`default`, `secondary`, `outline`, `ghost`, `destructive`; sizes `sm`, `default`, `lg`, `icon`), Input, Select, Combobox (Command + Popover), DatePicker and DateRangePicker (Calendar + Popover), Dialog, Sheet, DropdownMenu, Tabs, Table, Badge, Card, Skeleton, Tooltip, Sonner.
 App-level: PageHeader, DataTable, DataTableToolbar, StatusBadge, EmptyState, ConfirmDialog, MoneyInput, EntityCombobox, StatCard, TapeChart, RoomTile, Folio, PosKeypad, OfflineBanner, PinPad, ApprovalPrompt, ExceptionRow.

@@ -3,14 +3,13 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
 import { AuthCard } from '@/components/auth-card'
 import { Button } from '@/components/ui/button'
-import { Field } from '@/components/ui/field'
+import { EmailField } from '@/components/ui/email-field'
 import { authClient } from '@/lib/auth'
+import { emailProblem } from '@/lib/email'
 
 export const Route = createFileRoute('/forgot-password')({
   component: ForgotPassword,
 })
-
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function ForgotPassword() {
   const [sent, setSent] = useState<{ to: string; expiresAt: string }>()
@@ -20,8 +19,9 @@ function ForgotPassword() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const email = String(new FormData(event.currentTarget).get('email')).trim()
-    if (!EMAIL.test(email)) {
-      setEmailError('Enter a valid email, like ada@yourhotel.com.')
+    const problem = emailProblem(email)
+    if (problem) {
+      setEmailError(problem)
       return
     }
     setEmailError(undefined)
@@ -59,16 +59,8 @@ function ForgotPassword() {
   return (
     <AuthCard title="Reset your password" subtitle="We'll email a link that works for 30 minutes.">
       <form onSubmit={onSubmit} className="flex flex-col gap-[18px]" noValidate>
-        <Field
-          label="Work email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          autoFocus
-          error={emailError}
-        />
-        <Button type="submit" variant="primary" size="lg" disabled={pending}>
+        <EmailField autoComplete="username" autoFocus error={emailError} />
+        <Button type="submit" variant="primary" size="lg" loading={pending}>
           {pending ? 'Sending…' : 'Send reset link'}
         </Button>
         <Link to="/sign-in" className="text-sm text-pri-ink hover:underline">

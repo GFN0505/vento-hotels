@@ -29,6 +29,8 @@ export type AuthSettings = {
   secret: string
   baseURL: string
   webOrigin: string
+  // Off in tests that don't exercise it, so suites can sign in many times.
+  rateLimit?: boolean
 }
 
 // Better Auth's own organization management (invite, remove, change role) uses its built-in
@@ -68,6 +70,20 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
       },
     }),
     advanced: { database: { generateId: () => newId() } },
+    // Slows down password guessing. Counted per network address: a whole hotel often shares one,
+    // so the sign-in limit is generous enough for a busy front desk (15 tries per 10 minutes).
+    // Per-account lockout comes with device and PIN sign-in (brick 8). Memory storage resets when
+    // the API restarts; move to database storage when running more than one API instance.
+    rateLimit: {
+      enabled: settings.rateLimit ?? true,
+      window: 60,
+      max: 100,
+      customRules: {
+        '/sign-in/email': { window: 600, max: 15 },
+        '/sign-up/email': { window: 600, max: 10 },
+        '/request-password-reset': { window: 600, max: 5 },
+      },
+    },
     // The password rule from @vento/shared, enforced wherever a password is set, so it can't be
     // skipped by calling the API directly.
     hooks: {

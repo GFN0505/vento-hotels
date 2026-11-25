@@ -86,7 +86,7 @@ function Setup() {
           minLength={2}
         />
         <Field label="State" name="state" placeholder="e.g. Lagos" />
-        <Button type="submit" variant="primary" size="lg" disabled={pending}>
+        <Button type="submit" variant="primary" size="lg" loading={pending}>
           {pending ? 'Setting up…' : 'Continue'}
         </Button>
       </form>

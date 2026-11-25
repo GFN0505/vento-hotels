@@ -21,7 +21,7 @@ export function AuthCard({
       <main className="flex flex-col px-6 pt-8 pb-10 lg:min-h-dvh lg:items-center lg:justify-center lg:p-12">
         {/* Front-door type is larger and calmer than inside the app: 14–15px text, darker labels,
             taller fields and button. Applied here so every auth screen gets it. */}
-        <div className="flex w-full flex-col gap-5 text-md [&_button[type=submit]]:h-12 [&_button[type=submit]]:text-[15px] [&_input:not([type=checkbox])]:h-11 [&_input:not([type=checkbox])]:text-[15px] [&_label]:text-[13px] [&_label]:text-text lg:w-[400px]">
+        <div className="flex w-full flex-col gap-5 text-md [&_button[type=submit]]:h-12 [&_button[type=submit]]:text-[15px] [&_input:not([type=checkbox])]:h-11 [&_input:not([type=checkbox])]:text-[16px] lg:[&_input:not([type=checkbox])]:text-[15px] [&_label]:text-[13px] [&_label]:text-text lg:w-[400px]">
           <div className="mb-1">
             <h1 className="mb-2 text-[28px] leading-9 font-semibold tracking-[-0.02em]">{title}</h1>
             {subtitle ? <p className="text-[15px] leading-6 text-text-2">{subtitle}</p> : null}

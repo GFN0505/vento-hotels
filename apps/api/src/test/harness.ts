@@ -16,7 +16,7 @@ const healthy: HealthCheck = async () => ({
   checkedAt: new Date().toISOString(),
 })
 
-export function createTestApp(databaseUrl: string) {
+export function createTestApp(databaseUrl: string, options: { rateLimit?: boolean } = {}) {
   const database = createDatabase(databaseUrl, { max: 4 })
   const email = new MemoryEmailProvider()
   const auth = createAuth({
@@ -25,13 +25,18 @@ export function createTestApp(databaseUrl: string) {
       secret: 'test-only-secret-that-is-at-least-32-characters',
       baseURL: 'http://localhost:5180',
       webOrigin: WEB_ORIGIN,
+      rateLimit: options.rateLimit ?? false,
     },
     email,
   })
   const app = createApp({ db: database.db, auth, checkHealth: healthy })
 
-  async function call(path: string, init: { method?: string; body?: unknown; cookie?: string }) {
+  async function call(
+    path: string,
+    init: { method?: string; body?: unknown; cookie?: string; ip?: string },
+  ) {
     const headers: Record<string, string> = { origin: WEB_ORIGIN }
+    if (init.ip) headers['x-forwarded-for'] = init.ip
     if (init.body !== undefined) headers['content-type'] = 'application/json'
     if (init.cookie) headers.cookie = init.cookie
     return app.request(path, {

@@ -13,6 +13,7 @@ Stage 0, brick 5 needs sign-in, organizations (hotel groups), and a way to limit
 - **Vento owns** `entities`, `properties` and `member_properties`.
 - **Property access is closed by default.** A member sees no properties until given all of them or a list. Owners and group admins always see all.
 - **`organizationId` comes only from the session's active organization**, never from input. Reads outside the caller's scope answer **404**, not 403, so they don't reveal that a record exists.
+- **Attempt limits** per network address: sign-in 15 per 10 minutes, sign-up 10, password-reset requests 5 (Better Auth rate limiter, memory storage). Generous on purpose: a whole hotel usually shares one internet connection. Per-account lockout comes with device and PIN sign-in (brick 8); move the limiter to database storage before running more than one API instance.
 - Emails go through `EmailProvider`. Locally it's the console and in tests it's a memory capture, until a provider is chosen.
 
 ## Consequences

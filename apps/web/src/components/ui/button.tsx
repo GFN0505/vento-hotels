@@ -1,5 +1,6 @@
 // Button, matching `.btn` in the designs (docs/design/export/vento.css).
 import { cva, type VariantProps } from 'class-variance-authority'
+import { Loader2 } from 'lucide-react'
 import type { ButtonHTMLAttributes } from 'react'
 import { cn } from '@/lib/cn'
 
@@ -26,10 +27,31 @@ const buttonVariants = cva(
 )
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
-  VariantProps<typeof buttonVariants>
+  VariantProps<typeof buttonVariants> & {
+    // Shows a spinner and disables the button while the action runs (design: "Signing in…").
+    loading?: boolean
+  }
 
-export function Button({ className, variant, size, type = 'button', ...props }: ButtonProps) {
+export function Button({
+  className,
+  variant,
+  size,
+  type = 'button',
+  loading = false,
+  disabled,
+  children,
+  ...props
+}: ButtonProps) {
   return (
-    <button type={type} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+    <button
+      type={type}
+      className={cn(buttonVariants({ variant, size }), className)}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      {...props}
+    >
+      {loading ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+      {children}
+    </button>
   )
 }
