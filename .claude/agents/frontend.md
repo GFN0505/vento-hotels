@@ -7,6 +7,7 @@ color: green
 skills:
   - performance
   - ux-writing
+  - brand
   - add-list-page
   - design-system
   - offline-sync

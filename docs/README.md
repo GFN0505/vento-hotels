@@ -14,6 +14,7 @@ Everything about Vento Hotels that isn't code lives in `docs/`. If you're new, r
 | [design/CHANGES.md](design/CHANGES.md) | Where a build deliberately differs from its design | frontend | A designed screen is built differently |
 | [design/claude-design-prompt.md](design/claude-design-prompt.md), [design/claude-design-update-prompt.md](design/claude-design-update-prompt.md) | The Claude Design prompts that produced the designs | product-manager, ui-designer | A new design round |
 | [help/](help/README.md) | Customer help-centre articles, including guest app articles | frontend (writes), ui-designer (reviews copy) | A journey ships |
+| [marketing/](marketing/README.md) | Approved brand and marketing copy: headline, taglines, boilerplate, website and outreach pieces | brand-marketing (owner approves) | Positioning changes, or a new public piece |
 | [../CHANGELOG.md](../CHANGELOG.md) | What changed, release by release, in customers' words | whoever ships | Every user-visible change |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How the code is laid out, a request end to end, offline path, data, jobs, build and quality gates | architect | Structure changes |
 | `RUNBOOK.md` *(before first deploy)* | Environments, deploys, backups and restores, night audit and job failures, incident steps | devops | Infrastructure changes |
