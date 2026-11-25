@@ -1,7 +1,7 @@
 // Reads and validates the infrastructure settings documented in .env.example.
 import { z } from 'zod'
 
-const infraEnvSchema = z.object({
+export const infraEnvSchema = z.object({
   DATABASE_URL: z
     .string()
     .trim()

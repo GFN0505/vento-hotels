@@ -29,11 +29,12 @@ Read before working:
 ## Commands
 Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled with `corepack enable`). Commands not built yet print which brick adds them. Biome lints and formats code and config, not Markdown.
 - `pnpm install` — install all workspaces
-- `pnpm dev` — run web + api
+- `pnpm dev` — run web + api (the API serves `/health` and `/rpc` on `API_PORT`, default 3000)
 - `pnpm db:up` — start local Postgres and RustFS storage (Docker), waiting until healthy
 - `pnpm db:down` / `pnpm db:reset` — stop them / delete their data and start fresh
 - `pnpm db:status` — check the database and storage are reachable
-- `pnpm db:generate` / `pnpm db:migrate` — create / apply migrations
+- `pnpm db:generate` / `pnpm db:migrate` — create a migration from schema changes / apply migrations to the dev and test databases
+- `pnpm db:studio` — browse the local database in Drizzle Studio
 - `pnpm db:seed` — load the demo group (Kora Hotels Group, as in the designs and walkthroughs) for development, tests and sales demos
 - `pnpm check` — Biome lint + format check (`pnpm check:fix` to apply fixes)
 - `pnpm typecheck`, `pnpm test`, `pnpm e2e`

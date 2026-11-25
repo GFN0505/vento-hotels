@@ -2,10 +2,9 @@ packages:
   - apps/*
   - packages/*
 
-# Only these packages may run install scripts; add to the list deliberately.
-onlyBuiltDependencies:
-  - "@biomejs/biome"
-  - turbo
+# Packages allowed to run install scripts. pnpm blocks all others; add to the list deliberately.
+allowBuilds:
+  esbuild: true
 
 # Wait before installing newly published versions (supply-chain safety), in minutes.
 minimumReleaseAge: 10080

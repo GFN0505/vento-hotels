@@ -12,6 +12,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@orpc/contract": "1.16.2",
     "decimal.js": "10.6.0",
     "uuid": "14.0.3",
     "zod": "4.6.7"
