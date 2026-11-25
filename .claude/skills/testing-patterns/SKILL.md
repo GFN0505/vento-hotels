@@ -24,7 +24,7 @@ const roomType = await createRoomType(property, { rooms: 2 })   // also creates 
 const guest = await createGuest(org)
 const ctx = contextFor(user, org)
 ```
-Factories take overrides and fill realistic defaults. Never depend on rows created by another test, or on `pnpm db:seed` data: the seed (the demo group) is for local development, demos, and the Playwright smoke and walkthrough journeys only, and CI runs it against a fresh database to prove it still loads. `createDevice(property, { shared: true })` and `createMember(org, { role, pin })` cover PIN sign-in on shared devices; `setPermissionLimits(org, { 'stay.discount': { front_desk: '10' } })` overrides the matrix seed defaults. Never use the wall clock: set the property's business date explicitly, and freeze time (`vi.setSystemTime`) when a rule depends on the hour (late check-out, auto-release of unguaranteed bookings).
+Factories take overrides and fill realistic defaults. Never depend on rows created by another test, or on `pnpm db:seed` data: the seed (the demo group) is for local development, demos, and the Playwright smoke and walkthrough journeys only, and CI runs it against a fresh database to prove it still loads. Tests that need sign-in use the harness in `apps/api/src/test/harness.ts`: `signUp(name)`, `createOrganization(cookie, name)`, `addMember(orgId, person, role)` and `rpc(cookie, 'module/procedure', input)`, all over real HTTP. Override a limit the way an owner would, with `rpc(owner.cookie, 'permissions/set', { role, permission, allowed, limit, reason })`. Device and PIN factories arrive with brick 8. Never use the wall clock: set the property's business date explicitly, and freeze time (`vi.setSystemTime`) when a rule depends on the hour (late check-out, auto-release of unguaranteed bookings).
 
 ## Required tests for every resource
 ```ts
@@ -52,14 +52,13 @@ Every write asserts its audit event, so a missing one fails a test rather than a
 ```ts
 it('records who discounted the stay, why, and the before/after rate', async () => {
   await discount(ctx, { stayId, percent: '5', reason: 'Repeat corporate guest' })
-  expect(await auditEventsFor(stayId)).toEqual([
-    expect.objectContaining({ action: 'stay.discount', actorId: user.id, deviceId: device.id,
-      businessDate: '2026-11-25', reason: 'Repeat corporate guest',
-      before: expect.objectContaining({ rate: '50000.00' }), after: expect.objectContaining({ rate: '47500.00' }) }),
-  ])
+  const page = await t.rpc(gm.cookie, 'audit/list', { entityType: 'stay', entityId: stayId })
+  expect(page.data.items[0]).toMatchObject({ action: 'stay.discounted', actorName: 'Tunde Bello',
+    reason: 'Repeat corporate guest',
+    before: expect.objectContaining({ rate: '50000.00' }), after: expect.objectContaining({ rate: '47500.00' }) })
 })
 ```
-Also assert that a rejected action writes no audit event for the change, and that audit rows can't be updated or deleted.
+Also assert that a rejected action writes no audit event for the change (see `governance.test.ts`, "rolls the audit event back with a failed change"), and that audit rows can't be updated or deleted.
 
 ## Permission limits and approval
 For every action with a limit in the permissions matrix:

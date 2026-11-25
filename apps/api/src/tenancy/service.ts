@@ -11,11 +11,12 @@ import {
   toPage,
 } from '@vento/shared'
 import { and, asc, count, eq, inArray, isNull } from 'drizzle-orm'
+import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { members, organizations } from '../db/schema/auth.ts'
 import { entities, memberProperties, properties } from '../db/schema/tenancy.ts'
-import { type Access, propertyScope, requireGroupAdmin } from './access.ts'
+import { type Access, propertyScope, requirePermission } from './access.ts'
 
 const entityColumns = {
   id: entities.id,
@@ -88,19 +89,28 @@ export async function createEntity(
     vatRegistered: boolean
   },
 ): Promise<Entity> {
-  requireGroupAdmin(access)
+  requirePermission(access, 'setup.manage')
   try {
-    const [row] = await db
-      .insert(entities)
-      .values({
-        organizationId: access.organizationId,
-        name: input.name,
-        rcNumber: input.rcNumber ?? null,
-        tin: input.tin ?? null,
-        vatRegistered: input.vatRegistered,
+    return await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(entities)
+        .values({
+          organizationId: access.organizationId,
+          name: input.name,
+          rcNumber: input.rcNumber ?? null,
+          tin: input.tin ?? null,
+          vatRegistered: input.vatRegistered,
+        })
+        .returning(entityColumns)
+      const entity = row as Entity
+      await recordAudit(tx, access, {
+        action: 'entity.created',
+        entityType: 'entity',
+        entityId: entity.id,
+        after: entity,
       })
-      .returning(entityColumns)
-    return row as Entity
+      return entity
+    })
   } catch (error) {
     if (isUniqueViolation(error)) throw nameTaken('company')
     throw error
@@ -146,7 +156,7 @@ export async function createProperty(
     checkOutTime?: string | undefined
   },
 ): Promise<Property> {
-  requireGroupAdmin(access)
+  requirePermission(access, 'setup.manage')
   const [entity] = await db
     .select({ id: entities.id })
     .from(entities)
@@ -154,24 +164,34 @@ export async function createProperty(
   if (!entity) throw new ORPCError('BAD_REQUEST', { message: 'Choose a company from this group' })
 
   try {
-    const [row] = await db
-      .insert(properties)
-      .values({
-        organizationId: access.organizationId,
-        entityId: entity.id,
-        name: input.name,
-        addressLine1: input.addressLine1 ?? null,
-        area: input.area ?? null,
-        lga: input.lga ?? null,
-        state: input.state ?? null,
-        timeZone: input.timeZone,
-        ...(input.checkInTime ? { checkInTime: input.checkInTime } : {}),
-        ...(input.checkOutTime ? { checkOutTime: input.checkOutTime } : {}),
-        // A new property starts on today's date in its own time zone; night audit moves it after.
-        businessDate: calendarDateIn(input.timeZone),
+    return await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(properties)
+        .values({
+          organizationId: access.organizationId,
+          entityId: entity.id,
+          name: input.name,
+          addressLine1: input.addressLine1 ?? null,
+          area: input.area ?? null,
+          lga: input.lga ?? null,
+          state: input.state ?? null,
+          timeZone: input.timeZone,
+          ...(input.checkInTime ? { checkInTime: input.checkInTime } : {}),
+          ...(input.checkOutTime ? { checkOutTime: input.checkOutTime } : {}),
+          // A new property starts on today's date in its own time zone; night audit moves it after.
+          businessDate: calendarDateIn(input.timeZone),
+        })
+        .returning(propertyColumns)
+      const property = toProperty(row as Property)
+      await recordAudit(tx, access, {
+        action: 'property.created',
+        entityType: 'property',
+        entityId: property.id,
+        propertyId: property.id,
+        after: property,
       })
-      .returning(propertyColumns)
-    return toProperty(row as Property)
+      return property
+    })
   } catch (error) {
     if (isUniqueViolation(error)) throw nameTaken('property')
     throw error
@@ -185,12 +205,12 @@ export async function setPropertyAccess(
     | { memberId: string; allProperties: true }
     | { memberId: string; allProperties: false; propertyIds: string[] },
 ): Promise<{ ok: true }> {
-  requireGroupAdmin(access)
+  requirePermission(access, 'setup.manage')
   const propertyIds = input.allProperties ? [] : [...new Set(input.propertyIds)]
 
   await db.transaction(async (tx) => {
     const [member] = await tx
-      .select({ id: members.id })
+      .select({ id: members.id, allProperties: members.allProperties })
       .from(members)
       .where(and(eq(members.id, input.memberId), eq(members.organizationId, access.organizationId)))
     if (!member) throw notFound()
@@ -210,6 +230,15 @@ export async function setPropertyAccess(
       }
     }
 
+    const beforeIds = (
+      await tx
+        .select({ id: memberProperties.propertyId })
+        .from(memberProperties)
+        .where(eq(memberProperties.memberId, member.id))
+    )
+      .map((row) => row.id)
+      .sort()
+
     await tx
       .update(members)
       .set({ allProperties: input.allProperties })
@@ -224,6 +253,13 @@ export async function setPropertyAccess(
         })),
       )
     }
+    await recordAudit(tx, access, {
+      action: 'member.property_access_changed',
+      entityType: 'member',
+      entityId: member.id,
+      before: { allProperties: member.allProperties, propertyIds: beforeIds },
+      after: { allProperties: input.allProperties, propertyIds: [...propertyIds].sort() },
+    })
   })
   return { ok: true }
 }

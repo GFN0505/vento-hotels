@@ -15,6 +15,13 @@
       "when": 1795637964551,
       "tag": "0001_auth_and_tenancy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795638489046,
+      "tag": "0002_governance",
+      "breakpoints": true
     }
   ]
 }

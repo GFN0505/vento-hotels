@@ -4,6 +4,7 @@ import { implement, ORPCError } from '@orpc/server'
 import { contract } from '@vento/shared'
 import type { Auth } from './auth/auth.ts'
 import type { Database } from './db/client.ts'
+import * as governance from './governance/service.ts'
 import type { HealthCheck } from './system/health.ts'
 import { loadAccess } from './tenancy/access.ts'
 import * as tenancy from './tenancy/service.ts'
@@ -24,7 +25,7 @@ const inOrganization = authed.use(async ({ context, next }) => {
   if (!organizationId) {
     throw new ORPCError('FORBIDDEN', { message: 'Choose an organization first' })
   }
-  const access = await loadAccess(context.db, organizationId, context.user.id)
+  const access = await loadAccess(context.db, organizationId, context.user)
   if (!access) throw new ORPCError('FORBIDDEN', { message: "You don't have access to this" })
   return next({ context: { access } })
 })
@@ -60,6 +61,19 @@ export const router = base.router({
   members: {
     setPropertyAccess: inOrganization.members.setPropertyAccess.handler(({ context, input }) =>
       tenancy.setPropertyAccess(context.db, context.access, input),
+    ),
+  },
+  audit: {
+    list: inOrganization.audit.list.handler(({ context, input }) =>
+      governance.listAudit(context.db, context.access, input),
+    ),
+  },
+  permissions: {
+    list: inOrganization.permissions.list.handler(({ context }) =>
+      governance.listPermissions(context.db, context.access),
+    ),
+    set: inOrganization.permissions.set.handler(({ context, input }) =>
+      governance.setPermission(context.db, context.access, input),
     ),
   },
 })
