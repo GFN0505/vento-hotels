@@ -3,16 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="light" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Vento</title>
     <script>
-      // Follow the system light/dark setting before first paint, so the page never flashes.
+      // Vento opens in light mode. Dark mode is opt-in: a person's choice is stored as
+      // vento.theme = 'dark' (or 'system' to follow the device), set from their profile.
+      // Applied before first paint, so the page never flashes.
       ;(() => {
-        const dark = window.matchMedia('(prefers-color-scheme: dark)')
-        const apply = () => document.documentElement.classList.toggle('dark', dark.matches)
+        let choice = 'light'
+        try {
+          choice = localStorage.getItem('vento.theme') || 'light'
+        } catch {}
+        const system = window.matchMedia('(prefers-color-scheme: dark)')
+        const apply = () => {
+          const dark = choice === 'dark' || (choice === 'system' && system.matches)
+          document.documentElement.classList.toggle('dark', dark)
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+        }
         apply()
-        dark.addEventListener('change', apply)
+        system.addEventListener('change', apply)
       })()
     </script>
   </head>
