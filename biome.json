@@ -6,7 +6,16 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/*.md", "!docs/design/export", "!**/dist", "!**/coverage"]
+    "includes": [
+      "**",
+      "!**/*.md",
+      "!docs/design/export",
+      "!**/dist",
+      "!**/coverage",
+      "!**/routeTree.gen.ts",
+      "!**/test-results",
+      "!**/playwright-report"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -52,6 +61,11 @@
       "source": {
         "organizeImports": "on"
       }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   }
 }

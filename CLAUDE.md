@@ -37,7 +37,7 @@ Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled 
 - `pnpm db:studio` — browse the local database in Drizzle Studio
 - `pnpm db:seed` — load the demo group (Kora Hotels Group, as in the designs and walkthroughs) for development, tests and sales demos
 - `pnpm check` — Biome lint + format check (`pnpm check:fix` to apply fixes)
-- `pnpm typecheck`, `pnpm test`, `pnpm e2e`
+- `pnpm typecheck`, `pnpm test`, `pnpm e2e` (Playwright, desktop and phone; starts its own API and web app on ports 3100/5174 against the test database)
 - Before any commit: `pnpm check && pnpm typecheck && pnpm test`
 
 ## Non-negotiables

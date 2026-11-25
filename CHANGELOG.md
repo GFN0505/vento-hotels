@@ -4,6 +4,9 @@ User-visible changes, newest first, written for customers. Format: [Keep a Chang
 
 ## [Unreleased]
 ### Added
+- Sign in, and set up a hotel group: create your account, confirm your email, then add your group, company and first hotel. Home lists your hotels with each one's business date. Works on phones and in dark mode.
+- Every change to your group's setup and permissions is recorded in an audit log that nobody can edit.
+- Owners can change what each role may do and their limits (for example, front desk discounts up to 10%).
 - What Vento Hotels will do, for whom, and the plan to build it in stages: the ten modules, from front desk to group analytics.
 - The hotel vocabulary, statuses, business rules and the permissions matrix with limits for each role.
 - Walkthroughs of a day at Kora Victoria Island: front desk morning, night audit, owner's morning, going live, a room attendant's shift, dinner service through a power cut, and a guest's stay.

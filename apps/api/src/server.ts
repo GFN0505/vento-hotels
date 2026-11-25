@@ -4,7 +4,7 @@ import { createApp } from './app.ts'
 import { createAuth } from './auth/auth.ts'
 import { createDatabase } from './db/client.ts'
 import { loadEnv } from './env.ts'
-import { ConsoleEmailProvider } from './providers/email.ts'
+import { ConsoleEmailProvider, FileEmailProvider } from './providers/email.ts'
 import { healthCheck } from './system/health.ts'
 
 const env = loadEnv()
@@ -16,7 +16,10 @@ const auth = createAuth({
     baseURL: env.BETTER_AUTH_URL,
     webOrigin: env.WEB_ORIGIN,
   },
-  email: new ConsoleEmailProvider(),
+  email:
+    env.EMAIL_OUTBOX_DIR && env.NODE_ENV !== 'production'
+      ? new FileEmailProvider(env.EMAIL_OUTBOX_DIR)
+      : new ConsoleEmailProvider(),
 })
 const app = createApp({
   db: database.db,

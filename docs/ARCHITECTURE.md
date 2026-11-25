@@ -31,11 +31,15 @@ apps/
     drizzle/                 generated SQL migrations, committed                      (brick 4)
   web/                       Vite + React 19 SPA
     src/
-      routes/                TanStack Router file-based routes                        (brick 7)
-      components/            shared UI on shadcn/ui + Tailwind v4 tokens               (brick 7)
-      lib/orpc.ts            typed API client + TanStack Query                        (brick 7)
+      routes/                sign-in, get-started, setup, _app (shell) and home       (brick 7)
+      components/ui/         Button, Field, Card: shadcn-style, design tokens only    (brick 7)
+      components/shell/      sidebar, top bar, property switcher                      (brick 7)
+      components/logo.tsx    the Vento mark from the designs                          (brick 7)
+      styles.css             tokens ported from design/export/vento.css, light + dark (brick 7)
+      lib/api.ts             typed oRPC client + TanStack Query utils                 (brick 7)
+      lib/auth.ts, session.ts  Better Auth client; picks the member's group on sign-in (brick 7)
       offline/               service worker, IndexedDB outbox, sync queue             (brick 9)
-    e2e/journeys/            one Playwright spec per walkthrough in docs/journeys      (brick 7)
+    e2e/                     Playwright, desktop + phone; onboarding.spec.ts now, one spec per walkthrough later (brick 7)
 packages/
   shared/                    the single source of API types
     src/
@@ -50,7 +54,7 @@ packages/
 ```
 
 ## A request, end to end
-*Steps 3.1–3.3 built in brick 5: `authed` and `inOrganization` in `apps/api/src/router.ts`, scoping with `scopeToProperties()`. Steps 3.4 and 5 in review (brick 6): `requirePermission` / `requireWithinLimit` in each service and `recordAudit` in its transaction; approval by PIN in brick 8; device sessions in brick 8; the web client in brick 7.*
+*Steps 3.1–3.3 built in brick 5: `authed` and `inOrganization` in `apps/api/src/router.ts`, scoping with `scopeToProperties()`. Steps 3.4 and 5 built in brick 6: `requirePermission` / `requireWithinLimit` in each service and `recordAudit` in its transaction; approval by PIN in brick 8; device sessions in brick 8. Step 1 (the typed web client) in review (brick 7), same origin as the API (decision 0019).*
 1. A screen calls the typed oRPC client. Its input and output types come from the contract in `packages/shared`, so a mismatch is a compile error.
 2. The browser sends `POST /rpc/<module>/<procedure>`. Hono adds a request id and security headers.
 3. oRPC validates the input against the zod schema, then runs the middleware in this order:
@@ -113,7 +117,7 @@ Every outside service sits behind an interface in `apps/api/src/providers/` with
 Every variable is listed in `.env.example` and validated on start. Secrets never enter the repo.
 
 ## Build and quality gates
-*Built in brick 1: pnpm workspace, Turborepo, strict TypeScript, Biome, Vitest and a CI workflow. Built in brick 2: CI runs Postgres and RustFS as service containers. Built in brick 4: CI checks migrations match the schema and apply cleanly. Playwright planned (brick 7).*
+*Built in brick 1: pnpm workspace, Turborepo, strict TypeScript, Biome, Vitest and a CI workflow. Built in brick 2: CI runs Postgres and RustFS as service containers. Built in brick 4: CI checks migrations match the schema and apply cleanly. In review (brick 7): Playwright end-to-end tests on desktop and phone in CI, with the report kept on failure.*
 - `pnpm check` (Biome lint + format), `pnpm typecheck` (strict TS), `pnpm test` (Vitest), `pnpm e2e` (Playwright, desktop and 375px mobile).
 - Run before every commit: `pnpm check && pnpm typecheck && pnpm test`.
 - CI (`.github/workflows/ci.yml`) runs the same gates on every pull request, with Postgres and RustFS as service containers (same images and ports as `docker-compose.yml`) a `pnpm db:status` step, a check that every schema change has a committed migration, and a migration run. The test database is rebuilt and migrated before every run (only a database named `*_test`). From brick 5, tests cover organization isolation and property scoping through the real sign-in flow (`src/test/harness.ts`); no-overbooking concurrency arrives with reservations (`testing-patterns` skill).

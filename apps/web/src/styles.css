@@ -1,0 +1,167 @@
+/* Vento design tokens, ported from docs/design/export/vento.css (the approved designs).
+   Components use these through Tailwind classes only: no hex values in components. */
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --surface-3: #f2f4f7;
+  --border: #e4e7ec;
+  --border-strong: #d0d5dd;
+  --text: #101828;
+  --text-2: #475467;
+  --text-3: #667085;
+  --brand: #7677fb;
+  --pri: #6364f0;
+  --pri-hover: #5354de;
+  --pri-ink: #5254db;
+  --pri-soft: #f0f0ff;
+  --pri-line: #d9d9fe;
+  --side: #0e1630;
+  --side-2: #16203f;
+  --side-text: #b9c0d8;
+  --side-mute: #7d86a6;
+  --em-bg: #ecfdf3;
+  --em: #067647;
+  --em-dot: #12b76a;
+  --am-bg: #fffaeb;
+  --am: #b54708;
+  --am-dot: #f79009;
+  --bl-bg: #eff8ff;
+  --bl: #175cd3;
+  --bl-dot: #2e90fa;
+  --ro-bg: #fff1f3;
+  --ro: #c01048;
+  --ro-dot: #f63d68;
+  --sl-bg: #f2f4f7;
+  --sl: #475467;
+  --sl-dot: #98a2b3;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-lg: 0 12px 32px -8px rgba(16, 24, 40, 0.18), 0 4px 8px -4px rgba(16, 24, 40, 0.06);
+  --overlay: rgba(16, 24, 40, 0.44);
+  /* The logo's own colours (decision: design export version, not the brand button colour). */
+  --logo-v: #6d64f4;
+  --logo-dot: #5ec4ea;
+}
+
+/* Dark tokens apply when <html> has .dark, set in index.html from the system setting. */
+.dark {
+  --bg: #0a0f1e;
+  --surface: #111729;
+  --surface-2: #0e1424;
+  --surface-3: #182036;
+  --border: #222b42;
+  --border-strong: #2e3854;
+  --text: #e7eaf3;
+  --text-2: #aeb5c9;
+  --text-3: #8a93ab;
+  --pri-hover: #7677fb;
+  --pri-ink: #a9aaff;
+  --pri-soft: rgba(118, 119, 251, 0.16);
+  --pri-line: rgba(118, 119, 251, 0.38);
+  --side: #070b17;
+  --side-2: #111830;
+  --side-text: #aeb5c9;
+  --side-mute: #6f7894;
+  --em-bg: rgba(18, 183, 106, 0.14);
+  --em: #5bd69a;
+  --em-dot: #32d583;
+  --am-bg: rgba(247, 144, 9, 0.14);
+  --am: #fdb022;
+  --am-dot: #fdb022;
+  --bl-bg: rgba(46, 144, 250, 0.15);
+  --bl: #84caff;
+  --bl-dot: #53b1fd;
+  --ro-bg: rgba(246, 61, 104, 0.15);
+  --ro: #fd8fa8;
+  --ro-dot: #fd6f8e;
+  --sl-bg: rgba(152, 162, 179, 0.14);
+  --sl: #aeb5c9;
+  --sl-dot: #7d86a6;
+  --shadow: none;
+  --shadow-lg: 0 16px 40px -8px rgba(0, 0, 0, 0.6);
+  --overlay: rgba(3, 6, 14, 0.62);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-brand: var(--brand);
+  --color-pri: var(--pri);
+  --color-pri-hover: var(--pri-hover);
+  --color-pri-ink: var(--pri-ink);
+  --color-pri-soft: var(--pri-soft);
+  --color-pri-line: var(--pri-line);
+  --color-side: var(--side);
+  --color-side-2: var(--side-2);
+  --color-side-text: var(--side-text);
+  --color-side-mute: var(--side-mute);
+  --color-em: var(--em);
+  --color-em-bg: var(--em-bg);
+  --color-em-dot: var(--em-dot);
+  --color-am: var(--am);
+  --color-am-bg: var(--am-bg);
+  --color-am-dot: var(--am-dot);
+  --color-bl: var(--bl);
+  --color-bl-bg: var(--bl-bg);
+  --color-bl-dot: var(--bl-dot);
+  --color-ro: var(--ro);
+  --color-ro-bg: var(--ro-bg);
+  --color-ro-dot: var(--ro-dot);
+  --color-sl: var(--sl);
+  --color-sl-bg: var(--sl-bg);
+  --color-sl-dot: var(--sl-dot);
+  --color-logo-v: var(--logo-v);
+  --color-logo-dot: var(--logo-dot);
+  --shadow-card: var(--shadow);
+  --shadow-pop: var(--shadow-lg);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  /* Type scale from the designs: dense like Linear and Stripe. */
+  --text-xs: 11px;
+  --text-xs--line-height: 16px;
+  --text-sm: 12px;
+  --text-sm--line-height: 16px;
+  --text-base: 13px;
+  --text-base--line-height: 20px;
+  --text-md: 14px;
+  --text-md--line-height: 20px;
+  --text-lg: 16px;
+  --text-lg--line-height: 24px;
+  --text-xl: 22px;
+  --text-xl--line-height: 30px;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 36px;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 20px;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "cv11";
+  }
+}

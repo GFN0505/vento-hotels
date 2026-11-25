@@ -11,6 +11,8 @@ const envSchema = infraEnvSchema.extend({
   // Where the API is reached (used in email links) and the web app's origin (trusted for cookies).
   BETTER_AUTH_URL: z.url().default('http://localhost:3000'),
   WEB_ORIGIN: z.url().default('http://localhost:5173'),
+  // Local development and browser tests only: save emails as files here instead of printing them.
+  EMAIL_OUTBOX_DIR: z.string().optional(),
 })
 
 export type Env = z.infer<typeof envSchema>

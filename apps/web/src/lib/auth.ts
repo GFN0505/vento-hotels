@@ -1,0 +1,10 @@
+// Sign-in client for Better Auth at /api/auth on the same origin.
+import { organizationClient } from 'better-auth/client/plugins'
+import { createAuthClient } from 'better-auth/react'
+
+export const authClient = createAuthClient({
+  basePath: '/api/auth',
+  plugins: [organizationClient()],
+})
+
+export type Session = typeof authClient.$Infer.Session

@@ -47,26 +47,19 @@ You need Node 24 (see `.nvmrc`), pnpm through corepack, and Docker Desktop runni
 ```bash
 corepack enable
 pnpm install
-cp .env.example .env
-pnpm db:up        # Postgres and file storage in Docker, waits until healthy
-pnpm db:status    # confirms both are reachable
-pnpm db:migrate   # applies database migrations (dev and test databases)
-pnpm dev          # API on http://localhost:3000 — try /health
-pnpm check && pnpm typecheck && pnpm test
+cp .env.example .env      # then set BETTER_AUTH_SECRET: openssl rand -base64 32
+pnpm db:up                # Postgres and file storage in Docker, waits until healthy
+pnpm db:migrate           # applies database migrations (dev and test databases)
+pnpm dev                  # web app on http://localhost:5173, API behind it
 ```
 
-`pnpm db:down` stops the services; `pnpm db:reset` deletes their local data and starts fresh.
+Open http://localhost:5173 and choose **Set up your hotel group**. Emails aren't sent locally: with `EMAIL_OUTBOX_DIR` set (it is in `.env.example`), each one is saved as a file in `apps/api/.data/outbox/`. Open the newest file and copy the confirmation link into your browser.
+
+Checks: `pnpm check && pnpm typecheck && pnpm test`, and `pnpm e2e` for the browser tests (desktop and phone; first time, run `pnpm --filter @vento/web exec playwright install chromium`). `pnpm db:status` confirms the database and storage are reachable; `pnpm db:down` stops them and `pnpm db:reset` deletes their local data.
 
 ### Looking at the local database and files
 - **Database:** open TablePlus, Postico or any Postgres app and connect to host `localhost`, port `5433`, user `vento_hotels`, password `vento_hotels`, database `vento_hotels` (tests use `vento_hotels_test`). These are local placeholder credentials, not secrets. Or run `pnpm db:studio` to browse it in Drizzle Studio in your browser.
 - **Files:** open http://localhost:9101/rustfs/console/ and sign in with `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` from `.env`.
-
-Once the rest of Stage 0 lands:
-
-```bash
-pnpm db:seed
-
-```
 
 ## How we work
 Features go through specs → architecture plan → build → tests → review, with specialist AI agents for each step. They're defined in [`.claude/agents/`](.claude/agents/), and the step-by-step recipes are in [`.claude/skills/`](.claude/skills/). Before any commit: `pnpm check && pnpm typecheck && pnpm test`.
