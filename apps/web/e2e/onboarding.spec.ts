@@ -164,7 +164,9 @@ test.describe('sign-in brand panel motion', () => {
         .filter((a) => a.playState === 'running')
         .map((a) => (a as CSSAnimation).animationName),
     )
-    expect(running).toEqual(expect.arrayContaining(['auth-drift-a', 'auth-drift-b', 'auth-drift-c']))
+    expect(running).toEqual(
+      expect.arrayContaining(['auth-drift-a', 'auth-drift-b', 'auth-drift-c']),
+    )
   })
 
   test('stays still, with everything visible, for people who ask for reduced motion', async ({

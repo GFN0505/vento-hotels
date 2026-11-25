@@ -87,7 +87,10 @@ function BrandPanel() {
         </p>
       </div>
 
-      <div className="auth-rise relative flex flex-wrap gap-4 text-sm text-side-mute" style={rise(4)}>
+      <div
+        className="auth-rise relative flex flex-wrap gap-4 text-sm text-side-mute"
+        style={rise(4)}
+      >
         <span>© 2026 Vento</span>
         <span>Privacy (NDPA 2023)</span>
         <span>Terms</span>
