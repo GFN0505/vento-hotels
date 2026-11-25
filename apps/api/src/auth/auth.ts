@@ -1,8 +1,15 @@
 // Sign-in with Better Auth (decision 0017): email + password with verified emails, and the
 // organization plugin for hotel groups. Served at /api/auth/*.
-import { MEMBER_ROLES, newId } from '@vento/shared'
+import {
+  isStrongPassword,
+  MEMBER_ROLES,
+  MIN_PASSWORD_LENGTH,
+  newId,
+  PASSWORD_RULE_SUMMARY,
+} from '@vento/shared'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { organization } from 'better-auth/plugins/organization'
 import { adminAc, memberAc, ownerAc } from 'better-auth/plugins/organization/access'
 import { recordSystemAudit } from '../audit/record.ts'
@@ -34,6 +41,13 @@ const roles = Object.fromEntries(
   ]),
 )
 
+// The Better Auth endpoints that set a password, and which field carries it.
+const PASSWORD_PATHS: Record<string, 'password' | 'newPassword' | undefined> = {
+  '/sign-up/email': 'password',
+  '/reset-password': 'newPassword',
+  '/change-password': 'newPassword',
+}
+
 export function createAuth(deps: { db: Database; settings: AuthSettings; email: EmailProvider }) {
   const { db, settings, email } = deps
   return betterAuth({
@@ -54,13 +68,29 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
       },
     }),
     advanced: { database: { generateId: () => newId() } },
+    // The password rule from @vento/shared, enforced wherever a password is set, so it can't be
+    // skipped by calling the API directly.
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        const body = (ctx.body ?? {}) as { password?: unknown; newPassword?: unknown }
+        const password = PASSWORD_PATHS[ctx.path]
+        if (!password) return
+        const value = body[password]
+        if (typeof value !== 'string' || !isStrongPassword(value)) {
+          throw new APIError('BAD_REQUEST', {
+            code: 'PASSWORD_TOO_WEAK',
+            message: PASSWORD_RULE_SUMMARY,
+          })
+        }
+      }),
+    },
     // "Keep me signed in" keeps a session for 30 days (refreshed daily while in use). Unticked, the
     // session cookie ends when the browser closes.
     session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
-      minPasswordLength: 10,
+      minPasswordLength: MIN_PASSWORD_LENGTH,
       // Reset links last 30 minutes (design 24), and a reset signs the account out everywhere else.
       resetPasswordTokenExpiresIn: 30 * 60,
       revokeSessionsOnPasswordReset: true,

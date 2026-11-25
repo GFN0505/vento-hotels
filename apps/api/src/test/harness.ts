@@ -8,7 +8,7 @@ import { MemoryEmailProvider } from '../providers/email.ts'
 import type { HealthCheck } from '../system/health.ts'
 
 export const WEB_ORIGIN = 'http://localhost:5180'
-const PASSWORD = 'correct-horse-battery-staple'
+export const PASSWORD = 'Correct-horse-42!'
 
 const healthy: HealthCheck = async () => ({
   status: 'ok',

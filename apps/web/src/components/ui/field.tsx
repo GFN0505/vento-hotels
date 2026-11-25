@@ -25,7 +25,16 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   revealable?: boolean
 }
 
-export function Field({ label, hint, error, id, revealable, type, ...props }: FieldProps) {
+export function Field({
+  label,
+  hint,
+  error,
+  id,
+  revealable,
+  type,
+  'aria-describedby': describedBy,
+  ...props
+}: FieldProps) {
   const generated = useId()
   const inputId = id ?? generated
   const messageId = `${inputId}-message`
@@ -36,7 +45,9 @@ export function Field({ label, hint, error, id, revealable, type, ...props }: Fi
       id={inputId}
       type={revealable && revealed ? 'text' : type}
       aria-invalid={error ? true : undefined}
-      aria-describedby={error || hint ? messageId : undefined}
+      aria-describedby={
+        [error || hint ? messageId : null, describedBy].filter(Boolean).join(' ') || undefined
+      }
       className={revealable ? 'pr-10' : undefined}
       {...props}
     />

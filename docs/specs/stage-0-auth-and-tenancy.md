@@ -29,6 +29,7 @@ The owner sets up the group (Kora Hotels Group), its legal company (Kora Hospita
 ### Main path
 - Given a verified user with an active organization, when they list properties, then they get the shared page shape with only that organization's properties they may access.
 - Given an unverified email, sign-in is refused with a message to verify first.
+- A new password must have at least 8 characters, a capital letter, a small letter, a number and a special character. Sign-up and reset show a live checklist; the API refuses anything weaker with `PASSWORD_TOO_WEAK`.
 
 ### Organization isolation
 - `organizationId` always comes from the session's active organization, never from input.

@@ -2,10 +2,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
 import { AuthCard } from '@/components/auth-card'
+import { PasswordRules } from '@/components/password-rules'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { authClient } from '@/lib/auth'
-import { checkNewPassword, MIN_PASSWORD_LENGTH } from '@/lib/password'
+import { checkNewPassword } from '@/lib/password'
 
 export const Route = createFileRoute('/get-started')({
   component: GetStarted,
@@ -27,6 +28,7 @@ function GetStarted() {
   const [error, setError] = useState<string>()
   const [fieldErrors, setFieldErrors] = useState<Errors>({})
   const [pending, setPending] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -52,8 +54,8 @@ function GetStarted() {
         failure.code === 'USER_ALREADY_EXISTS' ||
           failure.code === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL'
           ? 'There is already an account with this email. Sign in instead.'
-          : failure.code === 'PASSWORD_TOO_SHORT'
-            ? `Use at least ${MIN_PASSWORD_LENGTH} characters for your password.`
+          : failure.code === 'PASSWORD_TOO_WEAK' || failure.code === 'PASSWORD_TOO_SHORT'
+            ? "Your password doesn't meet every rule yet."
             : "We couldn't create your account. Check the details and try again.",
       )
       return
@@ -105,9 +107,12 @@ function GetStarted() {
           autoComplete="new-password"
           required
           revealable
-          hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+          value={newPassword}
+          onChange={(event) => setNewPassword(event.target.value)}
+          aria-describedby="password-rules"
           error={fieldErrors.password}
         />
+        <PasswordRules id="password-rules" password={newPassword} />
         <Field
           label="Confirm password"
           name="confirm"

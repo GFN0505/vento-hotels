@@ -3,10 +3,11 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
 import { z } from 'zod'
 import { AuthCard } from '@/components/auth-card'
+import { PasswordRules } from '@/components/password-rules'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { authClient } from '@/lib/auth'
-import { checkNewPassword, MIN_PASSWORD_LENGTH, type PasswordErrors } from '@/lib/password'
+import { checkNewPassword, type PasswordErrors } from '@/lib/password'
 
 export const Route = createFileRoute('/reset-password')({
   validateSearch: z.object({ token: z.string().optional(), error: z.string().optional() }),
@@ -19,6 +20,7 @@ function ResetPassword() {
   const [errors, setErrors] = useState<PasswordErrors>({})
   const [failure, setFailure] = useState<string>()
   const [pending, setPending] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
 
   if (!token || linkError) {
     return (
@@ -55,7 +57,9 @@ function ResetPassword() {
       setFailure(
         error.code === 'INVALID_TOKEN'
           ? 'This link has expired. Send a new one from the sign-in page.'
-          : "We couldn't change your password. Try again.",
+          : error.code === 'PASSWORD_TOO_WEAK'
+            ? "Your password doesn't meet every rule yet."
+            : "We couldn't change your password. Try again.",
       )
       return
     }
@@ -78,9 +82,12 @@ function ResetPassword() {
           required
           revealable
           autoFocus
-          hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+          value={newPassword}
+          onChange={(event) => setNewPassword(event.target.value)}
+          aria-describedby="password-rules"
           error={errors.password}
         />
+        <PasswordRules id="password-rules" password={newPassword} />
         <Field
           label="Confirm password"
           name="confirm"

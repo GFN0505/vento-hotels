@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { expect, type Page, test } from '@playwright/test'
 import { OUTBOX } from '../playwright.config'
 
-const PASSWORD = 'correct-horse-battery-staple'
+const PASSWORD = 'Correct-horse-42!'
 
 async function linkFromEmail(email: string, subject: RegExp): Promise<string> {
   // The API saves emails as files in the outbox; poll briefly for this person's message.
@@ -97,7 +97,7 @@ test('sign-up checks the details before sending them', async ({ page }) => {
   await page.getByLabel('Confirm password').fill('different')
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByText('Enter a valid email')).toBeVisible()
-  await expect(page.getByText('Use at least 10 characters.')).toBeVisible()
+  await expect(page.getByText("Your password doesn't meet every rule below yet.")).toBeVisible()
   await expect(page.getByText("Passwords don't match.")).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Set up your hotel group' })).toBeVisible()
 })
@@ -130,7 +130,7 @@ test('a forgotten password can be reset from the emailed link', async ({ page },
   await page.getByRole('button', { name: 'Send reset link' }).click()
   await expect(page.getByRole('heading', { name: 'Check your inbox' })).toBeVisible()
 
-  const NEW_PASSWORD = 'a-brand-new-password-42'
+  const NEW_PASSWORD = 'Brand-new-pass-42!'
   await page.goto(await linkFromEmail(email, /Reset your Vento password/))
   await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible()
   await page.getByLabel('New password').fill(NEW_PASSWORD)
@@ -179,4 +179,19 @@ test.describe('sign-in brand panel motion', () => {
     const animations = await page.evaluate(() => document.getAnimations().length)
     expect(animations).toBe(0)
   })
+})
+
+test('the password checklist ticks each rule as it is met', async ({ page }) => {
+  await page.goto('/get-started')
+  const rules = page.locator('#password-rules li')
+  await expect(rules).toHaveCount(5)
+  const password = page.getByLabel('Create a password', { exact: true })
+
+  await password.fill('kora')
+  await expect(rules.filter({ hasText: 'A small letter' })).toContainText('(done)')
+  await expect(rules.filter({ hasText: 'A capital letter' })).toContainText('(still needed)')
+  await expect(rules.filter({ hasText: 'At least 8 characters' })).toContainText('(still needed)')
+
+  await password.fill('Kora-Hotel1')
+  for (const rule of await rules.all()) await expect(rule).toContainText('(done)')
 })

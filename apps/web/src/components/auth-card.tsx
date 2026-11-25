@@ -98,7 +98,11 @@ function BrandPanel() {
         >
           For hotel groups in Nigeria
         </p>
-        <Headline className="mb-6 text-[40px] leading-[1.12] xl:text-[52px]" animated />
+        {/* Sized to the panel (half the window) so each line always fits on one line. */}
+        <Headline
+          className="mb-6 text-[clamp(26px,2.9vw,52px)] leading-[1.12] whitespace-nowrap"
+          animated
+        />
         <p className="auth-rise max-w-[460px] text-lg leading-7 text-side-text" style={rise(3)}>
           Run every hotel in your group from one place, and know exactly how each one is doing.
         </p>

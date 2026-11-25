@@ -4,7 +4,7 @@ User-visible changes, newest first, written for customers. Format: [Keep a Chang
 
 ## [Unreleased]
 ### Added
-- Sign in, and set up a hotel group: create your account, confirm your email, then add your group, company and first hotel. Home lists your hotels with each one's business date. Opens in light mode; works on phones. Passwords can be shown while typing, sign-up asks you to confirm yours, and a forgotten password can be reset by email (the link lasts 30 minutes and signs you out everywhere else).
+- Sign in, and set up a hotel group: create your account, confirm your email, then add your group, company and first hotel. Home lists your hotels with each one's business date. Opens in light mode; works on phones. Passwords need at least 8 characters with a capital letter, a small letter, a number and a special character, with a checklist that ticks each one as you type. Passwords can be shown while typing, sign-up asks you to confirm yours, and a forgotten password can be reset by email (the link lasts 30 minutes and signs you out everywhere else).
 - Every change to your group's setup and permissions is recorded in an audit log that nobody can edit.
 - Owners can change what each role may do and their limits (for example, front desk discounts up to 10%).
 - What Vento Hotels will do, for whom, and the plan to build it in stages: the ten modules, from front desk to group analytics.
