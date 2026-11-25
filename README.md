@@ -2,7 +2,7 @@
 
 A hotel management platform for Nigerian hotel groups and chains. One place to run every property: selling rooms direct and on OTAs, the front desk, restaurant and bar, housekeeping and maintenance, stores, night audit, finance, payroll, and the owner's view across the group. It keeps working through power and internet cuts, and it makes revenue leakage visible to the owner the next morning.
 
-> **Status:** planning. The product, domain and walkthrough docs are written and all 46 screens are designed; no application code yet. Building starts with Stage 0 of the [release plan](docs/PRODUCT.md#release-plan).
+> **Status:** building Stage 0 of the [release plan](docs/PRODUCT.md#release-plan). The product, domain and walkthrough docs are written and all 46 screens are designed.
 
 ## What's in v1
 Ten modules, built in stages:
@@ -37,10 +37,17 @@ They share some features that run across all of them: leakage and fraud controls
 pnpm + Turborepo monorepo (`apps/web`, `apps/api`, `packages/shared`). API on Hono + oRPC (Node 24) with zod v4 contracts, PostgreSQL + Drizzle, Better Auth with organizations, pg-boss for background jobs, S3-compatible storage. Web on Vite + React 19, TanStack Router/Query/Table, shadcn/ui + Tailwind v4, offline support through a service worker and IndexedDB. Biome, Vitest, Playwright, GitHub Actions. Full details in [CLAUDE.md](CLAUDE.md).
 
 ## Getting started
-Not runnable yet. Once Stage 0 lands:
+You need Node 24 (see `.nvmrc`), pnpm through corepack, and Docker (from Stage 0, brick 2).
 
 ```bash
+corepack enable
 pnpm install
+pnpm check && pnpm typecheck && pnpm test
+```
+
+Once the rest of Stage 0 lands:
+
+```bash
 cp .env.example .env
 pnpm db:up && pnpm db:migrate && pnpm db:seed
 pnpm dev
