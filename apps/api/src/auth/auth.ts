@@ -54,6 +54,9 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
       },
     }),
     advanced: { database: { generateId: () => newId() } },
+    // "Keep me signed in" keeps a session for 30 days (refreshed daily while in use). Unticked, the
+    // session cookie ends when the browser closes.
+    session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,

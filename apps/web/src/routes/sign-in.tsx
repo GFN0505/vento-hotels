@@ -1,7 +1,7 @@
 // Design: 24 · Sign in (and · Wrong password, · Signing in).
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
-import { AuthCard } from '@/components/auth-card'
+import { AuthCard, AuthFootnote } from '@/components/auth-card'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { authClient } from '@/lib/auth'
@@ -43,7 +43,7 @@ function SignIn() {
   }
 
   return (
-    <AuthCard title="Sign in">
+    <AuthCard title="Sign in" subtitle="Use your work email.">
       <form onSubmit={onSubmit} className="flex flex-col gap-[18px]" noValidate>
         {error ? (
           <p role="alert" className="rounded-sm bg-ro-bg px-3 py-2 text-ro">
@@ -67,27 +67,30 @@ function SignIn() {
             required
             revealable
           />
-          <Link to="/forgot-password" className="self-end text-sm text-pri-ink hover:underline">
+          <Link to="/forgot-password" className="self-start text-sm text-pri-ink hover:underline">
             Forgot password?
           </Link>
         </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="remember" defaultChecked className="accent-pri" />
-          Keep me signed in on this computer
+        <hr className="border-border" />
+        <label className="flex items-start gap-2.5">
+          <input type="checkbox" name="remember" className="mt-0.5 size-4 accent-pri" />
+          <span className="flex flex-col">
+            <span className="font-medium">Keep me signed in on this device</span>
+            <span className="text-sm text-text-2">
+              30 days. Don't tick this on a shared computer.
+            </span>
+          </span>
         </label>
         <Button type="submit" variant="primary" size="lg" disabled={pending}>
           {pending ? 'Signing in…' : 'Sign in'}
         </Button>
-        <hr className="border-border" />
-        <span className="text-sm text-text-2">
+        <AuthFootnote>
+          New to Vento? <Link to="/get-started">Set up your hotel group</Link>. Invited by a
+          colleague? Use the link in your email.
+        </AuthFootnote>
+        <AuthFootnote>
           On a shared tablet or phone? Staff sign in with their PIN on the device lock screen.
-        </span>
-        <span className="text-sm text-text-2">
-          New to Vento?{' '}
-          <Link to="/get-started" className="text-pri-ink hover:underline">
-            Set up your hotel group
-          </Link>
-        </span>
+        </AuthFootnote>
       </form>
     </AuthCard>
   )
