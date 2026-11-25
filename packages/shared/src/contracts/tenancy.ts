@@ -1,0 +1,97 @@
+// Organization, entities, properties and property access (spec: docs/specs/stage-0-auth-and-tenancy.md).
+// No input here ever carries an organizationId: the API always takes it from the session.
+import { oc } from '@orpc/contract'
+import { z } from 'zod'
+import { calendarDateSchema } from '../dates.ts'
+import { idSchema } from '../ids.ts'
+import { currencySchema } from '../money.ts'
+import { pageQuerySchema, pageSchema } from '../pagination.ts'
+import { memberRoleSchema } from '../roles.ts'
+
+const name = z.string().trim().min(2, 'Enter at least 2 characters').max(120)
+const optionalText = z.string().trim().max(200).optional()
+
+export const entitySchema = z.object({
+  id: idSchema,
+  name: z.string(),
+  rcNumber: z.string().nullable(),
+  tin: z.string().nullable(),
+  vatRegistered: z.boolean(),
+  baseCurrency: currencySchema,
+})
+export type Entity = z.infer<typeof entitySchema>
+
+export const createEntitySchema = z.object({
+  name,
+  rcNumber: optionalText,
+  tin: optionalText,
+  vatRegistered: z.boolean().default(false),
+})
+
+export const propertySchema = z.object({
+  id: idSchema,
+  entityId: idSchema,
+  name: z.string(),
+  addressLine1: z.string().nullable(),
+  area: z.string().nullable(),
+  lga: z.string().nullable(),
+  state: z.string().nullable(),
+  country: z.string(),
+  timeZone: z.string(),
+  checkInTime: z.string(),
+  checkOutTime: z.string(),
+  businessDate: calendarDateSchema,
+})
+export type Property = z.infer<typeof propertySchema>
+
+const clockTime = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use 24-hour time, like 14:00')
+  .optional()
+
+export const createPropertySchema = z.object({
+  entityId: idSchema,
+  name,
+  addressLine1: optionalText,
+  area: optionalText,
+  lga: optionalText,
+  state: optionalText,
+  timeZone: z
+    .string()
+    .refine((tz) => Intl.supportedValuesOf('timeZone').includes(tz), 'Unknown time zone')
+    .default('Africa/Lagos'),
+  checkInTime: clockTime,
+  checkOutTime: clockTime,
+})
+
+export const currentOrganizationSchema = z.object({
+  organization: z.object({ id: idSchema, name: z.string(), slug: z.string() }),
+  member: z.object({ id: idSchema, role: memberRoleSchema, allProperties: z.boolean() }),
+})
+
+export const setPropertyAccessSchema = z.discriminatedUnion('allProperties', [
+  z.object({ memberId: idSchema, allProperties: z.literal(true) }),
+  z.object({
+    memberId: idSchema,
+    allProperties: z.literal(false),
+    propertyIds: z.array(idSchema).max(500),
+  }),
+])
+
+export const tenancyContract = {
+  organization: {
+    current: oc.output(currentOrganizationSchema),
+  },
+  entities: {
+    list: oc.input(pageQuerySchema).output(pageSchema(entitySchema)),
+    create: oc.input(createEntitySchema).output(entitySchema),
+  },
+  properties: {
+    list: oc.input(pageQuerySchema).output(pageSchema(propertySchema)),
+    get: oc.input(z.object({ id: idSchema })).output(propertySchema),
+    create: oc.input(createPropertySchema).output(propertySchema),
+  },
+  members: {
+    setPropertyAccess: oc.input(setPropertyAccessSchema).output(z.object({ ok: z.literal(true) })),
+  },
+}

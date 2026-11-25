@@ -29,5 +29,6 @@ Things still undecided stay under *Open questions* in `docs/DOMAIN.md` until the
 | [0014](0014-brick-workflow-and-pinning.md) | One branch and pull request per brick; pinned dependencies | accepted |
 | [0015](0015-local-services-dont-clash.md) | Local services don't clash with other projects | accepted |
 | [0016](0016-local-object-storage.md) | RustFS for local object storage, not MinIO | accepted |
+| [0017](0017-sign-in-and-tenancy.md) | Sign-in with Better Auth; property access closed by default | accepted |
 
 Template: [0000-template.md](0000-template.md)
