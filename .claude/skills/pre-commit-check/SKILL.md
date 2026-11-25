@@ -11,7 +11,7 @@ Run in order, fix and re-run until each one passes:
 2. `pnpm typecheck` — fix the types properly. No `any`, no `@ts-ignore`.
 3. `pnpm test` — if a test fails, decide whether the code or the test is wrong. Never delete or skip a test just to pass.
 4. If the DB schema changed: confirm a migration was generated and that it's in the diff.
-5. If the change touches offline sync, the booking engine, POS or front desk flows: run `pnpm e2e` for the affected journeys (including the offline ones).
+5. If the change touches anything in `apps/web`: run `pnpm --filter @vento/web build && pnpm --filter @vento/web size` (speed budgets) and `pnpm e2e` (journeys plus the accessibility scans, light and dark, desktop and phone). New pages must be added to `apps/web/e2e/accessibility.spec.ts`.
 6. Secret scan (the repo is public):
    `git diff --cached | rg -i "(api[_-]?key|secret|password|token|PRIVATE KEY|DATABASE_URL=|sk_live_|pk_live_|sk_test_)"`. Anything real goes to `.env` and the key name goes to `.env.example`.
 7. Personal data scan: no real guest names, phone numbers, passport or ID numbers in fixtures, seeds or screenshots. Use obviously fake data.

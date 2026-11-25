@@ -3,6 +3,7 @@
 A world-class hotel management platform for Nigerian hotel groups and chains: reservations & front desk, booking engine & channel manager, guests & sales, restaurant & bar POS, housekeeping & maintenance, inventory & procurement, finance (multi-property, multi-entity, multi-currency), HR & payroll, guest app, executive analytics. Top-of-the-line UX, nothing extra.
 
 Read before working:
+- `docs/UX-STANDARD.md` — the UX bar every screen must clear (speed, clarity, states, forms, accessibility, phones, look). It's the gate before the owner sees anything.
 - `docs/README.md` — the documentation map and the **definition of done for documentation**: a change isn't done until its docs are updated in the same commit.
 - `docs/PRODUCT.md` — vision, personas, the ten modules and how they connect. Keep each module lean; don't add features outside it without asking.
 - `docs/DOMAIN.md` — business vocabulary, statuses and rules.
@@ -37,6 +38,7 @@ Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled 
 - `pnpm db:studio` — browse the local database in Drizzle Studio
 - `pnpm db:seed` — load the demo group (Kora Hotels Group, as in the designs and walkthroughs) for development, tests and sales demos
 - `pnpm check` — Biome lint + format check (`pnpm check:fix` to apply fixes)
+- `pnpm --filter @vento/web build && pnpm --filter @vento/web size` — build the web app and check its speed budgets
 - `pnpm typecheck`, `pnpm test`, `pnpm e2e` (Playwright, desktop and phone; starts its own API and web app on ports 3100/5174 against the test database)
 - Before any commit: `pnpm check && pnpm typecheck && pnpm test`
 
@@ -66,7 +68,7 @@ Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled 
 
 ## Workflow
 Feature: **product-manager** specs (`docs/specs/`) → **architect** plans → **backend** + **frontend** build (**payments** for folios, deposits, settlements and refunds, **finance** for night audit, ledger, tax, payroll and reporting, **distribution** for the booking engine, channel manager and rates) → **tester** covers → **reviewer** + **ui-designer** check → fix → commit.
-**Bricks, branches and pull requests.** Work is built in small bricks, in the order of the release plan (`docs/PRODUCT.md`). Each brick gets its own branch (`stage-<n>/<short-name>`, e.g. `stage-0/monorepo-skeleton`), ends working and tested, and lands through a pull request that CI must pass and the owner merges. Never commit to `main` directly. One brick per pull request; don't start the next brick on top of an unmerged one unless asked. **The owner reviews every user-facing feature hands-on before merge:** at the end of a brick with anything visible, run `pnpm dev`, open http://localhost:5180, and list exactly what to try.
+**Bricks, branches and pull requests.** Work is built in small bricks, in the order of the release plan (`docs/PRODUCT.md`). Each brick gets its own branch (`stage-<n>/<short-name>`, e.g. `stage-0/monorepo-skeleton`), ends working and tested, and lands through a pull request that CI must pass and the owner merges. Never commit to `main` directly. One brick per pull request; don't start the next brick on top of an unmerged one unless asked. **UX gates for every brick with screens, in order:** (1) CI checks speed budgets (`apps/web/bundle-budget.json`) and scans every page for accessibility problems, light and dark, desktop and phone (`apps/web/e2e/accessibility.spec.ts` gets a line for each new page); (2) the **ui-designer** agent reviews the brick's screens against `docs/UX-STANDARD.md`, and its findings are fixed or listed in the pull request; (3) **the owner reviews every user-facing feature hands-on before merge:** at the end of a brick with anything visible, run `pnpm dev`, open http://localhost:5180, and list exactly what to try.
 **Attribution:** commits and pull requests carry no AI co-author or "generated with" lines.
 Periodic and pre-release: **security** audits. Build, CI, deploys and monitoring: **devops**. Naming, positioning and any brand or marketing copy (sign-in panel, website, pilot outreach, decks): **brand-marketing**, with the approved lines in `docs/marketing/`.
 Project skills in `.claude/skills/` hold the step-by-step recipes (`add-module`, `add-list-page`, `db-migration`, `design-system`, `ux-writing`, `brand`, `performance`, `offline-sync`, `printing`, `data-import`, `paystack`, `channel-manager`, `nigeria-compliance`, `testing-patterns`, `review-checklist`, `pre-commit-check`).

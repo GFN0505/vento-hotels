@@ -1,45 +1,7 @@
 // An owner's first visit (design 19 and 24): sign up, confirm the email, set up the group, land on
 // home, sign out and back in. Runs on desktop and phone widths.
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { expect, type Page, test } from '@playwright/test'
-import { OUTBOX } from '../playwright.config'
-
-const PASSWORD = 'Correct-horse-42!'
-
-async function linkFromEmail(email: string, subject: RegExp): Promise<string> {
-  // The API saves emails as files in the outbox; poll briefly for this person's message.
-  for (let attempt = 0; attempt < 50; attempt++) {
-    const files = (() => {
-      try {
-        return readdirSync(OUTBOX)
-          .filter((f) => f.endsWith('.json'))
-          .sort()
-      } catch {
-        return []
-      }
-    })()
-    for (const file of files.reverse()) {
-      const message = JSON.parse(readFileSync(join(OUTBOX, file), 'utf8')) as {
-        to: string
-        subject: string
-        text: string
-      }
-      const match = message.to === email && subject.test(message.subject)
-      const link = match ? message.text.match(/https?:\/\/\S+/)?.[0] : undefined
-      if (link) return link
-    }
-    await new Promise((resolve) => setTimeout(resolve, 100))
-  }
-  throw new Error(`No email matching ${subject} for ${email}`)
-}
-
-async function signIn(page: Page, email: string, password: string) {
-  await page.goto('/sign-in')
-  await page.getByLabel('Work email').fill(email)
-  await page.getByLabel('Password', { exact: true }).fill(password)
-  await page.getByRole('button', { name: 'Sign in' }).click()
-}
+import { expect, test } from '@playwright/test'
+import { linkFromEmail, PASSWORD, signIn } from './support'
 
 test('sends visitors without a session to sign in', async ({ page }) => {
   await page.goto('/')

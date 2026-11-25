@@ -79,10 +79,15 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Build the web app and check speed budgets
+        run: |
+          pnpm --filter @vento/web build
+          pnpm --filter @vento/web size
+
       - name: Install browser for end-to-end tests
         run: pnpm --filter @vento/web exec playwright install --with-deps chromium
 
-      - name: End-to-end tests (desktop and phone)
+      - name: End-to-end and accessibility tests (desktop and phone, light and dark)
         run: pnpm e2e
 
       - name: Keep the browser test report on failure

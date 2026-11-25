@@ -69,7 +69,7 @@
   --side: #070b17;
   --side-2: #111830;
   --side-text: #aeb5c9;
-  --side-mute: #6f7894;
+  --side-mute: #7a83a0; /* 5.2:1 on --side; the export's #6f7894 was 4.48:1 */
   --em-bg: rgba(18, 183, 106, 0.14);
   --em: #5bd69a;
   --em-dot: #32d583;

@@ -1,0 +1,6 @@
+{
+  "$comment": "Download budgets in KB after gzip, checked in CI by scripts/check-bundle.mjs (docs/UX-STANDARD.md, section 1). Vento must load fast on mid-range Android phones over weak networks. Raise a number only on purpose, in the same pull request that needs it, and say why.",
+  "initialJsKb": 170,
+  "largestChunkKb": 115,
+  "initialCssKb": 15
+}
