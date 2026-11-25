@@ -6,6 +6,7 @@ import { calendarDateSchema } from '../dates.ts'
 import { idSchema } from '../ids.ts'
 import { currencySchema } from '../money.ts'
 import { pageQuerySchema, pageSchema } from '../pagination.ts'
+import { permissionSchema } from '../permissions.ts'
 import { memberRoleSchema } from '../roles.ts'
 
 const name = z.string().trim().min(2, 'Enter at least 2 characters').max(120)
@@ -67,6 +68,8 @@ export const createPropertySchema = z.object({
 export const currentOrganizationSchema = z.object({
   organization: z.object({ id: idSchema, name: z.string(), slug: z.string() }),
   member: z.object({ id: idSchema, role: memberRoleSchema, allProperties: z.boolean() }),
+  // What this member may do, so the web app shows only what they can use. The API still checks.
+  permissions: z.array(permissionSchema),
 })
 
 export const setPropertyAccessSchema = z.discriminatedUnion('allProperties', [

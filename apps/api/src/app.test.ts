@@ -4,12 +4,20 @@ import { describe, expect, it } from 'vitest'
 import { createApp } from './app.ts'
 import type { Auth } from './auth/auth.ts'
 import type { Database } from './db/client.ts'
+import { RateLimiter } from './rate-limit.ts'
 import { router } from './router.ts'
 import type { HealthCheck } from './system/health.ts'
 
 // /health and system.health don't touch the database or auth, so these tests use placeholders.
 const unused = {} as Database & Auth
-const deps = (checkHealth: HealthCheck) => ({ checkHealth, db: unused, auth: unused })
+const deps = (checkHealth: HealthCheck) => ({
+  checkHealth,
+  db: unused,
+  auth: unused,
+  email: { send: async () => {} },
+  webOrigin: 'http://localhost:5180',
+  limiter: new RateLimiter(false),
+})
 
 const healthy: HealthCheck = async () => ({
   status: 'ok',

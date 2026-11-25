@@ -33,9 +33,9 @@ export type AuthSettings = {
   rateLimit?: boolean
 }
 
-// Better Auth's own organization management (invite, remove, change role) uses its built-in
-// access control: owners and group admins manage the group, every other hotel role is a plain
-// member there. What hotel roles may do in Vento itself comes from the permissions matrix (brick 6).
+// Better Auth needs to know every role name. Its own member and invite endpoints are closed
+// (OPEN_ORGANIZATION_PATHS below), so this access control only matters for server-side calls; what
+// hotel roles may do in Vento comes from the permissions matrix (brick 6) and team rules (brick 8).
 const roles = Object.fromEntries(
   MEMBER_ROLES.map((role) => [
     role,
@@ -49,6 +49,15 @@ const PASSWORD_PATHS: Record<string, 'password' | 'newPassword' | undefined> = {
   '/reset-password': 'newPassword',
   '/change-password': 'newPassword',
 }
+
+// The only Better Auth organization endpoints open over HTTP: what the web app uses to create its
+// group, list the groups it belongs to and pick one. Everything else about members and invites
+// goes through Vento's API, under the permissions matrix and the audit log (decision 0020).
+const OPEN_ORGANIZATION_PATHS = new Set([
+  '/organization/create',
+  '/organization/list',
+  '/organization/set-active',
+])
 
 export function createAuth(deps: { db: Database; settings: AuthSettings; email: EmailProvider }) {
   const { db, settings, email } = deps
@@ -72,7 +81,7 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
     advanced: { database: { generateId: () => newId() } },
     // Slows down password guessing. Counted per network address: a whole hotel often shares one,
     // so the sign-in limit is generous enough for a busy front desk (15 tries per 10 minutes).
-    // Per-account lockout comes with device and PIN sign-in (brick 8). Memory storage resets when
+    // Per-account lockout comes with device and PIN sign-in (brick 9). Memory storage resets when
     // the API restarts; move to database storage when running more than one API instance.
     rateLimit: {
       enabled: settings.rateLimit ?? true,
@@ -88,6 +97,12 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
     // skipped by calling the API directly.
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
+        // Closed organization endpoints answer 404 over HTTP; server-side calls (ctx.request
+        // undefined) still work for tests and scripts.
+        const organizationPath = ctx.path.startsWith('/organization/')
+        if (ctx.request && organizationPath && !OPEN_ORGANIZATION_PATHS.has(ctx.path)) {
+          throw new APIError('NOT_FOUND', { message: 'Not found' })
+        }
         const body = (ctx.body ?? {}) as { password?: unknown; newPassword?: unknown }
         const password = PASSWORD_PATHS[ctx.path]
         if (!password) return
@@ -173,13 +188,6 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
               after: { userId: user.id, name: user.name, role: member.role },
             })
           },
-        },
-        sendInvitationEmail: async ({ email: to, organization: org, inviter, id }) => {
-          await email.send({
-            to,
-            subject: `Join ${org.name} on Vento`,
-            text: `${inviter.user.name} invited you to ${org.name}. Invitation: ${settings.webOrigin}/accept-invitation/${id}`,
-          })
         },
       }),
     ],

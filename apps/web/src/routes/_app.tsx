@@ -7,6 +7,7 @@ import { PropertyProvider } from '@/components/shell/property-context'
 import { Sidebar } from '@/components/shell/sidebar'
 import { TopBar } from '@/components/shell/top-bar'
 import { orpc } from '@/lib/api'
+import { useMe } from '@/lib/me'
 import { loadSignedIn } from '@/lib/session'
 
 export const Route = createFileRoute('/_app')({
@@ -22,19 +23,24 @@ export const Route = createFileRoute('/_app')({
 function AppLayout() {
   const { user } = Route.useRouteContext()
   const [menuOpen, setMenuOpen] = useState(false)
-  const organization = useQuery(orpc.organization.current.queryOptions())
+  const organization = useMe()
+  const showSettings = organization.can('setup.manage') || organization.can('permissions.manage')
   const properties = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
 
   return (
     <PropertyProvider properties={properties.data?.items ?? []}>
       <div className="flex min-h-dvh">
         <div className="sticky top-0 hidden h-dvh lg:block">
-          <Sidebar groupName={organization.data?.organization.name ?? ''} />
+          <Sidebar
+            groupName={organization.data?.organization.name ?? ''}
+            showSettings={showSettings}
+          />
         </div>
         {menuOpen ? (
           <div className="fixed inset-0 z-40 flex lg:hidden">
             <Sidebar
               groupName={organization.data?.organization.name ?? ''}
+              showSettings={showSettings}
               onNavigate={() => setMenuOpen(false)}
             />
             <button

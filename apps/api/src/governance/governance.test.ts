@@ -90,8 +90,11 @@ describe.skipIf(!url)('permissions, limits and audit', () => {
         entityId: await memberIdOf(generalManager),
       })
       const change = page.data.items.find((e) => e.action === 'member.property_access_changed')
-      expect(change?.before).toEqual({ allProperties: false, propertyIds: [] })
-      expect(change?.after).toEqual({ allProperties: false, propertyIds: [victoriaIsland.id] })
+      expect(change?.before).toMatchObject({ allProperties: false, propertyIds: [] })
+      expect(change?.after).toMatchObject({
+        allProperties: false,
+        propertyIds: [victoriaIsland.id],
+      })
     })
 
     it('records members added through sign-in, without an actor', async () => {
@@ -180,8 +183,16 @@ describe.skipIf(!url)('permissions, limits and audit', () => {
       })
     })
 
-    it('keeps permission changes with the owner alone', async () => {
-      expect((await t.rpc(groupAdmin.cookie, 'permissions/list')).status).toBe(403)
+    it('keeps permission changes with the owner alone; people who manage the team can look', async () => {
+      expect((await t.rpc(groupAdmin.cookie, 'permissions/list')).status).toBe(200)
+      const change = await t.rpc(groupAdmin.cookie, 'permissions/set', {
+        role: 'front_desk',
+        permission: 'room.move',
+        allowed: false,
+        limit: null,
+        reason: 'trying to change it',
+      })
+      expect(change.status).toBe(403)
       expect((await t.rpc(generalManager.cookie, 'permissions/list')).status).toBe(403)
     })
 

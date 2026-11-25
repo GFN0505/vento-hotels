@@ -32,7 +32,7 @@ export const auditEvents = pgTable(
     actorMemberId: uuid(),
     actorName: text(),
     approverMemberId: uuid(),
-    // Arrive with devices (brick 8) and night audit; null until then.
+    // Arrive with devices (brick 9) and night audit; null until then.
     deviceId: uuid(),
     businessDate: calendarDate(),
     action: text().notNull(),

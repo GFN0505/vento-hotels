@@ -14,7 +14,7 @@ type PermissionDefinition = {
 
 export const PERMISSIONS = {
   // Setup (Stage 0)
-  'setup.manage': { label: 'Manage companies, properties and property access' },
+  'setup.manage': { label: 'Manage companies, properties, people and their access' },
   'permissions.manage': { label: 'Change permissions or limits' },
   'audit.view': { label: 'View the audit log' },
   // Front office
@@ -44,6 +44,41 @@ export const PERMISSIONS = {
 } as const satisfies Record<string, PermissionDefinition>
 
 export type Permission = keyof typeof PERMISSIONS
+
+// How the permissions grid groups rows (design #26).
+export const PERMISSION_GROUPS: readonly { label: string; permissions: readonly Permission[] }[] = [
+  { label: 'Setup', permissions: ['setup.manage', 'permissions.manage', 'audit.view'] },
+  {
+    label: 'Front office',
+    permissions: [
+      'reservation.manage',
+      'stay.rate_override',
+      'penalty.waive',
+      'room.move',
+      'folio.void_own_same_day',
+      'folio.void_same_day',
+      'folio.correct_after_audit',
+      'refund',
+      'room_night.comp',
+      'city_ledger.settle',
+      'credit_limit.exceed',
+      'cashier_shift.operate',
+      'rates.edit',
+      'night_audit.run',
+    ],
+  },
+  {
+    label: 'Restaurant & bar',
+    permissions: [
+      'pos.post_to_room',
+      'pos.void_before_send',
+      'pos.void_after_send',
+      'pos.discount',
+      'pos.reopen_bill',
+    ],
+  },
+  { label: 'Back office', permissions: ['payroll.approve', 'leakage.view'] },
+]
 export const PERMISSION_KEYS = Object.keys(PERMISSIONS) as Permission[]
 export const permissionSchema = z.enum(PERMISSION_KEYS as [Permission, ...Permission[]])
 

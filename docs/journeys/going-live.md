@@ -61,7 +61,7 @@
     - *Behind the scenes:* devices bound to Kora Victoria Island and revocable. Each caches the PIN hashes of members allowed at the property.
 
 11. **15:30 · Staff and PINs.**
-    - *Does:* invites Chiamaka and Ibrahim (`front_desk`), Grace (`housekeeping_supervisor`), Blessing (`room_attendant`), Femi (`fnb_manager`), Halima (`cashier`), Emeka (`waiter`), all limited to Kora Victoria Island. Each accepts the invite and sets a 4-digit PIN on a registered device.
+    - *Does:* invites Chiamaka and Ibrahim (`front_desk`), Grace (`housekeeping_supervisor`), Blessing (`room_attendant`), Femi (`fnb_manager`), Halima (`cashier`), Emeka (`waiter`), all limited to Kora Victoria Island. Each opens the invite email, sets a name and password in one step, and lands on Kora Victoria Island; staff PINs for shared devices come with brick 9.
     - *Sees:* in Permissions and limits (#26) he reads the defaults (front desk discount ≤ 10%, refund ≤ ₦100,000 for GM, and so on) and leaves them as they are. Only the owner can change them.
 
 12. **Mon 16 Nov · Parallel run.**

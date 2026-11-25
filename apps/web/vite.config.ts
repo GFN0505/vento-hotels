@@ -20,4 +20,14 @@ export default defineConfig({
   },
   server: { port: Number(process.env.WEB_PORT ?? 5180), strictPort: true, proxy },
   preview: { port: Number(process.env.WEB_PORT ?? 5180), strictPort: true, proxy },
+  build: {
+    rollupOptions: {
+      output: {
+        // The sign-in library changes rarely, so it gets its own file: phones keep it cached when
+        // the app updates, and no single file outgrows its budget (apps/web/bundle-budget.json).
+        manualChunks: (id) =>
+          /node_modules\/.*(better-auth|@better-fetch|nanostores)/.test(id) ? 'auth' : undefined,
+      },
+    },
+  },
 })

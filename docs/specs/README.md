@@ -22,3 +22,6 @@ A spec that is dropped is deleted, with the reason in the commit message.
 ## Specs
 | Spec | Stage | Module | Journeys | Status |
 |---|---|---|---|---|
+| [Sign-in, organizations, properties and entities](stage-0-auth-and-tenancy.md) | 0 | Platform | going-live, front-desk-morning | built |
+| [Permissions, limits and the audit log](stage-0-permissions-and-audit.md) | 0 | Platform | front-desk-morning, owner-morning, going-live | built |
+| [Team: invites, members and roles, permissions and limits](stage-0-team-and-roles.md) | 0 | Platform | going-live, front-desk-morning | built (in review) |

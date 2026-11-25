@@ -19,7 +19,10 @@ export type AuditEvent = {
   businessDate?: string | null
 }
 
-export async function recordAudit(tx: Writer, access: Access, event: AuditEvent): Promise<void> {
+// Who acted. Usually the request's `Access`; someone joining from an invite acts as their new member.
+export type Actor = Pick<Access, 'organizationId' | 'userId' | 'memberId' | 'userName'>
+
+export async function recordAudit(tx: Writer, access: Actor, event: AuditEvent): Promise<void> {
   await tx.insert(auditEvents).values({
     organizationId: access.organizationId,
     actorUserId: access.userId,

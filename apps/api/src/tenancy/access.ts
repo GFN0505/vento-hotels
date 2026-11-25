@@ -64,7 +64,7 @@ export async function effectiveRules(
 }
 
 export async function loadAccess(
-  db: Database,
+  db: Pick<Database, 'select'>,
   organizationId: string,
   user: { id: string; name: string },
 ): Promise<Access | undefined> {
@@ -134,7 +134,7 @@ export class ApprovalRequiredError extends ORPCError<
 
 // Checks the permission and, for permissions with a limit, that `value` (a percent or naira
 // amount as a decimal string) is within this member's limit. Above the limit the action needs an
-// approver with a higher limit (PIN approval arrives in brick 8). Nobody approves their own action.
+// approver with a higher limit (PIN approval arrives in brick 9). Nobody approves their own action.
 export function requireWithinLimit(access: Access, permission: Permission, value: string): void {
   requirePermission(access, permission)
   const { limit } = access.rules[permission]

@@ -1,6 +1,7 @@
 // The HTTP app: /health for monitors, /api/auth/* for sign-in (Better Auth), /rpc for the typed API.
 import { RPCHandler } from '@orpc/server/fetch'
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { type AppDeps, router } from './router.ts'
 
 export function createApp(deps: AppDeps) {
@@ -15,6 +16,14 @@ export function createApp(deps: AppDeps) {
 
   app.on(['GET', 'POST'], '/api/auth/*', (c) => deps.auth.handler(c.req.raw))
 
+  // No API call needs more than this; bigger bodies are refused before any work is done.
+  app.use(
+    '/rpc/*',
+    bodyLimit({
+      maxSize: 1024 * 1024,
+      onError: (c) => c.json({ message: 'That request is too large' }, 413),
+    }),
+  )
   app.use('/rpc/*', async (c, next) => {
     const { matched, response } = await rpc.handle(c.req.raw, {
       prefix: '/rpc',

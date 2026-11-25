@@ -4,7 +4,7 @@
 - **Stage:** 0
 - **Module:** Platform
 - **Walkthroughs:** `front-desk-morning.md` (discount over front desk's limit), `owner-morning.md` (who did what), `going-live.md` (permission defaults left as they are)
-- **Screens:** Permissions and limits (#26, API only in this brick), Audit log (#28, API only), approval prompt (#22, brick 8)
+- **Screens:** Permissions and limits (#26, API only in this brick), Audit log (#28, API only), approval prompt (#22, brick 9)
 - **Decisions:** `docs/decisions/0008-permission-limits-approvals-audit.md`, `docs/decisions/0018-permissions-and-audit-in-practice.md`
 
 ## Problem
@@ -31,7 +31,7 @@ The owner sets who may do what (rarely, during setup and after incidents). GMs a
 
 ### Permissions, limits and approvals
 - `requirePermission(access, key)`: 403 "You don't have access to this".
-- `requireWithinLimit(access, key, value)`: at the limit is allowed. Above it returns 403 with `data.code = 'APPROVAL_REQUIRED'`, the limit and the value. Approval by a manager's PIN arrives in brick 8.
+- `requireWithinLimit(access, key, value)`: at the limit is allowed. Above it returns 403 with `data.code = 'APPROVAL_REQUIRED'`, the limit and the value. Approval by a manager's PIN arrives in brick 9.
 - `permissions.manage` is owner-only by default, so a group admin can't widen their own access.
 
 ### Audit events
@@ -47,7 +47,7 @@ Not relevant yet. The audit event has `businessDate`, `deviceId` and `approverMe
 - `recordAudit(tx, access, event)` writes in the caller's transaction.
 
 ## Out of scope
-Approval by PIN and the approvals inbox (brick 8 and Stage 1), screens (brick 7), sign-in events (brick 8, with device sessions), and the exceptions feed for the owner's daily report (Stage 1).
+Approval by PIN and the approvals inbox (brick 9 and Stage 1), screens (brick 7), sign-in events (brick 9, with device sessions), and the exceptions feed for the owner's daily report (Stage 1).
 
 ## Open questions
 None.

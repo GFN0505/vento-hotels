@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_MATRIX, defaultRule, limitKindOf, PERMISSION_KEYS } from './permissions.ts'
+import {
+  DEFAULT_MATRIX,
+  defaultRule,
+  limitKindOf,
+  PERMISSION_GROUPS,
+  PERMISSION_KEYS,
+} from './permissions.ts'
 import { MEMBER_ROLES } from './roles.ts'
 
 describe('default permissions matrix (docs/DOMAIN.md)', () => {
@@ -36,5 +42,12 @@ describe('default permissions matrix (docs/DOMAIN.md)', () => {
         if (rule.limit !== null) expect(limitKindOf(key)).toBeDefined()
       }
     }
+  })
+})
+
+describe('PERMISSION_GROUPS', () => {
+  it('lists every permission exactly once', () => {
+    const grouped = PERMISSION_GROUPS.flatMap((group) => group.permissions)
+    expect([...grouped].sort()).toEqual([...PERMISSION_KEYS].sort())
   })
 })
