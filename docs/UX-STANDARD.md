@@ -13,12 +13,14 @@ A screen is done when every line below is true, or the exception is written in t
 ## 2. Clear
 - [ ] One job per screen, one primary action, and the most important number or status is the first thing seen.
 - [ ] Common tasks take 3 clicks or fewer, or one ⌘K command. A new person finishes their first real task in under 5 minutes without training.
+- [ ] Every screen sets its tab title (`usePageTitle`), and has one `h1`.
 - [ ] Words come from `docs/DOMAIN.md`, follow `ux-writing`, and never show codes, ids or technical errors.
 - [ ] Nothing on the screen that doesn't help someone decide or act.
 
 ## 3. Every state is designed
 - [ ] Loading (skeleton matching the final layout, no layout shift), empty (one helpful action), filtered-empty, error (what happened and what to do, with retry), offline (cached data, "saved on this device", sync count) and success.
 - [ ] Long names, long emails, large amounts and many rows don't break the layout.
+- [ ] Nothing jumps: messages appearing under a field don't move the form, and nothing shifts under a finger mid-tap.
 
 ## 4. Forms behave
 - [ ] Every field uses `Field` / `EmailField`: label above, never placeholder-only, example text starts "e.g.".
@@ -39,6 +41,7 @@ A screen is done when every line below is true, or the exception is written in t
 - [ ] Works at 375px with no sideways scrolling; checked at 375, 768 and 1440 (**auto**: browser tests run desktop and phone).
 - [ ] Touch targets at least 44px (48px on POS and housekeeping); 16px text in inputs so iPhones don't zoom.
 - [ ] Nothing important appears only on hover.
+- [ ] Never a link to a page that doesn't exist yet.
 
 ## 7. Looks like Vento
 - [ ] Design tokens only (no hex in components); light by default and correct in dark mode.

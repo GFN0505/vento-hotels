@@ -1,5 +1,5 @@
 // Design: 24 · Sign in (and · Wrong password, · Signing in).
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
 import { AuthCard, AuthFootnote } from '@/components/auth-card'
 import { Button } from '@/components/ui/button'
@@ -8,9 +8,16 @@ import { EmailField } from '@/components/ui/email-field'
 import { Field } from '@/components/ui/field'
 import { authClient } from '@/lib/auth'
 import { emailProblem } from '@/lib/email'
+import { CANT_REACH_VENTO, isConnectionProblem } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
+import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/sign-in')({
+  // Already signed in: go straight home.
+  beforeLoad: async () => {
+    const { data } = await authClient.getSession()
+    if (data) throw redirect({ to: '/' })
+  },
   component: SignIn,
 })
 
@@ -30,6 +37,7 @@ function messageFor(code: string | undefined, status: number): string {
 }
 
 function SignIn() {
+  usePageTitle('Sign in')
   const navigate = useNavigate()
   const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
@@ -62,7 +70,9 @@ function SignIn() {
     })
     setPending(false)
     if (failure) {
-      setError(messageFor(failure.code, failure.status))
+      setError(
+        isConnectionProblem(failure) ? CANT_REACH_VENTO : messageFor(failure.code, failure.status),
+      )
       return
     }
     await navigate({ to: '/' })

@@ -14,7 +14,9 @@ const API_PORT = 3100
 const WEB_PORT = 5174
 const WEB_URL = `http://localhost:${WEB_PORT}`
 export const OUTBOX = fileURLToPath(new URL('./.data/e2e-outbox', import.meta.url))
-rmSync(OUTBOX, { recursive: true, force: true })
+// Empty it once per run. Workers load this file too, and clearing it there would delete emails
+// other tests are still waiting for.
+if (!process.env.TEST_WORKER_INDEX) rmSync(OUTBOX, { recursive: true, force: true })
 
 const testDatabase = process.env.TEST_DATABASE_URL
 if (!testDatabase) throw new Error('TEST_DATABASE_URL is not set. Copy .env.example to .env.')

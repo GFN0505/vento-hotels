@@ -22,7 +22,7 @@ test('an owner sets up their hotel group and lands on home', async ({ page }, te
   await page.getByLabel('Full name').fill('Adaeze Okafor')
   await page.getByLabel('Work email').fill(email)
   await page.getByLabel('Create a password').fill(PASSWORD)
-  await page.getByLabel('Confirm password').fill(PASSWORD)
+  await page.getByLabel('Confirm password', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByRole('heading', { name: 'Check your inbox' })).toBeVisible()
 
@@ -34,9 +34,9 @@ test('an owner sets up their hotel group and lands on home', async ({ page }, te
   await page.goto(await linkFromEmail(email, /Confirm your email/))
   await expect(page.getByRole('heading', { name: 'Your hotel group' })).toBeVisible()
   await page.getByLabel('Group name').fill('Kora Hotels Group')
-  await page.getByLabel('Company (as registered with CAC)').fill('Kora Hospitality Ltd')
+  await page.getByLabel('Company', { exact: true }).fill('Kora Hospitality Ltd')
   await page.getByLabel('First hotel').fill('Kora Victoria Island')
-  await page.getByLabel('State').fill('Lagos')
+  await page.getByLabel('State').selectOption('Lagos')
   await page.getByRole('button', { name: 'Continue' }).click()
 
   await expect(page.getByRole('heading', { name: 'Kora Hotels Group' })).toBeVisible()
@@ -45,6 +45,7 @@ test('an owner sets up their hotel group and lands on home', async ({ page }, te
   ).toContainText('Business date')
 
   // Sign out and back in: straight to home, the group already set up.
+  await page.getByRole('button', { name: /^Account:/ }).click()
   await page.getByRole('button', { name: 'Sign out' }).click()
   await expect(page).toHaveURL(/\/sign-in$/)
   await signIn(page, email, PASSWORD)
@@ -56,7 +57,7 @@ test('sign-up checks the details before sending them', async ({ page }) => {
   await page.getByLabel('Full name').fill('Chiamaka Eze')
   await page.getByLabel('Work email').fill('not-an-email')
   await page.getByLabel('Create a password').fill('short')
-  await page.getByLabel('Confirm password').fill('different')
+  await page.getByLabel('Confirm password', { exact: true }).fill('different')
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByText('Enter a valid email')).toBeVisible()
   await expect(page.getByText("Your password doesn't meet every rule below yet.")).toBeVisible()
@@ -81,10 +82,12 @@ test('a forgotten password can be reset from the emailed link', async ({ page },
   await page.getByLabel('Full name').fill('Tunde Bello')
   await page.getByLabel('Work email').fill(email)
   await page.getByLabel('Create a password').fill(PASSWORD)
-  await page.getByLabel('Confirm password').fill(PASSWORD)
+  await page.getByLabel('Confirm password', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.goto(await linkFromEmail(email, /Confirm your email/))
 
+  // Confirming signs you in; someone who forgot their password is signed out.
+  await page.context().clearCookies()
   await page.goto('/sign-in')
   await page.getByRole('link', { name: 'Forgot password?' }).click()
   await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible()
@@ -93,10 +96,10 @@ test('a forgotten password can be reset from the emailed link', async ({ page },
   await expect(page.getByRole('heading', { name: 'Check your inbox' })).toBeVisible()
 
   const NEW_PASSWORD = 'Brand-new-pass-42!'
-  await page.goto(await linkFromEmail(email, /Reset your Vento password/))
+  await page.goto(await linkFromEmail(email, /Reset your Vento Hotels password/))
   await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible()
-  await page.getByLabel('New password').fill(NEW_PASSWORD)
-  await page.getByLabel('Confirm password').fill(NEW_PASSWORD)
+  await page.getByLabel('New password', { exact: true }).fill(NEW_PASSWORD)
+  await page.getByLabel('Confirm password', { exact: true }).fill(NEW_PASSWORD)
   await page.getByRole('button', { name: 'Change password' }).click()
   await expect(page.getByRole('heading', { name: 'Password changed' })).toBeVisible()
 
@@ -117,7 +120,7 @@ test.describe('sign-in brand panel motion', () => {
 
   test('drifts gently and finishes its entrance with all copy visible', async ({ page }) => {
     await page.goto('/sign-in')
-    const headline = page.getByRole('heading', { name: /accounted for/ })
+    const headline = page.getByText(/accounted for/).filter({ visible: true })
     await expect(headline).toBeVisible()
     await expect(page.getByText('For hotel groups in Nigeria')).toHaveCSS('opacity', '1')
     const running = await page.evaluate(() =>
@@ -137,7 +140,7 @@ test.describe('sign-in brand panel motion', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto('/sign-in')
     await expect(page.getByText('For hotel groups in Nigeria')).toHaveCSS('opacity', '1')
-    await expect(page.getByRole('heading', { name: /accounted for/ })).toBeVisible()
+    await expect(page.getByText(/accounted for/).filter({ visible: true })).toBeVisible()
     const animations = await page.evaluate(() => document.getAnimations().length)
     expect(animations).toBe(0)
   })

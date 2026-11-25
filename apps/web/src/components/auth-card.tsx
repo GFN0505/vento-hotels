@@ -18,7 +18,7 @@ export function AuthCard({
     <div className="min-h-dvh bg-surface lg:grid lg:grid-cols-2">
       <BrandPanel />
       <PhoneBand />
-      <main className="flex flex-col px-6 pt-8 pb-10 lg:min-h-dvh lg:items-center lg:justify-center lg:p-12">
+      <main className="flex flex-col px-6 pt-8 pb-10 lg:min-h-dvh lg:items-center lg:justify-start lg:px-12 lg:pt-[16vh] lg:pb-12">
         {/* Front-door type is larger and calmer than inside the app: 14–15px text, darker labels,
             taller fields and button. Applied here so every auth screen gets it. */}
         <div className="flex w-full flex-col gap-5 text-md [&_button[type=submit]]:h-12 [&_button[type=submit]]:text-[15px] [&_input:not([type=checkbox])]:h-11 [&_input:not([type=checkbox])]:text-[16px] lg:[&_input:not([type=checkbox])]:text-[15px] [&_label]:text-[13px] [&_label]:text-text lg:w-[400px]">
@@ -38,14 +38,14 @@ function Headline({ className, animated }: { className: string; animated: boolea
   const line = (step: number) =>
     animated ? { className: 'auth-rise block', style: rise(step) } : { className: 'block' }
   return (
-    <h2
+    <p
       className={`font-display font-normal tracking-[-0.015em] [font-optical-sizing:auto] ${className}`}
     >
       <span {...line(1)}>Every room. Every naira.</span>
       <span {...line(2)}>
         Every night, <em className="text-logo-dot italic">accounted for.</em>
       </span>
-    </h2>
+    </p>
   )
 }
 
@@ -109,7 +109,7 @@ function BrandPanel() {
       </div>
 
       <div
-        className="auth-rise relative flex flex-wrap gap-4 text-sm text-side-mute"
+        className="auth-rise relative flex flex-wrap gap-4 text-sm text-side-text"
         style={rise(4)}
       >
         <span>© 2026 Vento</span>
@@ -123,7 +123,7 @@ function BrandPanel() {
 // Small print under the main button: links to the neighbouring screens.
 export function AuthFootnote({ children }: { children: ReactNode }) {
   return (
-    <p className="text-center text-[13px] text-text-2 [&_a]:font-medium [&_a]:text-pri-ink [&_a:hover]:underline">
+    <p className="text-center text-[13px] text-text-2 [&_a]:font-medium [&_a]:text-pri-ink [&_a:hover]:underline [&_button]:font-medium [&_button]:text-pri-ink [&_button:hover]:underline max-sm:[&_a]:inline-flex max-sm:[&_a]:min-h-11 max-sm:[&_a]:items-center max-sm:[&_button]:inline-flex max-sm:[&_button]:min-h-11 max-sm:[&_button]:items-center">
       {children}
     </p>
   )

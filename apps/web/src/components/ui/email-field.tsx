@@ -1,6 +1,6 @@
 // Email field for sign-up and sign-in: the right keyboard on phones (no capitals, no autocorrect),
 // checked on leaving the field, and a one-tap fix for common typos ("Did you mean ada@gmail.com?").
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { emailProblem, suggestEmail } from '@/lib/email'
 import { Field, movingToAnotherField } from './field'
 
@@ -22,12 +22,16 @@ export function EmailField({
 }: EmailFieldProps) {
   const [value, setValue] = useState('')
   const [suggestion, setSuggestion] = useState<string>()
+  const inputId = useId()
+  const suggestionId = `${inputId}-suggestion`
 
   return (
     <div className="flex flex-col gap-1.5">
       <Field
+        id={inputId}
         label={label}
         name={name}
+        aria-describedby={suggestion ? suggestionId : undefined}
         type="email"
         inputMode="email"
         autoComplete={autoComplete}
@@ -50,7 +54,7 @@ export function EmailField({
         error={error}
       />
       {suggestion ? (
-        <p className="text-sm text-text-2" role="status">
+        <p id={suggestionId} className="text-[13px] text-text-2" role="status">
           Did you mean{' '}
           <button
             type="button"
@@ -58,6 +62,8 @@ export function EmailField({
             onClick={() => {
               setValue(suggestion)
               setSuggestion(undefined)
+              // Back to the field, so keyboard and screen-reader users carry on where they were.
+              document.getElementById(inputId)?.focus()
             }}
           >
             {suggestion}

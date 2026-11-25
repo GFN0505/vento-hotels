@@ -42,18 +42,25 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.getByRole('button', { name: 'Sign in' }).click()
 }
 
-// Creates an owner, confirms their email and sets up Kora Hotels Group; ends signed in on home.
-export async function signUpOwnerWithGroup(page: Page, tag: string): Promise<string> {
+// Creates an owner; ends on "Check your inbox", before the email is confirmed.
+export async function signUpOwner(page: Page, tag: string): Promise<string> {
   const email = `owner.${tag}.${Date.now()}@example.test`
   await page.goto('/get-started')
   await page.getByLabel('Full name').fill('Adaeze Okafor')
   await page.getByLabel('Work email').fill(email)
   await page.getByLabel('Create a password').fill(PASSWORD)
-  await page.getByLabel('Confirm password').fill(PASSWORD)
+  await page.getByLabel('Confirm password', { exact: true }).fill(PASSWORD)
   await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page.getByRole('heading', { name: 'Check your inbox' })).toBeVisible()
+  return email
+}
+
+// Creates an owner, confirms their email and sets up Kora Hotels Group; ends signed in on home.
+export async function signUpOwnerWithGroup(page: Page, tag: string): Promise<string> {
+  const email = await signUpOwner(page, tag)
   await page.goto(await linkFromEmail(email, /Confirm your email/))
   await page.getByLabel('Group name').fill('Kora Hotels Group')
-  await page.getByLabel('Company (as registered with CAC)').fill('Kora Hospitality Ltd')
+  await page.getByLabel('Company', { exact: true }).fill('Kora Hospitality Ltd')
   await page.getByLabel('First hotel').fill('Kora Victoria Island')
   await page.getByRole('button', { name: 'Continue' }).click()
   await expect(page.getByRole('heading', { name: 'Kora Hotels Group' })).toBeVisible()

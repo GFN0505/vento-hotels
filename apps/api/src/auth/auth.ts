@@ -113,7 +113,7 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
       sendResetPassword: async ({ user, url }) => {
         await email.send({
           to: user.email,
-          subject: 'Reset your Vento password',
+          subject: 'Reset your Vento Hotels password',
           text: `Use this link to choose a new password. It expires soon.\n${url}`,
         })
       },
@@ -124,7 +124,7 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
       sendVerificationEmail: async ({ user, url }) => {
         await email.send({
           to: user.email,
-          subject: 'Confirm your email for Vento',
+          subject: 'Confirm your email for Vento Hotels',
           text: `Confirm your email to finish setting up your account.\n${url}`,
         })
       },

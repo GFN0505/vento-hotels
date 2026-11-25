@@ -1,8 +1,8 @@
 // Onboarding step 1 (design 19): the owner creates their account, then confirms their email.
 
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { isStrongPassword } from '@vento/shared'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { AuthCard, AuthFootnote } from '@/components/auth-card'
 import { PasswordRules } from '@/components/password-rules'
 import { Button } from '@/components/ui/button'
@@ -10,10 +10,17 @@ import { EmailField } from '@/components/ui/email-field'
 import { Field } from '@/components/ui/field'
 import { authClient } from '@/lib/auth'
 import { emailProblem } from '@/lib/email'
+import { CANT_REACH_VENTO, isConnectionProblem } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
 import { checkNewPassword } from '@/lib/password'
+import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/get-started')({
+  // Already signed in: go straight home.
+  beforeLoad: async () => {
+    const { data } = await authClient.getSession()
+    if (data) throw redirect({ to: '/' })
+  },
   component: GetStarted,
 })
 
@@ -34,6 +41,7 @@ function GetStarted() {
   const [pending, setPending] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  usePageTitle(sentTo ? 'Check your inbox' : 'Set up your hotel group')
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -63,14 +71,16 @@ function GetStarted() {
     setPending(false)
     if (failure) {
       setError(
-        failure.code === 'USER_ALREADY_EXISTS' ||
-          failure.code === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL'
-          ? 'There is already an account with this email. Sign in instead.'
-          : failure.code === 'PASSWORD_TOO_WEAK' || failure.code === 'PASSWORD_TOO_SHORT'
-            ? "Your password doesn't meet every rule yet."
-            : failure.status === 429
-              ? 'Too many attempts from this network. Wait a few minutes, then try again.'
-              : "We couldn't create your account. Check the details and try again.",
+        isConnectionProblem(failure)
+          ? CANT_REACH_VENTO
+          : failure.code === 'USER_ALREADY_EXISTS' ||
+              failure.code === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL'
+            ? 'There is already an account with this email. Sign in instead.'
+            : failure.code === 'PASSWORD_TOO_WEAK' || failure.code === 'PASSWORD_TOO_SHORT'
+              ? "Your password doesn't meet every rule yet."
+              : failure.status === 429
+                ? 'Too many attempts from this network. Wait a few minutes, then try again.'
+                : "We couldn't create your account. Check the details and try again.",
       )
       return
     }
@@ -78,16 +88,7 @@ function GetStarted() {
   }
 
   if (sentTo) {
-    return (
-      <AuthCard title="Check your inbox" subtitle={`We sent a link to ${sentTo}.`}>
-        <p className="text-text-2">
-          Open it to confirm your email, then set up your hotel group. Not there? Check spam.
-        </p>
-        <Link to="/sign-in" className="text-pri-ink hover:underline">
-          Back to sign in
-        </Link>
-      </AuthCard>
-    )
+    return <CheckInbox email={sentTo} onStartAgain={() => setSentTo(undefined)} />
   }
 
   const passwordsMatch =
@@ -106,6 +107,7 @@ function GetStarted() {
           name="name"
           autoComplete="name"
           autoCapitalize="words"
+          maxLength={80}
           required
           autoFocus
           validate={nameProblem}
@@ -121,11 +123,13 @@ function GetStarted() {
           revealable
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
-          aria-describedby={newPassword ? 'password-rules' : undefined}
+          aria-describedby={newPassword || fieldErrors.password ? 'password-rules' : undefined}
           error={fieldErrors.password}
         />
         {/* The checklist appears once they start typing, not before. */}
-        {newPassword ? <PasswordRules id="password-rules" password={newPassword} /> : null}
+        {newPassword || fieldErrors.password ? (
+          <PasswordRules id="password-rules" password={newPassword} />
+        ) : null}
         <Field
           label="Confirm password"
           name="confirm"
@@ -136,7 +140,9 @@ function GetStarted() {
           value={confirm}
           onChange={(event) => setConfirm(event.target.value)}
           validate={(value) =>
-            value.length > 0 && value !== newPassword ? "Passwords don't match." : undefined
+            value.length > 0 && value !== newPassword
+              ? "Passwords don't match. Type it again."
+              : undefined
           }
           success={passwordsMatch ? 'Passwords match' : undefined}
           error={fieldErrors.confirm}
@@ -145,12 +151,64 @@ function GetStarted() {
           {pending ? 'Creating your account…' : 'Create account'}
         </Button>
         <AuthFootnote>
-          By creating an account, you agree to Vento's Terms and Privacy Policy (NDPA 2023).
-        </AuthFootnote>
-        <AuthFootnote>
           Already using Vento? <Link to="/sign-in">Sign in</Link>
         </AuthFootnote>
       </form>
+    </AuthCard>
+  )
+}
+
+const RESEND_AFTER_SECONDS = 60
+
+// After sign-up: where the link went, a way to send it again, and a way out if the address was wrong.
+function CheckInbox({ email, onStartAgain }: { email: string; onStartAgain: () => void }) {
+  const [wait, setWait] = useState(RESEND_AFTER_SECONDS)
+  const [note, setNote] = useState<string>()
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    if (wait <= 0) return
+    const timer = setTimeout(() => setWait((value) => value - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [wait])
+
+  async function resend() {
+    setSending(true)
+    const { error } = await authClient.sendVerificationEmail({
+      email,
+      callbackURL: `${window.location.origin}/setup`,
+    })
+    setSending(false)
+    setNote(
+      isConnectionProblem(error)
+        ? CANT_REACH_VENTO
+        : error
+          ? "We couldn't send it just now. Try again in a minute."
+          : 'Sent again. It can take a minute to arrive.',
+    )
+    setWait(RESEND_AFTER_SECONDS)
+  }
+
+  return (
+    <AuthCard title="Check your inbox" subtitle={`We sent a link to ${email}.`}>
+      <p className="text-text-2">
+        Open it to confirm your email, then set up your hotel group. Not there? Check spam.
+      </p>
+      {note ? (
+        <p className="text-text-2" role="status">
+          {note}
+        </p>
+      ) : null}
+      <Button variant="default" size="lg" onClick={resend} loading={sending} disabled={wait > 0}>
+        {wait > 0 ? `Resend email in 0:${String(wait).padStart(2, '0')}` : 'Resend email'}
+      </Button>
+      <AuthFootnote>
+        Wrong email?{' '}
+        <button type="button" onClick={onStartAgain}>
+          Start again
+        </button>{' '}
+        · <Link to="/sign-in">Back to sign in</Link>
+      </AuthFootnote>
     </AuthCard>
   )
 }

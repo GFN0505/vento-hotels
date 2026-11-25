@@ -46,7 +46,7 @@ function AppLayout() {
           </div>
         ) : null}
         <div className="flex min-w-0 grow flex-col">
-          <TopBar userName={user.name} onOpenMenu={() => setMenuOpen(true)} />
+          <TopBar user={user} onOpenMenu={() => setMenuOpen(true)} />
           <main className="flex-1 p-4 sm:p-6">
             <Outlet />
           </main>

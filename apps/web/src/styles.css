@@ -15,6 +15,10 @@
   --surface-3: #f2f4f7;
   --border: #e4e7ec;
   --border-strong: #d0d5dd;
+  /* Field and checkbox outlines: at least 3:1 on the surface (WCAG 1.4.11). */
+  --input: #858ea0;
+  /* Focus outline for every control: at least 3:1 in both themes. */
+  --ring: #6364f0;
   --text: #101828;
   --text-2: #475467;
   --text-3: #667085;
@@ -59,6 +63,8 @@
   --surface-3: #182036;
   --border: #222b42;
   --border-strong: #2e3854;
+  --input: #5b6683;
+  --ring: #7677fb;
   --text: #e7eaf3;
   --text-2: #aeb5c9;
   --text-3: #8a93ab;
@@ -100,6 +106,8 @@
   --color-surface-3: var(--surface-3);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-text: var(--text);
   --color-text-2: var(--text-2);
   --color-text-3: var(--text-3);
@@ -152,17 +160,24 @@
 }
 
 @layer base {
+  /* The root stays at the browser's 16px so rem-based spacing and sizes are what they say (h-11 is
+     44px). The app's dense 13px text is set on body instead. */
   html {
     font-family: var(--font-sans);
-    font-size: 13px;
-    line-height: 20px;
     font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
   }
   body {
     background: var(--bg);
     color: var(--text);
+    font-size: 13px;
+    line-height: 20px;
     margin: 0;
+  }
+  /* One visible focus style for every control, keyboard only (UX standard, section 5). */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
   .num {
     font-variant-numeric: tabular-nums;

@@ -8,7 +8,9 @@ import { PasswordRules } from '@/components/password-rules'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { authClient } from '@/lib/auth'
+import { CANT_REACH_VENTO, isConnectionProblem } from '@/lib/errors'
 import { checkNewPassword, type PasswordErrors } from '@/lib/password'
+import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/reset-password')({
   validateSearch: z.object({ token: z.string().optional(), error: z.string().optional() }),
@@ -23,12 +25,18 @@ function ResetPassword() {
   const [pending, setPending] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  usePageTitle(
+    !token || linkError ? 'Link expired' : done ? 'Password changed' : 'Choose a new password',
+  )
 
   if (!token || linkError) {
     return (
       <AuthCard title="This link has expired" subtitle="Reset links work once, for 30 minutes.">
         <Link to="/forgot-password" className="text-pri-ink hover:underline">
           Send a new link
+        </Link>
+        <Link to="/sign-in" className="text-sm text-pri-ink hover:underline">
+          Back to sign in
         </Link>
       </AuthCard>
     )
@@ -57,11 +65,13 @@ function ResetPassword() {
     setPending(false)
     if (error) {
       setFailure(
-        error.code === 'INVALID_TOKEN'
-          ? 'This link has expired. Send a new one from the sign-in page.'
-          : error.code === 'PASSWORD_TOO_WEAK'
-            ? "Your password doesn't meet every rule yet."
-            : "We couldn't change your password. Try again.",
+        isConnectionProblem(error)
+          ? CANT_REACH_VENTO
+          : error.code === 'INVALID_TOKEN'
+            ? 'This link has expired. Send a new one from the sign-in page.'
+            : error.code === 'PASSWORD_TOO_WEAK'
+              ? "Your password doesn't meet every rule yet."
+              : "We couldn't change your password. Try again.",
       )
       return
     }
@@ -86,11 +96,13 @@ function ResetPassword() {
           autoFocus
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
-          aria-describedby={newPassword ? 'password-rules' : undefined}
+          aria-describedby={newPassword || errors.password ? 'password-rules' : undefined}
           error={errors.password}
         />
         {/* The checklist appears once they start typing, not before. */}
-        {newPassword ? <PasswordRules id="password-rules" password={newPassword} /> : null}
+        {newPassword || errors.password ? (
+          <PasswordRules id="password-rules" password={newPassword} />
+        ) : null}
         <Field
           label="Confirm password"
           name="confirm"
@@ -101,7 +113,9 @@ function ResetPassword() {
           value={confirm}
           onChange={(event) => setConfirm(event.target.value)}
           validate={(value) =>
-            value.length > 0 && value !== newPassword ? "Passwords don't match." : undefined
+            value.length > 0 && value !== newPassword
+              ? "Passwords don't match. Type it again."
+              : undefined
           }
           success={
             confirm.length > 0 && confirm === newPassword && isStrongPassword(newPassword)

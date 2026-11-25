@@ -1,7 +1,13 @@
 // Every page the app has, scanned for accessibility problems in light and dark mode, on desktop and
 // phone (docs/UX-STANDARD.md, section 5). New pages get a line here when they're built.
 import { test } from '@playwright/test'
-import { expectAccessible, signUpOwnerWithGroup, switchToDarkMode } from './support'
+import {
+  expectAccessible,
+  linkFromEmail,
+  signUpOwner,
+  signUpOwnerWithGroup,
+  switchToDarkMode,
+} from './support'
 
 const PUBLIC_PAGES = [
   '/sign-in',
@@ -22,9 +28,24 @@ for (const theme of ['light', 'dark'] as const) {
       })
     }
 
-    test('home, signed in, has no accessibility problems', async ({ page }, testInfo) => {
+    test('check your inbox, then setup, have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      const email = await signUpOwner(page, `a11y-setup-${theme}-${testInfo.project.name}`)
+      await expectAccessible(page)
+      await page.goto(await linkFromEmail(email, /Confirm your email/))
+      await page.getByLabel('Group name').waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      await expectAccessible(page)
+    })
+
+    test('home, signed in, with the account menu open, has no accessibility problems', async ({
+      page,
+    }, testInfo) => {
       await signUpOwnerWithGroup(page, `a11y-${theme}-${testInfo.project.name}`)
       if (theme === 'dark') await switchToDarkMode(page)
+      await expectAccessible(page)
+      await page.getByRole('button', { name: /^Account:/ }).click()
       await expectAccessible(page)
     })
   })

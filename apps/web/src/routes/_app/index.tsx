@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Card } from '@/components/ui/card'
 import { orpc } from '@/lib/api'
+import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/_app/')({
   component: Home,
@@ -19,6 +20,7 @@ function formatDate(date: string): string {
 }
 
 function Home() {
+  usePageTitle('Home')
   const organization = useQuery(orpc.organization.current.queryOptions())
   const properties = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
 
@@ -49,14 +51,19 @@ function Home() {
         <ul className="grid gap-4 sm:grid-cols-2">
           {properties.data.items.map((property) => (
             <li key={property.id}>
-              <Card className="flex flex-col gap-1 p-4">
-                <span className="text-md font-semibold">{property.name}</span>
+              <Card className="flex min-w-0 flex-col gap-1 p-4">
+                <span className="truncate text-md font-semibold">{property.name}</span>
                 <span className="text-text-2">
                   {[property.area, property.state].filter(Boolean).join(', ') || 'Address not set'}
                 </span>
-                <span className="num text-sm text-text-3">
-                  Business date {formatDate(property.businessDate)} · Check-in{' '}
-                  {property.checkInTime} · Check-out {property.checkOutTime}
+                <span className="num flex flex-wrap gap-x-1.5 text-sm text-text-3">
+                  <span className="whitespace-nowrap">
+                    Business date {formatDate(property.businessDate)}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span className="whitespace-nowrap">Check-in {property.checkInTime}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="whitespace-nowrap">Check-out {property.checkOutTime}</span>
                 </span>
               </Card>
             </li>
