@@ -181,13 +181,17 @@ test.describe('sign-in brand panel motion', () => {
   })
 })
 
-test('the password checklist ticks each rule as it is met', async ({ page }) => {
+test('the password checklist appears on typing and ticks each rule as it is met', async ({
+  page,
+}) => {
   await page.goto('/get-started')
   const rules = page.locator('#password-rules li')
-  await expect(rules).toHaveCount(5)
   const password = page.getByLabel('Create a password', { exact: true })
 
+  // Hidden until they start typing.
+  await expect(rules).toHaveCount(0)
   await password.fill('kora')
+  await expect(rules).toHaveCount(5)
   await expect(rules.filter({ hasText: 'A small letter' })).toContainText('(done)')
   await expect(rules.filter({ hasText: 'A capital letter' })).toContainText('(still needed)')
   await expect(rules.filter({ hasText: 'At least 8 characters' })).toContainText('(still needed)')

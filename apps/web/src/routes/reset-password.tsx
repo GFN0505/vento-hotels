@@ -84,10 +84,11 @@ function ResetPassword() {
           autoFocus
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
-          aria-describedby="password-rules"
+          aria-describedby={newPassword ? 'password-rules' : undefined}
           error={errors.password}
         />
-        <PasswordRules id="password-rules" password={newPassword} />
+        {/* The checklist appears once they start typing, not before. */}
+        {newPassword ? <PasswordRules id="password-rules" password={newPassword} /> : null}
         <Field
           label="Confirm password"
           name="confirm"
