@@ -12,10 +12,13 @@ When a feature changes how someone works, update the walkthrough in the same cha
 
 ## The walkthroughs
 
+Start with [the golden thread](00-golden-thread.md): it follows Mr Mensah's Acme stay through all ten modules and shows how they connect before you read any single role's walkthrough.
+
 All walkthroughs describe the same day, 25 Nov 2026, at Kora Victoria Island, so the same rooms, guests and money carry across them.
 
 | Walkthrough | Who | First works | Complete at |
 |---|---|---|---|
+| [Golden thread: Mr Mensah's Acme stay](00-golden-thread.md) | Everyone | Stage 1 | Stage 6 |
 | [Front desk morning](front-desk-morning.md) | Front desk agent | Stage 1 | Stage 2 (room checks, work orders) |
 | [Night audit](night-audit.md) | Front desk agent on the night shift | Stage 1 | Stage 5 (ledger posting) |
 | [Owner's morning](owner-morning.md) | Owner / MD | Stage 1 | Stage 6 (group home) |

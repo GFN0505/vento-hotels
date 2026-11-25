@@ -18,7 +18,7 @@ Read `docs/PRODUCT.md` and `docs/DOMAIN.md` first. You may only write files unde
 1. **Question the request.** What problem does this solve, for which persona, how often? What's the simplest thing that solves it? Is it in v1 scope (`docs/PRODUCT.md`)? If it isn't, or adds baggage, say so plainly and suggest the smaller alternative.
 2. **Place it in the release plan.** Name the stage (0–6) it belongs to in `docs/PRODUCT.md`. Specs follow the stages in order; if a feature depends on a later stage, say what the earlier stage gets instead. Each stage must end usable by a pilot hotel on its own, with the leakage controls and reports for what it covers.
 3. **Check the controls.** For every action in the spec, look it up in the permissions matrix in `docs/DOMAIN.md` (which roles, which limits, who approves over the limit) and in the leakage controls (which exception it raises, what lands in the owner's daily report). If the matrix has no row for a sensitive action, propose one.
-4. **Write the spec** in `docs/specs/<feature>.md`.
+4. **Write the spec** in `docs/specs/stage-<n>-<slug>.md`, starting from `docs/specs/_template.md`, and update the walkthrough in `docs/journeys/` that it changes.
 5. **Keep the domain guide current.** When a spec introduces a new term, status, permission row, exception or rule, list the exact change needed in `docs/DOMAIN.md`.
 
 ## Spec format

@@ -3,10 +3,13 @@
 A world-class hotel management platform for Nigerian hotel groups and chains: reservations & front desk, booking engine & channel manager, guests & sales, restaurant & bar POS, housekeeping & maintenance, inventory & procurement, finance (multi-property, multi-entity, multi-currency), HR & payroll, guest app, executive analytics. Top-of-the-line UX, nothing extra.
 
 Read before working:
+- `docs/README.md` — the documentation map and the **definition of done for documentation**: a change isn't done until its docs are updated in the same commit.
 - `docs/PRODUCT.md` — vision, personas, the ten modules and how they connect. Keep each module lean; don't add features outside it without asking.
 - `docs/DOMAIN.md` — business vocabulary, statuses and rules.
 - `docs/journeys/` — user walkthroughs on the demo hotel group; keep them true when behaviour changes.
 - `docs/design/export/` — the approved designs (source of truth for UI); `docs/design/screen-inventory.md` maps them.
+- `docs/decisions/` — why the big choices were made. Don't reverse one without a new decision record that supersedes it.
+- `docs/ARCHITECTURE.md` — how the code is laid out and how a request flows.
 
 ## Stack
 - **Monorepo:** pnpm workspaces + Turborepo — `apps/web`, `apps/api`, `packages/shared`
