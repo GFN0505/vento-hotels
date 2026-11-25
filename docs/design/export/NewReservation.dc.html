@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New reservation · Room and rate</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif; position: relative; min-height: 1000px; overflow: hidden">
+<div class="app" style="min-height: 1000px">
+  <dc-import name="Sidebar" active="res" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="TB" user="Tolu Bankole" hint-size="100%,56px"></dc-import>
+    <main class="content">
+      <div class="pagehead"><div class="col"><h1 class="t-h1">Reservations</h1><span class="muted">Kora Victoria Island</span></div><button class="btn pri">New reservation<span class="kbd">N</span></button></div>
+      <div class="card"><div style="height: 420px"></div></div>
+    </main>
+  </div>
+</div>
+
+<div class="scrim"></div>
+<section class="sheet" aria-label="New reservation" style="width: min(1060px, 100%)">
+  <div class="row between" style="padding: 14px 20px; border-bottom: 1px solid var(--border)">
+    <div class="row" style="gap: 10px"><h2 class="t-h2">New reservation</h2><span class="t-sm faint">Draft saved 17:49</span></div>
+    <button class="btn ghost icon" aria-label="Close"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div style="flex: 1; display: grid; grid-template-columns: 210px minmax(0,1fr) 320px; min-height: 0">
+    <nav class="steps" aria-label="Steps" style="padding: 16px 10px; border-right: 1px solid var(--border)">
+      <div class="step done"><span class="sn"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><span class="col" style="line-height: 16px"><span>Dates &amp; guests</span><span class="t-sm faint num">2–5 Dec · 2 adults</span></span></div>
+      <div class="step cur"><span class="sn">2</span>Room &amp; rate</div>
+      <div class="step"><span class="sn">3</span>Guest</div>
+      <div class="step"><span class="sn">4</span>Guarantee &amp; deposit</div>
+      <div class="step"><span class="sn">5</span>Review &amp; send</div>
+    </nav>
+
+    <div class="col" style="padding: 20px 24px; gap: 14px; overflow: auto">
+      <div class="row between wrap">
+        <div class="row wrap"><span class="badge b-vi nd num" style="height: 28px; border-radius: 8px; padding: 0 10px">Wed 2 Dec → Sat 5 Dec 2026 · 3 nights</span><span class="badge nd" style="height: 28px; border-radius: 8px; padding: 0 10px">2 adults · 1 room</span></div>
+        <div class="seg" role="group" aria-label="Rate basis"><button class="on">Excl. taxes</button><button>Incl. taxes</button></div>
+      </div>
+
+      <div class="card" style="border-color: var(--pri-line); box-shadow: 0 0 0 3px var(--pri-soft)">
+        <div class="row between" style="padding: 14px 16px; border-bottom: 1px solid var(--border)">
+          <div class="col"><span class="t-h3">Deluxe King</span><span class="t-sm faint">32 m² · king bed · city view · max 3</span></div>
+          <div class="row num" style="gap: 6px"><span class="t-sm faint">Left per night</span><span class="badge nd">4</span><span class="badge nd">4</span><span class="badge b-am nd">2</span></div>
+        </div>
+        <div class="col">
+          <label class="row" style="padding: 12px 16px; gap: 12px; border-bottom: 1px solid var(--border)"><span class="radio"></span><span class="col grow"><span class="medium">Best available rate</span><span class="t-sm faint">Room only · free cancellation until 1 Dec 14:00</span></span><span class="col num" style="align-items: flex-end"><span>₦150,000.00<span class="faint t-sm"> /night</span></span><span class="t-sm faint">₦551,250.00 total incl. taxes</span></span></label>
+          <label class="row" style="padding: 12px 16px; gap: 12px; border-bottom: 1px solid var(--border); background: var(--pri-soft)"><span class="radio on"></span><span class="col grow"><span class="row"><span class="medium">Bed &amp; Breakfast</span><span class="tag">BAR + ₦18,000</span></span><span class="t-sm faint">Breakfast for 2 · free cancellation until 1 Dec 14:00</span></span><span class="col num" style="align-items: flex-end"><span class="medium">₦168,000.00<span class="faint t-sm"> /night</span></span><span class="t-sm faint">₦617,400.00 total incl. taxes</span></span></label>
+          <label class="row" style="padding: 12px 16px; gap: 12px; border-bottom: 1px solid var(--border)"><span class="radio"></span><span class="col grow"><span class="medium">Non-refundable</span><span class="t-sm faint">Room only · paid in full at booking</span></span><span class="col num" style="align-items: flex-end"><span>₦135,000.00<span class="faint t-sm"> /night</span></span><span class="t-sm faint">₦496,125.00 total incl. taxes</span></span></label>
+          <label class="row" style="padding: 12px 16px; gap: 12px; color: var(--text-3)"><span class="radio" style="opacity: .5"></span><span class="col grow"><span class="medium">Corporate · Acme Energy Ltd</span><span class="t-sm">Pick the company in step 3 to use this rate</span></span><span class="num">₦132,000.00<span class="t-sm"> /night</span></span></label>
+        </div>
+      </div>
+
+      <div class="card"><div class="row between" style="padding: 14px 16px"><div class="col"><span class="t-h3">Standard Queen</span><span class="t-sm faint">24 m² · queen bed · max 2</span></div><div class="row num" style="gap: 6px"><span class="badge nd">6</span><span class="badge nd">5</span><span class="badge nd">5</span><span style="width: 120px; text-align: right" class="faint">from <span style="color: var(--text)">₦120,000.00</span></span></div></div></div>
+      <div class="card"><div class="row between" style="padding: 14px 16px"><div class="col"><span class="t-h3">Executive King</span><span class="t-sm faint">40 m² · lounge access · max 3</span></div><div class="row num" style="gap: 6px"><span class="badge b-ro nd">CTA 2 Dec</span><span style="width: 120px; text-align: right" class="faint">Closed to arrival</span></div></div></div>
+      <div class="card" style="opacity: .7"><div class="row between" style="padding: 14px 16px"><div class="col"><span class="t-h3">Junior Suite</span><span class="t-sm faint">58 m² · separate living room</span></div><div class="row num" style="gap: 6px"><span class="badge nd">1</span><span class="badge b-ro nd">0</span><span class="badge nd">1</span><span style="width: 120px; text-align: right" class="faint">Sold out 3 Dec</span></div></div></div>
+      <button class="btn ghost" style="align-self: flex-start"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add another room</button>
+    </div>
+
+    <aside class="col" style="border-left: 1px solid var(--border); background: var(--surface-2); padding: 20px; gap: 16px">
+      <div class="col" style="gap: 2px"><span class="lbl">Summary</span><span class="t-h3">Deluxe King · Bed &amp; Breakfast</span><span class="t-sm muted num">2–5 Dec 2026 · 3 nights · 2 adults</span></div>
+      <div class="col num" style="gap: 6px">
+        <div class="row between"><span class="muted">Wed 2 Dec</span><span>₦168,000.00</span></div>
+        <div class="row between"><span class="muted">Thu 3 Dec</span><span>₦168,000.00</span></div>
+        <div class="row between"><span class="muted">Fri 4 Dec</span><span>₦168,000.00</span></div>
+        <div class="hr" style="margin: 4px 0"></div>
+        <div class="row between"><span>Room &amp; breakfast</span><span>₦504,000.00</span></div>
+        <div class="row between t-sm muted"><span>Service charge 10%</span><span>₦50,400.00</span></div>
+        <div class="row between t-sm muted"><span>VAT 7.5%</span><span>₦37,800.00</span></div>
+        <div class="row between t-sm muted"><span>Lagos consumption tax 5%</span><span>₦25,200.00</span></div>
+        <div class="row between" style="border-top: 1px solid var(--border-strong); padding-top: 8px; margin-top: 4px"><span class="t-h3">Total</span><span class="t-h2">₦617,400.00</span></div>
+      </div>
+      <div class="inset col" style="padding: 12px; gap: 4px; background: var(--surface)"><div class="row between"><span class="medium">Deposit due</span><span class="medium num">₦205,800.00</span></div><span class="t-sm faint">First night incl. taxes, by 27 Nov 2026</span></div>
+      <div class="col" style="gap: 4px"><span class="lbl">Cancellation</span><span class="t-sm muted num">Free until Tue 1 Dec 2026 14:00. After that, or no-show: first night, ₦205,800.00.</span></div>
+      <span class="t-sm faint">Rates exclude service charge and taxes.</span>
+    </aside>
+  </div>
+  <div class="row between" style="padding: 12px 20px; border-top: 1px solid var(--border)">
+    <button class="btn">Back<span class="kbd">⌘←</span></button>
+    <div class="row"><span class="t-sm faint num">Total ₦617,400.00 · deposit ₦205,800.00</span><button class="btn pri lg">Continue to guest<span class="kbd">↵</span></button></div>
+  </div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

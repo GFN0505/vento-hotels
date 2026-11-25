@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>POS · split and pay</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="width: 1194px; height: 834px; overflow: hidden; font-family: Inter, system-ui, sans-serif">
+<div class="pos-shell touch">
+  <div class="pos-top">
+    <button class="btn icon" style="height: 40px; width: 40px" aria-label="Back to order"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <span class="t-h2">Pay · Table 12</span><span class="t-sm muted num">Check 1188 · ₦71,050.00</span>
+    <div class="grow"></div>
+    <button class="btn" style="height: 40px">Merge with another table</button>
+    <button class="btn" style="height: 40px; padding: 0 10px 0 6px"><span class="av">MI</span>Musa I.</button>
+  </div>
+  <div style="display: grid; grid-template-columns: minmax(0,1fr) 360px; min-height: 0">
+    <div class="col" style="padding: 18px; gap: 16px; min-height: 0">
+      <div class="row between"><div class="seg" role="group" aria-label="Split"><button style="height: 38px; padding: 0 16px; font-size: 14px">One bill</button><button class="on" style="height: 38px; padding: 0 16px; font-size: 14px">Equally</button><button style="height: 38px; padding: 0 16px; font-size: 14px">By seat</button><button style="height: 38px; padding: 0 16px; font-size: 14px">By item</button></div><div class="row"><span class="muted">Parts</span><button class="btn sm icon" style="width: 36px">−</button><span class="num medium">2</span><button class="btn sm icon" style="width: 36px">+</button></div></div>
+
+      <div class="g2" style="gap: 16px; align-items: start">
+        <div class="card">
+          <div class="card-h"><span class="t-h3">Part 1 of 2</span><span class="num t-h3">₦35,525.00</span></div>
+          <div class="card-b col" style="gap: 12px">
+            <div class="g2" style="gap: 8px"><button class="btn" style="background: var(--pri-soft); border-color: var(--pri-line); color: var(--pri-ink)">Post to room</button><button class="btn">POS terminal</button><button class="btn">Transfer</button><button class="btn">Cash</button></div>
+            <div class="field"><label>Room</label><div class="input num" style="height: 44px">404</div></div>
+            <div class="inset col" style="padding: 12px; gap: 4px; background: var(--surface)"><div class="row between"><span class="medium">Ngozi Okafor</span><span class="tag vip">VIP 2</span></div><span class="t-sm muted num">In house · 25–27 Nov · charges allowed to room</span></div>
+            <div class="field"><label>Guest confirms with room PIN</label><div class="row" style="gap: 8px"><div class="input num" style="height: 44px; width: 52px; justify-content: center; font-size: 18px">•</div><div class="input num" style="height: 44px; width: 52px; justify-content: center; font-size: 18px">•</div><div class="input num focus" style="height: 44px; width: 52px; justify-content: center; font-size: 18px"></div><div class="input num" style="height: 44px; width: 52px; justify-content: center"></div></div><span class="hint">Or ask her to sign the printed check</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="t-h3">Part 2 of 2</span><span class="num t-h3">₦35,525.00</span></div>
+          <div class="card-b col" style="gap: 12px">
+            <div class="g2" style="gap: 8px"><button class="btn">Post to room</button><button class="btn">POS terminal</button><button class="btn">Transfer</button><button class="btn" style="background: var(--pri-soft); border-color: var(--pri-line); color: var(--pri-ink)">Cash</button></div>
+            <div class="field"><label>Currency</label><div class="seg" role="group" aria-label="Currency"><button class="on" style="height: 36px; padding: 0 14px">₦ NGN</button><button style="height: 36px; padding: 0 14px">$ USD</button><button style="height: 36px; padding: 0 14px">£ GBP</button><button style="height: 36px; padding: 0 14px">€ EUR</button></div></div>
+            <div class="field"><label>Cash received</label><div class="input num focus" style="height: 44px; font-size: 18px"><span class="pre">₦</span>40,000.00</div></div>
+            <div class="row" style="gap: 8px"><span class="pill" style="height: 36px">₦35,525</span><span class="pill on" style="height: 36px">₦40,000</span><span class="pill" style="height: 36px">₦50,000</span></div>
+            <div class="row between num" style="font-size: 16px"><span class="medium">Change</span><span class="strong">₦4,475.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside style="background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 18px; gap: 14px">
+      <span class="t-h3">Check 1188</span>
+      <div class="col num" style="gap: 6px">
+        <div class="row between"><span class="muted">Food &amp; drinks · 9 items</span><span>₦58,000.00</span></div>
+        <div class="row between t-sm muted"><span>Service charge 10%</span><span>₦5,800.00</span></div>
+        <div class="row between t-sm muted"><span>VAT 7.5%</span><span>₦4,350.00</span></div>
+        <div class="row between t-sm muted"><span>Lagos consumption tax 5%</span><span>₦2,900.00</span></div>
+        <div class="row between strong" style="border-top: 1px solid var(--border); padding-top: 8px; font-size: 16px"><span>Total</span><span>₦71,050.00</span></div>
+      </div>
+      <div class="col num" style="gap: 8px; border-top: 1px solid var(--border); padding-top: 12px">
+        <div class="row between"><span>Room 404 · Okafor</span><span class="badge b-am">Waiting for PIN</span></div>
+        <div class="row between"><span>Cash</span><span class="badge b-em">Ready</span></div>
+      </div>
+      <div class="col" style="margin-top: auto; gap: 10px">
+        <div class="row between num"><span class="muted">Still to collect</span><span class="medium">₦71,050.00</span></div>
+        <button class="btn pri xl" disabled>Complete both payments</button>
+        <button class="btn">Print bill</button>
+      </div>
+    </aside>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1194,"height":834}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

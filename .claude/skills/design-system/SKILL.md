@@ -5,7 +5,7 @@ description: The app's visual language — tokens, colours, typography, spacing,
 
 # Design system
 
-The quality bar is Linear, Stripe Dashboard, Mercury and Mews: calm, fast, precise. If the approved Claude Design files exist in `docs/design/`, they override anything below.
+The quality bar is Linear, Stripe Dashboard, Mercury and Mews: calm, fast, precise. The approved designs are in `docs/design/export/` (Claude Design export, 25 Nov 2026: all 46 screens with dark, 390px and state variants). They are the source of truth: when this file and the designs disagree, follow the designs and fix this file. `docs/design/export/vento.css` holds the exact token values below. The `.dc.html` files need the Claude Design runtime to render, so read them as reference (layout, copy, values) or view them in Claude Design.
 
 ## UX principles (apply to every screen)
 1. **One job per screen, one primary action.** The most important number or status is the first thing seen (today's arrivals, the folio balance, rooms left to clean).
@@ -22,22 +22,29 @@ The quality bar is Linear, Stripe Dashboard, Mercury and Mews: calm, fast, preci
 ## Tokens (defined in `apps/web/src/styles.css`, consumed via Tailwind)
 | Purpose | Token / class |
 |---|---|
-| Brand / primary action | `bg-primary text-primary-foreground` (brand `#7677FB`) |
-| Page background | `bg-background` (light: slate-50 tone, dark: near-black) |
+| Brand / primary action | `bg-primary text-primary-foreground` (brand `#7677FB`; primary button `#6364F0`, hover `#5354DE`; soft tint for selected states) |
+| Page background | `bg-background` (light `#F5F6F8`, dark `#0A0F1E`); surfaces light `#FFFFFF` / dark `#111729` |
+| Text | primary, secondary and tertiary text tokens (light `#101828` / `#475467` / `#667085`) |
 | Card / surface | `bg-card text-card-foreground border` |
 | Secondary text | `text-muted-foreground` |
 | Destructive | `bg-destructive`, `text-destructive` |
-| Sidebar | `bg-sidebar text-sidebar-foreground` (dark navy in both themes) |
+| Sidebar | `bg-sidebar text-sidebar-foreground` (dark navy in both themes: light `#0E1630`, dark `#070B17`) |
 | Focus ring | `ring-ring` (brand) |
 | Room status | `bg-status-clean`, `bg-status-dirty`, `bg-status-occupied`, `bg-status-ooo` (+ `-foreground`, `-muted` tints), defined for both themes |
-| Radius | `rounded-md` for controls, `rounded-lg` for cards and tiles, `rounded-full` for badges and avatars |
+| Status | emerald, amber, blue, rose and slate each with a tinted background, text and dot token, light and dark (values in `vento.css`: `--em*`, `--am*`, `--bl*`, `--ro*`, `--sl*`) |
+| Radius | 8px for controls (`rounded-md`), 10px for cards and tiles (`rounded-lg`), `rounded-full` for badges and avatars |
+| Shadow | almost none: 1px shadow on cards in light mode, borders do the work; a larger shadow only for overlays. No shadows in dark mode. |
+
+The hex values here are for defining tokens in `styles.css` only. Port them from `docs/design/export/vento.css`, light and dark, and keep the two files in step.
 
 **Never** write hex, rgb or arbitrary colour values in components. If a colour is missing, add a token in `styles.css` with a dark-mode value.
 
 ## Typography
-Poppins (self-hosted via `@fontsource`). Scale:
-- Page title `text-xl font-semibold`, section title `text-base font-semibold`
-- Body `text-sm`, secondary `text-sm text-muted-foreground`, caption `text-xs text-muted-foreground`
+**Inter** (self-hosted via `@fontsource-variable/inter`, with `cv11` and `ss01` features), chosen in the design over Poppins because it stays readable in dense tables, grids and folios. Base size is **13px / 20px**; the app is dense like Linear and Stripe, not marketing-sized. Scale (from `vento.css`):
+- Display 28/36 semibold (stat headlines), page title 22/30 semibold, section title 16/24 semibold, card title 14/20 semibold
+- Body 13/20, small 12/16, label 11/16 semibold uppercase with letter spacing (table headers, field labels)
+- Secondary text uses the secondary text token, captions the tertiary one
+- POS, PIN pad and housekeeping phone screens scale up (body 15–16px) for touch
 - Numbers in tables, folios, tiles and stats use `tabular-nums`. Room numbers in tiles `text-base font-semibold`.
 
 ## Spacing and layout

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Maintenance · work orders</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="mnt" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="EN" user="Emeka Nnaji" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+      <div class="pagehead">
+        <div class="col" style="gap: 2px"><h1 class="t-h1">Work orders</h1><span class="muted num">6 open · 2 urgent · 2 rooms out of order</span></div>
+        <div class="row wrap"><div class="seg" role="tablist"><button class="on">Board</button><button>List</button><button>Assets &amp; power</button></div><button class="btn pri">New work order<span class="kbd">N</span></button></div>
+      </div>
+      <div class="row wrap"><span class="pill on">All areas</span><span class="pill">Rooms</span><span class="pill">Public areas</span><span class="pill">Kitchen</span><span class="pill">Plant &amp; power</span><span class="pill">Mine <span class="n">4</span></span></div>
+
+      <div class="split">
+        <div class="g4" style="align-items: start; gap: 12px">
+          <div class="lane">
+            <div class="row between"><span class="t-h3">Open</span><span class="faint num">3</span></div>
+            <div class="wo" style="box-shadow: 0 0 0 2px var(--brand)"><div class="row between"><span class="medium num">714 · AC not cooling</span></div><div class="row wrap" style="gap: 6px"><span class="badge b-ro">Urgent</span><span class="badge b-bl">Occupied</span></div><span class="t-sm muted">Guest app · 16:40 · “room at 29°C”</span><span class="t-sm faint num">WO-1192 · 1 h 10 min</span></div>
+            <div class="wo"><span class="medium num">309 · No hot water</span><div class="row wrap" style="gap: 6px"><span class="badge b-ro">Urgent</span><span class="badge b-bl">Occupied</span></div><span class="t-sm muted">Front desk · 17:05</span><span class="t-sm faint num">WO-1193 · 45 min</span></div>
+            <div class="wo"><span class="medium">Lobby lift · door sensor</span><span class="badge" style="align-self: flex-start">Normal</span><span class="t-sm faint num">WO-1194 · 2 h</span></div>
+          </div>
+          <div class="lane">
+            <div class="row between"><span class="t-h3">Assigned</span><span class="faint num">2</span></div>
+            <div class="wo"><span class="medium">Kitchen extractor fan noise</span><span class="row t-sm muted"><span class="av" style="width: 20px; height: 20px; font-size: 9px">SB</span>Sani B. · tomorrow 08:00</span><span class="t-sm faint num">WO-1188</span></div>
+            <div class="wo"><span class="medium">Pool pump pressure low</span><span class="row t-sm muted"><span class="av" style="width: 20px; height: 20px; font-size: 9px">SB</span>Sani B. · today 18:30</span><span class="t-sm faint num">WO-1190</span></div>
+          </div>
+          <div class="lane">
+            <div class="row between"><span class="t-h3">In progress</span><span class="faint num">2</span></div>
+            <div class="wo"><span class="medium num">406 · AC compressor</span><span class="badge b-ro" style="align-self: flex-start">OOO to 27 Nov</span><span class="t-sm muted">Waiting for part · ETA 26 Nov</span><span class="row t-sm muted"><span class="av" style="width: 20px; height: 20px; font-size: 9px">EN</span>Emeka N.</span></div>
+            <div class="wo"><span class="medium num">305 · Bathroom leak</span><span class="badge b-ro" style="align-self: flex-start">OOO to 27 Nov</span><span class="t-sm muted">Pipe replaced, tiling tomorrow</span><span class="row t-sm muted"><span class="av" style="width: 20px; height: 20px; font-size: 9px">EN</span>Emeka N.</span></div>
+          </div>
+          <div class="lane">
+            <div class="row between"><span class="t-h3">Resolved today</span><span class="faint num">4</span></div>
+            <div class="wo"><span class="row between"><span class="num">512 · TV remote</span><span class="badge b-em nd">Done</span></span></div>
+            <div class="wo"><span class="row between"><span class="num">1102 · Shower head</span><span class="badge b-em nd">Done</span></span></div>
+            <div class="wo"><span class="row between"><span class="num">210 · Door lock battery</span><span class="badge b-em nd">Done</span></span></div>
+            <div class="wo"><span class="row between"><span>Generator 2 · oil change</span><span class="badge b-em nd">Done</span></span><span class="t-sm faint">Preventive · 250 h service</span></div>
+          </div>
+        </div>
+
+        <aside class="card">
+          <div class="card-h"><div class="col"><span class="lbl">WO-1192</span><span class="t-h3 num">Put 714 out of order</span></div></div>
+          <div class="card-b col" style="gap: 14px">
+            <div class="field"><label>Status</label><div class="seg"><button class="on">Out of order</button><button>Out of service</button></div><span class="hint">Out of order removes it from inventory. Out of service keeps it sellable after the dates.</span></div>
+            <div class="field"><label>Dates</label><div class="input num">25–26 Nov 2026<span class="suf">2 nights</span></div></div>
+            <div class="field"><label>Reason</label><div class="input">AC compressor failed, needs replacing</div></div>
+            <div class="inset col" style="padding: 12px; gap: 8px; background: var(--am-bg); border-color: transparent"><span class="medium ink-am">714 has a guest until 27 Nov</span><span class="t-sm muted num">Kola Ade · Deluxe King. Move him first: 716 is the same type and inspected.</span><button class="btn sm" style="align-self: flex-start">Move guest to 716</button></div>
+            <div class="row between t-sm muted num"><span>Lost revenue if unsold</span><span>₦0.00 · guest moved</span></div>
+            <button class="btn pri">Put 714 out of order 25–26 Nov</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1050}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

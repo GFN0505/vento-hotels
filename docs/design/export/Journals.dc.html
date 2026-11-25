@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ledger and journals</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="fin" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="IU" user="Ifeoma Uche" entity="Kora Hospitality Ltd" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">General ledger</h1><span class="muted num">Kora Hospitality Ltd · VI and Ikeja · November 2026 open</span></div><div class="row wrap"><button class="btn">Trial balance</button><button class="btn pri">New journal</button></div></div><div class="split"><div class="col" style="gap: 16px; min-width: 0"><div class="card"><div class="card-h"><span class="t-h3">Journals</span><div class="row"><span class="pill on">All sources</span><span class="pill">Manual <span class="n">2</span></span></div></div><div class="tbox"><table class="tbl"><thead><tr><th>Journal</th><th>Date</th><th>Source</th><th>Description</th><th class="r">Amount</th><th>Status</th></tr></thead><tbody><tr><td><span class="num medium">JE-KH-26-11-0912</span></td><td><span class="num">24 Nov</span></td><td>Night audit</td><td>Room revenue and taxes, VI</td><td class="r"><span class="num">₦20,155,905.00</span></td><td><span class="badge b-em">Posted</span></td></tr><tr><td><span class="num medium">JE-KH-26-11-0911</span></td><td><span class="num">24 Nov</span></td><td>POS</td><td>Calabash and bars takings, VI</td><td class="r"><span class="num">₦8,467,690.00</span></td><td><span class="badge b-em">Posted</span></td></tr><tr><td><span class="num medium">JE-KH-26-11-0905</span></td><td><span class="num">22 Nov</span></td><td>Stores</td><td>GRN-VI-2611-071 diesel 4,000 L</td><td class="r"><span class="num">₦4,600,000.00</span></td><td><span class="badge b-em">Posted</span></td></tr><tr><td><span class="num medium">JE-KH-26-11-0913</span></td><td><span class="num">25 Nov</span></td><td>Manual</td><td>Accrue November security contract</td><td class="r"><span class="num">₦3,250,000.00</span></td><td><span class="badge b-am">Needs approval</span></td></tr><tr><td><span class="num medium">Draft</span></td><td><span class="num">25 Nov</span></td><td>Manual</td><td>Reclass laundry income to rooms division</td><td class="r"><span class="num">₦186,000.00</span></td><td><span class="badge b-sl">Draft</span></td></tr></tbody></table></div></div><div class="card"><div class="card-h"><span class="t-h3">JE-KH-26-11-0912 · lines</span><span class="t-sm faint">created by night audit 24 Nov 00:51</span></div><div class="tbox"><table class="tbl"><thead><tr><th>Account</th><th>Description</th><th class="r">Debit</th><th class="r">Credit</th></tr></thead><tbody><tr><td><span class="num">1210</span> Guest ledger</td><td>Folios, 99 rooms</td><td class="r"><span class="num">₦20,155,905.00</span></td><td class="r"></td></tr><tr><td><span class="num">4010</span> Room revenue</td><td></td><td class="r"></td><td class="r"><span class="num">₦16,453,800.00</span></td></tr><tr><td><span class="num">2310</span> Service charge payable</td><td>10%</td><td class="r"></td><td class="r"><span class="num">₦1,645,380.00</span></td></tr><tr><td><span class="num">2320</span> VAT output</td><td>7.5%</td><td class="r"></td><td class="r"><span class="num">₦1,234,035.00</span></td></tr><tr><td><span class="num">2330</span> Lagos consumption tax payable</td><td>5%</td><td class="r"></td><td class="r"><span class="num">₦822,690.00</span></td></tr><tr><td><span class="strong">Total</span></td><td><span class="ink-em t-sm">Balanced</span></td><td class="r"><span class="num strong">₦20,155,905.00</span></td><td class="r"><span class="num strong">₦20,155,905.00</span></td></tr></tbody></table></div></div></div><div class="card"><div class="card-h"><span class="t-h3">Kora Hospitality Ltd · November</span></div><div class="card-b col num" style="gap: 8px"><div class="row between"><span class="muted">Revenue · MTD</span><span>₦784,600,000.00</span></div><div class="row between"><span class="muted">Cost of sales</span><span>₦98,420,000.00</span></div><div class="row between"><span class="muted">Payroll</span><span>₦121,300,000.00</span></div><div class="row between"><span class="muted">Energy · diesel and grid</span><span>₦61,800,000.00</span></div><div class="row between"><span class="muted">Cash and bank</span><span>₦184,215,400.00</span></div><div class="row between strong" style="border-top: 1px solid var(--border); padding-top: 8px"><span>Trial balance</span><span class="ink-em">Debits = credits</span></div><span class="t-sm faint">November is open. Lock period after month-end review.</span></div></div></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

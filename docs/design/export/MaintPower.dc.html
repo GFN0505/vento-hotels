@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Maintenance · assets, power and diesel</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="mnt" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="EN" user="Emeka Nnaji" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+      <div class="pagehead">
+        <div class="col" style="gap: 2px"><h1 class="t-h1">Assets &amp; power</h1><span class="muted num">19–25 Nov 2026 · diesel at ₦1,150.00 per litre (last delivery)</span></div>
+        <div class="row wrap"><div class="seg" role="tablist"><button>Board</button><button>List</button><button class="on">Assets &amp; power</button></div><button class="btn pri">Log today's readings</button></div>
+      </div>
+
+      <div class="g4">
+        <div class="card stat"><span class="lbl">Diesel per occupied room · MTD</span><span class="v">₦9,840</span><span class="t-sm muted">Target ₦11,000</span></div>
+        <div class="card stat"><span class="lbl">Diesel used · 7 days</span><span class="v">5,600 L</span><span class="t-sm muted num">₦6,440,000.00</span></div>
+        <div class="card stat"><span class="lbl">Grid supply</span><span class="v">9.6 h/day</span><span class="delta down">−2.1 h vs last week</span></div>
+        <div class="card stat"><span class="lbl">Tank level</span><span class="v">62%</span><div class="meter"><i class="f-pri" style="width: 62%"></i></div><span class="t-sm muted num">18,600 of 30,000 L · about 22 days</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="t-h3">Power and diesel log</span><div class="row"><span class="t-sm faint">Generator hours from the meter, entered by the shift technician</span></div></div>
+        <div class="tbox"><table class="tbl">
+          <thead><tr><th>Date</th><th class="r">Grid h</th><th class="r">Generator h</th><th class="r">Solar kWh</th><th class="r">Diesel added L</th><th class="r">Diesel used L</th><th class="r">Cost</th><th class="r">Occupied rooms</th><th class="r">Per occupied room</th></tr></thead>
+          <tbody>
+            <tr><td class="num">Thu 19 Nov</td><td class="r">9.5</td><td class="r">14.5</td><td class="r">182</td><td class="r faint">–</td><td class="r">840</td><td class="r">₦966,000.00</td><td class="r">92</td><td class="r">₦10,500</td></tr>
+            <tr><td class="num">Fri 20 Nov</td><td class="r">11.0</td><td class="r">13.0</td><td class="r">175</td><td class="r faint">–</td><td class="r">760</td><td class="r">₦874,000.00</td><td class="r">95</td><td class="r">₦9,200</td></tr>
+            <tr><td class="num">Sat 21 Nov</td><td class="r">6.5</td><td class="r">17.5</td><td class="r">190</td><td class="r faint">–</td><td class="r">1,010</td><td class="r">₦1,161,500.00</td><td class="r">97</td><td class="r ink-ro medium">₦11,974</td></tr>
+            <tr><td class="num">Sun 22 Nov</td><td class="r">8.0</td><td class="r">16.0</td><td class="r">168</td><td class="r">4,000</td><td class="r">920</td><td class="r">₦1,058,000.00</td><td class="r">101</td><td class="r">₦10,475</td></tr>
+            <tr><td class="num">Mon 23 Nov</td><td class="r">12.5</td><td class="r">11.5</td><td class="r">186</td><td class="r faint">–</td><td class="r">670</td><td class="r">₦770,500.00</td><td class="r">98</td><td class="r">₦7,862</td></tr>
+            <tr><td class="num">Tue 24 Nov</td><td class="r">10.0</td><td class="r">14.0</td><td class="r">179</td><td class="r faint">–</td><td class="r">810</td><td class="r">₦931,500.00</td><td class="r">99</td><td class="r">₦9,409</td></tr>
+            <tr><td class="num"><span class="row">Wed 25 Nov <span class="badge b-am nd">To 18:00</span></span></td><td class="r">7.0</td><td class="r">11.0</td><td class="r">150</td><td class="r faint">–</td><td class="r">590</td><td class="r">₦678,500.00</td><td class="r faint">–</td><td class="r faint">at night audit</td></tr>
+          </tbody>
+        </table></div>
+        <div class="card-f t-sm muted">Delivery 22 Nov: 4,000 L from [SUPPLIER] · ₦4,600,000.00 · received by Sani B., dip reading matched the waybill.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="t-h3">Assets and preventive schedule</span><button class="btn sm">Add asset</button></div>
+        <div class="tbox"><table class="tbl">
+          <thead><tr><th>Asset</th><th>Location</th><th class="r">Meter</th><th>Next service</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="medium">Generator 1 · 500 kVA diesel</td><td class="muted">Plant room</td><td class="r num">14,820 h</td><td class="num">250 h service at 14,900 h · about 4 days</td><td><span class="badge b-am">Due soon</span></td><td class="r"><button class="btn sm">Create WO</button></td></tr>
+            <tr><td class="medium">Generator 2 · 500 kVA diesel</td><td class="muted">Plant room</td><td class="r num">9,410 h</td><td class="num">9,660 h</td><td><span class="badge b-em">Serviced today</span></td><td></td></tr>
+            <tr><td class="medium">Water treatment · filters</td><td class="muted">Basement</td><td class="r faint">–</td><td class="num">23 Nov 2026</td><td><span class="badge b-ro">2 days overdue</span></td><td class="r"><button class="btn sm">Create WO</button></td></tr>
+            <tr><td class="medium">Fire pumps · weekly test</td><td class="muted">Basement</td><td class="r faint">–</td><td class="num">27 Nov 2026</td><td><span class="badge b-em">On schedule</span></td><td></td></tr>
+            <tr><td class="medium">Solar · 120 kWp array and inverter</td><td class="muted">Roof</td><td class="r num">48,210 kWh</td><td class="num">Panel clean 1 Dec 2026</td><td><span class="badge b-em">On schedule</span></td><td></td></tr>
+            <tr><td class="medium">Lifts (2) · contractor visit</td><td class="muted">Core</td><td class="r faint">–</td><td class="num">3 Dec 2026</td><td><span class="badge b-em">On schedule</span></td><td></td></tr>
+            <tr><td class="medium">Chiller 1 · quarterly service</td><td class="muted">Roof</td><td class="r faint">–</td><td class="num">10 Dec 2026</td><td><span class="badge b-em">On schedule</span></td><td></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Import states</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="none" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="TA" user="Tunde Alabi" offline="{{offline}}" pending="3" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">Import data</h1><span class="muted num">Kora Victoria Island · bring records from your old system or spreadsheets</span></div><div class="row wrap"></div></div><sc-if value="{{is_loading}}" hint-placeholder-val="{{ true }}"><div class="card"><div class="card-b col" style="gap: 16px; padding: 28px; max-width: 560px"><span class="t-h2">Checking future-reservations-opera.xlsx</span><div class="meter" style="height: 8px"><i class="f-pri" style="width: 62%"></i></div><span class="t-sm muted num">Row 796 of 1,284 · about 20 seconds</span><div class="col" style="gap: 8px"><div class="row" style="gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="muted">Read file</span></div><div class="row" style="gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="muted">Match columns</span></div><div class="row" style="gap: 10px"><span class="check" style="border-color: var(--brand)"></span><span class="medium">Check 1,284 rows</span></div><div class="row" style="gap: 10px"><span class="check"></span><span class="faint">Find duplicates</span></div></div><span class="t-sm faint">Nothing changes until you review and apply. You can leave this page.</span></div></div></sc-if><sc-if value="{{is_empty}}" hint-placeholder-val="{{ false }}"><div class="card"><div class="col" style="align-items: center; text-align: center; gap: 10px; padding: 64px 24px"><span class="av lg" style="background: var(--surface-3); color: var(--text-2)"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg></span><span class="t-h2">Nothing imported yet</span><span class="muted" style="max-width: 460px">Start with rooms, then guests and companies, then future reservations and opening balances. Each import can be undone for 24 hours.</span><div class="row" style="gap: 8px; margin-top: 6px"><button class="btn pri">Choose what to import</button><button class="btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>All templates</button></div></div></div></sc-if><sc-if value="{{is_error}}" hint-placeholder-val="{{ false }}"><div class="card"><div class="col" style="align-items: center; text-align: center; gap: 10px; padding: 64px 24px"><span class="av lg" style="background: var(--surface-3); color: var(--text-2)"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg></span><span class="t-h2">We couldn't read this file</span><span class="muted" style="max-width: 460px">future-reservations.xlsx is password-protected, and the sheet we could open has no Arrival or Departure column.</span><div class="row" style="gap: 8px; margin-top: 6px"><button class="btn pri">Choose another file</button><button class="btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Template (.xlsx)</button></div></div></div><div class="card card-b col" style="gap: 6px"><span class="t-h3">Fix it in the file</span><span class="t-sm muted">Remove the password (File › Info › Protect workbook), or export again from your old system as .csv. Required columns: Guest name, Arrival, Departure, Room type.</span></div></sc-if><sc-if value="{{is_offline}}" hint-placeholder-val="{{ false }}"><div class="banner off" style="border-radius: 10px; border: 1px solid var(--border)"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M8 8a5 5 0 0 0-1 9.9h10M16.5 11.5A4 4 0 0 1 19 18"/></svg><span class="grow"><b>Offline since 17:32.</b> Imports need a connection to check rows against your rooms and rates. Your file stays selected and uploads when you're back.</span></div><div class="card card-b row" style="gap: 14px"><span class="av lg" style="background: var(--surface-3); color: var(--text-2)"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg></span><div class="col grow"><span class="medium">future-reservations-opera.xlsx</span><span class="t-sm muted num">1.8 MB · selected 17:35 · waiting for connection</span></div><button class="btn ghost">Remove</button><button class="btn pri" disabled>Upload</button></div></sc-if>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"state":{"editor":"enum","options":["loading","empty","error","offline"],"default":"loading"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.props.state ?? 'loading';
+    return { theme: this.props.dark ? 'vt dark' : 'vt', is_loading: st === 'loading', is_empty: st === 'empty', is_error: st === 'error', is_offline: st === 'offline', offline: st === 'offline' };
+  }
+}
+</script>
+</body>
+</html>

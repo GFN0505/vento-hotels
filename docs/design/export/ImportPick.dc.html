@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Data import · choose</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="none" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="TA" user="Tunde Alabi" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">Import data</h1><span class="muted num">Kora Victoria Island · bring records from your old system or spreadsheets</span></div><div class="row wrap"></div></div><div class="col" style="gap: 8px"><span class="lbl">1 · What are you importing?</span><div style="display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 10px"><button class="card col" style="padding: 14px; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer; "><span class="medium">Rooms</span><span class="t-sm faint">by type and floor</span></button><button class="card col" style="padding: 14px; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer; "><span class="medium">Guests</span><span class="t-sm faint">12,400 rows max</span></button><button class="card col" style="padding: 14px; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer; "><span class="medium">Companies</span><span class="t-sm faint">with credit limits</span></button><button class="card col" style="padding: 14px; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer; border-color: var(--brand); box-shadow: 0 0 0 3px var(--pri-line)"><span class="medium">Future reservations</span><span class="t-sm faint">from your old system</span></button><button class="card col" style="padding: 14px; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer; "><span class="medium">Opening balances</span><span class="t-sm faint">city ledger, deposits</span></button><button class="card col" style="padding: 14px; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer; "><span class="medium">Stock</span><span class="t-sm faint">by store</span></button><button class="card col" style="padding: 14px; gap: 4px; text-align: left; font: inherit; color: inherit; cursor: pointer; "><span class="medium">Employees</span><span class="t-sm faint">with bank details</span></button></div></div><div class="g2" style="align-items: start"><div class="card card-b col" style="gap: 10px"><span class="lbl">2 · Use our template</span><span class="muted">Columns: guest name, phone, email, arrival, departure, room type, rate plan, rate, company, deposit paid, booking source, notes.</span><div class="row"><button class="btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Template (.xlsx)</button><button class="btn ghost">Column guide</button></div><span class="t-sm faint">Exports from Opera, Hotelogix and eZee open directly; we map their columns for you.</span></div><div class="card card-b col" style="gap: 10px"><span class="lbl">3 · Upload</span><div style="border: 1.5px dashed var(--border-strong); border-radius: 10px; padding: 28px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V9M7 14l5-5 5 5M4 3h16"/></svg><span class="medium">Drop a .xlsx or .csv file</span><span class="t-sm muted">or</span><button class="btn sm">Choose file</button></div><span class="t-sm faint">Nothing changes until you review and apply. Every import can be undone for 24 hours.</span></div></div><div class="card"><div class="card-h"><span class="t-h3">Recent imports</span></div><div class="tbox"><table class="tbl"><thead><tr><th>Import</th><th>When</th><th>By</th><th>Rows</th><th>Status</th></tr></thead><tbody><tr><td>Guests · opera-guests.csv</td><td><span class="num">24 Nov 10:12</span></td><td>Tunde Alabi</td><td><span class="num">8,912</span></td><td><span class="badge b-em">Applied · undo until 25 Nov 10:12</span></td></tr><tr><td>Companies · corporates.xlsx</td><td><span class="num">24 Nov 09:40</span></td><td>Ifeoma Uche</td><td><span class="num">48</span></td><td><span class="badge b-sl">Undo window closed</span></td></tr></tbody></table></div></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":950}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Data import · applied</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="none" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="TA" user="Tunde Alabi" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">Import applied</h1><span class="muted num">future-reservations-opera.xlsx · by Tunde Alabi · 25 Nov 2026 18:58</span></div><div class="row wrap"></div></div><div class="card"><div class="card-b row" style="gap: 16px; padding: 24px"><span class="av lg" style="background: var(--em-bg); color: var(--em)"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span><div class="col grow" style="gap: 4px"><span class="t-h2">1,251 reservations created</span><span class="muted num">33 rows skipped · 6 imported without a room because those dates were full</span></div><button class="btn">Open tape chart</button></div></div><div class="g3"><div class="card stat"><span class="lbl">Room nights added</span><span class="v">3,904</span><span class="t-sm muted num">26 Nov 2026 – 30 Jun 2027</span></div><div class="card stat"><span class="lbl">Deposits imported</span><span class="v">₦48,212,500.00</span><span class="t-sm muted num">posted to guest ledger</span></div><div class="card stat"><span class="lbl">Needs a room</span><span class="v">6</span><span class="t-sm muted num">assign on the tape chart</span></div></div><div class="card"><div class="card-h"><span class="t-h3">Undo</span><span class="badge b-am nd">23 h 54 min left</span></div><div class="card-b row between wrap" style="gap: 16px"><span class="muted" style="max-width: 640px">Undo removes every reservation and deposit this import created, as long as it hasn't been checked in, paid against or changed since. Changed records are listed so you can decide one by one.</span><button class="btn dng">Undo this import</button></div></div><div class="card"><div class="card-h"><span class="t-h3">Skipped rows</span><button class="btn sm"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Download 33</button></div><div class="tbox"><table class="tbl"><thead><tr><th>Row</th><th>Reason</th></tr></thead><tbody><tr><td><span class="num">14</span></td><td>Not a real date</td></tr><tr><td><span class="num">203</span></td><td>Phone too short</td></tr><tr><td><span class="num">1,204</span></td><td>Departure before arrival</td></tr></tbody></table></div></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

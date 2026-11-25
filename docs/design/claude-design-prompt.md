@@ -43,7 +43,7 @@ The bar is world-class: the craft and calm of Linear, Stripe Dashboard, Mercury,
 
 ## Brand and visual direction
 - Primary **#7677FB** (violet). Deep navy sidebar. Light neutral background, white cards, full dark mode.
-- Font: Poppins, or propose a better sans for dense grids and financial tables, with reasoning. Tabular numbers for all money, room numbers and counts.
+- Font: Inter, 13px base (chosen in the first design round for dense grids and financial tables). Tabular numbers for all money, room numbers and counts.
 - Soft 10px radius, subtle borders over heavy shadows, generous whitespace, restrained colour: colour means status or action, never decoration.
 - Status colours: emerald = clean/inspected/paid/settled, amber = dirty/due/pending/tentative, blue = occupied/in progress/checked in, rose = out of order/overdue/no-show/blacklisted, slate = draft/inactive/cancelled. Out of service is a muted rose or striped variant of out of order. Keep the same meaning in every module.
 - Room and property photos used with purpose (booking engine, room types, guest app), never as filler in the back office.

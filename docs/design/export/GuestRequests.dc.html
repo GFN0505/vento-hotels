@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guest app · requests</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#fff}</style>
+</helmet>
+<div class="kb" style="--k: {{accent}}; width: 390px; height: 844px; overflow: hidden; display: flex; flex-direction: column; background: #F7F8FA">
+  <header style="height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: #fff; border-bottom: 1px solid #E4E7EC">
+    <a href="#" aria-label="Back" style="color: #101828; display: flex"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+    <span class="kh" style="font-size: 16px">Requests · room 502</span>
+  </header>
+  <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px; flex: 1; overflow: hidden">
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px">
+      <button class="kcard" style="height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 500 14px/1.2 Inter, sans-serif; color: #101828">Towels</button>
+      <button class="kcard" style="height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 500 14px/1.2 Inter, sans-serif; color: #101828">Toiletries</button>
+      <button class="kcard" style="height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 500 14px/1.2 Inter, sans-serif; color: #101828">Clean room now</button>
+      <button class="kcard" style="height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 500 14px/1.2 Inter, sans-serif; color: #101828">Something's broken</button>
+      <button class="kcard" style="height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 500 14px/1.2 Inter, sans-serif; color: #101828">Wake-up call</button>
+      <button class="kcard" style="height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 600 14px/1.2 Inter, sans-serif; color: var(--k); box-shadow: 0 0 0 2px var(--k)">Late check-out</button>
+    </div>
+
+    <div class="kcard" style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+      <h2 style="font-size: 16px">Late check-out · Sat 28 Nov</h2>
+      <label style="display: flex; gap: 12px; align-items: center; padding: 12px; border: 1.5px solid var(--k); border-radius: 12px; background: var(--k-soft)"><span class="radio on" style="border-color: var(--k)"></span><span style="flex: 1"><b>Until 14:00</b><br><span style="font-size: 13px; color: #475467">Free if available</span></span><b>₦0.00</b></label>
+      <label style="display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid #E4E7EC; border-radius: 12px"><span class="radio"></span><span style="flex: 1"><b>Until 18:00</b><br><span style="font-size: 13px; color: #475467">Half day, excl. taxes</span></span><b class="num">₦90,000.00</b></label>
+      <button class="kbtn">Ask the front desk</button>
+      <span style="font-size: 13px; color: #475467">We'll confirm on WhatsApp by 18:00 on Friday.</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span class="klbl">Your requests</span>
+      <div class="kcard" style="padding: 12px 14px; display: flex; justify-content: space-between; align-items: center"><div style="display: flex; flex-direction: column"><b>Extra towels</b><span class="num" style="font-size: 13px; color: #475467">Asked 19:02 · delivered 19:10</span></div><span class="badge b-em">Done</span></div>
+      <div class="kcard" style="padding: 12px 14px; display: flex; justify-content: space-between; align-items: center"><div style="display: flex; flex-direction: column"><b>Desk lamp flickers</b><span class="num" style="font-size: 13px; color: #475467">Technician on the way · about 15 min</span></div><span class="badge b-bl">In progress</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#1F5C66","options":["#1F5C66","#7A3E2B","#1D3A6B","#3E4A2F"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#1F5C66' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reservation detail</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif; position: relative">
+<div class="app">
+  <dc-import name="Sidebar" active="res" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="CE" user="Chidi Eze" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+      <div class="row t-sm muted"><a href="#">Reservations</a><span class="faint">/</span><span class="num">VI-2611-0482</span></div>
+
+      <div class="card">
+        <div class="row between wrap" style="padding: 18px 20px; gap: 16px">
+          <div class="row" style="gap: 14px">
+            <span class="av lg">JW</span>
+            <div class="col" style="gap: 4px">
+              <div class="row wrap"><h1 class="t-h1">James Whitfield</h1><span class="badge b-vi">Confirmed · arriving today</span></div>
+              <div class="row wrap t-sm muted"><span class="tag">Foreign national</span><span class="tag">Corporate · Acme Energy Ltd</span><span class="num">Booked 18 Nov 2026 by Tolu Bankole</span></div>
+            </div>
+          </div>
+          <div class="row wrap">
+            <button class="btn ghost dng">Cancel</button>
+            <button class="btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>Audit trail</button>
+            <button class="btn">Room move</button>
+            <button class="btn">Modify<span class="kbd">M</span></button>
+            <button class="btn pri">Check in<span class="kbd">C</span></button>
+            <button class="btn icon" aria-label="More: no-show, duplicate, print"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+          </div>
+        </div>
+        <div class="g5" style="border-top: 1px solid var(--border); padding: 14px 20px; gap: 16px">
+          <div class="col"><span class="lbl">Stay</span><span class="medium num">25–28 Nov 2026</span><span class="t-sm faint">3 nights · ETA 15:30</span></div>
+          <div class="col"><span class="lbl">Room</span><span class="medium num">502 · Executive King</span><span class="t-sm ink-em">Inspected · ready</span></div>
+          <div class="col"><span class="lbl">Rate</span><span class="medium num">₦180,000.00 /night</span><span class="t-sm faint">Acme corporate · room &amp; breakfast</span></div>
+          <div class="col"><span class="lbl">Stay total</span><span class="medium num">₦661,500.00</span><span class="t-sm faint">incl. service charge &amp; taxes</span></div>
+          <div class="col"><span class="lbl">Balance</span><span class="medium num">₦0.00</span><span class="t-sm faint">Routed to city ledger</span></div>
+        </div>
+      </div>
+
+      <div class="row" role="tablist" style="gap: 2px; border-bottom: 1px solid var(--border); overflow-x: auto">
+        <button class="btn ghost" style="border-radius: 0; color: var(--text); box-shadow: inset 0 -2px 0 var(--brand)">Overview</button>
+        <button class="btn ghost" style="border-radius: 0">Rate &amp; charges</button>
+        <button class="btn ghost" style="border-radius: 0">Guest &amp; registration</button>
+        <button class="btn ghost" style="border-radius: 0">Messages <span class="faint num">3</span></button>
+        <button class="btn ghost" style="border-radius: 0">Documents</button>
+      </div>
+
+      <div class="split">
+        <div class="col" style="gap: 16px; min-width: 0">
+          <div class="card">
+            <div class="card-h"><span class="t-h3">Rate per night</span><span class="t-sm faint num">Rack ₦210,000.00 · contract rate saves ₦30,000.00/night</span></div>
+            <div class="tbox"><table class="tbl">
+              <thead><tr><th>Night</th><th>Plan</th><th class="r">Room &amp; breakfast</th><th class="r">Service 10%</th><th class="r">VAT 7.5%</th><th class="r">Consumption 5%</th><th class="r">Total</th></tr></thead>
+              <tbody>
+                <tr><td class="num">Wed 25 Nov</td><td>Acme corporate</td><td class="r">₦180,000.00</td><td class="r muted">₦18,000.00</td><td class="r muted">₦13,500.00</td><td class="r muted">₦9,000.00</td><td class="r">₦220,500.00</td></tr>
+                <tr><td class="num">Thu 26 Nov</td><td>Acme corporate</td><td class="r">₦180,000.00</td><td class="r muted">₦18,000.00</td><td class="r muted">₦13,500.00</td><td class="r muted">₦9,000.00</td><td class="r">₦220,500.00</td></tr>
+                <tr><td class="num">Fri 27 Nov</td><td>Acme corporate</td><td class="r">₦180,000.00</td><td class="r muted">₦18,000.00</td><td class="r muted">₦13,500.00</td><td class="r muted">₦9,000.00</td><td class="r">₦220,500.00</td></tr>
+                <tr class="sub"><td>3 nights</td><td></td><td class="r">₦540,000.00</td><td class="r">₦54,000.00</td><td class="r">₦40,500.00</td><td class="r">₦27,000.00</td><td class="r">₦661,500.00</td></tr>
+              </tbody>
+            </table></div>
+          </div>
+
+          <div class="g2">
+            <div class="card">
+              <div class="card-h"><span class="t-h3">Guest</span><a class="t-sm" href="#">Profile · 4 stays</a></div>
+              <div class="card-b col num" style="gap: 8px">
+                <div class="row between"><span class="faint">Nationality</span><span>British</span></div>
+                <div class="row between"><span class="faint">Passport</span><span>••••••4821 <button class="btn ghost sm" style="height: 22px">Reveal</button></span></div>
+                <div class="row between"><span class="faint">Phone · WhatsApp</span><span>+44 7700 900461</span></div>
+                <div class="row between"><span class="faint">Email</span><span>j.whitfield@acme-energy.com</span></div>
+                <div class="row between"><span class="faint">Preferences</span><span>High floor · late breakfast</span></div>
+                <div class="row between"><span class="faint">Pre-check-in</span><span class="ink-em">Done in guest app · 24 Nov</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-h"><span class="t-h3">Company &amp; guarantee</span><a class="t-sm" href="#">Acme Energy Ltd</a></div>
+              <div class="card-b col num" style="gap: 8px">
+                <div class="row between"><span class="faint">Guarantee</span><span>Company · LPO ACM-PO-77812</span></div>
+                <div class="row between"><span class="faint">Deposit</span><span>Not required (credit account)</span></div>
+                <div class="row between"><span class="faint">Credit used</span><span>₦11,860,000.00 of ₦15,000,000.00</span></div>
+                <div class="meter"><i class="f-pri" style="width: 79%"></i></div>
+                <div class="row between"><span class="faint">Booker</span><span>Adaeze Nnamdi · travel desk</span></div>
+                <div class="inset t-sm muted" style="padding: 8px 10px">Cancelling now costs 1 night, ₦220,500.00 (inside 24 hours of arrival).</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="g2">
+            <div class="card">
+              <div class="card-h"><span class="t-h3">Routing</span><button class="btn sm ghost">Edit</button></div>
+              <div class="col">
+                <div class="row between" style="padding: 11px 16px; border-bottom: 1px solid var(--border)"><div class="col"><span class="medium">Room, breakfast, taxes</span><span class="t-sm faint">Folio A</span></div><span class="row" style="gap: 6px"><svg class="ic ic-s faint" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Acme Energy Ltd · city ledger</span></div>
+                <div class="row between" style="padding: 11px 16px"><div class="col"><span class="medium">Everything else</span><span class="t-sm faint">Folio B · restaurant, bar, minibar, laundry</span></div><span class="row" style="gap: 6px"><svg class="ic ic-s faint" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Guest · pays at check-out</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-h"><span class="t-h3">Messages sent</span><button class="btn sm ghost">Send</button></div>
+              <div class="col">
+                <div class="row between" style="padding: 11px 16px; border-bottom: 1px solid var(--border)"><div class="col"><span class="medium">Booking confirmation</span><span class="t-sm faint num">WhatsApp · 18 Nov 2026 10:16</span></div><span class="badge b-em">Read</span></div>
+                <div class="row between" style="padding: 11px 16px; border-bottom: 1px solid var(--border)"><div class="col"><span class="medium">Pre-arrival + online check-in</span><span class="t-sm faint num">WhatsApp · 24 Nov 2026 09:00</span></div><span class="badge b-em">Read</span></div>
+                <div class="row between" style="padding: 11px 16px"><div class="col"><span class="medium">Confirmation copy to booker</span><span class="t-sm faint num">Email · 18 Nov 2026 10:16</span></div><span class="badge b-sl">Delivered</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="card">
+          <div class="card-h"><span class="t-h3">Activity</span><div class="row"><button class="btn sm ghost">Add note</button><button class="btn sm">Full audit trail</button></div></div>
+          <div class="card-b tl">
+            <div class="tl-i"><span class="tl-d em"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="m5 12 5 5 9-10"/></svg></span><div class="col"><span><b>Room 502 inspected</b></span><span class="t-sm faint num">Blessing O. · HK supervisor · today 13:12</span></div></div>
+            <div class="tl-i"><span class="tl-d pri"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="M3 18V7M3 13h18v5"/></svg></span><div class="col"><span><b>Room 502 assigned</b> · high floor preference</span><span class="t-sm faint num">Chidi Eze · today 08:40</span></div></div>
+            <div class="tl-i"><span class="tl-d em"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="m5 12 5 5 9-10"/></svg></span><div class="col"><span><b>Pre-check-in completed</b></span><span class="t-sm muted">Passport uploaded · arrival 15:30</span><span class="t-sm faint num">Guest app · 24 Nov 2026 19:22</span></div></div>
+            <div class="tl-i"><span class="tl-d am"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/></svg></span><div class="col"><span><b>Rate set below rack</b> ₦210,000.00 → ₦180,000.00</span><span class="t-sm muted">“Acme negotiated rate, 2026 contract”</span><span class="t-sm faint num">Tolu Bankole · 18 Nov 2026 10:14</span></div></div>
+            <div class="tl-i"><span class="tl-d"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="M4 5h16v11H9l-5 4z"/></svg></span><div class="col"><span><b>Confirmation sent</b> on WhatsApp</span><span class="t-sm faint num">System · 18 Nov 2026 10:16</span></div></div>
+            <div class="tl-i"><span class="tl-d pri"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="M12 5v14M5 12h14"/></svg></span><div class="col"><span><b>Reservation created</b></span><span class="t-sm faint num">Tolu Bankole · Sales · 18 Nov 2026 10:09</span></div></div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+<sc-if value="{{dialog}}" hint-placeholder-val="{{ false }}">
+<div class="scrim" style="z-index: 20"></div>
+<div class="dialog" role="dialog" aria-label="Override rate · VI-2611-0482" style="position: absolute; z-index: 21; left: 50%; top: 120px; transform: translateX(-50%); width: 560px; max-width: calc(100% - 32px); padding: 22px; display: flex; flex-direction: column; gap: 16px">
+  <div class="col" style="gap: 4px"><span class="t-h2">Override rate · VI-2611-0482</span><span class="t-sm muted num">James Whitfield · 502 · Acme corporate rate</span></div>
+  <div class="inset col num" style="padding: 12px; gap: 6px; background: var(--surface)">
+    <div class="row between"><span class="muted">Nights</span><span>Thu 26 and Fri 27 Nov</span></div>
+    <div class="row between"><span class="muted">Rate per night</span><span>₦180,000.00 → <b>₦150,000.00</b></span></div>
+    <div class="row between"><span class="muted">Change</span><span>−16.7% · your limit is 10%</span></div>
+    <div class="row between strong" style="border-top: 1px solid var(--border); padding-top: 6px"><span>Stay total</span><span>₦661,500.00 → ₦588,000.00</span></div>
+  </div>
+  <div class="field"><label>Reason (required)</label><div class="row wrap" style="gap: 6px"><span class="pill on">Service recovery</span><span class="pill">Corporate rate match</span><span class="pill">Long stay</span><span class="pill">Other</span></div><div class="input">Moved from 714 after AC fault; GM agreed a lower rate</div></div>
+  <div class="inset col" style="padding: 14px; gap: 12px; background: var(--surface-2)">
+  <div class="row" style="gap: 8px; align-items: flex-start"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--pri-ink); margin-top: 2px"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg><span class="medium">This is above your limit. A manager can approve with their PIN.</span></div>
+  <div class="row wrap" style="gap: 8px"><span class="pill on" style="height: 36px; padding: 0 12px 0 4px"><span class="av" style="width: 26px; height: 26px; font-size: 10px">KA</span>Kemi Adeyemi · Duty manager · on shift</span><span class="pill" style="height: 36px">Tunde Alabi</span></div>
+  <div class="row" style="gap: 14px"><div class="pdots"><i class="on"></i><i class="on"></i><i></i><i></i></div><span class="t-sm muted">Manager enters PIN on this device</span><a class="t-sm" href="#" style="margin-left: auto">Send to their phone instead</a></div>
+</div>
+  <div class="row" style="justify-content: flex-end"><button class="btn ghost">Cancel</button><button class="btn pri" disabled>Approve and apply ₦150,000.00</button></div>
+  <span class="t-sm faint">Saved to the audit trail with your name, the manager's, this device and the reason.</span>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"dialog":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1260}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt', dialog: !!this.props.dialog };
+  }
+}
+</script>
+</body>
+</html>

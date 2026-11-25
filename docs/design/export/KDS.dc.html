@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kitchen display</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B0F19}</style>
+</helmet>
+<div class="vt-c kds" style="width: 1440px; height: 900px; overflow: hidden; display: flex; flex-direction: column; font-family: Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums">
+  <header style="height: 64px; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-bottom: 1px solid #232B42">
+    <span style="font-size: 20px; font-weight: 700">Kitchen</span>
+    <span style="color: #AEB5C9">Calabash · room service · events</span>
+    <div style="flex: 1"></div>
+    <span style="color: #AEB5C9">6 open · average 8:40</span>
+    <span style="display: flex; gap: 14px; font-size: 13px; color: #AEB5C9"><span><i style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: #1B2236; border: 1px solid #2E3854; margin-right: 6px"></i>under 10 min</span><span><i style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: rgba(247,144,9,.5); margin-right: 6px"></i>10–15</span><span><i style="display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: rgba(246,61,104,.6); margin-right: 6px"></i>over 15</span></span>
+    <span style="font-size: 22px; font-weight: 700">19:44</span>
+  </header>
+  <div style="flex: 1; display: grid; grid-template-columns: minmax(0,1fr) 250px; min-height: 0">
+    <div style="padding: 16px; display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; align-content: start">
+      <div class="tk"><div class="tk-h ro"><div style="display: flex; flex-direction: column"><b style="font-size: 18px">Room 1101</b><span style="font-size: 12px; color: #FDCAD6">Room service · VIP 1</span></div><b style="font-size: 22px; color: #FD8FA8">16:05</b></div>
+        <div class="tk-i">1 Club sandwich<small>no tomato</small></div>
+        <div class="tk-i">1 Catfish pepper soup</div>
+        <button class="btn" style="margin: 10px 12px 12px; height: 48px; background: #E7EAF3; color: #0B0F19; border: 0; font-size: 16px; font-weight: 700">Bump</button></div>
+
+      <div class="tk"><div class="tk-h am"><div style="display: flex; flex-direction: column"><b style="font-size: 18px">T7 · 6 covers</b><span style="font-size: 12px; color: #FEDF89">Mains · Ada N.</span></div><b style="font-size: 22px; color: #FDB022">12:40</b></div>
+        <div class="tk-i">2 Egusi &amp; pounded yam</div>
+        <div class="tk-i">2 Suya platter<small>1 mild</small></div>
+        <div class="tk-i">1 Fried rice &amp; turkey</div>
+        <div class="tk-i done">1 Caesar salad</div>
+        <button class="btn" style="margin: 10px 12px 12px; height: 48px; background: #E7EAF3; color: #0B0F19; border: 0; font-size: 16px; font-weight: 700">Bump</button></div>
+
+      <div class="tk"><div class="tk-h"><div style="display: flex; flex-direction: column"><b style="font-size: 18px">T11 · 2</b><span style="font-size: 12px; color: #AEB5C9">Mains · Tunde K.</span></div><b style="font-size: 22px">9:10</b></div>
+        <div class="tk-i">1 Ofada rice &amp; ayamase</div>
+        <div class="tk-i">1 Jollof rice &amp; chicken</div>
+        <button class="btn" style="margin: 10px 12px 12px; height: 48px; background: #E7EAF3; color: #0B0F19; border: 0; font-size: 16px; font-weight: 700">Bump</button></div>
+
+      <div class="tk"><div class="tk-h"><div style="display: flex; flex-direction: column"><b style="font-size: 18px">T12 · 4</b><span style="font-size: 12px; color: #AEB5C9">Course 2 · Musa I.</span></div><b style="font-size: 22px">1:58</b></div>
+        <div class="tk-i">1 Grilled croaker<small>medium · fried plantain</small><small style="color: #FD8FA8; font-weight: 700">ALLERGY: NO GROUNDNUT OIL</small></div>
+        <button class="btn" style="margin: 10px 12px 12px; height: 48px; background: #E7EAF3; color: #0B0F19; border: 0; font-size: 16px; font-weight: 700">Bump</button></div>
+
+      <div class="tk"><div class="tk-h"><div style="display: flex; flex-direction: column"><b style="font-size: 18px">T15 · 4</b><span style="font-size: 12px; color: #AEB5C9">Mains · Ada N.</span></div><b style="font-size: 22px">0:40</b></div>
+        <div class="tk-i">2 Beef burger<small>1 well done</small></div>
+        <div class="tk-i">1 Club sandwich</div>
+        <div class="tk-i">1 Caesar salad<small>dressing on side</small></div>
+        <button class="btn" style="margin: 10px 12px 12px; height: 48px; background: #E7EAF3; color: #0B0F19; border: 0; font-size: 16px; font-weight: 700">Bump</button></div>
+    </div>
+    <aside style="border-left: 1px solid #232B42; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: .08em; color: #8A93AB">ALL DAY</span>
+      <div style="display: flex; flex-direction: column; gap: 8px; font-size: 16px">
+        <div style="display: flex; justify-content: space-between"><span>Club sandwich</span><b>2</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Beef burger</span><b>2</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Egusi &amp; pounded yam</span><b>2</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Suya platter</span><b>2</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Caesar salad</span><b>1</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Catfish pepper soup</span><b>1</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Fried rice &amp; turkey</span><b>1</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Grilled croaker</span><b>1</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Jollof rice &amp; chicken</span><b>1</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Ofada rice &amp; ayamase</span><b>1</b></div>
+      </div>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 13px; color: #AEB5C9">Sold out: Asun</span>
+        <button class="btn" style="height: 48px; background: #1B2236; color: #E7EAF3; border-color: #2E3854">Recall last bumped</button>
+        <button class="btn" style="height: 48px; background: #1B2236; color: #E7EAF3; border-color: #2E3854">Mark item sold out</button>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

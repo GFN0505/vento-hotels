@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Audit trail on a POS bill</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c" style="position: relative; width: 1194px; height: 834px; overflow: hidden; font-family: Inter, system-ui, sans-serif"><dc-import name="POSOrder" hint-size="1194px,834px"></dc-import><div class="scrim" style="z-index: 20"></div><aside class="sheet" aria-label="Audit trail" style="z-index: 21; width: min(480px, 100%); color: var(--text)"><div class="row between" style="padding: 14px 18px; border-bottom: 1px solid var(--border)"><div class="col"><span class="t-h2">Audit trail</span><span class="t-sm muted">Check 1188 · Table 12 · Calabash</span></div><button class="btn ghost icon" aria-label="Close"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="row" style="padding: 10px 18px; gap: 6px; border-bottom: 1px solid var(--border)"><span class="pill on">All 6</span><span class="pill">Money</span><span class="pill">Approvals</span><span class="grow"></span><a class="btn sm ghost" href="AuditLog.dc.html">Open in audit log</a></div><div class="col" style="padding: 0 18px"><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Item voided after send</span><span class="t-sm faint num">19:51</span></div><span class="t-sm num">Pepper soup · goat ₦7,000.00 → void</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>Musa Ibrahim</span><span>POS-VI-03</span><span>Approved by Tola Ogun</span></div><span class="t-sm">“Guest changed to grilled croaker”</span></div><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Sent to kitchen</span><span class="t-sm faint num">19:42</span></div><span class="t-sm num">Grilled croaker, fried plantain · ticket #K-55120</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>Musa Ibrahim</span><span>POS-VI-03</span><span></span></div></div><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Covers changed</span><span class="t-sm faint num">19:36</span></div><span class="t-sm num">3 → 4</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>Musa Ibrahim</span><span>POS-VI-03</span><span></span></div></div><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Sent to kitchen</span><span class="t-sm faint num">19:34</span></div><span class="t-sm num">4 items · ticket #K-55117</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>Musa Ibrahim</span><span>POS-VI-03</span><span></span></div></div><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Opened</span><span class="t-sm faint num">19:31</span></div><span class="t-sm num">Table 12 · 3 covers</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>Musa Ibrahim</span><span>POS-VI-03</span><span></span></div></div></div></aside></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1194,"height":834}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

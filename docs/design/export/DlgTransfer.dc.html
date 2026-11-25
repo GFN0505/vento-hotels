@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Transfer charges · Folio B → Folio A</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c" style="position: relative; width: 100%; min-height: 1320px; font-family: Inter, system-ui, sans-serif"><dc-import name="Folio" dark="{{ false }}" hint-size="100%,1320px"></dc-import><div class="scrim" style="z-index: 20"></div><div style="position: absolute; z-index: 21; left: 0; right: 0; top: 90px; display: flex; justify-content: center"><div class="dialog" role="dialog" aria-label="Transfer charges · Folio B → Folio A" style="width: 600px; max-width: calc(100% - 32px); padding: 22px; display: flex; flex-direction: column; gap: 14px; color: var(--text)"><div class="col" style="gap: 4px"><span class="t-h2">Transfer charges · Folio B → Folio A</span><span class="t-sm muted">Ibrahim Sule · Folio A is billed to Acme Energy Ltd</span></div><div class="col" style="gap: 4px"><label class="row" style="padding: 8px 4px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow">23 Nov · Calabash restaurant · check 1102</span><span class="num">₦46,550.00</span></label><label class="row" style="padding: 8px 4px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check"></span><span class="grow">24 Nov · Pool bar · check 2214</span><span class="num">₦26,950.00</span></label><label class="row" style="padding: 8px 4px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow">24 Nov · Laundry</span><span class="num">₦11,025.00</span></label></div><div class="inset col num" style="padding: 12px; gap: 6px; background: var(--surface)"><div class="row between"><span class="muted">Moving to Folio A</span><span>₦57,575.00</span></div><div class="row between strong" style="border-top: 1px solid var(--border); padding-top: 6px"><span class="">Acme credit after</span><span>₦12,435,750.00 of ₦15,000,000.00</span></div></div><span class="t-sm muted">Acme allows meals and laundry on the company folio (contract 2026).</span><div class="field"><label>Reason (required)</label><div class="row wrap" style="gap: 6px"><span class="pill on">Company allows</span><span class="pill">Guest request</span><span class="pill">Posted to wrong folio</span></div><div class="input">Working dinner with Acme team</div></div><div class="row" style="justify-content: flex-end"><button class="btn ghost">Cancel <span class="kbd">esc</span></button><button class="btn pri">Move 2 charges <span class="kbd">↵</span></button></div><span class="t-sm faint">Saved to the audit trail with your name, device and reason.</span></div></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

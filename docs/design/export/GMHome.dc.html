@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Property GM home</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="home" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="TA" user="Tunde Alabi" hint-size="100%,56px"></dc-import>
+    <main class="content">
+      <div class="pagehead">
+        <div class="col" style="gap: 2px"><h1 class="t-h1">Today at Kora Victoria Island</h1><span class="muted num">Business date 25 Nov 2026 · Duty manager Kemi Adeyemi · 17:50</span></div>
+        <div class="row wrap"><button class="btn">New reservation<span class="kbd">N</span></button><button class="btn pri">Walk-in<span class="kbd">W</span></button></div>
+      </div>
+
+      <div class="g4">
+        <div class="card stat"><span class="lbl">Arrivals</span><span class="v">38</span><div class="meter"><i class="f-bl" style="width: 31.6%"></i></div><span class="t-sm muted num">12 checked in · 26 to come</span></div>
+        <div class="card stat"><span class="lbl">Departures</span><span class="v">31</span><div class="meter"><i class="f-sl" style="width: 61.3%"></i></div><span class="t-sm muted num">19 checked out · 12 due</span></div>
+        <div class="card stat"><span class="lbl">In house</span><span class="v">89 <span class="t-h3 muted" style="font-weight: 500">rooms</span></span><span class="t-sm muted num">164 guests · tonight 101 rooms (84.2%)</span><span class="delta up">+3.6 pts vs budget</span></div>
+        <div class="card stat"><span class="lbl">Revenue today</span><span class="v">₦21.4m</span><span class="t-sm muted num">Budget ₦20.6m · MTD ₦486.2m</span><span class="delta up">MTD +4.1% vs budget</span></div>
+      </div>
+
+      <div class="split">
+        <div class="card">
+          <div class="card-h">
+            <div class="seg" role="tablist" aria-label="Movement"><button class="on">Arrivals · 26</button><button>Departures · 12</button><button>In house · 89</button></div>
+            <div class="row"><span class="pill">Unassigned <span class="n">7</span></span><span class="pill">VIP <span class="n">3</span></span></div>
+          </div>
+          <div class="tbox"><table class="tbl tbl-cards">
+            <thead><tr><th>Guest</th><th>ETA</th><th>Room</th><th>Room status</th><th>Source</th><th class="r">Due on arrival</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="m-full"><div class="row"><span class="medium">Chief Emeka Obi</span><span class="tag vip">VIP 1</span></div><span class="t-sm faint num">25–28 Nov 2026 · 3 nights</span></td><td class="num">14:00</td><td class="num">1101 · Jr Suite</td><td><span class="badge b-em">Inspected</span></td><td class="m-x">Direct</td><td class="r num">₦0.00</td><td class="r"><button class="btn sm">Check in</button></td></tr>
+              <tr><td class="m-full"><div class="row"><span class="medium">Aisha Bello</span></div><span class="t-sm faint num">25–26 Nov 2026 · 1 night</span></td><td class="num ink-ro medium">13:00 · late</td><td class="num">504 · Exec King</td><td><span class="badge b-am">Dirty</span></td><td class="m-x">Booking.com</td><td class="r num">₦257,250.00</td><td class="r"><button class="btn sm">Move room</button></td></tr>
+              <tr><td class="m-full"><div class="row"><span class="medium">James Whitfield</span><span class="tag">Foreign national</span></div><span class="t-sm faint num">25–28 Nov 2026 · 3 nights</span></td><td class="num">15:30</td><td class="num">502 · Exec King</td><td><span class="badge b-em">Inspected</span></td><td class="m-x">Acme Energy Ltd</td><td class="r num faint">City ledger</td><td class="r"><button class="btn sm">Check in</button></td></tr>
+              <tr><td class="m-full"><div class="row"><span class="medium">Zenvest Partners</span><span class="tag">Group · 8 rooms</span></div><span class="t-sm faint num">25–27 Nov 2026 · 2 nights</span></td><td class="num">16:00</td><td class="num">6 of 8 assigned</td><td><span class="badge b-am">2 not ready</span></td><td class="m-x">Group block</td><td class="r num faint">Master folio</td><td class="r"><button class="btn sm">Assign 2</button></td></tr>
+              <tr><td class="m-full"><div class="row"><span class="medium">Aliyu Danjuma</span></div><span class="t-sm faint num">25–26 Nov 2026 · 1 night</span></td><td class="num faint">–</td><td class="faint">Unassigned</td><td class="faint">–</td><td class="m-x">Booking.com</td><td class="r num">₦183,750.00</td><td class="r"><button class="btn sm">Assign</button></td></tr>
+              <tr><td class="m-full"><div class="row"><span class="medium">Ngozi Okafor</span><span class="tag vip">VIP 2</span></div><span class="t-sm faint num">25–27 Nov 2026 · 2 nights</span></td><td class="num">11:40</td><td class="num">404 · Deluxe King</td><td><span class="badge b-bl">Checked in</span></td><td class="m-x">Direct</td><td class="r num">₦0.00</td><td class="r"><button class="btn sm ghost">Open</button></td></tr>
+            </tbody>
+          </table></div>
+          <div class="card-f between"><span class="t-sm muted num">6 of 38 · sorted by ETA</span><a class="t-sm" href="#">All arrivals</a></div>
+        </div>
+
+        <div class="col" style="gap: 20px">
+          <div class="card">
+          <div class="card-h"><span class="t-h2">Needs attention</span><span class="badge b-vi nd num">4</span></div>
+          <div class="col">
+            <div class="row between" style="padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 12px"><div class="col"><span class="medium">7 arrivals without a room</span><span class="t-sm muted">Ready rooms exist for all 7</span></div><button class="btn sm pri">Auto-assign 7</button></div>
+            <div class="row between" style="padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 12px"><div class="col"><span class="medium">5 rooms not ready for early arrivals</span><span class="t-sm muted num">403 · 405 · 412 · 504 · 610</span></div><button class="btn sm">Prioritise in HK</button></div>
+            <div class="row between" style="padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 12px"><div class="col"><span class="medium">4 departures with balance due</span><span class="t-sm muted num">₦1,284,600.00 across 4 folios</span></div><button class="btn sm">Open folios</button></div>
+            <div class="row between" style="padding: 14px 16px; gap: 12px"><div class="col"><span class="medium">6 open work orders · 2 urgent</span><span class="t-sm muted">714 AC not cooling · 309 no hot water</span></div><button class="btn sm">Work orders</button></div>
+          </div>
+        </div>
+          <div class="card">
+            <div class="card-h"><div class="col"><span class="t-h3">Exceptions yesterday</span><span class="t-sm faint num">Business date 24 Nov</span></div><a class="t-sm" href="Leakage.dc.html">Open Leakage</a></div>
+            <div class="col"><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="grow">Discounts</span><span class="num faint" style="width: 28px; text-align: right">1</span><span class="num" style="width: 96px; text-align: right">₦14,500.00</span></div><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="grow">Voids</span><span class="num faint" style="width: 28px; text-align: right">1</span><span class="num" style="width: 96px; text-align: right">₦12,000.00</span></div><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="grow">Refunds</span><span class="num faint" style="width: 28px; text-align: right">1</span><span class="num" style="width: 96px; text-align: right">₦45,000.00</span></div><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="grow">Cash variances</span><span class="num faint" style="width: 28px; text-align: right">1</span><span class="num" style="width: 96px; text-align: right">−₦7,500.00</span></div><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="grow">Room discrepancies</span><span class="num faint" style="width: 28px; text-align: right">1</span><span class="num" style="width: 96px; text-align: right"><span class="badge b-ro">512 open</span></span></div></div>
+            <div class="card-f t-sm muted">Each one has a reason and approver on record.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="g3">
+        <div class="card">
+          <div class="card-h"><span class="t-h3">House status</span><span class="t-sm faint num">120 rooms</span></div>
+          <div class="card-b col" style="gap: 14px">
+            <div class="meter" style="height: 12px; gap: 2px; background: transparent"><i class="f-bl" style="width: 74.2%; border-radius: 3px"></i><i class="f-em" style="width: 14.2%; border-radius: 3px"></i><i class="f-am" style="width: 7.5%; border-radius: 3px"></i><i class="f-ro" style="width: 2.5%; border-radius: 3px"></i><i style="width: 1.6%; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--ro-dot) 0 2px, transparent 2px 4px)"></i></div>
+            <div class="g2 num" style="gap: 10px 16px">
+              <a href="#" class="row between" style="color: var(--text)"><span class="badge b-bl">Occupied</span><span class="medium">89</span></a>
+              <a href="#" class="row between" style="color: var(--text)"><span class="badge b-em">Inspected</span><span class="medium">11</span></a>
+              <a href="#" class="row between" style="color: var(--text)"><span class="badge b-em">Clean</span><span class="medium">6</span></a>
+              <a href="#" class="row between" style="color: var(--text)"><span class="badge b-am">Dirty</span><span class="medium">9</span></a>
+              <a href="#" class="row between" style="color: var(--text)"><span class="badge b-ro">Out of order</span><span class="medium">3</span></a>
+              <a href="#" class="row between" style="color: var(--text)"><span class="badge b-oos">Out of service</span><span class="medium">2</span></a>
+            </div>
+            <span class="t-sm muted">17 vacant rooms ready to sell tonight.</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="t-h3">VIPs and special requests</span><a class="t-sm" href="#">All 9</a></div>
+          <div class="col">
+            <div class="col" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 2px"><div class="row between"><span class="medium">Chief Emeka Obi <span class="tag vip">VIP 1</span></span><span class="t-sm faint num">1101</span></div><span class="t-sm muted">Airport pickup 12:30 from MMIA · <span class="ink-em">driver confirmed</span></span></div>
+            <div class="col" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 2px"><div class="row between"><span class="medium">Ngozi Okafor <span class="tag vip">VIP 2</span></span><span class="t-sm faint num">404</span></div><span class="t-sm muted">Anniversary · cake at Calabash 19:30</span></div>
+            <div class="col" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 2px"><div class="row between"><span class="medium">Daniel Mensah</span><span class="t-sm faint num">508</span></div><span class="t-sm muted">No feather pillows · quiet floor</span></div>
+            <div class="row between" style="padding: 11px 16px; gap: 8px"><div class="col"><span class="medium">Halden Oil · 5 rooms</span><span class="t-sm muted num">Late check-out 14:00 tomorrow</span></div><div class="row"><button class="btn sm ghost">Decline</button><button class="btn sm">Approve</button></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="t-h3">Staff on duty</span><span class="t-sm faint">Evening shift</span></div>
+          <div class="col num">
+            <div class="row" style="padding: 10px 16px; border-bottom: 1px solid var(--border)"><span class="grow">Front desk</span><span class="faint">4 of 4</span><div class="meter" style="width: 64px"><i class="f-em" style="width: 100%"></i></div></div>
+            <div class="row" style="padding: 10px 16px; border-bottom: 1px solid var(--border)"><span class="grow">Housekeeping</span><span class="ink-am medium">14 of 16</span><div class="meter" style="width: 64px"><i class="f-am" style="width: 87.5%"></i></div></div>
+            <div class="row" style="padding: 10px 16px; border-bottom: 1px solid var(--border)"><span class="grow">Food &amp; beverage</span><span class="faint">22 of 24</span><div class="meter" style="width: 64px"><i class="f-em" style="width: 91.7%"></i></div></div>
+            <div class="row" style="padding: 10px 16px; border-bottom: 1px solid var(--border)"><span class="grow">Maintenance</span><span class="faint">3 of 3</span><div class="meter" style="width: 64px"><i class="f-em" style="width: 100%"></i></div></div>
+            <div class="row" style="padding: 10px 16px"><span class="grow">Security</span><span class="faint">6 of 6</span><div class="meter" style="width: 64px"><i class="f-em" style="width: 100%"></i></div></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

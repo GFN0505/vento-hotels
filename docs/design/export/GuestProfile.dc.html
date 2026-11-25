@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guest profile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="guests" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="TB" user="Tolu Bankole" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="row t-sm muted"><a href="#">Guests</a><span class="faint">/</span><span>Ngozi Okafor</span></div><div class="card"><div class="row between wrap" style="padding: 18px 20px; gap: 16px">
+<div class="row" style="gap: 14px"><span class="av lg">NO</span><div class="col" style="gap: 4px"><div class="row wrap"><h1 class="t-h1">Ngozi Okafor</h1><span class="tag vip">VIP 2</span><span class="badge b-bl">In house · 404</span></div><span class="t-sm muted num">Lekki Phase 1, Eti-Osa, Lagos · +234 803 551 2290 · ngozi.okafor@outlook.com · guest since Mar 2023</span></div></div>
+<div class="row wrap"><button class="btn ghost dng">Blacklist…</button><button class="btn">Merge duplicate</button><button class="btn">Edit</button><button class="btn pri">New reservation</button></div></div>
+<div class="g5" style="border-top: 1px solid var(--border); padding: 14px 20px"><div class="col"><span class="lbl">Stays</span><span class="medium num">6 · 17 nights</span></div><div class="col"><span class="lbl">Lifetime spend</span><span class="medium num">₦3,412,500.00</span></div><div class="col"><span class="lbl">Average rating given</span><span class="medium num">4.6 of 5</span></div><div class="col"><span class="lbl">Prefers</span><span class="medium">WhatsApp</span></div><div class="col"><span class="lbl">Open balance</span><span class="medium num">₦0.00</span></div></div></div><div class="split"><div class="col" style="gap: 16px; min-width: 0"><div class="card"><div class="card-h"><span class="t-h3">Stay history</span><span class="t-sm faint">all properties</span></div><div class="tbox"><table class="tbl"><thead><tr><th>Stay</th><th>Property</th><th>Room</th><th>Rate plan</th><th class="r">Spend</th><th>Feedback</th></tr></thead><tbody><tr><td><span class="num">25–27 Nov 2026</span></td><td>Victoria Island</td><td><span class="num">404 · Deluxe King</span></td><td>Bed &amp; breakfast</td><td class="r"><span class="num faint">in house</span></td><td><span class="badge b-bl">Now</span></td></tr><tr><td><span class="num">14–16 Aug 2026</span></td><td>Victoria Island</td><td><span class="num">1101 · Junior Suite</span></td><td>Best available</td><td class="r"><span class="num">₦784,000.00</span></td><td><span class="num">5 · “Lovely anniversary”</span></td></tr><tr><td><span class="num">2–5 Jun 2026</span></td><td>Abuja</td><td><span class="num">312 · Deluxe King</span></td><td>Bed &amp; breakfast</td><td class="r"><span class="num">₦486,000.00</span></td><td><span class="num">4 · “Slow breakfast”</span></td></tr><tr><td><span class="num">19–22 Dec 2025</span></td><td>Victoria Island</td><td><span class="num">406 · Deluxe King</span></td><td>Best available</td><td class="r"><span class="num">₦612,500.00</span></td><td><span class="num">5</span></td></tr><tr><td><span class="num">7–9 Sep 2025</span></td><td>Port Harcourt</td><td><span class="num">208 · Deluxe King</span></td><td>Corporate · Halden Oil</td><td class="r"><span class="num">₦398,000.00</span></td><td><span class="faint">–</span></td></tr></tbody></table></div></div><div class="card"><div class="card-h"><span class="t-h3">Preferences and notes</span><button class="btn sm ghost">Add note</button></div><div class="card-b"><div class="col" style="gap: 10px"><div class="row wrap" style="gap: 6px"><span class="pill">High floor</span><span class="pill">Away from lift</span><span class="pill">Extra pillows</span><span class="pill">Still water</span><span class="pill">Late breakfast</span><button class="pill">+ Add</button></div>
+<div class="inset col" style="padding: 10px 12px; gap: 4px"><span class="t-sm">Anniversary on 25 Nov · husband Chidi usually joins.</span><span class="t-sm faint num">Kemi Adeyemi · 14 Aug 2026</span></div>
+<div class="inset col" style="padding: 10px 12px; gap: 4px"><span class="t-sm">Complained about breakfast wait in Abuja; offered late check-out, accepted.</span><span class="t-sm faint num">Abuja front office · 5 Jun 2026</span></div></div></div></div></div><div class="col" style="gap: 16px"><div class="card"><div class="card-h"><span class="t-h3">VIP</span></div><div class="card-b"> <div class="col" style="gap: 8px"><div class="seg"><button>None</button><button>VIP 1</button><button class="on">VIP 2</button><button>VIP 3</button></div><span class="t-sm muted">VIP 2: welcome amenity, room checked by duty manager, name on GM arrivals list.</span></div></div></div><div class="dialog" style="padding: 18px; display: flex; flex-direction: column; gap: 12px"><span class="t-h3">Blacklist a guest</span><span class="t-sm muted">Blocks new bookings at all 4 Kora properties. Staff see the reason when they search the name or ID.</span><div class="field"><label>Reason (required)</label><div class="input">Left without paying ₦215,000.00 · Ikeja, 3 Oct</div></div><div class="field"><label>Approver</label><div class="input">Group GM · PIN</div></div><button class="btn dng-solid">Blacklist Samuel Ogbu</button><span class="t-sm faint">Example on another profile. Every blacklist shows who added it, when and why, and can be lifted with a reason.</span></div></div></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

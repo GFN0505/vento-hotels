@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Purchase order receiving</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="stores" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="JE" user="Joy Eze" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">Receive PO-VI-0921</h1><span class="muted num">Greenleaf Fresh Produce Ltd · ordered 23 Nov 2026 by Joy Eze · expected 25 Nov 07:00 · ₦1,223,000.00 ordered</span></div><div class="row wrap"><button class="btn">Reject delivery</button></div></div><div class="split"><div class="card" style="min-width: 0"><div class="card-h"><span class="t-h3">Lines</span><span class="t-sm faint">Enter what actually arrived. Short lines stay open on the PO.</span></div><div class="tbox"><table class="tbl"><thead><tr><th>Item</th><th class="r">Ordered</th><th>Received now</th><th class="r">Unit price</th><th class="r">Line value</th><th>Status</th></tr></thead><tbody><tr><td><span class="medium">Plantain</span><br><span class="t-sm faint">bunch</span></td><td class="r"><span class="num">20</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">12</div></td><td class="r"><span class="num">₦6,000.00</span></td><td class="r"><span class="num">₦72,000.00</span></td><td><span class="badge b-am">8 to come</span></td></tr><tr><td><span class="medium">Tomatoes</span><br><span class="t-sm faint">basket</span></td><td class="r"><span class="num">6</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">6</div></td><td class="r"><span class="num">₦41,000.00</span><br><span class="t-sm ink-am num">PO ₦38,000.00 · +7.9%</span></td><td class="r"><span class="num">₦246,000.00</span></td><td><span class="badge b-em">Complete</span></td></tr><tr><td><span class="medium">Onions</span><br><span class="t-sm faint">50 kg bag</span></td><td class="r"><span class="num">4</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">4</div></td><td class="r"><span class="num">₦45,000.00</span></td><td class="r"><span class="num">₦180,000.00</span></td><td><span class="badge b-em">Complete</span></td></tr><tr><td><span class="medium">Pepper (rodo)</span><br><span class="t-sm faint">basket</span></td><td class="r"><span class="num">3</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">3</div></td><td class="r"><span class="num">₦28,000.00</span></td><td class="r"><span class="num">₦84,000.00</span></td><td><span class="badge b-em">Complete</span></td></tr><tr><td><span class="medium">Goat meat</span><br><span class="t-sm faint">kg</span></td><td class="r"><span class="num">40</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">30</div></td><td class="r"><span class="num">₦7,800.00</span></td><td class="r"><span class="num">₦234,000.00</span></td><td><span class="badge b-am">10 to come</span></td></tr><tr><td><span class="medium">Croaker fish</span><br><span class="t-sm faint">kg</span></td><td class="r"><span class="num">30</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">0</div></td><td class="r"><span class="num">₦6,500.00</span></td><td class="r"><span class="num">₦0.00</span></td><td><span class="badge b-sl">Not delivered</span></td></tr><tr><td><span class="medium">Eggs</span><br><span class="t-sm faint">crate of 30</span></td><td class="r"><span class="num">20</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">20</div></td><td class="r"><span class="num">₦5,200.00</span></td><td class="r"><span class="num">₦104,000.00</span></td><td><span class="badge b-em">Complete</span></td></tr></tbody></table></div></div><aside class="card"><div class="card-h"><span class="t-h3">Goods received note</span><span class="num t-sm faint">GRN-VI-2611-077</span></div><div class="card-b col" style="gap: 12px">
+<div class="field"><label>Supplier invoice no.</label><div class="input num">M12-55810</div></div>
+<div class="field"><label>Delivery note</label><div class="row" style="gap: 10px"><div class="ph" style="width: 64px; height: 64px; border-radius: 8px">Photo</div><span class="t-sm muted">Photographed at the gate 06:52</span></div></div>
+<div class="inset col num" style="padding: 10px 12px; gap: 4px"><div class="row between"><span class="muted">Received value</span><span class="medium">₦920,000.00</span></div><div class="row between t-sm"><span class="ink-am">Tomatoes priced above PO</span><span class="ink-am">+₦18,000.00</span></div><div class="row between t-sm muted"><span>Still to come</span><span>8 plantain · 10 kg goat · 30 kg croaker</span></div></div>
+<div class="field"><label>Price change reason</label><div class="input">Seasonal price rise, agreed by phone with F&amp;B manager</div></div>
+<div class="row"><button class="btn grow">Receive and close PO</button></div>
+<button class="btn pri">Receive 6 lines · keep PO open</button>
+<span class="t-sm faint">Stock goes into the Main store now. The supplier invoice is matched to this GRN in Finance.</span></div></aside></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1050}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

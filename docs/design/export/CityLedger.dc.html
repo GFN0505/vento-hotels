@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>City ledger</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="fin" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="IU" user="Ifeoma Uche" entity="Kora Hospitality Ltd" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">City ledger</h1><span class="muted num">Kora Hotels Group · all entities · as at 25 Nov 2026</span></div><div class="row wrap"><button class="btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Export ageing</button><button class="btn pri">Send 12 statements</button></div></div><div class="g4"><div class="card stat"><span class="lbl">Total owed</span><span class="v">₦93.9m</span><span class="t-sm muted num">48 accounts</span></div><div class="card stat"><span class="lbl">Over 60 days</span><span class="v">₦24.0m</span><span class="t-sm muted num">25.6% of total</span><span class="delta down">+₦3.1m vs last month</span></div><div class="card stat"><span class="lbl">Over credit limit</span><span class="v">2</span><span class="t-sm muted num">Halden Oil · Brightway</span></div><div class="card stat"><span class="lbl">Unallocated receipts</span><span class="v">₦2.0m</span><span class="t-sm muted num">1 transfer</span></div></div><div class="split"><div class="card"><div class="card-h"><span class="t-h3">Ageing by account</span><div class="row"><span class="pill on">All entities</span><span class="pill">Over 60 days</span></div></div><div class="tbox"><table class="tbl"><thead><tr><th>Account</th><th class="r">0–30</th><th class="r">31–60</th><th class="r">61–90</th><th class="r">90+</th><th class="r">Balance</th><th class="r">Limit</th></tr></thead><tbody><tr><td><span class="medium">Halden Oil Services</span> <span class="badge b-ro">Over limit</span></td><td class="r"><span class="num">₦4,200,000.00</span></td><td class="r"><span class="num">₦3,850,000.00</span></td><td class="r"><span class="num ink-ro">₦1,900,000.00</span></td><td class="r"><span class="num ink-ro medium">₦3,500,000.00</span></td><td class="r"><span class="num medium">₦13,450,000.00</span></td><td class="r"><span class="num muted">₦10,000,000.00</span></td></tr><tr><td><span class="medium">Acme Energy Ltd</span></td><td class="r"><span class="num">₦5,696,675.00</span></td><td class="r"><span class="num">₦3,601,500.00</span></td><td class="r"><span class="num ink-ro">₦3,080,000.00</span></td><td class="r"><span class="num faint">₦0.00</span></td><td class="r"><span class="num medium">₦12,378,175.00</span></td><td class="r"><span class="num muted">₦15,000,000.00</span></td></tr><tr><td><span class="medium">Riverbend Travel Ltd</span></td><td class="r"><span class="num">₦0.00</span></td><td class="r"><span class="num">₦1,200,000.00</span></td><td class="r"><span class="num ink-ro">₦1,450,000.00</span></td><td class="r"><span class="num ink-ro medium">₦4,800,000.00</span></td><td class="r"><span class="num medium">₦7,450,000.00</span></td><td class="r"><span class="num muted">₦8,000,000.00</span></td></tr><tr><td><span class="medium">Brightway Logistics</span> <span class="badge b-ro">Over limit</span></td><td class="r"><span class="num">₦1,120,000.00</span></td><td class="r"><span class="num">₦900,000.00</span></td><td class="r"><span class="num ink-ro">₦1,300,000.00</span></td><td class="r"><span class="num ink-ro medium">₦2,500,000.00</span></td><td class="r"><span class="num medium">₦5,820,000.00</span></td><td class="r"><span class="num muted">₦5,000,000.00</span></td></tr><tr><td><span class="medium">Lumen Events Ltd</span></td><td class="r"><span class="num">₦3,600,000.00</span></td><td class="r"><span class="num">₦0.00</span></td><td class="r"><span class="num faint">₦0.00</span></td><td class="r"><span class="num faint">₦0.00</span></td><td class="r"><span class="num medium">₦3,600,000.00</span></td><td class="r"><span class="num muted">₦6,000,000.00</span></td></tr><tr><td><span class="medium">Zenvest Partners</span></td><td class="r"><span class="num">₦2,100,000.00</span></td><td class="r"><span class="num">₦0.00</span></td><td class="r"><span class="num faint">₦0.00</span></td><td class="r"><span class="num faint">₦0.00</span></td><td class="r"><span class="num medium">₦2,100,000.00</span></td><td class="r"><span class="num muted">₦8,000,000.00</span></td></tr><tr><td><span class="medium">All 48 accounts</span></td><td class="r"><span class="num strong">₦48,600,000.00</span></td><td class="r"><span class="num strong">₦21,300,000.00</span></td><td class="r"><span class="num strong">₦9,800,000.00</span></td><td class="r"><span class="num strong">₦14,200,000.00</span></td><td class="r"><span class="num strong">₦93,900,000.00</span></td><td class="r"></td></tr></tbody></table></div></div><aside class="card"><div class="card-h"><div class="col"><span class="lbl">Unallocated receipt</span><span class="t-h3 num">₦2,000,000.00 · Halden Oil</span></div></div><div class="card-b col" style="gap: 10px">
+<span class="t-sm muted num">Transfer 24 Nov 2026 · ref HOS-PMT-44821 · matched by account name</span>
+<div class="col" style="gap: 6px">
+<label class="row between"><span class="row"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="num">INV-PH-2607-0112 · 98 days</span></span><span class="num">₦1,500,000.00</span></label>
+<label class="row between"><span class="row"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="num">INV-PH-2608-0140 · 81 days</span></span><span class="num">₦500,000.00 <span class="faint">of ₦900,000.00</span></span></label>
+<label class="row between"><span class="row"><span class="check"></span><span class="num">INV-VI-2610-0302 · 44 days</span></span><span class="num faint">₦0.00</span></label></div>
+<span class="t-sm faint">Oldest first. WHT credit note not received for these invoices.</span>
+<button class="btn pri">Allocate ₦2,000,000.00</button></div></aside></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1150}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

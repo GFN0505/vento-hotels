@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tax summary</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="fin" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="IU" user="Ifeoma Uche" entity="Kora Hospitality Ltd" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">Tax summary</h1><span class="muted num">Kora Hotels Group · November 2026 to 24 Nov · all entities</span></div><div class="row wrap"><div class="seg"><button class="on">All entities</button><button>Kora Hospitality</button><button>Kora Abuja</button><button>Kora PH</button></div><button class="btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Filing pack</button></div></div><div class="g4"><div class="card stat"><span class="lbl">Net VAT · accruing</span><span class="v">₦91.3m</span><span class="t-sm muted num">due 21 Dec</span></div><div class="card stat"><span class="lbl">State consumption tax</span><span class="v">₦73.2m</span><span class="t-sm muted num">3 returns due 10 Dec</span></div><div class="card stat"><span class="lbl">Service charge pool</span><span class="v">₦102.4m</span><span class="t-sm muted num">70% to staff with Nov payroll</span></div><div class="card stat"><span class="lbl">WHT credit notes missing</span><span class="v">₦5.9m</span><span class="t-sm muted num">from 11 corporates</span></div></div><div class="card"><div class="card-h"><span class="t-h3">By tax</span><span class="t-sm faint">figures update nightly after audit</span></div><div class="tbox"><table class="tbl"><thead><tr><th>Tax</th><th>Base</th><th>Rate</th><th class="r">Amount</th><th>Pay to</th><th>Due</th><th>Status</th></tr></thead><tbody><tr><td><span class="medium">VAT output</span></td><td><span class="num">₦1,463.4m taxable sales</span></td><td>7.5%</td><td class="r"><span class="num">₦109,755,000.00</span></td><td>FIRS</td><td><span class="num">21 Dec 2026</span></td><td><span class="badge b-sl">Accruing</span></td></tr><tr><td><span class="medium">VAT input</span></td><td><span class="num">Purchases with VAT invoices</span></td><td>7.5%</td><td class="r"><span class="num">−₦18,420,000.00</span></td><td></td><td></td><td></td></tr><tr><td><span class="medium">Net VAT payable</span></td><td></td><td></td><td class="r"><span class="num strong">₦91,335,000.00</span></td><td>FIRS</td><td><span class="num">21 Dec 2026</span></td><td><span class="badge b-sl">Accruing</span></td></tr><tr><td><span class="medium">Consumption tax · Lagos</span></td><td><span class="num">₦784.6m · VI, Ikeja</span></td><td>5%</td><td class="r"><span class="num">₦39,230,000.00</span></td><td>Lagos State IRS</td><td><span class="num">10 Dec 2026</span></td><td><span class="badge b-am">Return due</span></td></tr><tr><td><span class="medium">Consumption tax · FCT</span></td><td><span class="num">₦402.6m · Abuja</span></td><td>5%</td><td class="r"><span class="num">₦20,130,000.00</span></td><td>FCT IRS</td><td><span class="num">10 Dec 2026</span></td><td><span class="badge b-am">Return due</span></td></tr><tr><td><span class="medium">Consumption tax · Rivers</span></td><td><span class="num">₦276.2m · Port Harcourt</span></td><td>5%</td><td class="r"><span class="num">₦13,810,000.00</span></td><td>Rivers State IRS</td><td><span class="num">10 Dec 2026</span></td><td><span class="badge b-am">Return due</span></td></tr><tr><td><span class="medium">Service charge</span></td><td><span class="num">₦1,463.4m</span></td><td>10%</td><td class="r"><span class="num">₦146,340,000.00</span></td><td>70% staff pool · 30% hotel</td><td><span class="num">with Nov payroll</span></td><td><span class="badge b-sl">Accruing</span></td></tr><tr><td><span class="medium">WHT credit notes</span></td><td><span class="num">Deducted by corporates</span></td><td>5–10%</td><td class="r"><span class="num">₦8,980,000.00</span></td><td>Offset against CIT</td><td><span class="faint">–</span></td><td><span class="t-sm ink-am">₦5,860,000.00 not received</span></td></tr><tr><td><span class="medium">PAYE</span></td><td><span class="num">October payroll</span></td><td>Graduated</td><td class="r"><span class="num">₦28,600,000.00</span></td><td>State IRS by employee residence</td><td><span class="num">10 Nov 2026</span></td><td><span class="badge b-em">Paid 6 Nov</span></td></tr></tbody></table></div></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1150}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

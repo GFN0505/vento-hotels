@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Refund · VI-2611-0419 · 390</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="width: 390px; height: 1000px; overflow: hidden; position: relative; font-family: Inter, system-ui, sans-serif"><div class="scrim"></div><div style="position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-radius: 18px 18px 0 0; padding: 14px 16px 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-lg)"><span style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--border-strong)"></span><div class="dialog" role="dialog" aria-label="Refund · VI-2611-0419" style="width: 100%; padding: 0; border: 0; box-shadow: none; display: flex; flex-direction: column; gap: 14px; color: var(--text)"><div class="col" style="gap: 4px"><span class="t-h2">Refund · VI-2611-0419</span><span class="t-sm muted">Double payment by transfer on 22 Nov</span></div><div class="g2"><div class="field"><label>Amount</label><div class="input "><span class="num">₦45,000.00</span></div></div><div class="field"><label>Method</label><div class="input ">Bank transfer to guest</div></div></div><div class="g2"><div class="field"><label>Guest account</label><div class="input ">[BANK] · ••••3318 · O. Adeyemi</div></div><div class="field"><label>Original payment</label><div class="input "><span class="num">TRF ref 22N-88120</span></div></div></div><div class="field"><label>Reason (required)</label><div class="row wrap" style="gap: 6px"><span class="pill on">Double payment</span><span class="pill">Overcharge</span><span class="pill">Cancellation</span><span class="pill">Other</span></div><div class="input">Paid twice, both transfers confirmed by bank</div></div><div class="inset col" style="padding: 14px; gap: 12px; background: var(--surface-2)">
+  <div class="row" style="gap: 8px; align-items: flex-start"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--pri-ink); margin-top: 2px"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg><span class="medium">This is above your limit. A manager can approve with their PIN.</span></div>
+  <div class="row wrap" style="gap: 8px"><span class="pill on" style="height: 36px; padding: 0 12px 0 4px"><span class="av" style="width: 26px; height: 26px; font-size: 10px">KA</span>Kemi Adeyemi · Duty manager · on shift</span><span class="pill" style="height: 36px">Tunde Alabi</span></div>
+  <div class="row" style="gap: 14px"><div class="pdots"><i class="on"></i><i class="on"></i><i></i><i></i></div><span class="t-sm muted">Manager enters PIN on this device</span><a class="t-sm" href="#" style="margin-left: auto">Send to their phone instead</a></div>
+</div><div class="row" style="justify-content: flex-end"><button class="btn ghost">Cancel</button><button class="btn pri" disabled>Approve and refund ₦45,000.00</button></div><span class="t-sm faint">Saved to the audit trail with your name, device and reason.</span></div></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cashier shift close · before</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="fin" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" show-approvals="{{ false }}" property="Kora Victoria Island" initials="CE" user="Chidi Eze" entity="Kora Hospitality Ltd" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">Cashier shift · FD-2</h1><span class="muted num">Chidi Eze · front desk · 25 Nov 2026 07:00–15:00 · drawer Desk 1</span></div><div class="row wrap"></div></div><div class="split"><div class="col" style="gap: 16px; min-width: 0"><div class="card"><div class="card-h"><span class="t-h3">Takings by method</span></div><div class="tbox"><table class="tbl"><thead><tr><th>Method</th><th class="r">Expected</th><th class="r">Counted / confirmed</th><th class="r">Difference</th><th>Source</th></tr></thead><tbody><tr><td><span class="medium">Cash ₦ (incl. ₦50,000.00 float)</span></td><td class="r"><span class="num">₦462,000.00</span></td><td class="r"><span class="num">₦459,500.00</span></td><td class="r"><span class="num ink-ro medium">−₦2,500.00</span></td><td>Drawer count</td></tr><tr><td><span class="medium">Cash US$</span></td><td class="r"><span class="num">$40.00</span></td><td class="r"><span class="num">$40.00</span></td><td class="r"><span class="num faint">$0.00</span></td><td>Drawer count · ₦64,800.00 @ 1,620.00 CBN</td></tr><tr><td><span class="medium">Bank transfer</span></td><td class="r"><span class="num">₦2,840,000.00</span></td><td class="r"><span class="num">₦2,840,000.00</span></td><td class="r"><span class="num faint">₦0.00</span></td><td>Matched to bank alerts</td></tr><tr><td><span class="medium">POS · Moniepoint Desk 1</span></td><td class="r"><span class="num">₦1,215,687.50</span></td><td class="r"><span class="num">₦1,215,687.50</span></td><td class="r"><span class="num faint">₦0.00</span></td><td>Terminal end-of-day report</td></tr><tr><td><span class="medium">Paystack</span></td><td class="r"><span class="num">₦0.00</span></td><td class="r"><span class="num">₦0.00</span></td><td class="r"><span class="num faint">₦0.00</span></td><td>Automatic</td></tr></tbody></table></div></div><div class="card"><div class="card-h"><span class="t-h3">Cash count · ₦</span><span class="t-sm faint">count before seeing the expected figure</span></div><div class="col"><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border)"><span class="num" style="width: 80px">₦1,000</span><span class="faint">×</span><div class="input num" style="width: 80px; height: 30px; justify-content: center">412</div><span class="grow"></span><span class="num">₦412,000.00</span></div><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border)"><span class="num" style="width: 80px">₦500</span><span class="faint">×</span><div class="input num" style="width: 80px; height: 30px; justify-content: center">85</div><span class="grow"></span><span class="num">₦42,500.00</span></div><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border)"><span class="num" style="width: 80px">₦200</span><span class="faint">×</span><div class="input num" style="width: 80px; height: 30px; justify-content: center">20</div><span class="grow"></span><span class="num">₦4,000.00</span></div><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border)"><span class="num" style="width: 80px">₦100</span><span class="faint">×</span><div class="input num" style="width: 80px; height: 30px; justify-content: center">10</div><span class="grow"></span><span class="num">₦1,000.00</span></div><div class="row" style="padding: 8px 16px; border-bottom: 1px solid var(--border)"><span class="num" style="width: 80px">₦50</span><span class="faint">×</span><div class="input num" style="width: 80px; height: 30px; justify-content: center">0</div><span class="grow"></span><span class="num">₦0.00</span></div><div class="row between strong num" style="padding: 10px 16px"><span>Counted</span><span>₦459,500.00</span></div></div></div></div><aside class="card"><div class="card-h"><span class="t-h3">Close shift</span><span class="badge b-am">Short</span></div><div class="card-b col" style="gap: 12px">
+<div class="inset col num" style="padding: 10px 12px; gap: 4px"><div class="row between"><span class="muted">Cash short</span><span class="ink-ro medium">−₦2,500.00</span></div><span class="t-sm faint">Within the ₦5,000.00 tolerance · supervisor sign-off needed</span></div>
+<div class="field"><label>Reason</label><div class="input">Change given in error, walk-in at 13:20<span class="suf"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+<div class="field"><label>Supervisor</label><div class="input">Kemi Adeyemi · PIN</div></div>
+<div class="row between num"><span class="muted">Float stays in drawer</span><span>₦50,000.00</span></div>
+<div class="row between num"><span class="muted">To the safe, bag S-2211</span><span class="medium">₦409,500.00</span></div>
+<button class="btn pri">Close shift · drop ₦409,500.00 to safe</button></div></aside></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1050}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

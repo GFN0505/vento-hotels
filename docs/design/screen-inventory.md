@@ -1,6 +1,8 @@
 # Screen inventory
 
-Every screen and working dialog the product needs, checked against `claude-design-prompt.md` (46 screens in six rounds). Keep this up to date as screens are designed, built or changed.
+Every screen and working dialog the product needs, checked against `claude-design-prompt.md` (46 screens in six rounds).
+
+**Design status (25 Nov 2026):** all 46 screens are designed in Claude Design, with dark, 390px and loading/empty/error/offline variants. The export is in `export/`. Rows marked `pattern` have no board of their own and are built from the design system. Keep this up to date as screens are designed, built or changed.
 
 **Status:** `designed #n` = screen n in the design prompt · `partial #n` = covered in part · `missing` = not in the prompt yet · `pattern` = built from the design system without its own design.
 **Stage** follows the release plan in `docs/PRODUCT.md`.

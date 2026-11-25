@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Group block</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="guests" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="TB" user="Tolu Bankole" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="row t-sm muted"><a href="#">Sales</a><span class="faint">/</span><a href="#">Groups</a><span class="faint">/</span><span>GRP-VI-2612-04</span></div><div class="card"><div class="row between wrap" style="padding: 18px 20px; gap: 12px"><div class="col" style="gap: 4px"><div class="row"><h1 class="t-h1">Pan-African Fintech Summit</h1><span class="badge b-vi">Definite</span></div><span class="t-sm muted num">Victoria Island · 8–12 Dec 2026 · organiser Lumen Events Ltd · master folio to organiser, extras to guests</span></div><div class="row"><button class="btn">Send rooming list link</button><button class="btn">Edit block</button></div></div>
+<div class="g4" style="border-top: 1px solid var(--border); padding: 14px 20px"><div class="col"><span class="lbl">Rooms blocked</span><span class="medium num">30 · 108 room nights</span></div><div class="col"><span class="lbl">Picked up</span><span class="medium num">24 rooms · 77 room nights</span></div><div class="col"><span class="lbl">Release date</span><span class="medium num ink-am">1 Dec 2026 · in 6 days</span></div><div class="col"><span class="lbl">Attrition allowed</span><span class="medium num">20% · 6 rooms</span></div></div></div><div class="split"><div class="col" style="gap: 16px; min-width: 0"><div class="card"><div class="card-h"><span class="t-h3">Pick-up by night</span><span class="t-sm faint">blocked vs booked</span></div><div class="col"><div class="row" style="gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border)"><span class="num" style="width: 90px">Tue 8 Dec</span><div class="meter grow" style="height: 10px"><i class="f-pri" style="width: 80.0%"></i></div><span class="num" style="width: 120px; text-align: right">24 of 30 picked up</span></div><div class="row" style="gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border)"><span class="num" style="width: 90px">Wed 9 Dec</span><div class="meter grow" style="height: 10px"><i class="f-pri" style="width: 76.7%"></i></div><span class="num" style="width: 120px; text-align: right">23 of 30 picked up</span></div><div class="row" style="gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border)"><span class="num" style="width: 90px">Thu 10 Dec</span><div class="meter grow" style="height: 10px"><i class="f-pri" style="width: 70.0%"></i></div><span class="num" style="width: 120px; text-align: right">21 of 30 picked up</span></div><div class="row" style="gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border)"><span class="num" style="width: 90px">Fri 11 Dec</span><div class="meter grow" style="height: 10px"><i class="f-pri" style="width: 50.0%"></i></div><span class="num" style="width: 120px; text-align: right">9 of 18 picked up</span></div></div></div><div class="card"><div class="card-h"><span class="t-h3">By room type</span></div><div class="tbox"><table class="tbl"><thead><tr><th>Room type</th><th class="r">Blocked</th><th class="r">Picked up</th><th class="r">Rate</th><th>Rooming list</th></tr></thead><tbody><tr><td>Deluxe King</td><td class="r"><span class="num">20</span></td><td class="r"><span class="num">16</span></td><td class="r"><span class="num">₦135,000.00</span></td><td>16 of 16 named</td></tr><tr><td>Executive King</td><td class="r"><span class="num">10</span></td><td class="r"><span class="num">8</span></td><td class="r"><span class="num">₦190,000.00</span></td><td>5 of 8 named</td></tr></tbody></table></div></div></div><div class="card"><div class="card-h"><span class="t-h3">Release</span><span class="badge b-am nd">6 unsold</span></div><div class="card-b col" style="gap: 12px"><span>6 rooms are still unsold. On 1 Dec at 12:00 they go back to general sale unless you extend.</span><div class="inset col num" style="padding: 10px 12px; gap: 4px"><div class="row between"><span class="muted">Deluxe King unsold</span><span>4</span></div><div class="row between"><span class="muted">Executive King unsold</span><span>2</span></div><div class="row between"><span class="muted">Attrition allowed by contract</span><span>20% · 6 rooms</span></div></div><div class="row"><button class="btn">Extend to 4 Dec</button><button class="btn pri">Release 6 rooms now</button></div><span class="t-sm faint">Releasing now lets the booking engine sell them for the summit week, when the hotel is 91% full.</span></div></div></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

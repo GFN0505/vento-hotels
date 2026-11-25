@@ -12,7 +12,7 @@ When a feature changes how someone works, update the walkthrough in the same cha
 
 ## The walkthroughs
 
-All walkthroughs describe the same day, 25 Nov 2026, at Lekki Bay, so the same rooms, guests and money carry across them.
+All walkthroughs describe the same day, 25 Nov 2026, at Kora Victoria Island, so the same rooms, guests and money carry across them.
 
 | Walkthrough | Who | First works | Complete at |
 |---|---|---|---|
@@ -27,21 +27,23 @@ All walkthroughs describe the same day, 25 Nov 2026, at Lekki Bay, so the same r
 A journey's e2e test grows with the stages: steps that need a later stage are skipped (`test.fixme`) until that stage lands.
 
 ## The demo world
-All walkthroughs use the demo seed, so names and numbers match across documents and tests. Everything here is made up.
+All walkthroughs use the demo seed, so names and numbers match across documents, tests and the designs in `docs/design/export/`. Everything here is made up. The demo world follows the Claude Design export; when the two disagree, change the walkthroughs, not the designs.
 
-- **Organization:** Vento Demo Group.
-- **Entity:** Demo Hospitality Ltd (owns both properties).
+- **Organization:** Kora Hotels Group (4 properties, 382 rooms).
+- **Entity:** Kora Hospitality Ltd (owns all four properties).
 - **Properties:**
-  - **Lekki Bay Hotel**, Lekki Phase 1, Eti-Osa, Lagos. 60 rooms on 4 floors: Standard (101–130), Deluxe (201–220), Executive Suite (301–310). Restaurant "Coral", bar "The Deck", room service.
-  - **Garki Court Hotel**, Garki, Abuja (FCT). 40 rooms. Used where a walkthrough crosses properties.
-- **Rate plans:** BAR (Standard ₦85,000, Deluxe ₦120,000, Suite ₦210,000 per night, room only), BAR Bed & Breakfast, Non-refundable (BAR − 10%), Corporate (negotiated per company).
-- **Corporate rate:** Acme Energy, Deluxe ₦105,000 per night with breakfast at Lekki Bay.
-- **Taxes and charges:** VAT, Lagos consumption tax and a 10% service charge, all from configuration. Amounts marked * in the walkthroughs use **illustrative** rates (VAT 7.5%, Lagos consumption tax 5%) — verify against current law before they go into the seed.
-- **Other illustrative values:** Deluxe Bed & Breakfast ₦135,000; deposit of the first night; free cancellation until 48 hours before arrival; FX ₦1,950 = £1 (rate source shown); shared-device auto sign-out after 2 minutes idle.
-- **Corporate account:** Acme Energy Ltd (credit limit ₦5,000,000, 30-day terms).
+  - **Kora Victoria Island**, Victoria Island, Eti-Osa, Lagos. 120 rooms. The walkthroughs happen here. Room types and BAR rates (room only, per night, excl. taxes): Standard Queen ₦120,000 (3rd floor, e.g. 301–305), Deluxe King ₦150,000 (4th floor, e.g. 401–406), Executive King ₦210,000 (5th and 6th floors, e.g. 501–504, 611), Junior Suite ₦320,000 (11th floor, e.g. 1101–1102). Outlets: **Calabash restaurant** (06:30–23:00; main hall, terrace, private room), **Pool bar** (10:00–00:00), **Room service** (24 hours). Kitchen printers KITCHEN-1 and GRILL-1, bar printer BAR-2.
+  - **Kora Ikeja GRA**, Ikeja GRA, Ikeja, Lagos. 86 rooms.
+  - **Kora Abuja**, Wuse 2, Abuja Municipal, FCT. 104 rooms.
+  - **Kora Port Harcourt**, GRA Phase 2, Obio-Akpor, Rivers. 72 rooms.
+- **Rate plans:** BAR (rates above, room only), BAR Bed & Breakfast, Non-refundable (BAR − 10%), Corporate (negotiated per company).
+- **Corporate rate:** Acme Energy, Executive King ₦180,000 per night at Kora Victoria Island (as in the tape chart design); Deluxe King ₦130,000 with breakfast.
+- **Taxes and charges:** VAT, Lagos consumption tax and a 10% service charge, all from configuration. Amounts marked * in the walkthroughs use **illustrative** rates (VAT 7.5%, Lagos consumption tax 5%), the same as the designs — verify against current law before they go into the seed.
+- **Other illustrative values:** Deluxe King Bed & Breakfast ₦165,000; deposit of the first night; free cancellation until 48 hours before arrival; FX ₦1,950 = £1 (rate source shown); POS lock after 90 seconds idle, housekeeping phones after 2 minutes.
+- **Corporate account:** Acme Energy Ltd (credit limit ₦15,000,000, 30-day terms).
 - **People:**
   - Mrs Adaeze Okafor (owner)
-  - Tunde Bello (GM, Lekki Bay)
+  - Tunde Bello (GM, Kora Victoria Island)
   - Chiamaka Eze (front desk, morning)
   - Ibrahim Musa (front desk, night shift)
   - Blessing Udo (room attendant)

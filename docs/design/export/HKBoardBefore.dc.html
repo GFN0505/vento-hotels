@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Housekeeping board · before</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="hk" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" show-approvals="{{ false }}" property="Kora Victoria Island" initials="BO" user="Blessing Okon" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+      <div class="pagehead">
+        <div class="col" style="gap: 2px"><h1 class="t-h1">Housekeeping</h1><span class="muted num">25 Nov 2026 · 48 rooms on floors 3–6 · 26 arrivals today</span></div>
+        <div class="row wrap"><button class="btn">Print room sheets</button><button class="btn pri">Auto-assign by floor</button></div>
+      </div>
+
+      <div class="row wrap between">
+        <div class="row wrap">
+          <span class="pill on">All <span class="n">48</span></span>
+          <span class="pill">Dirty <span class="n">16</span></span>
+          <span class="pill">In progress <span class="n">2</span></span>
+          <span class="pill">Clean, not inspected <span class="n">15</span></span>
+          <span class="pill">Arrival today <span class="n">8</span></span>
+          <span class="pill">Rush <span class="n">5</span></span>
+          <span class="pill">Unassigned <span class="n">7</span></span>
+        </div>
+        <div class="row wrap t-sm muted" style="gap: 12px">
+          <span class="row" style="gap: 6px"><i style="width: 12px; height: 12px; border-radius: 3px; background: var(--em-bg); border: 1px solid var(--em-dot)"></i>Clean / inspected</span>
+          <span class="row" style="gap: 6px"><i style="width: 12px; height: 12px; border-radius: 3px; background: var(--am-bg); border: 1px solid var(--am-dot)"></i>Dirty</span>
+          <span class="row" style="gap: 6px"><i style="width: 12px; height: 12px; border-radius: 3px; background: var(--bl-bg); border: 1px solid var(--bl-dot)"></i>Being cleaned</span>
+          <span class="row" style="gap: 6px"><i style="width: 12px; height: 12px; border-radius: 3px; background: var(--ro-bg); border: 1px solid var(--ro-dot)"></i>Out of order</span>
+        </div>
+      </div>
+
+      <div class="row" style="padding: 10px 14px; border-radius: 10px; background: var(--pri-soft); border: 1px solid var(--pri-line); gap: 12px; flex-wrap: wrap">
+        <span class="medium">4 rooms selected</span><span class="muted num">602 · 605 · 608 · 610</span>
+        <div class="grow"></div>
+        <span class="t-sm muted">Assign to</span>
+        <button class="btn sm"><span class="av" style="width: 20px; height: 20px; font-size: 9px">PE</span>Peter Eko · 7 rooms<svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <button class="btn sm pri">Assign 4 rooms</button>
+        <button class="btn sm ghost">Clear</button>
+      </div>
+
+      <div class="split">
+        <div class="card">
+          <sc-for list="{{floors}}" as="f" hint-placeholder-count="4">
+            <div style="padding: 14px 16px; border-bottom: 1px solid var(--border)">
+              <div class="row between" style="margin-bottom: 10px"><span class="t-h3">Floor {{f.n}}</span><span class="t-sm faint num">{{f.summary}}</span></div>
+              <div style="display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 8px">
+                <sc-for list="{{f.rooms}}" as="r" hint-placeholder-count="12">
+                  <button class="hk {{r.cls}}" style="text-align: left; font: inherit; color: inherit; cursor: pointer; border-style: {{r.bs}}">
+                    <sc-if value="{{r.rush}}" hint-placeholder-val="{{ false }}"><span class="rush">RUSH</span></sc-if>
+                    <span class="row" style="gap: 6px"><sc-if value="{{r.pick}}" hint-placeholder-val="{{ false }}"><span class="check on" style="width: 14px; height: 14px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 10px; height: 10px"><path d="m5 12 5 5 9-10"/></svg></span></sc-if><span class="n">{{r.no}}</span></span>
+                    <span class="s">{{r.st}}</span>
+                    <span class="t-sm muted">{{r.occ}}</span>
+                    <span class="t-sm faint">{{r.who}}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div class="col" style="gap: 16px">
+          <div class="card">
+            <div class="card-h"><span class="t-h3">Attendants on shift</span><span class="t-sm faint">14 of 16</span></div>
+            <div class="col">
+              <div class="col" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 6px"><div class="row between"><span class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">GA</span><span class="medium">Grace Akpan</span></span><span class="t-sm muted num">3 of 12 done</span></div><div class="meter"><i class="f-em" style="width: 25%"></i><i class="f-bl" style="width: 8.3%"></i></div><span class="t-sm faint">Floor 4 · now in 403</span></div>
+              <div class="col" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 6px"><div class="row between"><span class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">CO</span><span class="medium">Chioma Obi</span></span><span class="t-sm muted num">6 of 11 done</span></div><div class="meter"><i class="f-em" style="width: 54.5%"></i></div><span class="t-sm faint">Floor 3 · on break until 15:30</span></div>
+              <div class="col" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 6px"><div class="row between"><span class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">HY</span><span class="medium">Halima Yusuf</span></span><span class="t-sm muted num">5 of 12 done</span></div><div class="meter"><i class="f-em" style="width: 41.7%"></i><i class="f-bl" style="width: 8.3%"></i></div><span class="t-sm faint">Floor 5 · now in 509</span></div>
+              <div class="col" style="padding: 11px 16px; gap: 6px"><div class="row between"><span class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">PE</span><span class="medium">Peter Eko</span></span><span class="t-sm muted num">4 of 7 done</span></div><div class="meter"><i class="f-em" style="width: 57%"></i></div><span class="t-sm faint">Floor 6 · can take 4 more</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-h"><span class="t-h3">Waiting for inspection</span><span class="badge b-vi nd num">15</span></div>
+            <div class="col">
+              <div class="row between" style="padding: 10px 16px; border-bottom: 1px solid var(--border)"><span class="num medium">402 · 408 · 306</span><span class="t-sm muted">arrivals before 16:00</span></div>
+              <div class="row between" style="padding: 10px 16px"><span class="t-sm muted">Supervisor: Blessing Okon</span><button class="btn sm">Start inspection round</button></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-h"><span class="t-h3">Room discrepancy</span><span class="badge b-ro">Open</span></div>
+            <div class="card-b col" style="gap: 8px"><span><b class="num">512</b> is vacant in the system, but housekeeping found a guest and luggage at 10:05.</span><button class="btn sm" style="align-self: flex-start">Send to front office</button></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ST = { I: ['em','Inspected'], C: ['em','Clean'], D: ['am','Dirty'], P: ['bl','Being cleaned'], O: ['ro','Out of order'], S: ['oos','Out of service'] };
+    const OC = { V: 'Vacant', O: 'Stayover', DO: 'Due out', DEP: 'Departed', A: 'Vacant · arrival', DND: 'Stayover · DND', X: 'Vacant · see alert' };
+    const W = { GA: 'Grace A.', CO: 'Chioma O.', HY: 'Halima Y.', PE: 'Peter E.', '-': 'Unassigned' };
+    const raw = {
+      3: 'D DEP CO|C O CO|I A CO|I A CO|O V -|C V CO|D DO CO|I V CO|C O CO|D DEP CO|I V CO|D O CO',
+      4: 'I V GA|C O GA|P DEP GA r|C O GA|D DO GA r|O V -|S V -|C V GA d|D O GA|D O GA|C DND GA|D DEP GA r',
+      5: 'C O HY|I A HY|I V HY|D DEP HY r|C O HY|I V HY|D DEP HY|C O HY|P O HY|D DO HY|I V HY|C X HY',
+      6: 'I V PE|D DEP - p|C O PE|C O PE|D DO - p|I V PE|C O PE|D O - p|I V PE|D DEP - pr|D DEP PE|C O PE'
+    };
+    const floors = [3,4,5,6].map((n) => {
+      const rooms = raw[n].split('|').map((s, i) => {
+        const [st, oc, who, flags] = s.split(' ');
+        const f = flags || '';
+        const no = String(n) + String(i + 1).padStart(2, '0');
+        return { no, cls: ST[st][0] + (f.includes('p') ? ' pick' : ''), st: ST[st][1], occ: OC[oc], who: W[who], rush: f.includes('r'), pick: f.includes('p'), bs: f.includes('d') ? 'dashed' : 'solid' };
+      });
+      const ready = rooms.filter((r) => r.st === 'Inspected' || r.st === 'Clean').length;
+      const dirty = rooms.filter((r) => r.st === 'Dirty').length;
+      return { n, rooms, summary: ready + ' clean · ' + dirty + ' dirty' };
+    });
+    floors[1].rooms[7].who = 'Saved on Grace’s phone';
+    return { theme: this.props.dark ? 'vt dark' : 'vt', floors };
+  }
+}
+</script>
+</body>
+</html>

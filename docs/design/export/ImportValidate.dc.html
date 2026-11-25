@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Data import · validate</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="none" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="TA" user="Tunde Alabi" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">Import future reservations</h1><span class="muted num">future-reservations-opera.xlsx · 1,284 rows · uploaded 25 Nov 2026 18:52</span></div><div class="row wrap"><button class="btn">Replace file</button></div></div><div class="g4"><div class="card stat"><span class="lbl">Rows read</span><span class="v">1,284</span></div><div class="card stat"><span class="lbl">Ready</span><span class="v">1,251</span><span class="t-sm muted num">97.4%</span></div><div class="card stat"><span class="lbl">Errors</span><span class="v">21</span><span class="t-sm muted num">skipped unless fixed</span></div><div class="card stat"><span class="lbl">Warnings</span><span class="v">12</span><span class="t-sm muted num">fix suggested</span></div></div><div class="split"><div class="col" style="gap: 16px; min-width: 0"><div class="card"><div class="card-h"><span class="t-h3">Rows to look at</span><div class="row"><span class="pill on">All 33</span><span class="pill">Errors 21</span><span class="pill">Warnings 12</span></div></div><div class="tbox"><table class="tbl"><thead><tr><th>Row</th><th>Column</th><th>Value</th><th>Problem</th><th>Suggested fix</th></tr></thead><tbody><tr><td><span class="num">14</span></td><td>Arrival</td><td><span class="num">31/11/2026</span></td><td><span class="ink-ro">Not a real date</span></td><td>30 Nov 2026 or 1 Dec 2026</td></tr><tr><td><span class="num">88</span></td><td>Room type</td><td>Dlx King</td><td><span class="ink-ro">No matching room type</span></td><td>Map “Dlx King” → Deluxe King (applies to 17 rows)</td></tr><tr><td><span class="num">203</span></td><td>Phone</td><td>0803 412 77</td><td><span class="ink-ro">Too short</span></td><td>Import without phone</td></tr><tr><td><span class="num">412</span></td><td>Company</td><td>Acme Energy</td><td><span class="ink-am">Close match</span></td><td>Use Acme Energy Ltd (CL-0042)</td></tr><tr><td><span class="num">977</span></td><td>Rate</td><td>150000 NGN incl</td><td><span class="ink-am">Inclusive rate</span></td><td>Convert to ₦122,449 excl. taxes</td></tr><tr><td><span class="num">1,204</span></td><td>Departure</td><td><span class="num">12 Mar 2027</span></td><td><span class="ink-ro">Before arrival 15 Mar 2027</span></td><td>Swap dates</td></tr></tbody></table></div></div><div class="card"><div class="card-h"><span class="t-h3">Column mapping</span><button class="btn sm">Edit mapping</button></div><div class="tbox"><table class="tbl"><thead><tr><th>Your column</th><th>→ Vento field</th><th>Sample</th></tr></thead><tbody><tr><td>Guest</td><td>Guest name</td><td>Amaka Eze</td></tr><tr><td>Arr</td><td>Arrival</td><td>2 Dec 2026</td></tr><tr><td>Dep</td><td>Departure</td><td>5 Dec 2026</td></tr><tr><td>RmType</td><td>Room type</td><td>Deluxe King</td></tr><tr><td>Rate Code</td><td>Rate plan</td><td>BB-FLEX → Bed &amp; breakfast</td></tr><tr><td>Source</td><td>Booking source</td><td>WEB → Kora booking engine</td></tr></tbody></table></div></div></div><aside class="card"><div class="card-h"><span class="t-h3">Apply</span></div><div class="card-b col num" style="gap: 8px"><div class="row between"><span class="muted">Ready</span><span class="ink-em medium">1,251 rows</span></div><div class="row between"><span class="muted">Errors · will be skipped</span><span class="ink-ro">21 rows</span></div><div class="row between"><span class="muted">Warnings · fix offered</span><span class="ink-am">12 rows</span></div><div class="inset t-sm muted" style="padding: 10px 12px">Creates 1,251 reservations from 26 Nov 2026 to 30 Jun 2027 and blocks their rooms on the tape chart. 6 dates would be overbooked; those rows import unassigned.</div><label class="row"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span> Accept the 12 suggested fixes</label><button class="btn pri">Apply 1,251 rows</button><button class="btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Download 21 errors</button></div></aside></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

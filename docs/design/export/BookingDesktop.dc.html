@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kora Victoria Island · Book a room</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#fff}</style>
+</helmet>
+<div class="kb" style="--k: {{accent}}; min-height: 1250px">
+  <header style="border-bottom: 1px solid #E4E7EC">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 72px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; line-height: 1"><span class="kh" style="font-size: 22px; letter-spacing: .16em; color: var(--k)">KORA</span><span style="font-size: 11px; letter-spacing: .14em; color: #667085; margin-top: 4px">VICTORIA ISLAND</span></div>
+      <nav style="display: flex; gap: 22px; font-size: 14px; color: #344054; flex: 1"><a href="#" style="color: inherit">Rooms</a><a href="#" style="color: inherit">Dining</a><a href="#" style="color: inherit">Meetings &amp; events</a><a href="#" style="color: inherit">Contact</a></nav>
+      <button class="kchip">₦ NGN<svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <a href="#" style="font-size: 14px; font-weight: 600; color: var(--k)">Manage booking</a>
+    </div>
+  </header>
+
+  <div style="max-width: 1200px; margin: 0 auto; padding: 28px 24px 56px; display: flex; flex-direction: column; gap: 24px">
+    <div class="kcard" style="padding: 12px; display: grid; grid-template-columns: 1.1fr 1.1fr 1fr 0.8fr auto; gap: 10px; align-items: end; box-shadow: 0 8px 24px -12px rgba(16,24,40,.15)">
+      <label style="display: flex; flex-direction: column; gap: 4px"><span class="klbl">Check-in</span><span class="kin focus num">Wed 2 Dec 2026</span></label>
+      <label style="display: flex; flex-direction: column; gap: 4px"><span class="klbl">Check-out</span><span class="kin num">Sat 5 Dec 2026<span style="margin-left: auto; font-size: 13px; color: var(--k); font-weight: 600">3 nights</span></span></label>
+      <label style="display: flex; flex-direction: column; gap: 4px"><span class="klbl">Guests</span><span class="kin">2 adults · 1 room</span></label>
+      <label style="display: flex; flex-direction: column; gap: 4px"><span class="klbl">Promo or company code</span><span class="kin" style="color: #98A2B3">Optional</span></label>
+      <button class="kbtn">Update</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 28px; align-items: start">
+      <div style="display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline"><h1 style="font-size: 24px">4 room types for your dates</h1><span style="font-size: 13px; color: #667085">Prices per night, before 10% service charge, 7.5% VAT and 5% Lagos consumption tax</span></div>
+
+        <article class="kcard" style="display: grid; grid-template-columns: 280px minmax(0,1fr); overflow: hidden; box-shadow: 0 0 0 2px var(--k)">
+          <div class="ph" style="min-height: 100%"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m21 16-5-5-9 8"/></svg>Hotel photo · Deluxe King</div>
+          <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; justify-content: space-between; gap: 12px"><div style="display: flex; flex-direction: column; gap: 4px"><h2 style="font-size: 19px">Deluxe King</h2><span style="font-size: 14px; color: #475467">32 m² · king bed · city view · rain shower · sleeps 3</span></div><span style="font-size: 13px; color: #B54708; font-weight: 600; white-space: nowrap">2 left on 4 Dec</span></div>
+            <div style="display: flex; flex-direction: column; border: 1px solid #E4E7EC; border-radius: 12px">
+              <div style="display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 16px; align-items: center; padding: 12px 14px; border-bottom: 1px solid #E4E7EC"><div style="display: flex; flex-direction: column"><span style="font-weight: 600">Room only</span><span style="font-size: 13px; color: #475467">Free cancellation until 1 Dec, 14:00</span></div><div class="num" style="text-align: right; display: flex; flex-direction: column"><span style="font-weight: 600">₦150,000</span><span style="font-size: 12px; color: #667085">₦551,250 total incl. taxes</span></div><button class="kbtn sec" style="height: 40px">Select</button></div>
+              <div style="display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 16px; align-items: center; padding: 12px 14px; border-bottom: 1px solid #E4E7EC; background: var(--k-soft)"><div style="display: flex; flex-direction: column"><span style="font-weight: 600">Bed &amp; breakfast <span style="font-size: 12px; font-weight: 600; color: var(--k); margin-left: 6px">Most booked</span></span><span style="font-size: 13px; color: #475467">Breakfast for 2 · free cancellation until 1 Dec, 14:00</span></div><div class="num" style="text-align: right; display: flex; flex-direction: column"><span style="font-weight: 600">₦168,000</span><span style="font-size: 12px; color: #667085">₦617,400 total incl. taxes</span></div><button class="kbtn" style="height: 40px">Selected</button></div>
+              <div style="display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 16px; align-items: center; padding: 12px 14px"><div style="display: flex; flex-direction: column"><span style="font-weight: 600">Pay now, non-refundable</span><span style="font-size: 13px; color: #475467">Save 10% · paid in full today</span></div><div class="num" style="text-align: right; display: flex; flex-direction: column"><span style="font-weight: 600">₦135,000</span><span style="font-size: 12px; color: #667085">₦496,125 total incl. taxes</span></div><button class="kbtn sec" style="height: 40px">Select</button></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="kcard" style="display: grid; grid-template-columns: 280px minmax(0,1fr); overflow: hidden">
+          <div class="ph" style="min-height: 190px"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m21 16-5-5-9 8"/></svg>Hotel photo · Standard Queen</div>
+          <div style="padding: 18px 20px; display: flex; justify-content: space-between; gap: 16px; align-items: flex-end">
+            <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="font-size: 19px">Standard Queen</h2><span style="font-size: 14px; color: #475467">24 m² · queen bed · work desk · sleeps 2</span></div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px"><span class="num"><span style="font-size: 13px; color: #667085">from </span><b>₦120,000</b><span style="font-size: 13px; color: #667085"> /night</span></span><button class="kbtn sec" style="height: 40px">See 3 rates</button></div>
+          </div>
+        </article>
+
+        <article class="kcard" style="display: grid; grid-template-columns: 280px minmax(0,1fr); overflow: hidden">
+          <div class="ph" style="min-height: 190px"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m21 16-5-5-9 8"/></svg>Hotel photo · Executive King</div>
+          <div style="padding: 18px 20px; display: flex; justify-content: space-between; gap: 16px; align-items: flex-end">
+            <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="font-size: 19px">Executive King</h2><span style="font-size: 14px; color: #475467">40 m² · lounge access · ocean view · sleeps 3</span><span style="font-size: 13px; color: #475467">Arrivals on 3 Dec only for these dates</span></div>
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px"><span class="num"><span style="font-size: 13px; color: #667085">from </span><b>₦210,000</b><span style="font-size: 13px; color: #667085"> /night</span></span><button class="kbtn sec" style="height: 40px">Change dates</button></div>
+          </div>
+        </article>
+
+        <article class="kcard" style="display: grid; grid-template-columns: 280px minmax(0,1fr); overflow: hidden; opacity: .75">
+          <div class="ph" style="min-height: 150px"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m21 16-5-5-9 8"/></svg>Hotel photo · Junior Suite</div>
+          <div style="padding: 18px 20px; display: flex; justify-content: space-between; gap: 16px; align-items: center">
+            <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="font-size: 19px">Junior Suite</h2><span style="font-size: 14px; color: #475467">Sold out on Thu 3 Dec</span></div>
+            <button class="kbtn sec" style="height: 40px">Nearest dates</button>
+          </div>
+        </article>
+      </div>
+
+      <aside class="kcard" style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+        <h3 style="font-size: 17px">Your stay</h3>
+        <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Deluxe King · Bed &amp; breakfast</span><span class="num" style="font-size: 14px; color: #475467">2–5 Dec 2026 · 3 nights · 2 adults</span></div>
+        <div class="num" style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; border-top: 1px solid #E4E7EC; padding-top: 12px">
+          <div style="display: flex; justify-content: space-between"><span style="color: #475467">3 nights × ₦168,000.00</span><span>₦504,000.00</span></div>
+          <div style="display: flex; justify-content: space-between; color: #475467; font-size: 13px"><span>Service charge 10%</span><span>₦50,400.00</span></div>
+          <div style="display: flex; justify-content: space-between; color: #475467; font-size: 13px"><span>VAT 7.5%</span><span>₦37,800.00</span></div>
+          <div style="display: flex; justify-content: space-between; color: #475467; font-size: 13px"><span>Lagos consumption tax 5%</span><span>₦25,200.00</span></div>
+          <div style="display: flex; justify-content: space-between; border-top: 1px solid #D0D5DD; padding-top: 10px; font-size: 17px; font-weight: 700"><span>Total</span><span>₦617,400.00</span></div>
+          <span style="font-size: 13px; color: #475467">Pay ₦205,800.00 now (first night), the rest at the hotel.</span>
+        </div>
+        <button class="kbtn" style="width: 100%">Continue</button>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #475467">
+          <span>Free cancellation until Tue 1 Dec 2026, 14:00</span>
+          <span>Pay by card (Paystack) or bank transfer</span>
+          <span>Confirmation on WhatsApp and email</span>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#1F5C66","options":["#1F5C66","#7A3E2B","#1D3A6B","#3E4A2F"]},"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#1F5C66' };
+  }
+}
+</script>
+</body>
+</html>

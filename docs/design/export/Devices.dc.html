@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings · devices</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="none" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="KA" user="Kemi Adeyemi" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+      <div class="row t-sm muted"><a href="#">Settings</a><span class="faint">/</span><span>Devices</span></div>
+      <div class="pagehead">
+        <div class="col" style="gap: 2px"><h1 class="t-h1">Shared devices</h1><span class="muted num">Kora Victoria Island · 14 devices · 1 with unsynced actions</span></div>
+        <button class="btn pri">Register a device</button>
+      </div>
+      <div class="split">
+        <div class="card">
+          <div class="tbox"><table class="tbl">
+            <thead><tr><th>Device</th><th>Used for</th><th>Sign-out</th><th>Last seen</th><th class="r">Waiting to sync</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><div class="col"><span class="medium num">POS-VI-03</span><span class="t-sm faint">Tablet</span></div></td><td>POS · Calabash</td><td class="num">90 s idle</td><td class="num">now</td><td class="r num">0</td><td><span class="badge b-em">Online</span></td></tr>
+              <tr><td><div class="col"><span class="medium num">POS-VI-04</span><span class="t-sm faint">Tablet</span></div></td><td>POS · Pool bar</td><td class="num">90 s idle</td><td class="num">now</td><td class="r num">0</td><td><span class="badge b-em">Online</span></td></tr>
+              <tr><td><div class="col"><span class="medium num">KDS-VI-01</span><span class="t-sm faint">Kitchen screen</span></div></td><td>Kitchen display</td><td class="faint">Stays on</td><td class="num">now</td><td class="r num">0</td><td><span class="badge b-em">Online</span></td></tr>
+              <tr><td><div class="col"><span class="medium num">HK-VI-07</span><span class="t-sm faint">Phone</span></div></td><td>Housekeeping · floor 4</td><td class="num">5 min idle</td><td class="num">13:52</td><td class="r num ink-am medium">2</td><td><span class="badge b-am">Offline · 6 min</span></td></tr>
+              <tr><td><div class="col"><span class="medium num">HK-VI-02</span><span class="t-sm faint">Phone</span></div></td><td>Housekeeping · supervisor</td><td class="num">5 min idle</td><td class="num">now</td><td class="r num">0</td><td><span class="badge b-em">Online</span></td></tr>
+              <tr><td><div class="col"><span class="medium num">FD-VI-02</span><span class="t-sm faint">Desktop</span></div></td><td>Front desk</td><td class="num">10 min idle</td><td class="num">now</td><td class="r num">0</td><td><span class="badge b-em">Online</span></td></tr>
+              <tr><td><div class="col"><span class="medium num">HK-VI-05</span><span class="t-sm faint">Phone</span></div></td><td>Housekeeping · floor 2</td><td class="num">5 min idle</td><td class="num">19 Nov</td><td class="r num">0</td><td><span class="badge b-sl">Not seen 6 days</span></td></tr>
+            </tbody>
+          </table></div>
+          <div class="card-f t-sm muted">Removing a device signs everyone out of it and wipes its local data after the queue syncs.</div>
+        </div>
+
+        <aside class="card">
+          <div class="card-h"><span class="t-h3">Register a device</span><button class="btn ghost sm icon" aria-label="Close"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+          <div class="card-b col" style="gap: 16px">
+            <div class="col" style="gap: 6px"><span class="t-sm medium">1 · On the new device, open <span class="num ink-pri">vento.ng/device</span></span><span class="t-sm medium">2 · Scan this code or type it</span></div>
+            <div class="row" style="gap: 16px">
+              <div class="ph" style="width: 120px; height: 120px; border-radius: 10px; border: 1px solid var(--border)">QR code</div>
+              <div class="col" style="gap: 4px"><span class="num" style="font-size: 26px; font-weight: 700; letter-spacing: .08em">K7Q-4M2</span><span class="t-sm muted num">Expires in 9:42</span></div>
+            </div>
+            <div class="hr"></div>
+            <div class="field"><label>Used for</label><div class="seg"><button class="on">POS</button><button>Housekeeping</button><button>Kitchen</button><button>Front desk</button></div></div>
+            <div class="field"><label>Outlet</label><div class="input">Calabash restaurant<span class="suf"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+            <div class="field"><label>Device name</label><div class="input num">POS-VI-05</div></div>
+            <div class="field"><label>Sign out after</label><div class="seg"><button>30 s</button><button class="on">90 s</button><button>5 min</button></div></div>
+            <div class="field"><label>Who can sign in</label><div class="input">F&amp;B team · 14 people</div></div>
+            <button class="btn pri" disabled>Waiting for the device…</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

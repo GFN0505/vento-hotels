@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>POS tablet lock screen</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}} touch" style="width: 1194px; height: 834px; overflow: hidden; display: grid; grid-template-columns: minmax(0,1fr) 440px; font-family: Inter, system-ui, sans-serif">
+  <div class="col" style="padding: 40px 44px; gap: 28px">
+    <div class="row between">
+      <div class="row" style="gap: 12px"><svg width="40" height="40" viewBox="0 0 100 100" role="img" aria-label="Vento" style="flex: none; display: block"><path d="M24 22 L50 78 L76 22" fill="none" stroke="#6D64F4" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><circle cx="50" cy="27" r="9" fill="#5EC4EA"/></svg><div class="col"><span class="t-h2">Calabash restaurant</span><span class="t-sm muted">Kora Victoria Island · POS-VI-03</span></div></div>
+      <div class="col" style="align-items: flex-end"><span class="num" style="font-size: 32px; line-height: 38px; font-weight: 600">19:46</span><span class="t-sm muted">Wed 25 Nov 2026</span></div>
+    </div>
+    <div class="col" style="gap: 14px">
+      <span class="lbl">Tap your name</span>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px">
+        <button class="card col" style="align-items: center; padding: 18px 10px; gap: 8px; border-color: var(--brand); box-shadow: 0 0 0 3px var(--pri-line); cursor: pointer; font: inherit; color: inherit"><span class="av" style="width: 56px; height: 56px; font-size: 18px">MI</span><span class="medium">Musa I.</span><span class="t-sm faint">Waiter · 3 open checks</span></button>
+        <button class="card col" style="align-items: center; padding: 18px 10px; gap: 8px; cursor: pointer; font: inherit; color: inherit"><span class="av" style="width: 56px; height: 56px; font-size: 18px">AN</span><span class="medium">Ada N.</span><span class="t-sm faint">Waiter · 2 open checks</span></button>
+        <button class="card col" style="align-items: center; padding: 18px 10px; gap: 8px; cursor: pointer; font: inherit; color: inherit"><span class="av" style="width: 56px; height: 56px; font-size: 18px">TK</span><span class="medium">Tunde K.</span><span class="t-sm faint">Waiter · 1 open check</span></button>
+        <button class="card col" style="align-items: center; padding: 18px 10px; gap: 8px; cursor: pointer; font: inherit; color: inherit"><span class="av" style="width: 56px; height: 56px; font-size: 18px">FA</span><span class="medium">Funke A.</span><span class="t-sm faint">Cashier</span></button>
+        <button class="card col" style="align-items: center; padding: 18px 10px; gap: 8px; cursor: pointer; font: inherit; color: inherit"><span class="av" style="width: 56px; height: 56px; font-size: 18px; background: var(--surface-3); color: var(--text-2)">TO</span><span class="medium">Tola O.</span><span class="t-sm faint">F&amp;B manager</span></button>
+        <button class="card col" style="align-items: center; padding: 18px 10px; gap: 8px; cursor: pointer; font: inherit; color: var(--text-2); border-style: dashed; justify-content: center"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="medium">Someone else</span><span class="t-sm faint">Not on this shift</span></button>
+      </div>
+    </div>
+    <div class="inset row" style="padding: 12px 14px; gap: 10px; margin-top: auto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="t-sm muted">Signs out after 90 seconds idle. Open checks stay with their server, so switching people mid-shift is one tap and a PIN.</span></div>
+  </div>
+  <div class="col" style="background: var(--surface); border-left: 1px solid var(--border); align-items: center; justify-content: center; gap: 22px">
+    <div class="col" style="align-items: center; gap: 6px"><span class="av" style="width: 64px; height: 64px; font-size: 20px">MI</span><span class="t-h2">Musa Ibrahim</span><span class="t-sm muted">Enter your 4-digit PIN</span></div>
+    <div class="pdots"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+    <div class="pin" style="grid-template-columns: repeat(3, 84px)"><button style="height: 72px">1</button><button style="height: 72px">2</button><button style="height: 72px">3</button><button style="height: 72px">4</button><button style="height: 72px">5</button><button style="height: 72px">6</button><button style="height: 72px">7</button><button style="height: 72px">8</button><button style="height: 72px">9</button><button style="height: 72px; font-size: 14px; color: var(--text-2)">Cancel</button><button style="height: 72px">0</button><button style="height: 72px" aria-label="Delete"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12z"/><path d="m12 9 6 6M18 9l-6 6"/></svg></button></div>
+    <span class="t-sm faint">Forgot your PIN? Ask Tola O. to reset it.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1194,"height":834}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Attendant · my rooms</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}} touch" style="width: 390px; height: 844px; overflow: hidden; display: flex; flex-direction: column; font-family: Inter, system-ui, sans-serif">
+  <header style="padding: 14px 16px 12px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px">
+    <div class="row between"><div class="col"><span class="t-h2">My rooms</span><span class="t-sm muted">Grace Akpan · Floor 4</span></div><span class="badge b-em nd">Online</span></div>
+    <div class="col" style="gap: 6px"><div class="meter" style="height: 8px"><i class="f-em" style="width: 25%"></i><i class="f-bl" style="width: 8.3%"></i></div><span class="t-sm muted num">3 of 12 done · next arrival 14:00</span></div>
+  </header>
+  <div class="col" style="flex: 1; min-height: 0; overflow: hidden; padding: 12px 12px; gap: 10px">
+    <a href="HKRoomCheck.dc.html" class="card" style="border-color: var(--pri-line); color: inherit; text-decoration: none"><div class="row between" style="padding: 12px 14px; gap: 10px"><div class="col"><span class="row"><span class="t-h3">Room check · floor 4</span><span class="badge b-vi nd">New</span></span><span class="t-sm muted">Walk the floor, mark each room occupied or vacant · by 15:00</span></div><span class="btn pri sm">Start</span></div></a>
+    <div class="card" style="border-color: var(--bl-dot); box-shadow: 0 0 0 3px var(--bl-bg)">
+      <div class="col" style="padding: 14px; gap: 10px">
+        <div class="row between"><span class="row"><span class="t-h1 num">403</span><span class="badge b-bl">Cleaning · 18 min</span></span><span class="t-sm ink-ro medium">RUSH</span></div>
+        <span class="muted">Departed · arrival at 14:00 · Deluxe King</span>
+        <div class="g2" style="gap: 8px"><button class="btn">Open checklist</button><button class="btn pri">Done</button></div>
+      </div>
+    </div>
+    <div class="card"><div class="row between" style="padding: 12px 14px"><div class="col"><span class="row"><span class="t-h2 num">412</span><span class="t-sm ink-ro medium">RUSH</span></span><span class="t-sm muted">Departed · arrival 15:00</span></div><button class="btn">Start</button></div></div>
+    <div class="card"><div class="row between" style="padding: 12px 14px"><div class="col"><span class="t-h2 num">405</span><span class="t-sm muted">Due out · guest still in · arrival 16:00</span></div><span class="badge b-am">Waiting</span></div></div>
+    <div class="card"><div class="row between" style="padding: 12px 14px"><div class="col"><span class="t-h2 num">409</span><span class="t-sm muted">Stayover · refresh</span></div><button class="btn">Start</button></div></div>
+    <div class="card"><div class="row between" style="padding: 12px 14px"><div class="col"><span class="t-h2 num">410</span><span class="t-sm muted">Stayover · refresh</span></div><button class="btn">Start</button></div></div>
+    <div class="card"><div class="row between" style="padding: 12px 14px"><div class="col"><span class="t-h2 num">411</span><span class="t-sm muted">Do not disturb · try again 14:00</span></div><span class="badge b-sl">DND</span></div></div>
+    <span class="lbl" style="padding: 4px 4px 0">Done</span>
+    <div class="row between" style="padding: 4px"><span class="num muted">401 · 402 · 404</span><span class="badge b-em">3 done</span></div>
+  </div>
+  <nav aria-label="Housekeeping" style="height: 72px; border-top: 1px solid var(--border); background: var(--surface); display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); padding: 6px 6px 10px">
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 600; color: var(--pri-ink); background: var(--pri-soft); border-radius: 10px"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg>My rooms</a>
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 500; color: var(--text-2)"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4a5 5 0 0 0-4.6 6.9L3 18.3 5.7 21l7.4-7.4A5 5 0 0 0 20 9l-3 1-2-2 1-3z"/></svg>Report fault</a>
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 500; color: var(--text-2)"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Lost &amp; found</a>
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 500; color: var(--text-2)"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Me</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

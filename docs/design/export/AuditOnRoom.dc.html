@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Audit trail on a room</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c" style="position: relative; width: 100%; min-height: 1300px; font-family: Inter, system-ui, sans-serif"><dc-import name="HKBoard" hint-size="100%,1300px"></dc-import><div class="scrim" style="z-index: 20"></div><aside class="sheet" aria-label="Audit trail" style="z-index: 21; width: min(480px, 100%); color: var(--text)"><div class="row between" style="padding: 14px 18px; border-bottom: 1px solid var(--border)"><div class="col"><span class="t-h2">Audit trail</span><span class="t-sm muted">Room 512 · Executive King</span></div><button class="btn ghost icon" aria-label="Close"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="row" style="padding: 10px 18px; gap: 6px; border-bottom: 1px solid var(--border)"><span class="pill on">All 5</span><span class="pill">Money</span><span class="pill">Approvals</span><span class="grow"></span><a class="btn sm ghost" href="AuditLog.dc.html">Open in audit log</a></div><div class="col" style="padding: 0 18px"><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Discrepancy reported</span><span class="t-sm faint num">24 Nov 10:05</span></div><span class="t-sm num">System vacant · guest and luggage found</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>Grace Akpan</span><span>HK-VI-07</span><span></span></div></div><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Status</span><span class="t-sm faint num">24 Nov 09:12</span></div><span class="t-sm num">Dirty → Clean</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>Halima Yusuf</span><span>HK-VI-05</span><span></span></div></div><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Status</span><span class="t-sm faint num">23 Nov 11:50</span></div><span class="t-sm num">Clean → Dirty</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>System</span><span>–</span><span></span></div></div><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Checked out</span><span class="t-sm faint num">23 Nov 11:48</span></div><span class="t-sm num">Kalu E. · balance ₦0.00</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>Chidi Eze</span><span>FD-VI-02</span><span></span></div></div><div class="col" style="padding: 12px 0; border-bottom: 1px solid var(--border); gap: 4px"><div class="row between"><span class="medium">Maintenance closed</span><span class="t-sm faint num">22 Nov 16:20</span></div><span class="t-sm num">TV remote replaced · WO-1171</span><div class="row wrap t-sm muted" style="gap: 4px 12px"><span>Emeka Nnaji</span><span>Web</span><span></span></div></div></div></aside></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

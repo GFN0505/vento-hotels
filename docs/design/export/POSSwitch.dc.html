@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>POS quick user switch</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c " style="width: 1194px; height: 834px; overflow: hidden; position: relative; font-family: Inter, system-ui, sans-serif">
+<dc-import name="POSOrder" hint-size="1194px,834px"></dc-import>
+<div class="scrim" style="z-index: 20"></div>
+<div class="pop" style="position: absolute; z-index: 21; right: 12px; top: 64px; width: 340px; padding: 14px; display: flex; flex-direction: column; gap: 10px; color: var(--text)">
+<span class="t-h3">Switch user</span>
+<div class="col" style="gap: 2px"><button class="row" style="gap: 10px; padding: 10px 12px; border-radius: 10px; border: 0; background: var(--pri-soft); font: inherit; color: inherit; width: 100%; text-align: left"><span class="av" style="width: 36px; height: 36px">MI</span><span class="col grow"><span class="medium">Musa I.</span><span class="t-sm muted">3 open checks · now</span></span><span class="t-sm ink-pri">Signed in</span></button><button class="row" style="gap: 10px; padding: 10px 12px; border-radius: 10px; border: 0; background: transparent; font: inherit; color: inherit; width: 100%; text-align: left"><span class="av" style="width: 36px; height: 36px">AN</span><span class="col grow"><span class="medium">Ada N.</span><span class="t-sm muted">2 open checks</span></span></button><button class="row" style="gap: 10px; padding: 10px 12px; border-radius: 10px; border: 0; background: transparent; font: inherit; color: inherit; width: 100%; text-align: left"><span class="av" style="width: 36px; height: 36px">TK</span><span class="col grow"><span class="medium">Tunde K.</span><span class="t-sm muted">1 open check</span></span></button><button class="row" style="gap: 10px; padding: 10px 12px; border-radius: 10px; border: 0; background: transparent; font: inherit; color: inherit; width: 100%; text-align: left"><span class="av" style="width: 36px; height: 36px">FA</span><span class="col grow"><span class="medium">Funke A.</span><span class="t-sm muted">Cashier</span></span></button></div>
+<div class="inset t-sm muted" style="padding: 10px 12px">Each check stays with the person who opened it. To give table 12 to someone else, use Transfer on the check.</div>
+<div class="row"><button class="btn grow">Transfer table 12</button><a class="btn pri grow" href="LockPOS.dc.html">Lock tablet</a></div>
+</div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1194,"height":834}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

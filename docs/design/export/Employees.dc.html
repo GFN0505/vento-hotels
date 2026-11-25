@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Employees</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="hr" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Whole group · 4 properties" initials="NB" user="Ngozi Bello" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">People</h1><span class="muted num">Kora Hotels Group · 561 employees</span></div><div class="row wrap"><button class="btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V9M7 14l5-5 5 5M4 3h16"/></svg>Import</button><button class="btn pri">Add employee</button></div></div><div class="row wrap"><div class="input" style="width: 260px; height: 32px"><span class="faint">Search name, role, phone</span></div><span class="pill on">All properties</span><span class="pill">Department</span><span class="pill">Entity</span><span class="pill">On leave <span class="n">14</span></span><span class="pill">Probation <span class="n">9</span></span><span class="pill">Missing bank details <span class="n">3</span></span></div><div class="split"><div class="card"><div class="card-h"><span class="t-h3">Employees</span></div><div class="tbox"><table class="tbl"><thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Property</th><th>Started</th><th>Status</th></tr></thead><tbody><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">GA</span><span class="medium">Grace Akpan</span></div></td><td>Room attendant</td><td><span class="muted">Housekeeping</span></td><td>Victoria Island</td><td><span class="num muted">12 Feb 2024</span></td><td><span class="badge b-em">Active</span></td></tr><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">CE</span><span class="medium">Chidi Eze</span></div></td><td>Front desk agent</td><td><span class="muted">Front office</span></td><td>Victoria Island</td><td><span class="num muted">3 Jun 2023</span></td><td><span class="badge b-em">Active</span></td></tr><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">MI</span><span class="medium">Musa Ibrahim</span></div></td><td>Waiter</td><td><span class="muted">F&amp;B · Calabash</span></td><td>Victoria Island</td><td><span class="num muted">15 Jan 2025</span></td><td><span class="badge b-em">Active</span></td></tr><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">BO</span><span class="medium">Bola Ojo</span></div></td><td>Night auditor</td><td><span class="muted">Front office</span></td><td>Victoria Island</td><td><span class="num muted">8 Aug 2022</span></td><td><span class="badge b-em">Active</span></td></tr><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">HY</span><span class="medium">Halima Yusuf</span></div></td><td>Room attendant</td><td><span class="muted">Housekeeping</span></td><td>Victoria Island</td><td><span class="num muted">2 Nov 2026</span></td><td><span class="badge b-am">Probation · 3 mo</span></td></tr><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">EN</span><span class="medium">Emeka Nnaji</span></div></td><td>Maintenance supervisor</td><td><span class="muted">Engineering</span></td><td>Victoria Island</td><td><span class="num muted">19 Apr 2021</span></td><td><span class="badge b-em">Active</span></td></tr><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">AD</span><span class="medium">Aisha Danladi</span></div></td><td>Sous chef</td><td><span class="muted">Kitchen</span></td><td>Abuja</td><td><span class="num muted">1 Mar 2024</span></td><td><span class="badge b-bl">Annual leave to 2 Dec</span></td></tr><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">IU</span><span class="medium">Ifeoma Uche</span></div></td><td>Group accountant</td><td><span class="muted">Finance</span></td><td>Group office</td><td><span class="num muted">5 Sep 2020</span></td><td><span class="badge b-em">Active</span></td></tr><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">PE</span><span class="medium">Peter Eko</span></div></td><td>Room attendant</td><td><span class="muted">Housekeeping</span></td><td>Victoria Island</td><td><span class="num muted">10 Oct 2025</span></td><td><span class="badge b-em">Active</span></td></tr><tr><td><div class="row"><span class="av" style="width: 24px; height: 24px; font-size: 10px">SW</span><span class="medium">Samson Wike</span></div></td><td>Security officer</td><td><span class="muted">Security</span></td><td>Port Harcourt</td><td><span class="num muted">14 May 2023</span></td><td><span class="badge b-sl">Leaving 30 Nov</span></td></tr></tbody></table></div><div class="card-f between"><span class="t-sm muted num">1–10 of 561</span><div class="row"><button class="btn sm" disabled>Previous</button><button class="btn sm">Next</button></div></div></div><div class="card"><div class="card-h"><span class="t-h3">Headcount by property</span></div><div class="card-b col num" style="gap: 10px"><div class="col" style="gap: 4px"><div class="row between"><span>Victoria Island</span><span>204</span></div><div class="meter"><i class="f-pri" style="width: 93%"></i></div></div><div class="col" style="gap: 4px"><div class="row between"><span>Ikeja GRA</span><span>96</span></div><div class="meter"><i class="f-pri" style="width: 44%"></i></div></div><div class="col" style="gap: 4px"><div class="row between"><span>Abuja</span><span>148</span></div><div class="meter"><i class="f-pri" style="width: 67%"></i></div></div><div class="col" style="gap: 4px"><div class="row between"><span>Port Harcourt</span><span>101</span></div><div class="meter"><i class="f-pri" style="width: 46%"></i></div></div><div class="col" style="gap: 4px"><div class="row between"><span>Group office</span><span>12</span></div><div class="meter"><i class="f-pri" style="width: 5%"></i></div></div><span class="t-sm faint">561 people · 3 entities · 6 joined and 4 left this month</span></div></div></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1050}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

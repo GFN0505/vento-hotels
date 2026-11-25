@@ -5,6 +5,8 @@ A world-class hotel management platform for Nigerian hotel groups and chains: re
 Read before working:
 - `docs/PRODUCT.md` — vision, personas, the ten modules and how they connect. Keep each module lean; don't add features outside it without asking.
 - `docs/DOMAIN.md` — business vocabulary, statuses and rules.
+- `docs/journeys/` — user walkthroughs on the demo hotel group; keep them true when behaviour changes.
+- `docs/design/export/` — the approved designs (source of truth for UI); `docs/design/screen-inventory.md` maps them.
 
 ## Stack
 - **Monorepo:** pnpm workspaces + Turborepo — `apps/web`, `apps/api`, `packages/shared`

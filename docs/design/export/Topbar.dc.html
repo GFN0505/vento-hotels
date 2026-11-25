@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Top bar</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c" style="font-family: Inter, system-ui, sans-serif; color: var(--text)">
+<header class="top">
+  <button class="input hide-m" style="width: 340px; cursor: text; color: var(--text-3); background: var(--surface-2)" aria-label="Search or run a command"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search guests, rooms, folios or run a command<span class="suf"><span class="kbd">⌘K</span></span></button>
+  <button class="btn icon ghost show-m" aria-label="Search"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+  <div class="grow"></div>
+  <button class="btn" aria-label="Switch property"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 21v-3h4v3"/></svg>{{property}}<svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="m6 9 6 6 6-6"/></svg></button>
+  <sc-if value="{{hasEntity}}" hint-placeholder-val="{{ false }}">
+    <button class="btn hide-m" aria-label="Switch legal entity"><span class="faint">Entity</span>{{entity}}<svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="m6 9 6 6 6-6"/></svg></button>
+  </sc-if>
+  <sc-if value="{{afterMidnight}}" hint-placeholder-val="{{ false }}">
+    <span class="badge b-am nd num hide-m" style="height: 32px; border-radius: 8px; padding: 0 10px" title="Night audit has not run yet">Business date {{bizDate}} · Calendar {{calDate}}</span>
+  </sc-if>
+  <sc-if value="{{normalDate}}" hint-placeholder-val="{{ true }}">
+    <span class="row num hide-m" style="height: 32px; padding: 0 10px; border-radius: 8px; background: var(--surface-3); font-size: 12px; font-weight: 500; color: var(--text-2)"><span class="faint">Business date</span>{{bizDate}}</span>
+  </sc-if>
+  <sc-if value="{{offline}}" hint-placeholder-val="{{ false }}">
+    <button class="btn" style="color: var(--am); border-color: var(--am-dot)" aria-label="Offline, open sync queue"><span class="dotlive am"></span>Offline · {{pending}} to sync</button>
+  </sc-if>
+  <sc-if value="{{online}}" hint-placeholder-val="{{ true }}">
+    <span class="row t-sm faint hide-m" style="padding: 0 6px" title="Connected · last sync 17:49"><span class="dotlive"></span>Online</span>
+  </sc-if>
+  <sc-if value="{{showApprovals}}" hint-placeholder-val="{{ true }}">
+    <button class="btn ghost" style="padding: 0 8px; gap: 6px; color: var(--text-2)" aria-label="Approvals waiting for you: {{approvals}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg><span class="hide-m">Approvals</span><span class="badge b-vi nd num" style="height: 18px; padding: 0 6px; font-size: 11px">{{approvals}}</span></button>
+  </sc-if>
+  <button class="btn icon ghost" aria-label="Notifications, 4 unread" style="position: relative"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg><span style="position: absolute; top: 6px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--brand); border: 1.5px solid var(--surface)"></span></button>
+  <button class="av" style="border: 0; cursor: pointer" aria-label="Account: {{user}}">{{initials}}</button>
+</header>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"property":{"editor":"text","default":"Kora Victoria Island"},"bizDate":{"editor":"text","default":"25 Nov 2026"},"calDate":{"editor":"text","default":""},"offline":{"editor":"boolean","default":false},"pending":{"editor":"int","default":3},"entity":{"editor":"text","default":""},"user":{"editor":"text","default":"Kemi Adeyemi"},"initials":{"editor":"text","default":"KA"},"showApprovals":{"editor":"boolean","default":true},"approvals":{"editor":"int","default":3},"$preview":{"width":1208,"height":56}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const cal = this.props.calDate ?? '';
+    const off = !!this.props.offline;
+    const ent = this.props.entity ?? '';
+    return {
+      property: this.props.property ?? 'Kora Victoria Island',
+      bizDate: this.props.bizDate ?? '25 Nov 2026',
+      calDate: cal,
+      afterMidnight: cal !== '',
+      normalDate: cal === '',
+      offline: off,
+      online: !off,
+      pending: this.props.pending ?? 3,
+      entity: ent,
+      hasEntity: ent !== '',
+      user: this.props.user ?? 'Kemi Adeyemi',
+      initials: this.props.initials ?? 'KA',
+      showApprovals: this.props.showApprovals ?? true,
+      approvals: this.props.approvals ?? 3
+    };
+  }
+}
+</script>
+</body>
+</html>

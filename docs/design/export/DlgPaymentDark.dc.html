@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Take payment · Folio B · dark</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c dark" style="position: relative; width: 100%; min-height: 1320px; font-family: Inter, system-ui, sans-serif"><dc-import name="Folio" dark="{{ true }}" hint-size="100%,1320px"></dc-import><div class="scrim" style="z-index: 20"></div><div style="position: absolute; z-index: 21; left: 0; right: 0; top: 90px; display: flex; justify-content: center"><div class="dialog" role="dialog" aria-label="Take payment · Folio B" style="width: 600px; max-width: calc(100% - 32px); padding: 22px; display: flex; flex-direction: column; gap: 14px; color: var(--text)"><div class="col" style="gap: 4px"><span class="t-h2">Take payment · Folio B</span><span class="t-sm muted">Ibrahim Sule · balance ₦92,487.50</span></div><div class="col" style="gap: 8px"><div class="row" style="gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px"><span class="medium" style="width: 130px">Cash · USD</span><div class="input num" style="width: 150px">$40.00</div><span class="t-sm muted grow">@ ₦1,620.00 CBN official = ₦64,800.00</span><button class="btn ghost icon sm" aria-label="Remove"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="row" style="gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px"><span class="medium" style="width: 130px">POS · Moniepoint</span><div class="input num" style="width: 150px">₦27,687.50</div><span class="t-sm muted grow">RRN 412038877195</span><button class="btn ghost icon sm" aria-label="Remove"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><button class="btn sm ghost" style="align-self: flex-start"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add method <span class="kbd">⇧A</span></button></div><div class="field"><label>FX rate for USD</label><div class="seg"><button class="on">CBN official ₦1,620.00</button><button>Market ₦1,655.00 · reason needed</button></div></div><div class="inset col num" style="padding: 12px; gap: 6px; background: var(--surface)"><div class="row between"><span class="muted">Paying</span><span>₦92,487.50</span></div><div class="row between strong" style="border-top: 1px solid var(--border); padding-top: 6px"><span class="">Balance after</span><span>₦0.00</span></div></div><label class="row t-sm"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span>Send receipt to WhatsApp +234 802 115 3409</label><div class="row" style="justify-content: flex-end"><button class="btn ghost">Cancel <span class="kbd">esc</span></button><button class="btn pri">Take ₦92,487.50 <span class="kbd">↵</span></button></div><span class="t-sm faint">Saved to the audit trail with your name, device and reason.</span></div></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

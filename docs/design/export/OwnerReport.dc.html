@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Owner's daily report</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c" style="width: 720px; height: 1500px; box-sizing: border-box; background: #FFFFFF; color: #101828; font-family: Inter, system-ui, sans-serif; padding: 48px 48px 40px; display: flex; flex-direction: column; gap: 28px">
+  <header style="display: flex; justify-content: space-between; align-items: flex-start">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #5254DB">Daily report</span>
+      <h1 style="margin: 0; font-size: 30px; line-height: 38px; font-weight: 700; letter-spacing: -.02em">Kora Victoria Island</h1>
+      <span style="font-size: 15px; color: #475467" class="num">Business date Tue 24 Nov 2026 · sent 25 Nov 06:30</span>
+    </div>
+    <svg width="44" height="44" viewBox="0 0 100 100" role="img" aria-label="Vento" style="flex: none; display: block"><path d="M24 22 L50 78 L76 22" fill="none" stroke="#6D64F4" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><circle cx="50" cy="27" r="9" fill="#5EC4EA"/></svg>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px">
+    <div style="border: 1px solid #E4E7EC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #667085; font-weight: 500">Occupancy</span><span class="num" style="font-size: 30px; line-height: 36px; font-weight: 700">82.5%</span><span class="num" style="font-size: 13px; color: #475467">99 of 120 rooms</span></div>
+    <div style="border: 1px solid #E4E7EC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #667085; font-weight: 500">ADR</span><span class="num" style="font-size: 30px; line-height: 36px; font-weight: 700">₦166,200</span><span class="num" style="font-size: 13px; color: #475467">RevPAR ₦137,115</span></div>
+    <div style="border: 1px solid #E4E7EC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #667085; font-weight: 500">Revenue</span><span class="num" style="font-size: 30px; line-height: 36px; font-weight: 700">₦24.47m</span><span class="num" style="font-size: 13px; color: #067647; font-weight: 500">+2.8% vs budget</span></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: #667085">Revenue</span>
+      <div class="num" style="display: flex; flex-direction: column; gap: 6px; font-size: 15px">
+        <div style="display: flex; justify-content: space-between"><span style="color: #475467">Rooms</span><span>₦16,453,800.00</span></div>
+        <div style="display: flex; justify-content: space-between"><span style="color: #475467">Food &amp; beverage</span><span>₦6,912,400.00</span></div>
+        <div style="display: flex; justify-content: space-between"><span style="color: #475467">Other</span><span>₦1,104,000.00</span></div>
+        <div style="display: flex; justify-content: space-between; border-top: 1px solid #D0D5DD; padding-top: 6px; font-weight: 600"><span>Total</span><span>₦24,470,200.00</span></div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: #667085">Cash collected</span>
+      <div class="num" style="display: flex; flex-direction: column; gap: 6px; font-size: 15px">
+        <div style="display: flex; justify-content: space-between"><span style="color: #475467">Bank transfer</span><span>₦12,840,000.00</span></div>
+        <div style="display: flex; justify-content: space-between"><span style="color: #475467">POS terminals</span><span>₦7,215,500.00</span></div>
+        <div style="display: flex; justify-content: space-between"><span style="color: #475467">Paystack</span><span>₦2,106,000.00</span></div>
+        <div style="display: flex; justify-content: space-between"><span style="color: #475467">Cash</span><span>₦1,384,000.00</span></div>
+        <div style="display: flex; justify-content: space-between; border-top: 1px solid #D0D5DD; padding-top: 6px; font-weight: 600"><span>Total</span><span>₦23,545,500.00</span></div>
+        <span style="font-size: 13px; color: #667085">Plus ₦4,920,000.00 charged to company accounts</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 20px; font-weight: 700">8 exceptions</span><span class="num" style="font-size: 14px; color: #475467">₦152,000.00 in reductions · 0.6% of revenue</span></div>
+    <div style="border: 1px solid #E4E7EC; border-radius: 12px; overflow: hidden">
+      <div style="display: grid; grid-template-columns: 138px minmax(0,1fr) 118px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #E4E7EC; font-size: 14px; align-items: baseline"><span style="font-weight: 600">Rate below plan</span><span style="display: flex; flex-direction: column"><span class="num">Room 407 · ₦95,000 vs ₦150,000</span><span style="font-size: 13px; color: #667085">Chidi Eze · “Returning guest” · approved Kemi Adeyemi</span></span><span class="num" style="text-align: right">₦55,000.00</span></div>
+      <div style="display: grid; grid-template-columns: 138px minmax(0,1fr) 118px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #E4E7EC; font-size: 14px; align-items: baseline"><span style="font-weight: 600">Refund</span><span style="display: flex; flex-direction: column"><span class="num">VI-2611-0419 · to bank transfer</span><span style="font-size: 13px; color: #667085">Chidi Eze · “Double payment” · approved Kemi Adeyemi</span></span><span class="num" style="text-align: right">₦45,000.00</span></div>
+      <div style="display: grid; grid-template-columns: 138px minmax(0,1fr) 118px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #E4E7EC; font-size: 14px; align-items: baseline"><span style="font-weight: 600">Comp</span><span style="display: flex; flex-direction: column"><span class="num">Room 1101 · fruit and wine</span><span style="font-size: 13px; color: #667085">Kemi Adeyemi · “VIP 1 welcome”</span></span><span class="num" style="text-align: right">₦18,000.00</span></div>
+      <div style="display: grid; grid-template-columns: 138px minmax(0,1fr) 118px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #E4E7EC; font-size: 14px; align-items: baseline"><span style="font-weight: 600">Discount 25%</span><span style="display: flex; flex-direction: column"><span class="num">Calabash · check 1184</span><span style="font-size: 13px; color: #667085">Musa Ibrahim · “Service delay” · approved Tola Ogun</span></span><span class="num" style="text-align: right">₦14,500.00</span></div>
+      <div style="display: grid; grid-template-columns: 138px minmax(0,1fr) 118px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #E4E7EC; font-size: 14px; align-items: baseline"><span style="font-weight: 600">Void</span><span style="display: flex; flex-direction: column"><span class="num">Pool bar · check 2207</span><span style="font-size: 13px; color: #667085">Seun Ade · “Posted to wrong room” · within limit</span></span><span class="num" style="text-align: right">₦12,000.00</span></div>
+      <div style="display: grid; grid-template-columns: 138px minmax(0,1fr) 118px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #E4E7EC; font-size: 14px; align-items: baseline"><span style="font-weight: 600">Cash variance</span><span style="display: flex; flex-direction: column"><span class="num">Front desk · night shift</span><span style="font-size: 13px; color: #667085">Bola Ojo · “Change given in error” · awaiting review</span></span><span class="num" style="text-align: right">−₦7,500.00</span></div>
+      <div style="display: grid; grid-template-columns: 138px minmax(0,1fr) 118px; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #E4E7EC; font-size: 14px; align-items: baseline"><span style="font-weight: 600">Quick turn</span><span style="display: flex; flex-direction: column"><span class="num">Room 309 · in 23:10, out 01:40 · paid cash</span><span style="font-size: 13px; color: #667085">Bola Ojo · revenue recorded, for your information</span></span><span class="num" style="text-align: right; color: #667085">₦75,000.00</span></div>
+      <div style="display: grid; grid-template-columns: 138px minmax(0,1fr) 118px; gap: 12px; padding: 12px 16px; font-size: 14px; align-items: baseline; background: #FFF1F3"><span style="font-weight: 600; color: #C01048">Room discrepancy</span><span style="display: flex; flex-direction: column"><span class="num">Room 512 · vacant in system, occupied per housekeeping 10:05</span><span style="font-size: 13px; color: #667085">Open · front office manager to resolve with a reason</span></span><span style="text-align: right; color: #C01048; font-weight: 600">Open</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E4E7EC; padding-top: 16px; font-size: 13px; color: #667085">
+    <span>Each exception links to its audit trail: who, device, reason, approver.</span>
+    <span style="font-weight: 600; color: #5254DB">vento.ng/r/vi-24nov</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":720,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

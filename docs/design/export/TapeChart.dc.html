@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tape chart</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="tape" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="KA" user="Kemi Adeyemi" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+      <div class="pagehead">
+        <div class="col" style="gap: 2px"><h1 class="t-h1">Tape chart</h1><span class="muted num">23 Nov – 6 Dec 2026 · 17 rooms shown of 120</span></div>
+        <div class="row wrap">
+          <div class="row" style="gap: 4px"><button class="btn icon" aria-label="Previous week"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><button class="btn">Today<span class="kbd">T</span></button><button class="btn icon" aria-label="Next week"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div>
+          <div class="seg" role="group" aria-label="Range"><button>7 days</button><button class="on">14 days</button><button>30 days</button></div>
+          <button class="btn pri">New reservation<span class="kbd">N</span></button>
+        </div>
+      </div>
+      <div class="row wrap between">
+        <div class="row wrap"><span class="pill on">All room types</span><span class="pill">Floor 3–5, 11</span><span class="pill">Unassigned <span class="n">7</span></span><span class="pill">+ Filter</span></div>
+        <div class="row wrap t-sm muted" style="gap: 12px">
+          <span class="row" style="gap: 6px"><i style="width: 14px; height: 10px; border-radius: 3px; background: var(--bl-bg); border: 1px solid var(--bl-dot)"></i>In house</span>
+          <span class="row" style="gap: 6px"><i style="width: 14px; height: 10px; border-radius: 3px; background: var(--pri-soft); border: 1px solid var(--pri-line)"></i>Confirmed</span>
+          <span class="row" style="gap: 6px"><i style="width: 14px; height: 10px; border-radius: 3px; background: var(--am-bg); border: 1px dashed var(--am-dot)"></i>Tentative</span>
+          <span class="row" style="gap: 6px"><i style="width: 14px; height: 10px; border-radius: 3px; background: var(--sl-bg)"></i>Checked out</span>
+          <span class="row" style="gap: 6px"><i style="width: 14px; height: 10px; border-radius: 3px; background: var(--ro-bg)"></i>No-show</span>
+          <span class="row" style="gap: 6px"><i style="width: 14px; height: 10px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--ro-dot) 0 2px, transparent 2px 5px)"></i>Out of order</span>
+          <span class="row" style="gap: 6px"><span class="medium ink-am">₦</span>Balance due</span>
+        </div>
+      </div>
+
+      <div class="card" style="position: relative; overflow: visible">
+        <div class="tbox" style="border-radius: 10px">
+          <div style="min-width: 940px">
+            <div class="tape">
+              <div class="hd" style="grid-row: 1; grid-column: 1; align-items: flex-start; padding-left: 12px; border-left: 0"><span class="lbl">Room</span></div>
+              <sc-for list="{{days}}" as="d" hint-placeholder-count="14">
+                <div class="hd {{d.cls}}" style="grid-row: 1; grid-column: {{d.col}}"><span>{{d.dow}}</span><b>{{d.n}}</b><sc-if value="{{d.isBiz}}" hint-placeholder-val="{{ false }}"><span style="font-size: 10px; font-weight: 600">Business date</span></sc-if></div>
+              </sc-for>
+            </div>
+            <sc-for list="{{types}}" as="t" hint-placeholder-count="4">
+              <div class="tape">
+                <div class="tl-type"><span>{{t.name}}</span><span class="faint" style="font-weight: 500">{{t.rate}} excl. taxes</span></div>
+              </div>
+              <sc-for list="{{t.rooms}}" as="r" hint-placeholder-count="4">
+                <div class="tape">
+                  <div class="rl" style="grid-row: 1; grid-column: 1"><span>{{r.no}}</span><span class="badge {{r.stCls}}" style="height: 18px; font-size: 11px; padding: 0 6px">{{r.st}}</span></div>
+                  <sc-for list="{{days}}" as="d" hint-placeholder-count="14">
+                    <div class="c {{d.cls}}" style="grid-row: 1; grid-column: {{d.col}}"></div>
+                  </sc-for>
+                  <sc-for list="{{r.bars}}" as="b" hint-placeholder-count="1">
+                    <div class="tb {{b.k}}" style="grid-row: 1; grid-column: {{b.span}}" title="{{b.title}}"><sc-if value="{{b.due}}" hint-placeholder-val="{{ false }}"><span class="ink-am" style="font-weight: 700">₦</span></sc-if><span class="medium">{{b.name}}</span><span style="opacity: .75">{{b.sub}}</span><sc-if value="{{b.hdl}}" hint-placeholder-val="{{ false }}"><span class="hdl"></span></sc-if></div>
+                  </sc-for>
+                </div>
+              </sc-for>
+              <div class="tape">
+                <div class="rl t-sm faint" style="grid-row: 1; grid-column: 1; height: 30px; font-weight: 500; background: var(--surface-2)">Available</div>
+                <sc-for list="{{t.avail}}" as="a" hint-placeholder-count="14">
+                  <div class="av-c" style="grid-row: 1; grid-column: {{a.col}}; background: var(--surface-2); color: {{a.color}}">{{a.n}}</div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div class="pop" style="position: absolute; left: 56%; top: 722px; width: 360px; padding: 16px; display: flex; flex-direction: column; gap: 12px; z-index: 5">
+          <div class="col" style="gap: 2px"><span class="t-h3">Extend James Whitfield to 30 Nov?</span><span class="t-sm muted num">Room 502 · 25–30 Nov 2026 · 5 nights (was 3)</span></div>
+          <div class="inset col num" style="padding: 10px 12px; gap: 4px">
+            <div class="row between"><span class="muted">2 nights × ₦180,000.00 Acme rate</span><span>₦360,000.00</span></div>
+            <div class="row between t-sm muted"><span>Service charge 10%</span><span>₦36,000.00</span></div>
+            <div class="row between t-sm muted"><span>VAT 7.5%</span><span>₦27,000.00</span></div>
+            <div class="row between t-sm muted"><span>Lagos consumption tax 5%</span><span>₦18,000.00</span></div>
+            <div class="row between strong" style="border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px"><span>Added to stay</span><span>+ ₦441,000.00</span></div>
+          </div>
+          <span class="t-sm muted">Routed to Acme Energy Ltd · ₦3,140,000.00 credit left. Room 502 is free both nights.</span>
+          <div class="row" style="justify-content: flex-end"><button class="btn ghost">Cancel<span class="kbd">esc</span></button><button class="btn pri">Extend stay<span class="kbd">↵</span></button></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dows = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const nums = [23,24,25,26,27,28,29,30,1,2,3,4,5,6];
+    const days = nums.map((n, i) => {
+      const dow = dows[i % 7];
+      const we = dow === 'Sat' || dow === 'Sun';
+      const isBiz = i === 2;
+      return { n, dow: i === 8 ? 'Dec · Tue' : dow, col: i + 2, isBiz, cls: isBiz ? 'biz' : (we ? 'we' : '') };
+    });
+    const bar = (k, name, s, nights, extra) => Object.assign({ k, name, sub: '', s, nights, span: (s + 2) + ' / span ' + nights, title: name, due: false, hdl: false }, extra || {});
+    const types = [
+      { name: 'Standard Queen', rate: '₦120,000', rooms: [
+        { no: '301', st: 'Dirty', stCls: 'b-am', bars: [bar('out','Adeyemi T.',0,2), bar('cf','Eze C.',3,3)] },
+        { no: '302', st: 'Occ', stCls: 'b-bl', bars: [bar('in','Ojo F.',0,4,{sub:'· 2 ad'}), bar('cf','Lawal B.',5,4)] },
+        { no: '303', st: 'Clean', stCls: 'b-em', bars: [bar('cf','Zenvest',2,2,{sub:'· group'}), bar('tn','Ade wedding hold',8,3)] },
+        { no: '304', st: 'Insp', stCls: 'b-em', bars: [bar('ns','Musa K.',1,1), bar('cf','Zenvest',2,2,{sub:'· group'})] },
+        { no: '305', st: 'OOO', stCls: 'b-ro', ooo: true, bars: [bar('ooo','OOO · plumbing',2,3), bar('cf','Nwankwo I.',6,3)] }
+      ]},
+      { name: 'Deluxe King', rate: '₦150,000', rooms: [
+        { no: '401', st: 'Insp', stCls: 'b-em', bars: [bar('out','Hassan M.',0,2), bar('cf','Okeke U.',4,3)] },
+        { no: '402', st: 'Occ', stCls: 'b-bl', bars: [bar('in','Ibe C.',1,2), bar('cf','Shittu R.',6,2,{due:true})] },
+        { no: '403', st: 'Dirty', stCls: 'b-am', bars: [bar('out','Ade K.',0,2), bar('cf','Bello R.',3,2)] },
+        { no: '404', st: 'Occ', stCls: 'b-bl', bars: [bar('in','Okafor N.',2,2,{sub:'· VIP 2'}), bar('cf','Daramola T.',7,4)] },
+        { no: '405', st: 'Occ', stCls: 'b-bl', bars: [bar('in','Danladi S.',0,2,{due:true}), bar('cf','Etim A.',4,5)] },
+        { no: '406', st: 'OOO', stCls: 'b-ro', bars: [bar('ooo','OOO · AC compressor',1,3)] }
+      ]},
+      { name: 'Executive King', rate: '₦210,000', rooms: [
+        { no: '501', st: 'Occ', stCls: 'b-bl', bars: [bar('in','Uche P.',0,3), bar('cf','Halden Oil',3,3)] },
+        { no: '502', st: 'Insp', stCls: 'b-em', bars: [bar('cf drag','Whitfield J.',2,5,{sub:'· 25–30 Nov', hdl:true})] },
+        { no: '503', st: 'Insp', stCls: 'b-em', bars: [bar('cf','Kalu E.',6,3)] },
+        { no: '504', st: 'Dirty', stCls: 'b-am', bars: [bar('cf','Bello A.',2,1,{due:true})] }
+      ]},
+      { name: 'Junior Suite', rate: '₦320,000', rooms: [
+        { no: '1101', st: 'Insp', stCls: 'b-em', bars: [bar('cf','Chief Obi',2,3,{sub:'· VIP 1'})] },
+        { no: '1102', st: 'Dirty', stCls: 'b-am', bars: [bar('out','Adebayo L.',0,2), bar('tn','Yusuf A.',9,3)] }
+      ]}
+    ];
+    types.forEach((t) => {
+      t.avail = nums.map((n, i) => {
+        let free = 0;
+        t.rooms.forEach((r) => {
+          const busy = r.bars.some((b) => i >= b.s && i < b.s + b.nights);
+          if (!busy) free += 1;
+        });
+        return { n: free, col: i + 2, color: free === 0 ? 'var(--ro)' : 'var(--text-2)' };
+      });
+    });
+    return { theme: this.props.dark ? 'vt dark' : 'vt', days, types };
+  }
+}
+</script>
+</body>
+</html>

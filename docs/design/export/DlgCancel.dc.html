@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cancel reservation · VI-2611-0482</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c" style="position: relative; width: 100%; min-height: 1260px; font-family: Inter, system-ui, sans-serif"><dc-import name="ReservationDetail" dark="{{ false }}" hint-size="100%,1260px"></dc-import><div class="scrim" style="z-index: 20"></div><div style="position: absolute; z-index: 21; left: 0; right: 0; top: 90px; display: flex; justify-content: center"><div class="dialog" role="dialog" aria-label="Cancel reservation · VI-2611-0482" style="width: 600px; max-width: calc(100% - 32px); padding: 22px; display: flex; flex-direction: column; gap: 14px; color: var(--text)"><div class="col" style="gap: 4px"><span class="t-h2">Cancel reservation · VI-2611-0482</span><span class="t-sm muted">Arrives today · inside the 24-hour window</span></div><div class="inset col num" style="padding: 12px; gap: 6px; background: var(--surface)"><div class="row between"><span class="muted">Policy</span><span>Acme contract: free until 24 h before arrival</span></div><div class="row between"><span class="muted">Penalty</span><span>1 night · ₦220,500.00</span></div><div class="row between"><span class="muted">Deposit held</span><span>₦0.00 · company guarantee</span></div><div class="row between strong" style="border-top: 1px solid var(--border); padding-top: 6px"><span class="">Charged to Acme Energy Ltd</span><span>₦220,500.00</span></div></div><div class="field"><label>Reason (required)</label><div class="row wrap" style="gap: 6px"><span class="pill">Guest request</span><span class="pill on">Company request</span><span class="pill">Duplicate booking</span><span class="pill">Other</span></div><div class="input">Acme travel desk cancelled; trip postponed</div></div><label class="row t-sm"><span class="check"></span>Waive the penalty (needs a manager)</label><div class="row" style="justify-content: flex-end"><button class="btn ghost">Keep booking</button><button class="btn pri" disabled>Cancel booking · charge ₦220,500.00</button></div><span class="t-sm faint">Saved to the audit trail with your name, device and reason.</span></div></div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1260}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

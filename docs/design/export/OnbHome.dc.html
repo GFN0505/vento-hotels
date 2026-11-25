@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home with setup checklist</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="home" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Lekki" initials="TA" user="Tunde Alabi" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">Welcome to Kora Lekki</h1><span class="muted num">First booking made in 4 min 38 s · business date 25 Nov 2026</span></div><div class="row wrap"><button class="btn">New reservation<span class="kbd">N</span></button><button class="btn pri">Walk-in<span class="kbd">W</span></button></div></div><div class="split"><div class="col" style="gap: 16px; min-width: 0"><div class="g4"><div class="card stat"><span class="lbl">Arrivals</span><span class="v">1</span><span class="t-sm muted num">test booking · tonight</span></div><div class="card stat"><span class="lbl">In house</span><span class="v">0</span></div><div class="card stat"><span class="lbl">Occupancy tonight</span><span class="v">2.1%</span><span class="t-sm muted num">1 of 48 rooms</span></div><div class="card stat"><span class="lbl">Revenue today</span><span class="v">₦0</span><span class="t-sm muted num">posts at night audit</span></div></div><div class="card"><div class="card-h"><span class="t-h3">Arrivals</span></div><div class="card-b col" style="align-items: center; gap: 8px; padding: 32px; text-align: center"><span class="t-h3">One test arrival tonight</span><span class="t-sm muted">Check it in to see registration, room assignment and the folio.</span><button class="btn pri sm">Check in test guest</button></div></div><div class="card"><div class="card-h"><span class="t-h3">Housekeeping</span></div><div class="card-b col" style="align-items: center; gap: 8px; padding: 32px; text-align: center"><span class="t-h3">All 48 rooms are Dirty until someone inspects them</span><span class="t-sm muted">Mark rooms clean in bulk if they are ready today.</span><button class="btn sm">Mark all inspected</button></div></div></div><div class="card"><div class="card-h"><div class="col"><span class="t-h3">Finish setting up</span><span class="t-sm muted num">5 of 11 done</span></div></div><div style="padding: 0 16px 12px"><div class="meter"><i class="f-pri" style="width: 45%"></i></div></div><div class="col"><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow muted">Create organisation</span><span class="t-sm faint">Done</span></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow muted">Add property</span><span class="t-sm faint">Done</span></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow muted">Room types and 48 rooms</span><span class="t-sm faint">Done</span></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow muted">First rate</span><span class="t-sm faint">Done</span></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow muted">First booking</span><span class="t-sm faint">Done</span></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check"></span><span class="grow medium">Connect Paystack for card payments</span><button class="btn sm">Connect</button></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check"></span><span class="grow medium">Add staff and their PINs</span><button class="btn sm">Add staff</button></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check"></span><span class="grow medium">Register POS and housekeeping devices</span><button class="btn sm">Register</button></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check"></span><span class="grow medium">Connect Booking.com and Expedia</span><button class="btn sm">Connect</button></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check"></span><span class="grow medium">Import guests and company accounts</span><button class="btn sm">Import</button></div><div class="row" style="padding: 11px 16px; border-bottom: 1px solid var(--border); gap: 10px"><span class="check"></span><span class="grow medium">Set opening balances</span><button class="btn sm">Start</button></div></div><div class="card-f"><button class="btn ghost sm">Hide checklist</button></div></div></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

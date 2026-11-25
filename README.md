@@ -2,7 +2,7 @@
 
 A hotel management platform for Nigerian hotel groups and chains. One place to run every property: selling rooms direct and on OTAs, the front desk, restaurant and bar, housekeeping and maintenance, stores, night audit, finance, payroll, and the owner's view across the group. It keeps working through power and internet cuts, and it makes revenue leakage visible to the owner the next morning.
 
-> **Status:** planning. The product, domain and design docs are written; no application code yet. Building starts with Stage 0 of the [release plan](docs/PRODUCT.md#release-plan).
+> **Status:** planning. The product, domain and walkthrough docs are written and all 46 screens are designed; no application code yet. Building starts with Stage 0 of the [release plan](docs/PRODUCT.md#release-plan).
 
 ## What's in v1
 Ten modules, built in stages:
@@ -28,6 +28,7 @@ They share some features that run across all of them: leakage and fraud controls
 | [docs/journeys/](docs/journeys/README.md) | Step-by-step user walkthroughs on the demo hotel group |
 | [docs/design/claude-design-prompt.md](docs/design/claude-design-prompt.md) | Full design brief (46 screens) for a new Claude Design project |
 | [docs/design/claude-design-update-prompt.md](docs/design/claude-design-update-prompt.md) | Update prompts for an existing Claude Design project |
+| [docs/design/export/](docs/design/export/README.md) | Approved designs exported from Claude Design (all 46 screens, tokens) |
 | [docs/design/screen-inventory.md](docs/design/screen-inventory.md) | Every screen the product needs, its status, and what will change |
 | [docs/specs/](docs/specs/) | Feature specs, written per release stage |
 | [CLAUDE.md](CLAUDE.md) | Stack, commands, non-negotiables and code style for contributors and AI agents |

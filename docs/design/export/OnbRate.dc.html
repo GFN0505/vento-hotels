@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Onboarding · first rate</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif; min-height: 950px">
+<header style="height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 28px; background: var(--surface); border-bottom: 1px solid var(--border)"><svg width="32" height="32" viewBox="0 0 100 100" role="img" aria-label="Vento" style="flex: none; display: block"><path d="M24 22 L50 78 L76 22" fill="none" stroke="#6D64F4" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><circle cx="50" cy="27" r="9" fill="#5EC4EA"/></svg><span class="t-h3">Set up Vento</span><span class="grow"></span><span class="t-sm muted num">Step 4 of 5 · about 2 minutes left</span><button class="btn ghost sm">Save and finish later</button></header>
+<div style="max-width: 1160px; margin: 0 auto; padding: 32px 24px; display: grid; grid-template-columns: 220px minmax(0,1fr) 300px; gap: 28px; align-items: start">
+<nav class="steps"><div class="step done"><span class="sn">✓</span>Organisation</div><div class="step done"><span class="sn">✓</span>Property</div><div class="step done"><span class="sn">✓</span>Rooms</div><div class="step cur"><span class="sn">4</span>First rate</div><div class="step "><span class="sn">5</span>First booking</div></nav>
+<div class="col" style="gap: 20px; min-width: 0"><div class="col" style="gap: 4px"><h1 class="t-h1">Your first rate</h1><span class="muted">One price per room type. Add plans, seasons and channels whenever you're ready.</span></div>
+<div class="card"><div class="tbox"><table class="tbl"><thead><tr><th>Room type</th><th>Rooms</th><th>Weekday price, excl. taxes</th><th>Fri and Sat</th><th class="r">Guest pays per night</th></tr></thead><tbody>
+<tr><td class="medium">Standard Queen</td><td class="num">24</td><td><div class="input num" style="width: 160px"><span class="pre">₦</span>120,000</div></td><td><div class="input num" style="width: 120px">same</div></td><td class="r num">₦147,000.00</td></tr>
+<tr><td class="medium">Deluxe King</td><td class="num">16</td><td><div class="input num focus" style="width: 160px"><span class="pre">₦</span>150,000</div></td><td><div class="input num" style="width: 120px">+ ₦15,000</div></td><td class="r num">₦183,750.00</td></tr>
+<tr><td class="medium">Executive King</td><td class="num">8</td><td><div class="input num" style="width: 160px"><span class="pre">₦</span>210,000</div></td><td><div class="input num" style="width: 120px">same</div></td><td class="r num">₦257,250.00</td></tr>
+</tbody></table></div></div>
+<div class="row" style="gap: 10px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span>Also create a Bed &amp; breakfast plan at</span><div class="input num" style="width: 130px"><span class="pre">+₦</span>18,000</div></div>
+<div class="row between"><button class="btn">Back</button><button class="btn pri lg">Save rate and make a test booking</button></div></div>
+<aside class="card"><div class="card-h"><span class="t-h3">Next: first booking</span></div><div class="card-b col" style="gap: 10px"><span class="t-sm muted">A real or test booking, so you can see the tape chart, folio and taxes working.</span><div class="inset col num" style="padding: 10px 12px; gap: 4px"><span class="medium">Tonight · Deluxe King · 1 night</span><span class="t-sm muted">₦150,000.00 + service ₦15,000.00 + VAT ₦11,250.00 + consumption ₦7,500.00</span><span class="strong">₦183,750.00</span></div><span class="t-sm faint">Test bookings are marked and never reach reports.</span></div></aside>
+</div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":950}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

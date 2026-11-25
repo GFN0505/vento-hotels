@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Access states in the app</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif; position: relative">
+<div class="app">
+  <dc-import name="Sidebar" active="desk" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="CE" user="Chidi Eze" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<sc-if value="{{v_noaccess}}" hint-placeholder-val="{{ true }}"><div class="card"><div class="col" style="align-items: center; text-align: center; gap: 10px; padding: 56px 24px"><span class="av lg" style="background: var(--surface-3); color: var(--text-2)"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><span class="t-h2">You don't have access to Payroll</span><span class="muted" style="max-width: 460px">Your role, Front desk agent, can't open payroll. If you need it for your work, ask for access and an owner will decide.</span><div class="row wrap" style="gap: 8px; margin-top: 6px; justify-content: center"><button class="btn pri">Ask for access</button><a class="btn" href="#">Back to front desk</a></div></div></div></sc-if><sc-if value="{{v_notfound}}" hint-placeholder-val="{{ false }}"><div class="card"><div class="col" style="align-items: center; text-align: center; gap: 10px; padding: 56px 24px"><span class="av lg" style="background: var(--surface-3); color: var(--text-2)"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span><span class="t-h2">We couldn't find that page</span><span class="muted" style="max-width: 460px">Reservation VI-2611-9999 doesn't exist. It may have been mistyped, cancelled and purged, or merged into another booking.</span><div class="row wrap" style="gap: 8px; margin-top: 6px; justify-content: center"><div class="input" style="width: 280px"><span class="faint">Search guests, bookings, rooms</span><span class="suf"><span class="kbd">⌘K</span></span></div><a class="btn" href="#">Go home</a></div></div></div></sc-if>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark": {"editor": "boolean", "default": false}, "view": {"editor": "enum", "options": ["noaccess", "notfound"], "default": "noaccess"}, "$preview": {"width": 1440, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    return { theme: p.dark ? 'vt dark' : 'vt', v_noaccess: (p.view ?? 'noaccess') === 'noaccess', v_notfound: p.view === 'notfound' };
+  }
+}
+</script>
+</body>
+</html>

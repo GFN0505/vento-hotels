@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Resolve room discrepancy · dark</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c dark" style="position: relative; width: 100%; font-family: Inter, system-ui, sans-serif">
+<dc-import name="Leakage" dark="{{ true }}" hint-size="100%,1400px"></dc-import>
+<div class="scrim" style="z-index: 20"></div>
+<div class="dialog" role="dialog" aria-label="Resolve room discrepancy" style="position: absolute; z-index: 21; left: 50%; top: 110px; transform: translateX(-50%); width: 600px; max-width: calc(100% - 32px); padding: 22px; display: flex; flex-direction: column; gap: 14px; color: var(--text)"><div class="col" style="gap: 4px"><div class="row"><span class="t-h2">Resolve room discrepancy · 318</span><span class="badge b-ro">Open · 7 h</span></div><span class="t-sm muted">Sleeper: the system says occupied, the room was found empty.</span></div>
+<div class="inset col num" style="padding: 12px; gap: 6px; background: var(--surface)">
+<div class="row between"><span class="muted">System</span><span>Occupied · Ifeanyi Obi · 24–26 Nov · Booking.com</span></div>
+<div class="row between"><span class="muted">Room check</span><span>Empty, bed unused, no luggage</span></div>
+<div class="row between"><span class="muted">Checked by</span><span>Blessing Okon · HK-VI-02 · 25 Nov 11:20</span></div>
+<div class="row between"><span class="muted">Front desk call</span><span>No answer 11:35</span></div></div>
+<div class="col" style="gap: 8px"><span class="flabel">What happened?</span><label class="row" style="padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; gap: 10px; align-items: flex-start; background: var(--surface)"><span class="radio" style="margin-top: 2px"></span><span class="col"><span class="medium">Guest is staying, just out</span><span class="t-sm muted">No change</span></span></label><label class="row" style="padding: 10px 12px; border: 1px solid var(--brand); border-radius: 10px; gap: 10px; align-items: flex-start; background: var(--pri-soft)"><span class="radio on" style="margin-top: 2px"></span><span class="col"><span class="medium">Guest left early</span><span class="t-sm muted">Check out 318, keep the night charged per policy</span></span></label><label class="row" style="padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; gap: 10px; align-items: flex-start; background: var(--surface)"><span class="radio" style="margin-top: 2px"></span><span class="col"><span class="medium">Wrong room in the system</span><span class="t-sm muted">Move the stay to the room actually used</span></span></label><label class="row" style="padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; gap: 10px; align-items: flex-start; background: var(--surface)"><span class="radio" style="margin-top: 2px"></span><span class="col"><span class="medium">Other</span><span class="t-sm muted"></span></span></label></div>
+<div class="field"><label>Reason (required)</label><div class="input">Guest confirmed by phone he left at 06:00; key left in room</div></div>
+<div class="row" style="justify-content: flex-end"><button class="btn ghost">Not now</button><button class="btn pri">Resolve · check out 318</button></div>
+<span class="t-sm faint">The alert stays open until resolved. This closes it with your name, device and reason, and shows as resolved in tomorrow's report.</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

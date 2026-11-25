@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>38 · Menu · offline, 390 dark</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="vt-c" style="width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); font-family: Inter, system-ui, sans-serif">
+  <div style="flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden">
+    <dc-import name="MenuSetup" view="items" state="offline" dark="{{ true }}" hint-size="390px,1800px"></dc-import>
+  </div>
+  <dc-import name="BottomNav" role="gm" hint-size="390px,72px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

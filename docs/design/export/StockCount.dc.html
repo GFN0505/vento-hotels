@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stock count and transfers</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="stores" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" property="Kora Victoria Island" initials="JE" user="Joy Eze" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+<div class="pagehead"><div class="col" style="gap: 2px"><h1 class="t-h1">Stock count · Bar store</h1><span class="muted num">Month-end count · started 25 Nov 2026 16:10 by Seun Ade · checked by Joy Eze</span></div><div class="row wrap"><button class="btn">Save draft</button><button class="btn pri">Post count</button></div></div><div class="g4"><div class="card stat"><span class="lbl">Items counted</span><span class="v">58 of 64</span></div><div class="card stat"><span class="lbl">Net variance</span><span class="v">−₦23,500.00</span><span class="t-sm muted num">0.69% of bar stock value</span></div><div class="card stat"><span class="lbl">Need a reason</span><span class="v">1</span><span class="t-sm muted num">House red wine</span></div><div class="card stat"><span class="lbl">Stock value · bar</span><span class="v">₦3,420,000</span></div></div><div class="split-w"><div class="card"><div class="card-h"><span class="t-h3">Count sheet</span><span class="t-sm faint">blind count · system figures shown after entry</span></div><div class="tbox"><table class="tbl"><thead><tr><th>Item</th><th class="r">System</th><th>Counted</th><th class="r">Difference</th><th class="r">Value</th><th>Reason</th></tr></thead><tbody><tr><td><span class="medium">Lager 60cl</span></td><td class="r"><span class="num">240</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">232</div></td><td class="r"><span class="num ink-ro">-8</span></td><td class="r"><span class="num ink-ro">−₦9,600.00</span></td><td><span class="t-sm muted">Breakage · 8 in crate 14</span></td></tr><tr><td><span class="medium">House red wine</span></td><td class="r"><span class="num">36</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">35</div></td><td class="r"><span class="num ink-ro">-1</span></td><td class="r"><span class="num ink-ro">−₦9,500.00</span></td><td><div class="input" style="height: 30px; border-color: var(--ro-dot)"><span class="faint">Reason needed</span></div></td></tr><tr><td><span class="medium">House whisky 75cl</span></td><td class="r"><span class="num">14</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">14</div></td><td class="r"><span class="num faint">0</span></td><td class="r"><span class="num faint">₦0.00</span></td><td><span class="t-sm muted">—</span></td></tr><tr><td><span class="medium">Soft drinks 35cl</span></td><td class="r"><span class="num">310</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">316</div></td><td class="r"><span class="num ink-em">+6</span></td><td class="r"><span class="num ink-em">₦3,600.00</span></td><td><span class="t-sm muted">Last count used crates, not bottles</span></td></tr><tr><td><span class="medium">Chapman mix 1L</span></td><td class="r"><span class="num">22</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">20</div></td><td class="r"><span class="num ink-ro">-2</span></td><td class="r"><span class="num ink-ro">−₦8,000.00</span></td><td><span class="t-sm muted">Staff party 20 Nov, not posted</span></td></tr><tr><td><span class="medium">Bottled water 75cl</span></td><td class="r"><span class="num">180</span></td><td><div class="input num" style="width: 70px; height: 30px; justify-content: center">180</div></td><td class="r"><span class="num faint">0</span></td><td class="r"><span class="num faint">₦0.00</span></td><td><span class="t-sm muted">—</span></td></tr></tbody></table></div></div><div class="card"><div class="card-h"><span class="t-h3">Transfers</span><button class="btn sm">New transfer</button></div><div class="tbox"><table class="tbl"><thead><tr><th>Transfer</th><th>From → to</th><th>Items</th><th>Status</th></tr></thead><tbody><tr><td><span class="num medium">TRF-0331</span></td><td>Main store → Pool bar</td><td>2 crates soft drinks · 1 pack water</td><td><span class="badge b-bl">In transit</span></td></tr><tr><td><span class="num medium">TRF-0330</span></td><td>Kitchen → Banquets</td><td>12 kg chicken · 2 bags rice</td><td><span class="badge b-em">Received</span></td></tr><tr><td><span class="num medium">TRF-0329</span></td><td>Main store → Housekeeping</td><td>6 packs toilet rolls</td><td><span class="badge b-em">Received</span></td></tr></tbody></table></div></div></div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

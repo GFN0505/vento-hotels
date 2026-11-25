@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vento design system · Core components</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="padding: 56px 64px 80px; display: flex; flex-direction: column; gap: 40px; max-width: 1440px; margin: 0 auto">
+  <header class="col" style="gap: 8px"><span class="lbl">Vento design system</span><h1 class="t-display" style="font-size: 40px; line-height: 48px">Core components</h1></header>
+
+  <section class="g2" style="gap: 20px">
+    <div class="card">
+      <div class="card-h"><span class="t-h3">Buttons</span><span class="t-sm faint">Label states the effect; shortcut shown on desktop</span></div>
+      <div class="card-b col" style="gap: 16px">
+        <div class="row wrap" style="gap: 10px"><button class="btn pri">Check in<span class="kbd">↵</span></button><button class="btn">Modify</button><button class="btn ghost">Cancel</button><button class="btn dng">Void charge</button><button class="btn icon" aria-label="More actions"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></div>
+        <div class="row wrap" style="gap: 10px"><button class="btn sm">Small 28</button><button class="btn">Default 32</button><button class="btn lg">Large 40</button><button class="btn xl pri">Touch 48</button></div>
+        <div class="row wrap" style="gap: 10px"><button class="btn focus">Focused</button><button class="btn pri" disabled>Disabled</button><button class="btn pri"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="animation: none"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4"/></svg>Saving…</button></div>
+        <div class="inset" style="padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px"><span class="t-sm muted">Money actions confirm with the exact amount and payee</span><button class="btn pri">Settle ₦518,175.00 to Acme Energy Ltd</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><span class="t-h3">Badges</span><span class="t-sm faint">Dot + word; same meaning everywhere</span></div>
+      <div class="card-b col" style="gap: 14px">
+        <div class="row wrap" style="gap: 8px"><span class="badge b-em">Clean</span><span class="badge b-em">Inspected</span><span class="badge b-am">Dirty</span><span class="badge b-bl">Occupied</span><span class="badge b-ro">Out of order</span><span class="badge b-oos">Out of service</span></div>
+        <div class="row wrap" style="gap: 8px"><span class="badge b-em">Paid</span><span class="badge b-am">Balance due</span><span class="badge b-ro">Overdue 61–90</span><span class="badge b-ro">Over credit limit</span><span class="badge b-sl">Void</span><span class="badge b-sl">Draft</span></div>
+        <div class="row wrap" style="gap: 8px"><span class="badge b-vi">Confirmed</span><span class="badge b-am">Tentative</span><span class="badge b-bl">Checked in</span><span class="badge b-sl">Checked out</span><span class="badge b-ro">No-show</span><span class="badge b-ro">Blacklisted</span><span class="badge b-sl">Cancelled</span></div>
+        <div class="row wrap" style="gap: 8px"><span class="tag vip">VIP 1</span><span class="tag">Corporate</span><span class="tag">OTA · Booking.com</span><span class="tag">Foreign national</span><span class="badge b-am nd">Saved on this device</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><span class="t-h3">Inputs</span><span class="t-sm faint">36px desktop, 44px touch · label above · validation inline, on blur</span></div>
+    <div class="card-b g4" style="gap: 20px; align-items: start">
+      <div class="field"><label>Guest name</label><div class="input">James Whitfield</div></div>
+      <div class="field"><label>Phone</label><div class="input focus"><span class="pre">NG</span>+234 803 412 7790</div><span class="hint">WhatsApp confirmations go here</span></div>
+      <div class="field"><label>Email</label><div class="input err">j.whitfield@acme</div><span class="errtxt">Add the domain ending, e.g. acme-energy.com</span></div>
+      <div class="field"><label>Passport number</label><div class="input num">G•••••4821<span class="suf"><button class="btn ghost sm" style="height: 24px">Reveal</button></span></div><span class="hint">Masked · reveal is logged (NDPA 2023)</span></div>
+
+      <div class="field"><label>Amount</label><div class="input num" style="padding: 0; overflow: hidden"><button class="btn ghost" style="height: 34px; border-radius: 0; border-right: 1px solid var(--border-strong); padding: 0 10px; color: var(--text)">USD<svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><span style="padding: 0 4px 0 6px" class="faint">$</span><span>40.00</span></div><span class="hint num">≈ ₦64,800.00</span></div>
+      <div class="field"><label>FX rate · USD → NGN</label><div class="input num">1,620.00<span class="suf"><span class="badge b-em nd" style="height: 20px">CBN official</span></span></div><span class="hint">25 Nov 2026 09:00 · updates daily</span></div>
+      <div class="field"><label>FX rate · overridden</label><div class="input num">1,655.00<span class="suf"><span class="badge b-am nd" style="height: 20px">Market rate</span></span></div><span class="hint" style="color: var(--am)">+2.2% vs CBN · reason required, shown on receipt</span></div>
+      <div class="field"><label>Rate basis</label><div class="seg" role="group" aria-label="Rate basis"><button class="on">Excl. taxes</button><button>Incl. taxes</button></div><span class="hint">Property default: exclusive</span></div>
+    </div>
+  </section>
+
+  <section class="g2" style="gap: 20px; align-items: start">
+    <div class="card">
+      <div class="card-h"><span class="t-h3">Date range picker with nights</span><span class="t-sm faint">Type “2 Dec + 3” or click; nights update live</span></div>
+      <div class="card-b col" style="gap: 14px">
+        <div class="row" style="gap: 8px"><div class="input focus num" style="width: auto; flex: 1"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>2–5 Dec 2026</div><span class="badge b-vi nd num" style="height: 36px; border-radius: 8px; padding: 0 12px">3 nights</span></div>
+        <div class="pop" style="padding: 16px; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px">
+          <div class="col" style="gap: 8px"><div class="row between"><button class="btn icon ghost sm" aria-label="Previous month"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><span class="t-h3">November 2026</span><span style="width: 28px"></span></div>
+            <div class="num" style="display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 2px; text-align: center; font-size: 12px">
+              <span class="faint">Mo</span><span class="faint">Tu</span><span class="faint">We</span><span class="faint">Th</span><span class="faint">Fr</span><span class="faint">Sa</span><span class="faint">Su</span>
+              <span></span><span></span><span></span><span></span><span></span><span></span><span style="padding: 6px 0" class="faint">1</span>
+              <span style="padding: 6px 0" class="faint">2</span><span style="padding: 6px 0" class="faint">3</span><span style="padding: 6px 0" class="faint">4</span><span style="padding: 6px 0" class="faint">5</span><span style="padding: 6px 0" class="faint">6</span><span style="padding: 6px 0" class="faint">7</span><span style="padding: 6px 0" class="faint">8</span>
+              <span style="padding: 6px 0" class="faint">9</span><span style="padding: 6px 0" class="faint">10</span><span style="padding: 6px 0" class="faint">11</span><span style="padding: 6px 0" class="faint">12</span><span style="padding: 6px 0" class="faint">13</span><span style="padding: 6px 0" class="faint">14</span><span style="padding: 6px 0" class="faint">15</span>
+              <span style="padding: 6px 0" class="faint">16</span><span style="padding: 6px 0" class="faint">17</span><span style="padding: 6px 0" class="faint">18</span><span style="padding: 6px 0" class="faint">19</span><span style="padding: 6px 0" class="faint">20</span><span style="padding: 6px 0" class="faint">21</span><span style="padding: 6px 0" class="faint">22</span>
+              <span style="padding: 6px 0" class="faint">23</span><span style="padding: 6px 0" class="faint">24</span><span style="padding: 6px 0; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--brand); font-weight: 600">25</span><span style="padding: 6px 0">26</span><span style="padding: 6px 0">27</span><span style="padding: 6px 0">28</span><span style="padding: 6px 0">29</span>
+              <span style="padding: 6px 0">30</span>
+            </div>
+          </div>
+          <div class="col" style="gap: 8px"><div class="row between"><span style="width: 28px"></span><span class="t-h3">December 2026</span><button class="btn icon ghost sm" aria-label="Next month"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div>
+            <div class="num" style="display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 2px 0; text-align: center; font-size: 12px">
+              <span class="faint">Mo</span><span class="faint">Tu</span><span class="faint">We</span><span class="faint">Th</span><span class="faint">Fr</span><span class="faint">Sa</span><span class="faint">Su</span>
+              <span></span><span style="padding: 6px 0">1</span><span style="padding: 6px 0; background: var(--pri); color: #fff; border-radius: 6px 0 0 6px; font-weight: 600">2</span><span style="padding: 6px 0; background: var(--pri-soft)">3</span><span style="padding: 6px 0; background: var(--pri-soft)">4</span><span style="padding: 6px 0; background: var(--pri); color: #fff; border-radius: 0 6px 6px 0; font-weight: 600">5</span><span style="padding: 6px 0">6</span>
+              <span style="padding: 6px 0">7</span><span style="padding: 6px 0">8</span><span style="padding: 6px 0">9</span><span style="padding: 6px 0">10</span><span style="padding: 6px 0">11</span><span style="padding: 6px 0">12</span><span style="padding: 6px 0">13</span>
+              <span style="padding: 6px 0">14</span><span style="padding: 6px 0">15</span><span style="padding: 6px 0">16</span><span style="padding: 6px 0">17</span><span style="padding: 6px 0">18</span><span style="padding: 6px 0">19</span><span style="padding: 6px 0">20</span>
+              <span style="padding: 6px 0">21</span><span style="padding: 6px 0">22</span><span style="padding: 6px 0">23</span><span style="padding: 6px 0">24</span><span style="padding: 6px 0">25</span><span style="padding: 6px 0">26</span><span style="padding: 6px 0">27</span>
+            </div>
+          </div>
+          <div class="row between" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 12px"><span class="num"><b>Wed 2 Dec → Sat 5 Dec 2026</b> <span class="faint">· 3 nights</span></span><div class="row"><button class="btn ghost sm">Clear</button><button class="btn pri sm">Apply</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col" style="gap: 20px">
+      <div class="card">
+        <div class="card-h"><span class="t-h3">Stat card</span><span class="t-sm faint">Value, comparison, one action at most</span></div>
+        <div class="card-b g3" style="gap: 12px">
+          <div class="inset stat"><span class="lbl">Occupancy today</span><span class="v">73.3%</span><span class="delta up">+3.1 pts vs budget</span></div>
+          <div class="inset stat"><span class="lbl">ADR</span><span class="v">₦140,132</span><span class="delta up">+4.2% vs last year</span></div>
+          <div class="inset stat"><span class="lbl">Over credit limit</span><span class="v">2</span><a class="t-sm" href="#">Review accounts</a></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="t-h3">Stepper</span><span class="t-sm faint">Vertical in sheets, horizontal on phone</span></div>
+        <div class="card-b g2" style="gap: 20px; align-items: start">
+          <div class="steps"><div class="step done"><span class="sn"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></span>Dates &amp; guests<span class="kbd" style="margin-left: auto">⌘1</span></div><div class="step cur"><span class="sn">2</span>Room &amp; rate<span class="kbd" style="margin-left: auto">⌘2</span></div><div class="step"><span class="sn">3</span>Guest<span class="kbd" style="margin-left: auto">⌘3</span></div><div class="step"><span class="sn">4</span>Guarantee<span class="kbd" style="margin-left: auto">⌘4</span></div></div>
+          <div class="col" style="gap: 12px"><div class="hsteps"><span class="av" style="background: var(--em-bg); color: var(--em)">✓</span><span class="bar"></span><span class="av" style="background: var(--pri); color: #fff">2</span><span class="bar"></span><span class="av" style="background: var(--surface-3); color: var(--text-3)">3</span><span class="bar"></span><span class="av" style="background: var(--surface-3); color: var(--text-3)">4</span></div><span class="t-sm muted">Step 2 of 4 · Room &amp; rate</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h">
+      <div class="row" style="gap: 12px"><span class="t-h3">Table · the one list pattern</span><div class="seg" role="group" aria-label="Saved view"><button class="on">Arriving today</button><button>In house</button><button>Due out</button><button>+ Save view</button></div></div>
+      <div class="row"><button class="btn sm"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM10 4v16"/></svg>Columns</button><button class="btn sm"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Export</button></div>
+    </div>
+    <div class="row wrap" style="padding: 12px 16px; gap: 8px; border-bottom: 1px solid var(--border)">
+      <div class="input" style="width: 260px; height: 28px"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="faint">Search name, room, booking no.</span><span class="suf"><span class="kbd">/</span></span></div>
+      <span class="pill on">Room type: Deluxe <svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></span><span class="pill">Status</span><span class="pill">Company</span><span class="pill">Channel</span><span class="pill">+ Filter</span>
+    </div>
+    <div class="row" style="padding: 8px 16px; background: var(--pri-soft); border-bottom: 1px solid var(--border); gap: 12px"><span class="check on"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="medium">2 selected</span><button class="btn sm">Assign rooms</button><button class="btn sm">Send WhatsApp pre-arrival</button><button class="btn sm ghost">Clear</button></div>
+    <div class="tbox"><table class="tbl">
+      <thead><tr><th style="width: 36px"></th><th>Guest</th><th>Booking</th><th>Stay</th><th>Room</th><th>Company / source</th><th>Status</th><th class="r">Balance</th></tr></thead>
+      <tbody>
+        <tr class="sel"><td><span class="check on"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span></td><td><div class="row"><span class="medium">James Whitfield</span><span class="tag">Foreign national</span></div></td><td class="num muted">VI-2611-0482</td><td class="num">25–28 Nov 2026 · 3 nights</td><td class="num">502 · Exec King</td><td>Acme Energy Ltd</td><td><span class="badge b-vi">Confirmed</span></td><td class="r num">₦0.00</td></tr>
+        <tr class="sel"><td><span class="check on"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span></td><td><div class="row"><span class="medium">Ngozi Okafor</span><span class="tag vip">VIP 2</span></div></td><td class="num muted">VI-2611-0455</td><td class="num">25–27 Nov 2026 · 2 nights</td><td class="faint">Unassigned</td><td>Direct · booking engine</td><td><span class="badge b-em">Deposit paid</span></td><td class="r num">₦183,750.00</td></tr>
+        <tr><td><span class="check"></span></td><td><span class="medium">Aliyu Danjuma</span></td><td class="num muted">VI-2611-0501</td><td class="num">25–26 Nov 2026 · 1 night</td><td class="faint">Unassigned</td><td>Booking.com</td><td><span class="badge b-am">Tentative</span></td><td class="r num">₦183,750.00</td></tr>
+      </tbody>
+    </table></div>
+    <div class="card-f between"><span class="t-sm muted num">1–3 of 38</span><div class="row"><button class="btn sm" disabled>Previous</button><button class="btn sm">Next</button></div></div>
+  </section>
+
+  <section class="g3" style="gap: 20px; align-items: start">
+    <div class="card">
+      <div class="card-h"><span class="t-h3">Timeline</span><span class="t-sm faint">Right rail of every detail page</span></div>
+      <div class="card-b tl">
+        <div class="tl-i"><span class="tl-d am"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/></svg></span><div class="col"><span><b>Rate overridden</b> ₦210,000.00 → ₦180,000.00</span><span class="t-sm muted">“Acme negotiated rate, 2026 contract”</span><span class="t-sm faint num">Tolu Bankole · 18 Nov 2026 10:14 · approved by Kemi Adeyemi</span></div></div>
+        <div class="tl-i"><span class="tl-d em"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="m5 12 5 5 9-10"/></svg></span><div class="col"><span><b>WhatsApp confirmation</b> read</span><span class="t-sm faint num">18 Nov 2026 10:16</span></div></div>
+        <div class="tl-i"><span class="tl-d pri"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="M12 5v14M5 12h14"/></svg></span><div class="col"><span><b>Reservation created</b></span><span class="t-sm faint num">Tolu Bankole · Sales · 18 Nov 2026 10:09</span></div></div>
+      </div>
+    </div>
+    <div class="col" style="gap: 20px">
+      <div class="card">
+        <div class="card-h"><span class="t-h3">Approval prompt</span><span class="t-sm faint">Reason inline; PIN appears only above limit</span></div>
+        <div class="card-b">
+          <div class="dialog" style="padding: 18px; display: flex; flex-direction: column; gap: 14px">
+            <div class="col" style="gap: 2px"><span class="t-h2">Discount 25% on check 1184</span><span class="t-sm muted num">₦58,000.00 → ₦43,500.00 · your limit is 10%</span></div>
+            <div class="field"><label>Reason</label><div class="input">Regular corporate diner, service delay</div></div>
+            <div class="inset" style="padding: 12px; display: flex; flex-direction: column; gap: 8px"><span class="t-sm medium">Manager approval needed</span><div class="row"><div class="input" style="width: 160px">Tola Ogun<span class="suf"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></div><div class="input num" style="width: 120px; letter-spacing: 6px">••••</div></div><span class="hint">Or send to Tola's phone for approval</span></div>
+            <div class="row" style="justify-content: flex-end"><button class="btn ghost">Cancel</button><button class="btn pri">Apply ₦14,500.00 discount</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col" style="gap: 20px">
+      <div class="card">
+        <div class="card-h"><span class="t-h3">Toast</span><span class="t-sm faint">Undo for reversible actions, 8 seconds</span></div>
+        <div class="card-b col" style="gap: 10px"><div class="toast"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: #32D583"><path d="m5 12 5 5 9-10"/></svg><span class="grow">Room 502 assigned to James Whitfield</span><span class="ua">Undo</span><span class="kbd" style="background: transparent; border-color: #475467; color: #98A2B3">⌘Z</span></div><div class="toast"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: #FDB022"><path d="M3 3l18 18M8 8a5 5 0 0 0-1 9.9h10M16.5 11.5A4 4 0 0 1 19 18"/></svg><span class="grow">Charge saved on this device. It will sync when you're back online.</span></div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="t-h3">States</span><span class="t-sm faint">Every screen</span></div>
+        <div class="card-b g2" style="gap: 12px">
+          <div class="inset col" style="padding: 12px; gap: 8px"><span class="lbl">Loading</span><div style="height: 10px; width: 70%; border-radius: 4px; background: var(--surface-3)"></div><div style="height: 10px; width: 90%; border-radius: 4px; background: var(--surface-3)"></div><div style="height: 10px; width: 50%; border-radius: 4px; background: var(--surface-3)"></div></div>
+          <div class="inset col" style="padding: 12px; gap: 6px"><span class="lbl">Error</span><span class="t-sm">Couldn't load folios.</span><button class="btn sm" style="align-self: flex-start">Retry</button></div>
+          <div class="inset col" style="padding: 14px; gap: 8px; grid-column: 1 / -1; align-items: center; text-align: center"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="t-h3">No arrivals left today</span><span class="t-sm muted">All 38 guests are checked in.</span><button class="btn sm pri">New walk-in</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="g2" style="gap: 20px; align-items: start">
+    <div class="card">
+      <div class="card-h"><span class="t-h3">Command palette · ⌘K</span><span class="t-sm faint">Records and actions in one list</span></div>
+      <div class="card-b" style="background: var(--surface-2)">
+        <div class="dialog cmd">
+          <div class="q"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>check in 50</span><span style="width: 1.5px; height: 20px; background: var(--brand)"></span><span class="grow"></span><span class="kbd">esc</span></div>
+          <div style="padding: 6px 0 8px">
+            <div class="lbl" style="padding: 6px 18px">Actions</div>
+            <div class="it on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--pri-ink)"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3"/></svg><span class="grow"><b>Check in 502</b> <span class="muted">· James Whitfield · Exec King</span></span><span class="kbd">↵</span></div>
+            <div class="it"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3"/></svg><span class="grow">Check in 504 <span class="muted">· Aisha Bello</span></span></div>
+            <div class="lbl" style="padding: 10px 18px 6px">Records</div>
+            <div class="it"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg><span class="grow">Room 503 <span class="muted">· Vacant · Inspected</span></span><span class="badge b-em">Inspected</span></div>
+            <div class="it"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: var(--text-3)"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8"/></svg><span class="grow">Folio F-50211 <span class="muted">· Room 611 · Ibrahim Sule</span></span></div>
+          </div>
+          <div class="row" style="padding: 8px 14px; border-top: 1px solid var(--border); gap: 14px"><span class="t-sm faint row" style="gap: 4px"><span class="kbd">↑</span><span class="kbd">↓</span>move</span><span class="t-sm faint row" style="gap: 4px"><span class="kbd">↵</span>run</span><span class="t-sm faint row" style="gap: 4px"><span class="kbd">tab</span>filter by type</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><span class="t-h3">Property and entity switchers</span><span class="t-sm faint">Scope stays visible in the top bar</span></div>
+      <div class="card-b g2" style="gap: 16px; align-items: start; background: var(--surface-2)">
+        <div class="pop" style="padding: 6px">
+          <div class="input" style="height: 32px; margin-bottom: 6px"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="faint">Find property</span></div>
+          <div class="row" style="height: 36px; padding: 0 8px; border-radius: 6px"><span class="check"></span><span class="grow medium">Whole group</span><span class="t-sm faint num">382 rooms</span></div>
+          <div class="hr" style="margin: 4px 0"></div>
+          <div class="row" style="height: 36px; padding: 0 8px; border-radius: 6px; background: var(--pri-soft)"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow">Kora Victoria Island</span><span class="t-sm faint num">120</span></div>
+          <div class="row" style="height: 36px; padding: 0 8px; border-radius: 6px"><span class="check"></span><span class="grow">Kora Ikeja GRA</span><span class="t-sm faint num">86</span></div>
+          <div class="row" style="height: 36px; padding: 0 8px; border-radius: 6px"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow">Kora Abuja</span><span class="t-sm faint num">104</span></div>
+          <div class="row" style="height: 36px; padding: 0 8px; border-radius: 6px"><span class="check"></span><span class="grow">Kora Port Harcourt</span><span class="t-sm faint num">72</span></div>
+          <div class="row between" style="padding: 8px; border-top: 1px solid var(--border); margin-top: 4px"><span class="t-sm muted">2 properties</span><button class="btn pri sm">Show 2</button></div>
+        </div>
+        <div class="pop" style="padding: 6px">
+          <div class="lbl" style="padding: 6px 8px">Legal entity · Finance only</div>
+          <div class="col" style="padding: 8px; border-radius: 6px; background: var(--pri-soft)"><span class="medium">Kora Hospitality Ltd</span><span class="t-sm faint">RC 1184402 · VI, Ikeja</span></div>
+          <div class="col" style="padding: 8px; border-radius: 6px"><span class="medium">Kora Hotels Abuja Ltd</span><span class="t-sm faint">RC 1290517 · Abuja</span></div>
+          <div class="col" style="padding: 8px; border-radius: 6px"><span class="medium">Kora PH Ltd</span><span class="t-sm faint">RC 1377281 · Port Harcourt</span></div>
+          <div class="col" style="padding: 8px; border-radius: 6px; border-top: 1px solid var(--border)"><span class="medium">Consolidated</span><span class="t-sm faint">Reporting only, no postings</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><span class="t-h3">Navigation</span><span class="t-sm faint">Sidebar groups modules; phone gets 4 role destinations + More</span></div>
+    <div class="card-b row" style="gap: 32px; align-items: flex-start; flex-wrap: wrap; background: var(--surface-2)">
+      <div style="width: 232px; height: 640px; border-radius: 10px; overflow: hidden"><dc-import name="Sidebar" active="desk" hint-size="232px,900px"></dc-import></div>
+      <div class="col" style="gap: 16px">
+        <div class="col" style="gap: 6px"><span class="lbl">Front desk agent</span><div style="width: 390px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border)"><dc-import name="BottomNav" role="desk" hint-size="390px,72px"></dc-import></div></div>
+        <div class="col" style="gap: 6px"><span class="lbl">Property GM</span><div style="width: 390px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border)"><dc-import name="BottomNav" role="gm" hint-size="390px,72px"></dc-import></div></div>
+        <div class="col" style="gap: 6px"><span class="lbl">MD / owner</span><div style="width: 390px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border)"><dc-import name="BottomNav" role="exec" hint-size="390px,72px"></dc-import></div></div>
+        <p class="t-sm muted" style="max-width: 390px">Collapsed sidebar is 64px icons with tooltips (<span class="kbd">[</span>). Counts appear only where something waits on the user.</p>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":2500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.dark ? 'vt dark' : 'vt' };
+  }
+}
+</script>
+</body>
+</html>

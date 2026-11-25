@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>City ledger statement</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#fff}</style>
+</helmet>
+<div style="width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px; background: #fff; color: #111; font-family: Inter, system-ui, sans-serif; font-size: 13px; line-height: 18px; display: flex; flex-direction: column; gap: 22px; font-variant-numeric: tabular-nums">
+  <header style="display: flex; justify-content: space-between; align-items: flex-start">
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 20px; font-weight: 700">Kora Hotels Group</span><span style="color: #444">Kora Hospitality Ltd · RC 1184402 · TIN 21847390-0001</span><span style="color: #444">Plot 1412 Ahmadu Bello Way, Victoria Island, Eti-Osa, Lagos</span></div>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px"><span style="font-size: 24px; font-weight: 700; letter-spacing: -.02em">Statement of account</span><span>1 Oct – 25 Nov 2026</span><span style="color: #444">Issued 25 Nov 2026</span></div>
+  </header>
+
+  <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; border-top: 2px solid #111; border-bottom: 1px solid #111; padding: 14px 0">
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase">Account</span><span style="font-weight: 600">Acme Energy Ltd · CL-0042</span><span>Attn: Accounts payable</span><span>[COMPANY ADDRESS]</span></div>
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <div style="display: flex; justify-content: space-between"><span>Credit limit</span><span>₦15,000,000.00</span></div>
+      <div style="display: flex; justify-content: space-between"><span>Terms</span><span>30 days from invoice</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; border-top: 1px solid #111; padding-top: 6px"><span>Balance due</span><span>₦12,378,175.00</span></div>
+    </div>
+  </div>
+
+  <table style="width: 100%; border-collapse: collapse">
+    <thead><tr><th style="text-align: left; padding: 8px 0; border-bottom: 1px solid #111; font-size: 12px; text-transform: uppercase; letter-spacing: .06em">Date</th><th style="text-align: left; padding: 8px 0; border-bottom: 1px solid #111; font-size: 12px; text-transform: uppercase; letter-spacing: .06em">Reference</th><th style="text-align: left; padding: 8px 0; border-bottom: 1px solid #111; font-size: 12px; text-transform: uppercase; letter-spacing: .06em">Detail</th><th style="text-align: right; padding: 8px 0; border-bottom: 1px solid #111; font-size: 12px; text-transform: uppercase; letter-spacing: .06em">Charges ₦</th><th style="text-align: right; padding: 8px 0; border-bottom: 1px solid #111; font-size: 12px; text-transform: uppercase; letter-spacing: .06em">Payments ₦</th><th style="text-align: right; padding: 8px 0; border-bottom: 1px solid #111; font-size: 12px; text-transform: uppercase; letter-spacing: .06em">Balance ₦</th></tr></thead>
+    <tbody>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #ccc">1 Oct 2026</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc" colspan="2">Opening balance</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc"></td><td style="padding: 8px 0; border-bottom: 1px solid #ccc"></td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">6,980,000.00</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #ccc">3 Oct 2026</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">INV-VI-2610-0214</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">O. Adeyemi · VI · 3 nights</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">661,500.00</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc"></td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">7,641,500.00</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #ccc">12 Oct 2026</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">PMT-TRF-88213</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">Transfer received</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc"></td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">2,400,000.00</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">5,241,500.00</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #ccc">18 Oct 2026</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">INV-VI-2610-0288</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">Leadership offsite · 6 rooms</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">2,940,000.00</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc"></td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">8,181,500.00</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #ccc">30 Oct 2026</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">INV-VI-2610-0331</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">J. Whitfield · VI · 4 nights</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">882,000.00</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc"></td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">9,063,500.00</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #ccc">6 Nov 2026</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">PMT-TRF-90477</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">Transfer received</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc"></td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">1,500,000.00</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">7,563,500.00</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #ccc">11 Nov 2026</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">INV-VI-2611-0362</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">Event · Calabash hall · 40 pax</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">2,856,500.00</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc"></td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">10,420,000.00</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 1px solid #ccc">19 Nov 2026</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">INV-VI-2611-0379</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc">E. Ugo · VI · 4 nights</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">1,440,000.00</td><td style="padding: 8px 0; border-bottom: 1px solid #ccc"></td><td style="padding: 8px 0; border-bottom: 1px solid #ccc; text-align: right">11,860,000.00</td></tr>
+      <tr><td style="padding: 8px 0; border-bottom: 2px solid #111">25 Nov 2026</td><td style="padding: 8px 0; border-bottom: 2px solid #111">INV-VI-2611-0391</td><td style="padding: 8px 0; border-bottom: 2px solid #111">I. Sule · VI · 3 nights</td><td style="padding: 8px 0; border-bottom: 2px solid #111; text-align: right">518,175.00</td><td style="padding: 8px 0; border-bottom: 2px solid #111"></td><td style="padding: 8px 0; border-bottom: 2px solid #111; text-align: right; font-weight: 700">12,378,175.00</td></tr>
+    </tbody>
+  </table>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase">Ageing</span>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); border: 1px solid #111">
+      <div style="padding: 10px; border-right: 1px solid #111"><div style="font-size: 12px; color: #555">0–30 days</div><div style="font-weight: 600">₦5,696,675.00</div></div>
+      <div style="padding: 10px; border-right: 1px solid #111"><div style="font-size: 12px; color: #555">31–60 days</div><div style="font-weight: 600">₦3,601,500.00</div></div>
+      <div style="padding: 10px; border-right: 1px solid #111"><div style="font-size: 12px; color: #555">61–90 days</div><div style="font-weight: 600">₦3,080,000.00</div></div>
+      <div style="padding: 10px; border-right: 1px solid #111"><div style="font-size: 12px; color: #555">90+ days</div><div style="font-weight: 600">₦0.00</div></div>
+      <div style="padding: 10px; background: #111; color: #fff"><div style="font-size: 12px">Total</div><div style="font-weight: 700">₦12,378,175.00</div></div>
+    </div>
+    <span style="color: #444">₦6,681,500.00 is past the 30-day terms. Payments are applied to the oldest invoice first.</span>
+  </div>
+
+  <div style="margin-top: auto; border: 1px solid #111; padding: 14px 16px; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase">Pay by transfer</span><span>Kora Hospitality Ltd</span><span>[BANK NAME]</span><span>NUBAN [10-DIGIT ACCOUNT]</span></div>
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase">Reference</span><span style="font-size: 16px; font-weight: 700">CL-0042</span><span style="color: #444">or the invoice numbers you are paying</span></div>
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase">Queries</span><span>accounts@korahotels.ng</span><span>+234 1 277 4100 ext. 214</span></div>
+  </div>
+  <footer style="display: flex; justify-content: space-between; color: #555; font-size: 12px; border-top: 1px solid #111; padding-top: 8px"><span>Generated by Vento · 25 Nov 2026 12:04</span><span>Page 1 of 1</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Folio and check-out · before</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{theme}}" style="font-family: Inter, system-ui, sans-serif">
+<div class="app">
+  <dc-import name="Sidebar" active="desk" hint-size="232px,900px"></dc-import>
+  <div class="main">
+    <dc-import name="Topbar" show-approvals="{{ false }}" property="Kora Victoria Island" initials="CE" user="Chidi Eze" biz-date="{{bizDate}}" cal-date="{{calDate}}" hint-size="100%,56px"></dc-import>
+    <main class="content" style="gap: 16px">
+      <div class="card">
+        <div class="row between wrap" style="padding: 16px 20px; gap: 16px">
+          <div class="row" style="gap: 14px"><span class="av lg">IS</span>
+            <div class="col" style="gap: 4px"><div class="row wrap"><h1 class="t-h1">Ibrahim Sule</h1><span class="badge b-am">Due out today</span></div><span class="t-sm muted num">Room 611 · Deluxe King · 22–25 Nov 2026 · 3 nights · Acme Energy Ltd · VI-2611-0391</span></div>
+          </div>
+          <div class="row wrap"><button class="btn">Post charge<span class="kbd">P</span></button><button class="btn">Move charges</button><button class="btn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/></svg>Print</button><button class="btn pri" disabled>Check out<span class="kbd">O</span></button></div>
+        </div>
+        <div class="row" style="border-top: 1px solid var(--border); padding: 0 12px; gap: 4px">
+          <button class="btn ghost" style="border-radius: 0; height: 44px"><span class="col" style="align-items: flex-start; line-height: 16px"><span>Folio A · Acme Energy Ltd</span><span class="t-sm faint num">₦518,175.00 · room &amp; breakfast</span></span></button>
+          <button class="btn ghost" style="border-radius: 0; height: 44px; color: var(--text); box-shadow: inset 0 -2px 0 var(--brand)"><span class="col" style="align-items: flex-start; line-height: 16px"><span>Folio B · Guest</span><span class="t-sm faint num">₦92,487.50 · extras</span></span></button>
+          <button class="btn ghost sm" style="margin-left: 8px"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Folio</button>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="col" style="gap: 16px; min-width: 0">
+          <div class="card">
+            <div class="card-h"><span class="t-h3">Folio B · postings</span><div class="row"><span class="pill on">All</span><span class="pill">F&amp;B</span><span class="pill">Show voids <span class="n">1</span></span></div></div>
+            <div class="tbox"><table class="tbl">
+              <thead><tr><th style="width: 92px">Bus. date</th><th>Description</th><th>Dept</th><th>By</th><th class="r">Amount</th></tr></thead>
+              <tbody>
+                <tr><td class="num muted">23 Nov</td><td><div class="col"><span class="medium">Calabash restaurant · check 1102</span><span class="t-sm faint num">SC ₦3,800.00 · VAT ₦2,850.00 · Consumption ₦1,900.00</span></div></td><td class="muted">F&amp;B</td><td class="muted">Musa I.</td><td class="r"><div class="col"><span>₦38,000.00</span><span class="t-sm faint">₦46,550.00 incl.</span></div></td></tr>
+                <tr><td class="num muted">24 Nov</td><td><div class="col"><span class="medium">Pool bar · check 2214</span><span class="t-sm faint num">SC ₦2,200.00 · VAT ₦1,650.00 · Consumption ₦1,100.00</span></div></td><td class="muted">Bar</td><td class="muted">Seun A.</td><td class="r"><div class="col"><span>₦22,000.00</span><span class="t-sm faint">₦26,950.00 incl.</span></div></td></tr>
+                <tr class="void"><td class="num">24 Nov</td><td><div class="col"><span class="row"><span class="medium vx">Pool bar · check 2207</span><span class="badge b-sl">Void</span></span><span class="t-sm">“Posted to wrong room” · 24 Nov 21:42</span></div></td><td>Bar</td><td>Seun A.</td><td class="r"><span class="vx">₦12,000.00</span></td></tr>
+                <tr><td class="num muted">24 Nov</td><td><div class="col"><span class="medium">Minibar · 2 water, 1 Chapman, 1 nuts</span><span class="t-sm faint num">SC ₦650.00 · VAT ₦487.50 · Consumption ₦325.00</span></div></td><td class="muted">Minibar</td><td class="muted">Grace A.</td><td class="r"><div class="col"><span>₦6,500.00</span><span class="t-sm faint">₦7,962.50 incl.</span></div></td></tr>
+                <tr><td class="num muted">24 Nov</td><td><div class="col"><span class="medium">Laundry · 4 pieces</span><span class="t-sm faint num">SC ₦900.00 · VAT ₦675.00 · Consumption ₦450.00</span></div></td><td class="muted">Laundry</td><td class="muted">System</td><td class="r"><div class="col"><span>₦9,000.00</span><span class="t-sm faint">₦11,025.00 incl.</span></div></td></tr>
+              </tbody>
+            </table></div>
+            <div class="col num" style="padding: 12px 16px; gap: 4px; border-top: 1px solid var(--border); background: var(--surface-2); border-radius: 0 0 10px 10px">
+              <div class="row between"><span class="muted">Charges excl. taxes</span><span>₦75,500.00</span></div>
+              <div class="row between t-sm muted"><span>Service charge 10%</span><span>₦7,550.00</span></div>
+              <div class="row between t-sm muted"><span>VAT 7.5%</span><span>₦5,662.50</span></div>
+              <div class="row between t-sm muted"><span>Lagos consumption tax 5%</span><span>₦3,775.00</span></div>
+              <div class="row between strong"><span>Folio B total</span><span>₦92,487.50</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-h"><div class="col"><span class="t-h3">Folio A · Acme Energy Ltd</span><span class="t-sm faint">Room &amp; breakfast routed to company</span></div><span class="badge b-am">Unsettled</span></div>
+            <div class="col num">
+              <div class="row between" style="padding: 10px 16px; border-bottom: 1px solid var(--border)"><span><span class="faint" style="display: inline-block; width: 64px">22 Nov</span>Room &amp; breakfast · Acme rate</span><span>₦141,000.00</span></div>
+              <div class="row between" style="padding: 10px 16px; border-bottom: 1px solid var(--border)"><span><span class="faint" style="display: inline-block; width: 64px">23 Nov</span>Room &amp; breakfast · Acme rate</span><span>₦141,000.00</span></div>
+              <div class="row between" style="padding: 10px 16px; border-bottom: 1px solid var(--border)"><span><span class="faint" style="display: inline-block; width: 64px">24 Nov</span>Room &amp; breakfast · Acme rate</span><span>₦141,000.00</span></div>
+              <div class="row between t-sm muted" style="padding: 8px 16px 2px"><span>Service charge 10% · VAT 7.5% · Consumption 5%</span><span>₦42,300.00 · ₦31,725.00 · ₦21,150.00</span></div>
+              <div class="row between strong" style="padding: 6px 16px 12px"><span>Folio A total</span><span>₦518,175.00</span></div>
+            </div>
+            <div class="card-f between" style="background: var(--surface-2); border-radius: 0 0 10px 10px">
+              <div class="col" style="gap: 4px; min-width: 260px"><span class="t-sm muted num">Acme credit after settling: ₦12,378,175.00 of ₦15,000,000.00</span><div class="meter"><i class="f-pri" style="width: 82.5%"></i></div></div>
+              <button class="btn pri">Settle ₦518,175.00 to Acme Energy Ltd</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="card">
+          <div class="card-h"><span class="t-h3">Settle Folio B</span><span class="num medium">₦92,487.50</span></div>
+          <div class="card-b col" style="gap: 14px">
+            <div class="col" style="gap: 8px">
+              <span class="lbl">Payments</span>
+              <div class="inset col" style="padding: 10px 12px; gap: 2px; background: var(--surface)">
+                <div class="row between"><span class="medium">Cash · USD</span><span class="num medium">$40.00</span></div>
+                <div class="row between t-sm muted num"><span>@ 1,620.00 · <span class="ink-em">CBN official</span> 25 Nov 09:00</span><span>= ₦64,800.00</span></div>
+                <div class="row t-sm faint">Received by Chidi Eze · drawer Desk 1</div>
+              </div>
+              <div class="inset col" style="padding: 10px 12px; gap: 10px; background: var(--surface); border-color: var(--pri-line)">
+                <div class="row between"><span class="medium">POS terminal</span><span class="t-sm faint">Moniepoint · Desk 1</span></div>
+                <div class="input num"><span class="pre">₦</span>27,687.50<span class="suf">remaining</span></div>
+                <div class="input num">RRN 412038877195</div>
+              </div>
+              <button class="btn ghost sm" style="align-self: flex-start"><svg class="ic ic-s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add method · Transfer, Paystack, cash NGN/GBP/EUR</button>
+            </div>
+            <div class="col num" style="gap: 4px; border-top: 1px solid var(--border); padding-top: 12px">
+              <div class="row between"><span class="muted">Folio B total</span><span>₦92,487.50</span></div>
+              <div class="row between"><span class="muted">Paid</span><span>₦92,487.50</span></div>
+              <div class="row between strong"><span>Balance</span><span class="ink-em">₦0.00</span></div>
+            </div>
+            <button class="btn pri lg">Take ₦27,687.50 on Moniepoint</button>
+            <div class="col" style="gap: 8px; border-top: 1px solid var(--border); padding-top: 12px">
+              <span class="lbl">After settlement</span>
+              <div class="row"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow">Receipt to WhatsApp</span><span class="t-sm faint num">+234 802 115 3409</span></div>
+              <div class="row"><span class="check on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 12px; height: 12px"><path d="m5 12 5 5 9-10"/></svg></span><span class="grow">Invoice PDF to Acme travel desk</span></div>
+              <div class="row"><span class="check"></span><span class="grow">Print 80mm receipt</span></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"afterMidnight":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const am = !!this.props.afterMidnight;
+    return { theme: this.props.dark ? 'vt dark' : 'vt', bizDate: am ? '24 Nov 2026' : '25 Nov 2026', calDate: am ? '25 Nov 00:42' : '' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,5176 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-25T16:55:00Z"
+ },
+ "title": "Vento Hotels",
+ "launch": {
+  "view": "canvas",
+  "page": "ds"
+ },
+ "pages": [
+  {
+   "id": "ds",
+   "name": "Design system"
+  },
+  {
+   "id": "update",
+   "name": "Update · before and after"
+  },
+  {
+   "id": "screens",
+   "name": "Screens"
+  },
+  {
+   "id": "owner",
+   "name": "20 · Owner report & leakage"
+  },
+  {
+   "id": "print",
+   "name": "21 · Printed documents"
+  },
+  {
+   "id": "board",
+   "name": "18 · Board pack"
+  },
+  {
+   "id": "comp",
+   "name": "Shell components"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 2100,
+   "page": "ds",
+   "title": "Foundations",
+   "expand": "fill"
+  },
+  "DSComponents.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 2500,
+   "page": "ds",
+   "title": "Core components",
+   "expand": "fill"
+  },
+  "DSHospitality.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 2900,
+   "page": "ds",
+   "title": "Hospitality components",
+   "expand": "fill"
+  },
+  "ExecHome.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 1560,
+   "page": "screens",
+   "title": "1 · Group executive home",
+   "expand": "fill"
+  },
+  "GMHome.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 1500,
+   "page": "screens",
+   "title": "2 · Property GM home",
+   "expand": "fill"
+  },
+  "TapeChart.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 1180,
+   "page": "screens",
+   "title": "3 · Tape chart",
+   "expand": "fill"
+  },
+  "NewReservation.dc.html": {
+   "x": 4560,
+   "y": 0,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "4 · New reservation",
+   "expand": "fill"
+  },
+  "ReservationDetail.dc.html": {
+   "x": 0,
+   "y": 1900,
+   "w": 1440,
+   "h": 1260,
+   "page": "screens",
+   "title": "5 · Reservation detail",
+   "expand": "fill"
+  },
+  "CheckIn.dc.html": {
+   "x": 1520,
+   "y": 1900,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "6a · Check-in",
+   "expand": "fill"
+  },
+  "WalkIn.dc.html": {
+   "x": 3040,
+   "y": 1900,
+   "w": 1440,
+   "h": 940,
+   "page": "screens",
+   "title": "6b · 60-second walk-in",
+   "expand": "fill"
+  },
+  "Folio.dc.html": {
+   "x": 4560,
+   "y": 1900,
+   "w": 1440,
+   "h": 1320,
+   "page": "screens",
+   "title": "7 · Folio and check-out",
+   "expand": "fill"
+  },
+  "ExecHomeDark.dc.html": {
+   "x": 0,
+   "y": 3560,
+   "w": 1440,
+   "h": 1560,
+   "page": "screens",
+   "title": "1 · Executive home, dark",
+   "expand": "fill"
+  },
+  "TapeChartDark.dc.html": {
+   "x": 1520,
+   "y": 3560,
+   "w": 1440,
+   "h": 1180,
+   "page": "screens",
+   "title": "3 · Tape chart, dark",
+   "expand": "fill"
+  },
+  "FolioDark.dc.html": {
+   "x": 3040,
+   "y": 3560,
+   "w": 1440,
+   "h": 1320,
+   "page": "screens",
+   "title": "7 · Folio, dark",
+   "expand": "fill"
+  },
+  "ExecHomeMobile.dc.html": {
+   "x": 0,
+   "y": 5500,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "1 · Executive home, 390"
+  },
+  "GMHomeMobile.dc.html": {
+   "x": 470,
+   "y": 5500,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "2 · GM home, 390"
+  },
+  "ReservationMobile.dc.html": {
+   "x": 940,
+   "y": 5500,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "5 · Reservation, 390"
+  },
+  "FolioMobile.dc.html": {
+   "x": 1410,
+   "y": 5500,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "7 · Folio, 390"
+  },
+  "OwnerReport.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 720,
+   "h": 1500,
+   "page": "owner",
+   "title": "20a · Owner's morning report (WhatsApp image / PDF)"
+  },
+  "Leakage.dc.html": {
+   "x": 800,
+   "y": 0,
+   "w": 1440,
+   "h": 1400,
+   "page": "owner",
+   "title": "20b · Leakage",
+   "expand": "fill"
+  },
+  "LeakageDark.dc.html": {
+   "x": 2320,
+   "y": 0,
+   "w": 1440,
+   "h": 1400,
+   "page": "owner",
+   "title": "20b · Leakage, dark",
+   "expand": "fill"
+  },
+  "LeakageMobile.dc.html": {
+   "x": 3840,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "owner",
+   "title": "20b · Leakage, 390"
+  },
+  "RegCard.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "page": "print",
+   "title": "A4 registration card",
+   "paper": "a4"
+  },
+  "Invoice.dc.html": {
+   "x": 874,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "page": "print",
+   "title": "A4 invoice / folio",
+   "paper": "a4"
+  },
+  "Statement.dc.html": {
+   "x": 1748,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "page": "print",
+   "title": "A4 city ledger statement",
+   "paper": "a4"
+  },
+  "Receipt.dc.html": {
+   "x": 2622,
+   "y": 0,
+   "w": 302,
+   "h": 1000,
+   "page": "print",
+   "title": "80mm thermal receipt"
+  },
+  "KitchenTicket.dc.html": {
+   "x": 3004,
+   "y": 0,
+   "w": 302,
+   "h": 600,
+   "page": "print",
+   "title": "80mm kitchen / bar ticket"
+  },
+  "Sidebar.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 232,
+   "h": 900,
+   "page": "comp",
+   "title": "Sidebar"
+  },
+  "Topbar.dc.html": {
+   "x": 312,
+   "y": 0,
+   "w": 1208,
+   "h": 56,
+   "page": "comp",
+   "title": "Top bar"
+  },
+  "BottomNav.dc.html": {
+   "x": 312,
+   "y": 176,
+   "w": 390,
+   "h": 72,
+   "page": "comp",
+   "title": "Mobile bottom nav"
+  },
+  "BookingDesktop.dc.html": {
+   "x": 0,
+   "y": 6900,
+   "w": 1440,
+   "h": 1250,
+   "page": "screens",
+   "title": "9 · Booking engine, desktop",
+   "expand": "fill"
+  },
+  "BookingRooms.dc.html": {
+   "x": 1520,
+   "y": 6900,
+   "w": 390,
+   "h": 1560,
+   "page": "screens",
+   "title": "9 · Booking: dates and rooms, 390"
+  },
+  "BookingCheckout.dc.html": {
+   "x": 1990,
+   "y": 6900,
+   "w": 390,
+   "h": 1600,
+   "page": "screens",
+   "title": "9 · Booking: details and payment, 390"
+  },
+  "BookingDone.dc.html": {
+   "x": 2460,
+   "y": 6900,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "9 · Booking: confirmed, 390"
+  },
+  "POSTables.dc.html": {
+   "x": 0,
+   "y": 8900,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "11 · POS table map, tablet"
+  },
+  "POSOrder.dc.html": {
+   "x": 1274,
+   "y": 8900,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "11 · POS order, tablet"
+  },
+  "POSPay.dc.html": {
+   "x": 2548,
+   "y": 8900,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "11 · POS split and pay, tablet"
+  },
+  "KDS.dc.html": {
+   "x": 3822,
+   "y": 8900,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "11 · Kitchen display"
+  },
+  "HKBoard.dc.html": {
+   "x": 0,
+   "y": 10200,
+   "w": 1440,
+   "h": 1300,
+   "page": "screens",
+   "title": "12 · Housekeeping board",
+   "expand": "fill"
+  },
+  "HKAttendant.dc.html": {
+   "x": 1520,
+   "y": 10200,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "12 · Attendant: my rooms, 390"
+  },
+  "HKRoom.dc.html": {
+   "x": 1990,
+   "y": 10200,
+   "w": 390,
+   "h": 1250,
+   "page": "screens",
+   "title": "12 · Attendant: room 403, 390"
+  },
+  "HKInspect.dc.html": {
+   "x": 2460,
+   "y": 10200,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "12 · Supervisor inspection, 390"
+  },
+  "MaintBoard.dc.html": {
+   "x": 0,
+   "y": 11900,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "13 · Work orders",
+   "expand": "fill"
+  },
+  "MaintPower.dc.html": {
+   "x": 1520,
+   "y": 11900,
+   "w": 1440,
+   "h": 1200,
+   "page": "screens",
+   "title": "13 · Assets, power and diesel",
+   "expand": "fill"
+  },
+  "GuestHome.dc.html": {
+   "x": 0,
+   "y": 13600,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "17 · Guest app: my stay"
+  },
+  "GuestPrecheck.dc.html": {
+   "x": 470,
+   "y": 13600,
+   "w": 390,
+   "h": 1200,
+   "page": "screens",
+   "title": "17 · Pre-check-in"
+  },
+  "GuestRequests.dc.html": {
+   "x": 940,
+   "y": 13600,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "17 · Requests"
+  },
+  "GuestFood.dc.html": {
+   "x": 1410,
+   "y": 13600,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "17 · Order to the room"
+  },
+  "GuestFolio.dc.html": {
+   "x": 1880,
+   "y": 13600,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "17 · Live bill and pay"
+  },
+  "GuestReview.dc.html": {
+   "x": 2350,
+   "y": 13600,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "17 · Review after the stay"
+  },
+  "LockPOS.dc.html": {
+   "x": 0,
+   "y": 15300,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "22 · POS tablet lock screen"
+  },
+  "ApprovalPOS.dc.html": {
+   "x": 1274,
+   "y": 15300,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "22 · Manager PIN approval on device"
+  },
+  "LockHK.dc.html": {
+   "x": 2548,
+   "y": 15300,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "22 · Housekeeping phone lock"
+  },
+  "Devices.dc.html": {
+   "x": 3018,
+   "y": 15300,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "22 · Device registration",
+   "expand": "fill"
+  },
+  "RatesGrid.dc.html": {
+   "x": 0,
+   "y": 16900,
+   "w": 1440,
+   "h": 1250,
+   "page": "screens",
+   "title": "8 · Rates and restrictions",
+   "expand": "fill"
+  },
+  "Channels.dc.html": {
+   "x": 1520,
+   "y": 16900,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "8 · Channel manager",
+   "expand": "fill"
+  },
+  "GuestProfile.dc.html": {
+   "x": 0,
+   "y": 18500,
+   "w": 1440,
+   "h": 1200,
+   "page": "screens",
+   "title": "10 · Guest profile",
+   "expand": "fill"
+  },
+  "Corporate.dc.html": {
+   "x": 1520,
+   "y": 18500,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "10 · Corporate accounts",
+   "expand": "fill"
+  },
+  "GroupBlock.dc.html": {
+   "x": 3040,
+   "y": 18500,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "10 · Group block",
+   "expand": "fill"
+  },
+  "Events.dc.html": {
+   "x": 4560,
+   "y": 18500,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "10 · Events calendar and BEO",
+   "expand": "fill"
+  },
+  "Stores.dc.html": {
+   "x": 0,
+   "y": 20100,
+   "w": 1440,
+   "h": 1250,
+   "page": "screens",
+   "title": "14 · Stores and requisitions",
+   "expand": "fill"
+  },
+  "Receiving.dc.html": {
+   "x": 1520,
+   "y": 20100,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "14 · Purchase order and receiving",
+   "expand": "fill"
+  },
+  "StockCount.dc.html": {
+   "x": 3040,
+   "y": 20100,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "14 · Stock count and transfers",
+   "expand": "fill"
+  },
+  "Recipe.dc.html": {
+   "x": 4560,
+   "y": 20100,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "14 · Recipe cost and food cost",
+   "expand": "fill"
+  },
+  "NightAudit.dc.html": {
+   "x": 0,
+   "y": 21900,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "15 · Night audit",
+   "expand": "fill"
+  },
+  "ShiftClose.dc.html": {
+   "x": 1520,
+   "y": 21900,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "15 · Cashier shift close",
+   "expand": "fill"
+  },
+  "CityLedger.dc.html": {
+   "x": 3040,
+   "y": 21900,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "15 · City ledger",
+   "expand": "fill"
+  },
+  "Journals.dc.html": {
+   "x": 0,
+   "y": 23500,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "15 · Ledger and journals",
+   "expand": "fill"
+  },
+  "Reconciliation.dc.html": {
+   "x": 1520,
+   "y": 23500,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "15 · Payment reconciliation",
+   "expand": "fill"
+  },
+  "TaxSummary.dc.html": {
+   "x": 3040,
+   "y": 23500,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "15 · Tax summary",
+   "expand": "fill"
+  },
+  "Employees.dc.html": {
+   "x": 0,
+   "y": 25100,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "16 · Employees",
+   "expand": "fill"
+  },
+  "Roster.dc.html": {
+   "x": 1520,
+   "y": 25100,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "16 · Roster",
+   "expand": "fill"
+  },
+  "PayrollRun.dc.html": {
+   "x": 3040,
+   "y": 25100,
+   "w": 1440,
+   "h": 1250,
+   "page": "screens",
+   "title": "16 · Payroll run review",
+   "expand": "fill"
+  },
+  "Payslip.dc.html": {
+   "x": 4560,
+   "y": 25100,
+   "w": 794,
+   "h": 1123,
+   "page": "screens",
+   "title": "16 · Payslip (A4)",
+   "paper": "a4"
+  },
+  "OnbOrg.dc.html": {
+   "x": 0,
+   "y": 26800,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "19 · Onboarding: organisation and property",
+   "expand": "fill"
+  },
+  "OnbRooms.dc.html": {
+   "x": 1520,
+   "y": 26800,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "19 · Onboarding: room types and rooms",
+   "expand": "fill"
+  },
+  "OnbRate.dc.html": {
+   "x": 3040,
+   "y": 26800,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "19 · Onboarding: first rate and booking",
+   "expand": "fill"
+  },
+  "OnbHome.dc.html": {
+   "x": 4560,
+   "y": 26800,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "19 · Home with setup checklist",
+   "expand": "fill"
+  },
+  "ImportPick.dc.html": {
+   "x": 0,
+   "y": 28500,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "23 · Import: choose and upload",
+   "expand": "fill"
+  },
+  "ImportValidate.dc.html": {
+   "x": 1520,
+   "y": 28500,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "23 · Import: validate and preview",
+   "expand": "fill"
+  },
+  "ImportDone.dc.html": {
+   "x": 3040,
+   "y": 28500,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "23 · Import: applied, undo 24 h",
+   "expand": "fill"
+  },
+  "Board1.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "page": "board",
+   "title": "Board pack · page 1",
+   "paper": "a4"
+  },
+  "Board2.dc.html": {
+   "x": 874,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "page": "board",
+   "title": "Board pack · page 2",
+   "paper": "a4"
+  },
+  "Board3.dc.html": {
+   "x": 1748,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "page": "board",
+   "title": "Board pack · page 3",
+   "paper": "a4"
+  },
+  "Board4.dc.html": {
+   "x": 2622,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "page": "board",
+   "title": "Board pack · page 4",
+   "paper": "a4"
+  },
+  "Board5.dc.html": {
+   "x": 3496,
+   "y": 0,
+   "w": 794,
+   "h": 1123,
+   "page": "board",
+   "title": "Board pack · page 5",
+   "paper": "a4"
+  },
+  "TopbarBefore.dc.html": {
+   "x": 0,
+   "y": 320,
+   "w": 1208,
+   "h": 56,
+   "page": "update",
+   "title": "Before"
+  },
+  "TopbarAfter.dc.html": {
+   "x": 1520,
+   "y": 320,
+   "w": 1208,
+   "h": 56,
+   "page": "update",
+   "title": "After"
+  },
+  "ExecHomeBefore.dc.html": {
+   "x": 0,
+   "y": 896,
+   "w": 1440,
+   "h": 1560,
+   "page": "update",
+   "title": "Before",
+   "expand": "fill"
+  },
+  "ExecHomeAfter.dc.html": {
+   "x": 1520,
+   "y": 896,
+   "w": 1440,
+   "h": 1660,
+   "page": "update",
+   "title": "After",
+   "expand": "fill"
+  },
+  "GMHomeBefore.dc.html": {
+   "x": 0,
+   "y": 3076,
+   "w": 1440,
+   "h": 1500,
+   "page": "update",
+   "title": "Before",
+   "expand": "fill"
+  },
+  "GMHomeAfter.dc.html": {
+   "x": 1520,
+   "y": 3076,
+   "w": 1440,
+   "h": 1600,
+   "page": "update",
+   "title": "After",
+   "expand": "fill"
+  },
+  "ReservationDetailBefore.dc.html": {
+   "x": 0,
+   "y": 5196,
+   "w": 1440,
+   "h": 1260,
+   "page": "update",
+   "title": "Before",
+   "expand": "fill"
+  },
+  "ReservationDetailAfter.dc.html": {
+   "x": 1520,
+   "y": 5196,
+   "w": 1440,
+   "h": 1260,
+   "page": "update",
+   "title": "After · rate override dialog",
+   "expand": "fill"
+  },
+  "FolioBefore.dc.html": {
+   "x": 0,
+   "y": 6976,
+   "w": 1440,
+   "h": 1320,
+   "page": "update",
+   "title": "Before",
+   "expand": "fill"
+  },
+  "FolioAfter.dc.html": {
+   "x": 1520,
+   "y": 6976,
+   "w": 1440,
+   "h": 1320,
+   "page": "update",
+   "title": "After · void dialog",
+   "expand": "fill"
+  },
+  "FolioAuditAfter.dc.html": {
+   "x": 3040,
+   "y": 6976,
+   "w": 1440,
+   "h": 1320,
+   "page": "update",
+   "title": "After · audit trail drawer",
+   "expand": "fill"
+  },
+  "POSOrderBefore.dc.html": {
+   "x": 0,
+   "y": 8816,
+   "w": 1194,
+   "h": 834,
+   "page": "update",
+   "title": "Before"
+  },
+  "POSOrderAfter.dc.html": {
+   "x": 1520,
+   "y": 8816,
+   "w": 1194,
+   "h": 834,
+   "page": "update",
+   "title": "After"
+  },
+  "POSTablesBefore.dc.html": {
+   "x": 0,
+   "y": 10170,
+   "w": 1194,
+   "h": 834,
+   "page": "update",
+   "title": "Before"
+  },
+  "POSTablesAfter.dc.html": {
+   "x": 1520,
+   "y": 10170,
+   "w": 1194,
+   "h": 834,
+   "page": "update",
+   "title": "After · sign-in screen is 22 · LockPOS"
+  },
+  "HKBoardBefore.dc.html": {
+   "x": 0,
+   "y": 11524,
+   "w": 1440,
+   "h": 1300,
+   "page": "update",
+   "title": "Before",
+   "expand": "fill"
+  },
+  "HKBoardAfter.dc.html": {
+   "x": 1520,
+   "y": 11524,
+   "w": 1440,
+   "h": 1300,
+   "page": "update",
+   "title": "After",
+   "expand": "fill"
+  },
+  "HKAttendantBefore.dc.html": {
+   "x": 0,
+   "y": 13344,
+   "w": 390,
+   "h": 844,
+   "page": "update",
+   "title": "Before"
+  },
+  "HKAttendantAfter.dc.html": {
+   "x": 1520,
+   "y": 13344,
+   "w": 390,
+   "h": 844,
+   "page": "update",
+   "title": "After"
+  },
+  "HKRoomCheck.dc.html": {
+   "x": 3040,
+   "y": 13344,
+   "w": 390,
+   "h": 1000,
+   "page": "update",
+   "title": "After · new: room check"
+  },
+  "ShiftCloseBefore.dc.html": {
+   "x": 0,
+   "y": 14864,
+   "w": 1440,
+   "h": 1050,
+   "page": "update",
+   "title": "Before",
+   "expand": "fill"
+  },
+  "ShiftCloseAfter.dc.html": {
+   "x": 1520,
+   "y": 14864,
+   "w": 1440,
+   "h": 1100,
+   "page": "update",
+   "title": "After · step 1, counting",
+   "expand": "fill"
+  },
+  "ShiftCloseSubmitted.dc.html": {
+   "x": 3040,
+   "y": 14864,
+   "w": 1440,
+   "h": 1050,
+   "page": "update",
+   "title": "After · step 2, submitted",
+   "expand": "fill"
+  },
+  "NightAuditBefore.dc.html": {
+   "x": 0,
+   "y": 16484,
+   "w": 1440,
+   "h": 1100,
+   "page": "update",
+   "title": "Before",
+   "expand": "fill"
+  },
+  "NightAuditAfter.dc.html": {
+   "x": 1520,
+   "y": 16484,
+   "w": 1440,
+   "h": 1000,
+   "page": "update",
+   "title": "After · final step",
+   "expand": "fill"
+  },
+  "CorporateBefore.dc.html": {
+   "x": 0,
+   "y": 18104,
+   "w": 1440,
+   "h": 1150,
+   "page": "update",
+   "title": "Before · Corporate accounts",
+   "expand": "fill"
+  },
+  "CorporateAfter.dc.html": {
+   "x": 1520,
+   "y": 18104,
+   "w": 1440,
+   "h": 1150,
+   "page": "update",
+   "title": "After",
+   "expand": "fill"
+  },
+  "CityLedgerBefore.dc.html": {
+   "x": 0,
+   "y": 19774,
+   "w": 1440,
+   "h": 1150,
+   "page": "update",
+   "title": "Before · City ledger",
+   "expand": "fill"
+  },
+  "CityLedgerAfter.dc.html": {
+   "x": 1520,
+   "y": 19774,
+   "w": 1440,
+   "h": 1150,
+   "page": "update",
+   "title": "After",
+   "expand": "fill"
+  },
+  "ChannelsBefore.dc.html": {
+   "x": 0,
+   "y": 21444,
+   "w": 1440,
+   "h": 1150,
+   "page": "update",
+   "title": "Before · Channels",
+   "expand": "fill"
+  },
+  "ChannelsAfter.dc.html": {
+   "x": 1520,
+   "y": 21444,
+   "w": 1440,
+   "h": 1150,
+   "page": "update",
+   "title": "After",
+   "expand": "fill"
+  },
+  "ReceivingBefore.dc.html": {
+   "x": 0,
+   "y": 23114,
+   "w": 1440,
+   "h": 1050,
+   "page": "update",
+   "title": "Before · Receiving",
+   "expand": "fill"
+  },
+  "ReceivingAfter.dc.html": {
+   "x": 1520,
+   "y": 23114,
+   "w": 1440,
+   "h": 1050,
+   "page": "update",
+   "title": "After",
+   "expand": "fill"
+  },
+  "DSHospitalityBefore.dc.html": {
+   "x": 0,
+   "y": 24684,
+   "w": 1440,
+   "h": 2900,
+   "page": "update",
+   "title": "Before · Hospitality components",
+   "expand": "fill"
+  },
+  "DSHospitalityAfter.dc.html": {
+   "x": 1520,
+   "y": 24684,
+   "w": 1440,
+   "h": 2900,
+   "page": "update",
+   "title": "After",
+   "expand": "fill"
+  },
+  "DSGovernance.dc.html": {
+   "x": 4560,
+   "y": 0,
+   "w": 1440,
+   "h": 3600,
+   "page": "ds",
+   "title": "Controls and audit (new)",
+   "expand": "fill"
+  },
+  "OwnerEmail.dc.html": {
+   "x": 0,
+   "y": 1900,
+   "w": 720,
+   "h": 1500,
+   "page": "owner",
+   "title": "20a · Morning report by email"
+  },
+  "OwnerEmailMobile.dc.html": {
+   "x": 800,
+   "y": 1900,
+   "w": 390,
+   "h": 1400,
+   "page": "owner",
+   "title": "20a · Email on a phone"
+  },
+  "LeakageResolve.dc.html": {
+   "x": 1270,
+   "y": 1900,
+   "w": 1440,
+   "h": 1400,
+   "page": "owner",
+   "title": "20b · Resolve a sleeper (318)",
+   "expand": "fill"
+  },
+  "LeakageResolveDark.dc.html": {
+   "x": 2790,
+   "y": 1900,
+   "w": 1440,
+   "h": 1400,
+   "page": "owner",
+   "title": "20b · Resolve, dark",
+   "expand": "fill"
+  },
+  "LeakageResolveMobile.dc.html": {
+   "x": 4310,
+   "y": 1900,
+   "w": 390,
+   "h": 844,
+   "page": "owner",
+   "title": "20b · Resolve a skipper (512), 390"
+  },
+  "LeakageLoading.dc.html": {
+   "x": 0,
+   "y": 3800,
+   "w": 1440,
+   "h": 900,
+   "page": "owner",
+   "title": "Leakage · loading",
+   "expand": "fill"
+  },
+  "LeakageEmpty.dc.html": {
+   "x": 1520,
+   "y": 3800,
+   "w": 1440,
+   "h": 900,
+   "page": "owner",
+   "title": "Leakage · empty",
+   "expand": "fill"
+  },
+  "LeakageError.dc.html": {
+   "x": 3040,
+   "y": 3800,
+   "w": 1440,
+   "h": 900,
+   "page": "owner",
+   "title": "Leakage · error",
+   "expand": "fill"
+  },
+  "LeakageOffline.dc.html": {
+   "x": 4560,
+   "y": 3800,
+   "w": 1440,
+   "h": 900,
+   "page": "owner",
+   "title": "Leakage · offline",
+   "expand": "fill"
+  },
+  "LeakageLoadingMobile.dc.html": {
+   "x": 0,
+   "y": 5100,
+   "w": 390,
+   "h": 844,
+   "page": "owner",
+   "title": "Leakage · loading · 390"
+  },
+  "LeakageEmptyMobile.dc.html": {
+   "x": 470,
+   "y": 5100,
+   "w": 390,
+   "h": 844,
+   "page": "owner",
+   "title": "Leakage · empty · 390"
+  },
+  "LeakageErrorMobile.dc.html": {
+   "x": 940,
+   "y": 5100,
+   "w": 390,
+   "h": 844,
+   "page": "owner",
+   "title": "Leakage · error · 390"
+  },
+  "LeakageOfflineMobile.dc.html": {
+   "x": 1410,
+   "y": 5100,
+   "w": 390,
+   "h": 844,
+   "page": "owner",
+   "title": "Leakage · offline · 390"
+  },
+  "LeakageOfflineDark.dc.html": {
+   "x": 1880,
+   "y": 5100,
+   "w": 1440,
+   "h": 900,
+   "page": "owner",
+   "title": "Leakage · offline · dark",
+   "expand": "fill"
+  },
+  "LockPOSIdle.dc.html": {
+   "x": 0,
+   "y": 30300,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "22 · Auto sign-out, offline"
+  },
+  "POSSwitch.dc.html": {
+   "x": 1274,
+   "y": 30300,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "22 · Quick user switch"
+  },
+  "DeviceRegisterTablet.dc.html": {
+   "x": 2548,
+   "y": 30300,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "22 · Register on the tablet"
+  },
+  "LockPOSDark.dc.html": {
+   "x": 3822,
+   "y": 30300,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "22 · POS lock, dark"
+  },
+  "ApprovalPOSDark.dc.html": {
+   "x": 0,
+   "y": 31600,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "22 · Manager approval, dark"
+  },
+  "ApprovalPhone.dc.html": {
+   "x": 1274,
+   "y": 31600,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "22 · Approve on manager phone"
+  },
+  "HKSwitch.dc.html": {
+   "x": 1744,
+   "y": 31600,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "22 · HK phone switch person"
+  },
+  "LockHKDark.dc.html": {
+   "x": 2214,
+   "y": 31600,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "22 · HK lock, dark"
+  },
+  "DevicesMobile.dc.html": {
+   "x": 2684,
+   "y": 31600,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "22 · Devices, 390"
+  },
+  "DevicesLoading.dc.html": {
+   "x": 0,
+   "y": 32900,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Devices · loading",
+   "expand": "fill"
+  },
+  "DevicesEmpty.dc.html": {
+   "x": 1520,
+   "y": 32900,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Devices · empty",
+   "expand": "fill"
+  },
+  "DevicesError.dc.html": {
+   "x": 3040,
+   "y": 32900,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Devices · error",
+   "expand": "fill"
+  },
+  "DevicesOffline.dc.html": {
+   "x": 4560,
+   "y": 32900,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Devices · offline",
+   "expand": "fill"
+  },
+  "DevicesLoadingMobile.dc.html": {
+   "x": 0,
+   "y": 34200,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "Devices · loading · 390"
+  },
+  "DevicesEmptyMobile.dc.html": {
+   "x": 470,
+   "y": 34200,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "Devices · empty · 390"
+  },
+  "DevicesErrorMobile.dc.html": {
+   "x": 940,
+   "y": 34200,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "Devices · error · 390"
+  },
+  "DevicesOfflineMobile.dc.html": {
+   "x": 1410,
+   "y": 34200,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "Devices · offline · 390"
+  },
+  "DevicesOfflineDark.dc.html": {
+   "x": 1880,
+   "y": 34200,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Devices · offline · dark",
+   "expand": "fill"
+  },
+  "ImportUndo.dc.html": {
+   "x": 0,
+   "y": 35500,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "23 · Undo within 24 hours",
+   "expand": "fill"
+  },
+  "ImportValidateDark.dc.html": {
+   "x": 1520,
+   "y": 35500,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "23 · Validate, dark",
+   "expand": "fill"
+  },
+  "ImportValidateMobile.dc.html": {
+   "x": 3040,
+   "y": 35500,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "23 · Validate, 390"
+  },
+  "ImportDoneMobile.dc.html": {
+   "x": 3510,
+   "y": 35500,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "23 · Applied, 390"
+  },
+  "ImportLoading.dc.html": {
+   "x": 0,
+   "y": 37000,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Import · loading",
+   "expand": "fill"
+  },
+  "ImportEmpty.dc.html": {
+   "x": 1520,
+   "y": 37000,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Import · empty",
+   "expand": "fill"
+  },
+  "ImportError.dc.html": {
+   "x": 3040,
+   "y": 37000,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Import · error",
+   "expand": "fill"
+  },
+  "ImportOffline.dc.html": {
+   "x": 4560,
+   "y": 37000,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Import · offline",
+   "expand": "fill"
+  },
+  "ImportLoadingMobile.dc.html": {
+   "x": 0,
+   "y": 38300,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "Import · loading · 390"
+  },
+  "ImportEmptyMobile.dc.html": {
+   "x": 470,
+   "y": 38300,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "Import · empty · 390"
+  },
+  "ImportErrorMobile.dc.html": {
+   "x": 940,
+   "y": 38300,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "Import · error · 390"
+  },
+  "ImportOfflineMobile.dc.html": {
+   "x": 1410,
+   "y": 38300,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "Import · offline · 390"
+  },
+  "ImportOfflineDark.dc.html": {
+   "x": 1880,
+   "y": 38300,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "Import · offline · dark",
+   "expand": "fill"
+  },
+  "LeakageStates.dc.html": {
+   "x": 800,
+   "y": 400,
+   "w": 1440,
+   "h": 900,
+   "page": "comp",
+   "title": "LeakageStates (source, state tweak)",
+   "expand": "fill"
+  },
+  "ImportStates.dc.html": {
+   "x": 2320,
+   "y": 400,
+   "w": 1440,
+   "h": 900,
+   "page": "comp",
+   "title": "ImportStates (source, state tweak)",
+   "expand": "fill"
+  },
+  "DevicesStates.dc.html": {
+   "x": 3840,
+   "y": 400,
+   "w": 1440,
+   "h": 900,
+   "page": "comp",
+   "title": "DevicesStates (source, state tweak)",
+   "expand": "fill"
+  },
+  "AuthSignIn.dc.html": {
+   "x": 0,
+   "y": 40000,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Sign in",
+   "expand": "fill"
+  },
+  "Auth2FA.dc.html": {
+   "x": 1520,
+   "y": 40000,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Two-step code",
+   "expand": "fill"
+  },
+  "AuthForgot.dc.html": {
+   "x": 3040,
+   "y": 40000,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Forgot password",
+   "expand": "fill"
+  },
+  "AuthForgotSent.dc.html": {
+   "x": 4560,
+   "y": 40000,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Reset link sent",
+   "expand": "fill"
+  },
+  "AuthInvite.dc.html": {
+   "x": 6080,
+   "y": 40000,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Accept invite",
+   "expand": "fill"
+  },
+  "AuthLoading.dc.html": {
+   "x": 0,
+   "y": 41320,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Signing in",
+   "expand": "fill"
+  },
+  "AuthError.dc.html": {
+   "x": 1520,
+   "y": 41320,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Wrong password",
+   "expand": "fill"
+  },
+  "AuthNoProperty.dc.html": {
+   "x": 3040,
+   "y": 41320,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · No property assigned",
+   "expand": "fill"
+  },
+  "AuthDevice.dc.html": {
+   "x": 4560,
+   "y": 41320,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Device not registered",
+   "expand": "fill"
+  },
+  "AuthExpired.dc.html": {
+   "x": 6080,
+   "y": 41320,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Session expired",
+   "expand": "fill"
+  },
+  "AuthOffline.dc.html": {
+   "x": 7600,
+   "y": 41320,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · First load offline",
+   "expand": "fill"
+  },
+  "AccessNoAccess.dc.html": {
+   "x": 0,
+   "y": 42640,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · No access to this page",
+   "expand": "fill"
+  },
+  "AccessNotFound.dc.html": {
+   "x": 1520,
+   "y": 42640,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Page not found",
+   "expand": "fill"
+  },
+  "AuthSignInDark.dc.html": {
+   "x": 3040,
+   "y": 42640,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · Sign in, dark",
+   "expand": "fill"
+  },
+  "AccessNoAccessDark.dc.html": {
+   "x": 4560,
+   "y": 42640,
+   "w": 1440,
+   "h": 900,
+   "page": "screens",
+   "title": "24 · No access, dark",
+   "expand": "fill"
+  },
+  "AuthSignInM.dc.html": {
+   "x": 0,
+   "y": 43960,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "24 · Sign in, 390"
+  },
+  "Auth2FAM.dc.html": {
+   "x": 470,
+   "y": 43960,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "24 · Code, 390"
+  },
+  "AuthInviteM.dc.html": {
+   "x": 940,
+   "y": 43960,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "24 · Invite, 390"
+  },
+  "AuthErrorM.dc.html": {
+   "x": 1410,
+   "y": 43960,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "24 · Wrong password, 390"
+  },
+  "AuthOfflineM.dc.html": {
+   "x": 1880,
+   "y": 43960,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "24 · Offline, 390"
+  },
+  "AuthExpiredM.dc.html": {
+   "x": 2350,
+   "y": 43960,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "24 · Expired, 390 dark"
+  },
+  "AccessNoAccessM.dc.html": {
+   "x": 2820,
+   "y": 43960,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "24 · No access, 390"
+  },
+  "AccessNotFoundM.dc.html": {
+   "x": 3290,
+   "y": 43960,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "24 · Not found, 390"
+  },
+  "SetProperty.dc.html": {
+   "x": 0,
+   "y": 45224,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Property",
+   "expand": "fill"
+  },
+  "SetEntities.dc.html": {
+   "x": 1520,
+   "y": 45224,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Entities and departments",
+   "expand": "fill"
+  },
+  "SetMembers.dc.html": {
+   "x": 3040,
+   "y": 45224,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Members and roles",
+   "expand": "fill"
+  },
+  "SetInvite.dc.html": {
+   "x": 4560,
+   "y": 45224,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Invite people",
+   "expand": "fill"
+  },
+  "SetDevices.dc.html": {
+   "x": 6080,
+   "y": 45224,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Devices",
+   "expand": "fill"
+  },
+  "SetRevoke.dc.html": {
+   "x": 7600,
+   "y": 45224,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Revoke a device",
+   "expand": "fill"
+  },
+  "SetLoading.dc.html": {
+   "x": 0,
+   "y": 46744,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Loading",
+   "expand": "fill"
+  },
+  "SetEmpty.dc.html": {
+   "x": 1520,
+   "y": 46744,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Empty",
+   "expand": "fill"
+  },
+  "SetError.dc.html": {
+   "x": 3040,
+   "y": 46744,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Error",
+   "expand": "fill"
+  },
+  "SetOffline.dc.html": {
+   "x": 4560,
+   "y": 46744,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Offline",
+   "expand": "fill"
+  },
+  "SetMembersDark.dc.html": {
+   "x": 6080,
+   "y": 46744,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "25 · Members, dark",
+   "expand": "fill"
+  },
+  "SetPropertyM.dc.html": {
+   "x": 0,
+   "y": 48264,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "25 · Property, 390"
+  },
+  "SetMembersM.dc.html": {
+   "x": 470,
+   "y": 48264,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "25 · Members, 390"
+  },
+  "SetLoadingM.dc.html": {
+   "x": 940,
+   "y": 48264,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "25 · Loading, 390"
+  },
+  "SetEmptyM.dc.html": {
+   "x": 1410,
+   "y": 48264,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "25 · Empty, 390"
+  },
+  "SetErrorM.dc.html": {
+   "x": 1880,
+   "y": 48264,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "25 · Error, 390"
+  },
+  "SetOfflineM.dc.html": {
+   "x": 2350,
+   "y": 48264,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "25 · Offline, 390 dark"
+  },
+  "PermGrid.dc.html": {
+   "x": 0,
+   "y": 49528,
+   "w": 1440,
+   "h": 1500,
+   "page": "screens",
+   "title": "26 · Roles × actions",
+   "expand": "fill"
+  },
+  "PermGridDark.dc.html": {
+   "x": 1520,
+   "y": 49528,
+   "w": 1440,
+   "h": 1500,
+   "page": "screens",
+   "title": "26 · Dark",
+   "expand": "fill"
+  },
+  "PermRoleM.dc.html": {
+   "x": 3040,
+   "y": 49528,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "26 · By role, 390"
+  },
+  "PermOfflineM.dc.html": {
+   "x": 3510,
+   "y": 49528,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "26 · By role, 390 dark"
+  },
+  "PermLoading.dc.html": {
+   "x": 0,
+   "y": 51448,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "26 · Loading",
+   "expand": "fill"
+  },
+  "PermEmpty.dc.html": {
+   "x": 1520,
+   "y": 51448,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "26 · Empty",
+   "expand": "fill"
+  },
+  "PermError.dc.html": {
+   "x": 3040,
+   "y": 51448,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "26 · Error",
+   "expand": "fill"
+  },
+  "PermOffline.dc.html": {
+   "x": 4560,
+   "y": 51448,
+   "w": 1440,
+   "h": 1500,
+   "page": "screens",
+   "title": "26 · Offline",
+   "expand": "fill"
+  },
+  "TaxRules.dc.html": {
+   "x": 0,
+   "y": 53368,
+   "w": 1440,
+   "h": 1350,
+   "page": "screens",
+   "title": "27 · Taxes and charges",
+   "expand": "fill"
+  },
+  "TaxSchedule.dc.html": {
+   "x": 1520,
+   "y": 53368,
+   "w": 1440,
+   "h": 1350,
+   "page": "screens",
+   "title": "27 · Schedule a change",
+   "expand": "fill"
+  },
+  "PayMethods.dc.html": {
+   "x": 3040,
+   "y": 53368,
+   "w": 1440,
+   "h": 1350,
+   "page": "screens",
+   "title": "27 · Payments",
+   "expand": "fill"
+  },
+  "PayMethodsDark.dc.html": {
+   "x": 4560,
+   "y": 53368,
+   "w": 1440,
+   "h": 1350,
+   "page": "screens",
+   "title": "27 · Payments, dark",
+   "expand": "fill"
+  },
+  "TaxLoading.dc.html": {
+   "x": 0,
+   "y": 55138,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "27 · Loading",
+   "expand": "fill"
+  },
+  "TaxEmpty.dc.html": {
+   "x": 1520,
+   "y": 55138,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "27 · Empty",
+   "expand": "fill"
+  },
+  "TaxError.dc.html": {
+   "x": 3040,
+   "y": 55138,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "27 · Error",
+   "expand": "fill"
+  },
+  "TaxOffline.dc.html": {
+   "x": 4560,
+   "y": 55138,
+   "w": 1440,
+   "h": 1350,
+   "page": "screens",
+   "title": "27 · Offline",
+   "expand": "fill"
+  },
+  "TaxRulesM.dc.html": {
+   "x": 6080,
+   "y": 55138,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "27 · Taxes, 390"
+  },
+  "PayMethodsM.dc.html": {
+   "x": 6550,
+   "y": 55138,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "27 · Payments, 390 dark"
+  },
+  "AuditLogMain.dc.html": {
+   "x": 0,
+   "y": 56908,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "28 · Audit log",
+   "expand": "fill"
+  },
+  "AuditOnReservation.dc.html": {
+   "x": 1520,
+   "y": 56908,
+   "w": 1440,
+   "h": 1260,
+   "page": "screens",
+   "title": "28 · Drawer on a reservation",
+   "expand": "fill"
+  },
+  "AuditOnPOS.dc.html": {
+   "x": 3040,
+   "y": 56908,
+   "w": 1194,
+   "h": 834,
+   "page": "screens",
+   "title": "28 · Drawer on a POS bill"
+  },
+  "AuditOnRoom.dc.html": {
+   "x": 4314,
+   "y": 56908,
+   "w": 1440,
+   "h": 1300,
+   "page": "screens",
+   "title": "28 · Drawer on a room",
+   "expand": "fill"
+  },
+  "AuditLoading.dc.html": {
+   "x": 0,
+   "y": 58628,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "28 · Loading",
+   "expand": "fill"
+  },
+  "AuditEmpty.dc.html": {
+   "x": 1520,
+   "y": 58628,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "28 · No matches",
+   "expand": "fill"
+  },
+  "AuditError.dc.html": {
+   "x": 3040,
+   "y": 58628,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "28 · Error",
+   "expand": "fill"
+  },
+  "AuditOffline.dc.html": {
+   "x": 4560,
+   "y": 58628,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "28 · Offline",
+   "expand": "fill"
+  },
+  "AuditLogDark.dc.html": {
+   "x": 6080,
+   "y": 58628,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "28 · Dark",
+   "expand": "fill"
+  },
+  "AuditLogM.dc.html": {
+   "x": 7600,
+   "y": 58628,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "28 · Audit log, 390"
+  },
+  "InboxApprovals.dc.html": {
+   "x": 0,
+   "y": 60198,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "29 · Approvals inbox",
+   "expand": "fill"
+  },
+  "InboxBell.dc.html": {
+   "x": 1520,
+   "y": 60198,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "29 · Bell menu",
+   "expand": "fill"
+  },
+  "InboxNotifications.dc.html": {
+   "x": 3040,
+   "y": 60198,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "29 · All notifications",
+   "expand": "fill"
+  },
+  "InboxApprovalsDark.dc.html": {
+   "x": 4560,
+   "y": 60198,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "29 · Approvals, dark",
+   "expand": "fill"
+  },
+  "InboxLoading.dc.html": {
+   "x": 0,
+   "y": 61668,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "29 · Loading",
+   "expand": "fill"
+  },
+  "InboxEmpty.dc.html": {
+   "x": 1520,
+   "y": 61668,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "29 · All caught up",
+   "expand": "fill"
+  },
+  "InboxError.dc.html": {
+   "x": 3040,
+   "y": 61668,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "29 · Error",
+   "expand": "fill"
+  },
+  "InboxOffline.dc.html": {
+   "x": 4560,
+   "y": 61668,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "29 · Offline",
+   "expand": "fill"
+  },
+  "InboxApprovalsM.dc.html": {
+   "x": 6080,
+   "y": 61668,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "29 · Approvals, 390"
+  },
+  "InboxNotificationsM.dc.html": {
+   "x": 6550,
+   "y": 61668,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "29 · Notifications, 390"
+  },
+  "InboxOfflineM.dc.html": {
+   "x": 7020,
+   "y": 61668,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "29 · Offline, 390 dark"
+  },
+  "Auth.dc.html": {
+   "x": 800,
+   "y": 1500,
+   "w": 1440,
+   "h": 1100,
+   "page": "comp",
+   "title": "Auth (source, tweaks)",
+   "expand": "fill"
+  },
+  "AccessShell.dc.html": {
+   "x": 2320,
+   "y": 1500,
+   "w": 1440,
+   "h": 1100,
+   "page": "comp",
+   "title": "AccessShell (source, tweaks)",
+   "expand": "fill"
+  },
+  "Settings.dc.html": {
+   "x": 3840,
+   "y": 1500,
+   "w": 1440,
+   "h": 1100,
+   "page": "comp",
+   "title": "Settings (source, tweaks)",
+   "expand": "fill"
+  },
+  "Permissions.dc.html": {
+   "x": 5360,
+   "y": 1500,
+   "w": 1440,
+   "h": 1500,
+   "page": "comp",
+   "title": "Permissions (source, tweaks)",
+   "expand": "fill"
+  },
+  "TaxSetup.dc.html": {
+   "x": 800,
+   "y": 3200,
+   "w": 1440,
+   "h": 1100,
+   "page": "comp",
+   "title": "TaxSetup (source, tweaks)",
+   "expand": "fill"
+  },
+  "AuditLog.dc.html": {
+   "x": 2320,
+   "y": 3200,
+   "w": 1440,
+   "h": 1100,
+   "page": "comp",
+   "title": "AuditLog (source, tweaks)",
+   "expand": "fill"
+  },
+  "Inbox.dc.html": {
+   "x": 3840,
+   "y": 3200,
+   "w": 1440,
+   "h": 1100,
+   "page": "comp",
+   "title": "Inbox (source, tweaks)",
+   "expand": "fill"
+  },
+  "FDArrivals.dc.html": {
+   "x": 0,
+   "y": 63138,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · Arrivals",
+   "expand": "fill"
+  },
+  "FDDepartures.dc.html": {
+   "x": 1520,
+   "y": 63138,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · Departures",
+   "expand": "fill"
+  },
+  "FDInHouse.dc.html": {
+   "x": 3040,
+   "y": 63138,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · In house",
+   "expand": "fill"
+  },
+  "FDGroupCheckIn.dc.html": {
+   "x": 4560,
+   "y": 63138,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · Bulk check-in for a group",
+   "expand": "fill"
+  },
+  "FDShortcuts.dc.html": {
+   "x": 6080,
+   "y": 63138,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · Keyboard shortcuts",
+   "expand": "fill"
+  },
+  "FDArrivalsDark.dc.html": {
+   "x": 0,
+   "y": 64608,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · Arrivals, dark",
+   "expand": "fill"
+  },
+  "FDArrivalsM.dc.html": {
+   "x": 1520,
+   "y": 64608,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "30 · Arrivals, 390"
+  },
+  "FDDeparturesM.dc.html": {
+   "x": 1990,
+   "y": 64608,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "30 · Departures, 390"
+  },
+  "FDInHouseM.dc.html": {
+   "x": 2460,
+   "y": 64608,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "30 · In house, 390 dark"
+  },
+  "FDLoading.dc.html": {
+   "x": 0,
+   "y": 66078,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · Front desk · loading",
+   "expand": "fill"
+  },
+  "FDEmpty.dc.html": {
+   "x": 1520,
+   "y": 66078,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · Front desk · empty",
+   "expand": "fill"
+  },
+  "FDError.dc.html": {
+   "x": 3040,
+   "y": 66078,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · Front desk · error",
+   "expand": "fill"
+  },
+  "FDOffline.dc.html": {
+   "x": 4560,
+   "y": 66078,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "30 · Front desk · offline",
+   "expand": "fill"
+  },
+  "FDOfflineM.dc.html": {
+   "x": 6080,
+   "y": 66078,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "30 · Front desk · offline, 390 dark"
+  },
+  "FDEmptyM.dc.html": {
+   "x": 6550,
+   "y": 66078,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "30 · Empty, 390"
+  },
+  "DlgModify.dc.html": {
+   "x": 0,
+   "y": 67548,
+   "w": 1440,
+   "h": 1260,
+   "page": "screens",
+   "title": "31 · Modify reservation",
+   "expand": "fill"
+  },
+  "DlgCancel.dc.html": {
+   "x": 1520,
+   "y": 67548,
+   "w": 1440,
+   "h": 1260,
+   "page": "screens",
+   "title": "31 · Cancel",
+   "expand": "fill"
+  },
+  "DlgRoomMove.dc.html": {
+   "x": 3040,
+   "y": 67548,
+   "w": 1440,
+   "h": 1180,
+   "page": "screens",
+   "title": "31 · Room move",
+   "expand": "fill"
+  },
+  "DlgPostCharge.dc.html": {
+   "x": 4560,
+   "y": 67548,
+   "w": 1440,
+   "h": 1320,
+   "page": "screens",
+   "title": "31 · Post charge",
+   "expand": "fill"
+  },
+  "DlgPayment.dc.html": {
+   "x": 0,
+   "y": 69288,
+   "w": 1440,
+   "h": 1320,
+   "page": "screens",
+   "title": "31 · Take payment",
+   "expand": "fill"
+  },
+  "DlgRefund.dc.html": {
+   "x": 1520,
+   "y": 69288,
+   "w": 1440,
+   "h": 1320,
+   "page": "screens",
+   "title": "31 · Refund",
+   "expand": "fill"
+  },
+  "DlgTransfer.dc.html": {
+   "x": 3040,
+   "y": 69288,
+   "w": 1440,
+   "h": 1320,
+   "page": "screens",
+   "title": "31 · Transfer charges",
+   "expand": "fill"
+  },
+  "DlgPaymentDark.dc.html": {
+   "x": 4560,
+   "y": 69288,
+   "w": 1440,
+   "h": 1320,
+   "page": "screens",
+   "title": "31 · Take payment, dark",
+   "expand": "fill"
+  },
+  "DlgRoomMoveDark.dc.html": {
+   "x": 6080,
+   "y": 69288,
+   "w": 1440,
+   "h": 1180,
+   "page": "screens",
+   "title": "31 · Room move, dark",
+   "expand": "fill"
+  },
+  "DlgModifyM.dc.html": {
+   "x": 0,
+   "y": 71028,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "31 · Modify, 390"
+  },
+  "DlgCancelM.dc.html": {
+   "x": 470,
+   "y": 71028,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "31 · Cancel, 390"
+  },
+  "DlgRoomMoveM.dc.html": {
+   "x": 940,
+   "y": 71028,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "31 · Room move, 390"
+  },
+  "DlgPostChargeM.dc.html": {
+   "x": 1410,
+   "y": 71028,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "31 · Post charge, 390"
+  },
+  "DlgPaymentM.dc.html": {
+   "x": 1880,
+   "y": 71028,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "31 · Take payment, 390"
+  },
+  "DlgRefundM.dc.html": {
+   "x": 2350,
+   "y": 71028,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "31 · Refund, 390"
+  },
+  "DlgTransferM.dc.html": {
+   "x": 2820,
+   "y": 71028,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "31 · Transfer, 390"
+  },
+  "GroupResMain.dc.html": {
+   "x": 0,
+   "y": 72448,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "32 · Group booking",
+   "expand": "fill"
+  },
+  "GroupRooming.dc.html": {
+   "x": 1520,
+   "y": 72448,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "32 · Paste a rooming list",
+   "expand": "fill"
+  },
+  "GroupResDark.dc.html": {
+   "x": 3040,
+   "y": 72448,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "32 · Dark",
+   "expand": "fill"
+  },
+  "GroupResM.dc.html": {
+   "x": 4560,
+   "y": 72448,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "32 · Group, 390"
+  },
+  "GroupLoading.dc.html": {
+   "x": 0,
+   "y": 74018,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "32 · Group · loading",
+   "expand": "fill"
+  },
+  "GroupEmpty.dc.html": {
+   "x": 1520,
+   "y": 74018,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "32 · Group · empty",
+   "expand": "fill"
+  },
+  "GroupError.dc.html": {
+   "x": 3040,
+   "y": 74018,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "32 · Group · error",
+   "expand": "fill"
+  },
+  "GroupOffline.dc.html": {
+   "x": 4560,
+   "y": 74018,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "32 · Group · offline",
+   "expand": "fill"
+  },
+  "GroupOfflineM.dc.html": {
+   "x": 6080,
+   "y": 74018,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "32 · Group · offline, 390 dark"
+  },
+  "RoomsManage.dc.html": {
+   "x": 0,
+   "y": 75588,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "33 · Rooms and room types",
+   "expand": "fill"
+  },
+  "RatePlanEdit.dc.html": {
+   "x": 1520,
+   "y": 75588,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "33 · Rate plan editor",
+   "expand": "fill"
+  },
+  "RatePlanDark.dc.html": {
+   "x": 3040,
+   "y": 75588,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "33 · Rate plan, dark",
+   "expand": "fill"
+  },
+  "RoomsManageM.dc.html": {
+   "x": 4560,
+   "y": 75588,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "33 · Rooms, 390"
+  },
+  "RatePlanM.dc.html": {
+   "x": 5030,
+   "y": 75588,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "33 · Rate plan, 390"
+  },
+  "RRLoading.dc.html": {
+   "x": 0,
+   "y": 77158,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "33 · Rooms and plans · loading",
+   "expand": "fill"
+  },
+  "RREmpty.dc.html": {
+   "x": 1520,
+   "y": 77158,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "33 · Rooms and plans · empty",
+   "expand": "fill"
+  },
+  "RRError.dc.html": {
+   "x": 3040,
+   "y": 77158,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "33 · Rooms and plans · error",
+   "expand": "fill"
+  },
+  "RROffline.dc.html": {
+   "x": 4560,
+   "y": 77158,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "33 · Rooms and plans · offline",
+   "expand": "fill"
+  },
+  "RROfflineM.dc.html": {
+   "x": 6080,
+   "y": 77158,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "33 · Rooms and plans · offline, 390 dark"
+  },
+  "CashOpen.dc.html": {
+   "x": 0,
+   "y": 78728,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "34 · Open cashier shift",
+   "expand": "fill"
+  },
+  "CashBlind.dc.html": {
+   "x": 1520,
+   "y": 78728,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "34 · Blind count at close (reuses 15)",
+   "expand": "fill"
+  },
+  "CashDeposits.dc.html": {
+   "x": 3040,
+   "y": 78728,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "34 · Deposits held",
+   "expand": "fill"
+  },
+  "CashMatching.dc.html": {
+   "x": 4560,
+   "y": 78728,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "34 · Payment matching",
+   "expand": "fill"
+  },
+  "CashMatchingDark.dc.html": {
+   "x": 6080,
+   "y": 78728,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "34 · Matching, dark",
+   "expand": "fill"
+  },
+  "CashLoading.dc.html": {
+   "x": 0,
+   "y": 80248,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "34 · Matching · loading",
+   "expand": "fill"
+  },
+  "CashEmpty.dc.html": {
+   "x": 1520,
+   "y": 80248,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "34 · Matching · empty",
+   "expand": "fill"
+  },
+  "CashError.dc.html": {
+   "x": 3040,
+   "y": 80248,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "34 · Matching · error",
+   "expand": "fill"
+  },
+  "CashOffline.dc.html": {
+   "x": 4560,
+   "y": 80248,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "34 · Matching · offline",
+   "expand": "fill"
+  },
+  "CashOfflineM.dc.html": {
+   "x": 6080,
+   "y": 80248,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "34 · Matching · offline, 390 dark"
+  },
+  "CashDepositsM.dc.html": {
+   "x": 6550,
+   "y": 80248,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "34 · Deposits, 390"
+  },
+  "CashOpenM.dc.html": {
+   "x": 7020,
+   "y": 80248,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "34 · Open shift, 390"
+  },
+  "RepFlash.dc.html": {
+   "x": 0,
+   "y": 81718,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "35 · Manager's flash",
+   "expand": "fill"
+  },
+  "RepRegister.dc.html": {
+   "x": 1520,
+   "y": 81718,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "35 · Guest register",
+   "expand": "fill"
+  },
+  "RepCatalogue.dc.html": {
+   "x": 3040,
+   "y": 81718,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "35 · All 14 reports",
+   "expand": "fill"
+  },
+  "RepFlashDark.dc.html": {
+   "x": 4560,
+   "y": 81718,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "35 · Flash, dark",
+   "expand": "fill"
+  },
+  "RepFlashM.dc.html": {
+   "x": 6080,
+   "y": 81718,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "35 · Flash, 390"
+  },
+  "RepRegisterM.dc.html": {
+   "x": 6550,
+   "y": 81718,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "35 · Register, 390"
+  },
+  "RepLoading.dc.html": {
+   "x": 0,
+   "y": 83138,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "35 · Reports · loading",
+   "expand": "fill"
+  },
+  "RepEmpty.dc.html": {
+   "x": 1520,
+   "y": 83138,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "35 · Reports · empty",
+   "expand": "fill"
+  },
+  "RepError.dc.html": {
+   "x": 3040,
+   "y": 83138,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "35 · Reports · error",
+   "expand": "fill"
+  },
+  "RepOffline.dc.html": {
+   "x": 4560,
+   "y": 83138,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "35 · Reports · offline",
+   "expand": "fill"
+  },
+  "RepOfflineM.dc.html": {
+   "x": 6080,
+   "y": 83138,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "35 · Reports · offline, 390 dark"
+  },
+  "SyncMain.dc.html": {
+   "x": 0,
+   "y": 84558,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "36 · Sync queue",
+   "expand": "fill"
+  },
+  "SyncDiscard.dc.html": {
+   "x": 1520,
+   "y": 84558,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "36 · Discard with a reason",
+   "expand": "fill"
+  },
+  "SyncDark.dc.html": {
+   "x": 3040,
+   "y": 84558,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "36 · Dark",
+   "expand": "fill"
+  },
+  "SyncM.dc.html": {
+   "x": 4560,
+   "y": 84558,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "36 · Sync queue, 390"
+  },
+  "SyncLoading.dc.html": {
+   "x": 0,
+   "y": 86078,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "36 · Sync · loading",
+   "expand": "fill"
+  },
+  "SyncEmpty.dc.html": {
+   "x": 1520,
+   "y": 86078,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "36 · Sync · empty",
+   "expand": "fill"
+  },
+  "SyncError.dc.html": {
+   "x": 3040,
+   "y": 86078,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "36 · Sync · error",
+   "expand": "fill"
+  },
+  "SyncOffline.dc.html": {
+   "x": 4560,
+   "y": 86078,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "36 · Sync · offline",
+   "expand": "fill"
+  },
+  "SyncOfflineM.dc.html": {
+   "x": 6080,
+   "y": 86078,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "36 · Sync · offline, 390 dark"
+  },
+  "SyncEmptyM.dc.html": {
+   "x": 6550,
+   "y": 86078,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "36 · All synced, 390"
+  },
+  "FrontDesk.dc.html": {
+   "x": 800,
+   "y": 5000,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "FrontDesk (source, tweaks)",
+   "expand": "fill"
+  },
+  "GroupRes.dc.html": {
+   "x": 2320,
+   "y": 5000,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "GroupRes (source, tweaks)",
+   "expand": "fill"
+  },
+  "RoomsRates.dc.html": {
+   "x": 3840,
+   "y": 5000,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "RoomsRates (source, tweaks)",
+   "expand": "fill"
+  },
+  "Cash.dc.html": {
+   "x": 5360,
+   "y": 5000,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "Cash (source, tweaks)",
+   "expand": "fill"
+  },
+  "Reports.dc.html": {
+   "x": 800,
+   "y": 6700,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "Reports (source, tweaks)",
+   "expand": "fill"
+  },
+  "SyncQueue.dc.html": {
+   "x": 2320,
+   "y": 6700,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "SyncQueue (source, tweaks)",
+   "expand": "fill"
+  },
+  "RequestsMain.dc.html": {
+   "x": 0,
+   "y": 87598,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "37 · Requests queue",
+   "expand": "fill"
+  },
+  "RequestsDark.dc.html": {
+   "x": 1520,
+   "y": 87598,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "37 · Dark",
+   "expand": "fill"
+  },
+  "RequestsM.dc.html": {
+   "x": 3040,
+   "y": 87598,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "37 · Requests, 390"
+  },
+  "ReqLoading.dc.html": {
+   "x": 0,
+   "y": 89168,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "37 · Requests · loading",
+   "expand": "fill"
+  },
+  "ReqEmpty.dc.html": {
+   "x": 1520,
+   "y": 89168,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "37 · Requests · empty",
+   "expand": "fill"
+  },
+  "ReqError.dc.html": {
+   "x": 3040,
+   "y": 89168,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "37 · Requests · error",
+   "expand": "fill"
+  },
+  "ReqOffline.dc.html": {
+   "x": 4560,
+   "y": 89168,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "37 · Requests · offline",
+   "expand": "fill"
+  },
+  "ReqOfflineM.dc.html": {
+   "x": 6080,
+   "y": 89168,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "37 · Requests · offline, 390 dark"
+  },
+  "MenuItems.dc.html": {
+   "x": 0,
+   "y": 90738,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "38 · Menu items and modifiers",
+   "expand": "fill"
+  },
+  "MenuOutlets.dc.html": {
+   "x": 1520,
+   "y": 90738,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "38 · Outlets, table map, printers",
+   "expand": "fill"
+  },
+  "MenuItemsDark.dc.html": {
+   "x": 3040,
+   "y": 90738,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "38 · Dark",
+   "expand": "fill"
+  },
+  "MenuItemsM.dc.html": {
+   "x": 4560,
+   "y": 90738,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "38 · Menu, 390"
+  },
+  "MenuLoading.dc.html": {
+   "x": 0,
+   "y": 92308,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "38 · Menu · loading",
+   "expand": "fill"
+  },
+  "MenuEmpty.dc.html": {
+   "x": 1520,
+   "y": 92308,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "38 · Menu · empty",
+   "expand": "fill"
+  },
+  "MenuError.dc.html": {
+   "x": 3040,
+   "y": 92308,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "38 · Menu · error",
+   "expand": "fill"
+  },
+  "MenuOffline.dc.html": {
+   "x": 4560,
+   "y": 92308,
+   "w": 1440,
+   "h": 1150,
+   "page": "screens",
+   "title": "38 · Menu · offline",
+   "expand": "fill"
+  },
+  "MenuOfflineM.dc.html": {
+   "x": 6080,
+   "y": 92308,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "38 · Menu · offline, 390 dark"
+  },
+  "RCCheck.dc.html": {
+   "x": 0,
+   "y": 93878,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "39 · Room check"
+  },
+  "RCAlert.dc.html": {
+   "x": 470,
+   "y": 93878,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "39 · Skipper found"
+  },
+  "RCLost.dc.html": {
+   "x": 940,
+   "y": 93878,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "39 · Lost and found"
+  },
+  "RCLaundry.dc.html": {
+   "x": 1410,
+   "y": 93878,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "39 · Laundry"
+  },
+  "RCCheckDark.dc.html": {
+   "x": 1880,
+   "y": 93878,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "39 · Room check, dark"
+  },
+  "RCOffline.dc.html": {
+   "x": 2350,
+   "y": 93878,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "39 · Offline"
+  },
+  "RCLoading.dc.html": {
+   "x": 2820,
+   "y": 93878,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "39 · Loading"
+  },
+  "RCEmpty.dc.html": {
+   "x": 3290,
+   "y": 93878,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "39 · No check assigned"
+  },
+  "RCError.dc.html": {
+   "x": 3760,
+   "y": 93878,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "39 · Error"
+  },
+  "HKOfficeMain.dc.html": {
+   "x": 0,
+   "y": 95298,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "39 · Lost and found and linen",
+   "expand": "fill"
+  },
+  "HKOfficeDark.dc.html": {
+   "x": 1520,
+   "y": 95298,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "39 · Dark",
+   "expand": "fill"
+  },
+  "HKOfficeEmpty.dc.html": {
+   "x": 3040,
+   "y": 95298,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "39 · Empty",
+   "expand": "fill"
+  },
+  "HKOfficeOffline.dc.html": {
+   "x": 4560,
+   "y": 95298,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "39 · Offline",
+   "expand": "fill"
+  },
+  "OverbookMain.dc.html": {
+   "x": 0,
+   "y": 96668,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "40 · Overbooked, with options",
+   "expand": "fill"
+  },
+  "OverbookDark.dc.html": {
+   "x": 1520,
+   "y": 96668,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "40 · Dark",
+   "expand": "fill"
+  },
+  "OverbookM.dc.html": {
+   "x": 3040,
+   "y": 96668,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "40 · Overbooking, 390"
+  },
+  "OverbookLoading.dc.html": {
+   "x": 0,
+   "y": 98138,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "40 · Overbooking · loading",
+   "expand": "fill"
+  },
+  "OverbookEmpty.dc.html": {
+   "x": 1520,
+   "y": 98138,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "40 · Overbooking · empty",
+   "expand": "fill"
+  },
+  "OverbookError.dc.html": {
+   "x": 3040,
+   "y": 98138,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "40 · Overbooking · error",
+   "expand": "fill"
+  },
+  "OverbookOffline.dc.html": {
+   "x": 4560,
+   "y": 98138,
+   "w": 1440,
+   "h": 1050,
+   "page": "screens",
+   "title": "40 · Overbooking · offline",
+   "expand": "fill"
+  },
+  "OverbookOfflineM.dc.html": {
+   "x": 6080,
+   "y": 98138,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "40 · Overbooking · offline, 390 dark"
+  },
+  "MergeList.dc.html": {
+   "x": 0,
+   "y": 99608,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "41 · Suggested duplicates",
+   "expand": "fill"
+  },
+  "MergeCompare.dc.html": {
+   "x": 1520,
+   "y": 99608,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "41 · Compare and merge",
+   "expand": "fill"
+  },
+  "MergeCompareDark.dc.html": {
+   "x": 3040,
+   "y": 99608,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "41 · Dark",
+   "expand": "fill"
+  },
+  "MergeCompareM.dc.html": {
+   "x": 4560,
+   "y": 99608,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "41 · Merge, 390"
+  },
+  "MergeLoading.dc.html": {
+   "x": 0,
+   "y": 101028,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "41 · Merge · loading",
+   "expand": "fill"
+  },
+  "MergeEmpty.dc.html": {
+   "x": 1520,
+   "y": 101028,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "41 · Merge · empty",
+   "expand": "fill"
+  },
+  "MergeError.dc.html": {
+   "x": 3040,
+   "y": 101028,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "41 · Merge · error",
+   "expand": "fill"
+  },
+  "MergeOffline.dc.html": {
+   "x": 4560,
+   "y": 101028,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "41 · Merge · offline",
+   "expand": "fill"
+  },
+  "LicMain.dc.html": {
+   "x": 0,
+   "y": 102448,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "42 · Licences",
+   "expand": "fill"
+  },
+  "LicDark.dc.html": {
+   "x": 1520,
+   "y": 102448,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "42 · Dark",
+   "expand": "fill"
+  },
+  "LicM.dc.html": {
+   "x": 3040,
+   "y": 102448,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "42 · Licences, 390"
+  },
+  "LicLoading.dc.html": {
+   "x": 0,
+   "y": 103968,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "42 · Licences · loading",
+   "expand": "fill"
+  },
+  "LicEmpty.dc.html": {
+   "x": 1520,
+   "y": 103968,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "42 · Licences · empty",
+   "expand": "fill"
+  },
+  "LicError.dc.html": {
+   "x": 3040,
+   "y": 103968,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "42 · Licences · error",
+   "expand": "fill"
+  },
+  "LicOffline.dc.html": {
+   "x": 4560,
+   "y": 103968,
+   "w": 1440,
+   "h": 1100,
+   "page": "screens",
+   "title": "42 · Licences · offline",
+   "expand": "fill"
+  },
+  "LicOfflineM.dc.html": {
+   "x": 6080,
+   "y": 103968,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "42 · Licences · offline, 390 dark"
+  },
+  "MsgTemplates.dc.html": {
+   "x": 0,
+   "y": 105488,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "43 · Templates with merge fields",
+   "expand": "fill"
+  },
+  "MsgLog.dc.html": {
+   "x": 1520,
+   "y": 105488,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "43 · Message log",
+   "expand": "fill"
+  },
+  "MsgTemplatesDark.dc.html": {
+   "x": 3040,
+   "y": 105488,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "43 · Dark",
+   "expand": "fill"
+  },
+  "MsgLogM.dc.html": {
+   "x": 4560,
+   "y": 105488,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "43 · Log, 390"
+  },
+  "MsgLoading.dc.html": {
+   "x": 0,
+   "y": 106908,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "43 · Messages · loading",
+   "expand": "fill"
+  },
+  "MsgEmpty.dc.html": {
+   "x": 1520,
+   "y": 106908,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "43 · Messages · empty",
+   "expand": "fill"
+  },
+  "MsgError.dc.html": {
+   "x": 3040,
+   "y": 106908,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "43 · Messages · error",
+   "expand": "fill"
+  },
+  "MsgOffline.dc.html": {
+   "x": 4560,
+   "y": 106908,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "43 · Messages · offline",
+   "expand": "fill"
+  },
+  "BOHReceive.dc.html": {
+   "x": 0,
+   "y": 108328,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "44 · Receive at the gate"
+  },
+  "BOHClock.dc.html": {
+   "x": 470,
+   "y": 108328,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "44 · Clock in with PIN"
+  },
+  "BOHReceiveDark.dc.html": {
+   "x": 940,
+   "y": 108328,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "44 · Receive, dark"
+  },
+  "BOHClockOffline.dc.html": {
+   "x": 1410,
+   "y": 108328,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "44 · Clock in offline"
+  },
+  "BOHEmpty.dc.html": {
+   "x": 1880,
+   "y": 108328,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "44 · No deliveries"
+  },
+  "BOHError.dc.html": {
+   "x": 2350,
+   "y": 108328,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "44 · Error"
+  },
+  "BOHLoading.dc.html": {
+   "x": 2820,
+   "y": 108328,
+   "w": 390,
+   "h": 1000,
+   "page": "screens",
+   "title": "44 · Loading"
+  },
+  "AttendanceMain.dc.html": {
+   "x": 0,
+   "y": 109748,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "44 · Attendance from clock-ins",
+   "expand": "fill"
+  },
+  "AttendanceDark.dc.html": {
+   "x": 1520,
+   "y": 109748,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "44 · Dark",
+   "expand": "fill"
+  },
+  "AttendanceM.dc.html": {
+   "x": 3040,
+   "y": 109748,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "44 · Attendance, 390"
+  },
+  "AttendanceEmpty.dc.html": {
+   "x": 3510,
+   "y": 109748,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "44 · Empty",
+   "expand": "fill"
+  },
+  "AttendanceOffline.dc.html": {
+   "x": 5030,
+   "y": 109748,
+   "w": 1440,
+   "h": 950,
+   "page": "screens",
+   "title": "44 · Offline",
+   "expand": "fill"
+  },
+  "ARMain.dc.html": {
+   "x": 0,
+   "y": 111118,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "45 · Invoices and credit notes",
+   "expand": "fill"
+  },
+  "APMain.dc.html": {
+   "x": 1520,
+   "y": 111118,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "45 · Bills, expenses, payment run",
+   "expand": "fill"
+  },
+  "BudgetMain.dc.html": {
+   "x": 3040,
+   "y": 111118,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "45 · Budgets by month",
+   "expand": "fill"
+  },
+  "APDark.dc.html": {
+   "x": 4560,
+   "y": 111118,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "45 · Dark",
+   "expand": "fill"
+  },
+  "ARM.dc.html": {
+   "x": 6080,
+   "y": 111118,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "45 · Receivables, 390"
+  },
+  "ARAPLoading.dc.html": {
+   "x": 0,
+   "y": 112538,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "45 · Finance · loading",
+   "expand": "fill"
+  },
+  "ARAPEmpty.dc.html": {
+   "x": 1520,
+   "y": 112538,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "45 · Finance · empty",
+   "expand": "fill"
+  },
+  "ARAPError.dc.html": {
+   "x": 3040,
+   "y": 112538,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "45 · Finance · error",
+   "expand": "fill"
+  },
+  "ARAPOffline.dc.html": {
+   "x": 4560,
+   "y": 112538,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "45 · Finance · offline",
+   "expand": "fill"
+  },
+  "AccountPlan.dc.html": {
+   "x": 0,
+   "y": 113958,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "46 · Subscription",
+   "expand": "fill"
+  },
+  "AccountSupport.dc.html": {
+   "x": 1520,
+   "y": 113958,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "46 · Support access",
+   "expand": "fill"
+  },
+  "AccountSupportDark.dc.html": {
+   "x": 3040,
+   "y": 113958,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "46 · Dark",
+   "expand": "fill"
+  },
+  "AccountSupportM.dc.html": {
+   "x": 4560,
+   "y": 113958,
+   "w": 390,
+   "h": 844,
+   "page": "screens",
+   "title": "46 · Support access, 390"
+  },
+  "AcctLoading.dc.html": {
+   "x": 0,
+   "y": 115378,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "46 · Account · loading",
+   "expand": "fill"
+  },
+  "AcctEmpty.dc.html": {
+   "x": 1520,
+   "y": 115378,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "46 · Account · empty",
+   "expand": "fill"
+  },
+  "AcctError.dc.html": {
+   "x": 3040,
+   "y": 115378,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "46 · Account · error",
+   "expand": "fill"
+  },
+  "AcctOffline.dc.html": {
+   "x": 4560,
+   "y": 115378,
+   "w": 1440,
+   "h": 1000,
+   "page": "screens",
+   "title": "46 · Account · offline",
+   "expand": "fill"
+  },
+  "Requests.dc.html": {
+   "x": 800,
+   "y": 8500,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "Requests (source, tweaks)",
+   "expand": "fill"
+  },
+  "MenuSetup.dc.html": {
+   "x": 2320,
+   "y": 8500,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "MenuSetup (source, tweaks)",
+   "expand": "fill"
+  },
+  "RoomChecksPhone.dc.html": {
+   "x": 3840,
+   "y": 8500,
+   "w": 390,
+   "h": 1000,
+   "page": "comp",
+   "title": "RoomChecksPhone (source, tweaks)"
+  },
+  "HKOffice.dc.html": {
+   "x": 5360,
+   "y": 8500,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "HKOffice (source, tweaks)",
+   "expand": "fill"
+  },
+  "Overbooking.dc.html": {
+   "x": 800,
+   "y": 10200,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "Overbooking (source, tweaks)",
+   "expand": "fill"
+  },
+  "MergeGuests.dc.html": {
+   "x": 2320,
+   "y": 10200,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "MergeGuests (source, tweaks)",
+   "expand": "fill"
+  },
+  "Licences.dc.html": {
+   "x": 3840,
+   "y": 10200,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "Licences (source, tweaks)",
+   "expand": "fill"
+  },
+  "Messages.dc.html": {
+   "x": 5360,
+   "y": 10200,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "Messages (source, tweaks)",
+   "expand": "fill"
+  },
+  "BOHPhone.dc.html": {
+   "x": 800,
+   "y": 11900,
+   "w": 390,
+   "h": 1000,
+   "page": "comp",
+   "title": "BOHPhone (source, tweaks)"
+  },
+  "Attendance.dc.html": {
+   "x": 2320,
+   "y": 11900,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "Attendance (source, tweaks)",
+   "expand": "fill"
+  },
+  "ARAP.dc.html": {
+   "x": 3840,
+   "y": 11900,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "ARAP (source, tweaks)",
+   "expand": "fill"
+  },
+  "Account.dc.html": {
+   "x": 5360,
+   "y": 11900,
+   "w": 1440,
+   "h": 1150,
+   "page": "comp",
+   "title": "Account (source, tweaks)",
+   "expand": "fill"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "DSComponents.dc.html",
+  "DSHospitality.dc.html",
+  "ExecHome.dc.html",
+  "GMHome.dc.html",
+  "TapeChart.dc.html",
+  "NewReservation.dc.html",
+  "ReservationDetail.dc.html",
+  "CheckIn.dc.html",
+  "WalkIn.dc.html",
+  "Folio.dc.html",
+  "ExecHomeDark.dc.html",
+  "TapeChartDark.dc.html",
+  "FolioDark.dc.html",
+  "ExecHomeMobile.dc.html",
+  "GMHomeMobile.dc.html",
+  "ReservationMobile.dc.html",
+  "FolioMobile.dc.html",
+  "OwnerReport.dc.html",
+  "Leakage.dc.html",
+  "LeakageDark.dc.html",
+  "LeakageMobile.dc.html",
+  "RegCard.dc.html",
+  "Invoice.dc.html",
+  "Statement.dc.html",
+  "Receipt.dc.html",
+  "KitchenTicket.dc.html",
+  "Sidebar.dc.html",
+  "Topbar.dc.html",
+  "BottomNav.dc.html",
+  "BookingDesktop.dc.html",
+  "BookingRooms.dc.html",
+  "BookingCheckout.dc.html",
+  "BookingDone.dc.html",
+  "POSTables.dc.html",
+  "POSOrder.dc.html",
+  "POSPay.dc.html",
+  "KDS.dc.html",
+  "HKBoard.dc.html",
+  "HKAttendant.dc.html",
+  "HKRoom.dc.html",
+  "HKInspect.dc.html",
+  "MaintBoard.dc.html",
+  "MaintPower.dc.html",
+  "GuestHome.dc.html",
+  "GuestPrecheck.dc.html",
+  "GuestRequests.dc.html",
+  "GuestFood.dc.html",
+  "GuestFolio.dc.html",
+  "GuestReview.dc.html",
+  "LockPOS.dc.html",
+  "ApprovalPOS.dc.html",
+  "LockHK.dc.html",
+  "Devices.dc.html",
+  "RatesGrid.dc.html",
+  "Channels.dc.html",
+  "GuestProfile.dc.html",
+  "Corporate.dc.html",
+  "GroupBlock.dc.html",
+  "Events.dc.html",
+  "Stores.dc.html",
+  "Receiving.dc.html",
+  "StockCount.dc.html",
+  "Recipe.dc.html",
+  "NightAudit.dc.html",
+  "ShiftClose.dc.html",
+  "CityLedger.dc.html",
+  "Journals.dc.html",
+  "Reconciliation.dc.html",
+  "TaxSummary.dc.html",
+  "Employees.dc.html",
+  "Roster.dc.html",
+  "PayrollRun.dc.html",
+  "Payslip.dc.html",
+  "OnbOrg.dc.html",
+  "OnbRooms.dc.html",
+  "OnbRate.dc.html",
+  "OnbHome.dc.html",
+  "ImportPick.dc.html",
+  "ImportValidate.dc.html",
+  "ImportDone.dc.html",
+  "Board1.dc.html",
+  "Board2.dc.html",
+  "Board3.dc.html",
+  "Board4.dc.html",
+  "Board5.dc.html",
+  "TopbarBefore.dc.html",
+  "TopbarAfter.dc.html",
+  "ExecHomeBefore.dc.html",
+  "ExecHomeAfter.dc.html",
+  "GMHomeBefore.dc.html",
+  "GMHomeAfter.dc.html",
+  "ReservationDetailBefore.dc.html",
+  "ReservationDetailAfter.dc.html",
+  "FolioBefore.dc.html",
+  "FolioAfter.dc.html",
+  "FolioAuditAfter.dc.html",
+  "POSOrderBefore.dc.html",
+  "POSOrderAfter.dc.html",
+  "POSTablesBefore.dc.html",
+  "POSTablesAfter.dc.html",
+  "HKBoardBefore.dc.html",
+  "HKBoardAfter.dc.html",
+  "HKAttendantBefore.dc.html",
+  "HKAttendantAfter.dc.html",
+  "HKRoomCheck.dc.html",
+  "ShiftCloseBefore.dc.html",
+  "ShiftCloseAfter.dc.html",
+  "ShiftCloseSubmitted.dc.html",
+  "NightAuditBefore.dc.html",
+  "NightAuditAfter.dc.html",
+  "CorporateBefore.dc.html",
+  "CorporateAfter.dc.html",
+  "CityLedgerBefore.dc.html",
+  "CityLedgerAfter.dc.html",
+  "ChannelsBefore.dc.html",
+  "ChannelsAfter.dc.html",
+  "ReceivingBefore.dc.html",
+  "ReceivingAfter.dc.html",
+  "DSHospitalityBefore.dc.html",
+  "DSHospitalityAfter.dc.html",
+  "DSGovernance.dc.html",
+  "OwnerEmail.dc.html",
+  "OwnerEmailMobile.dc.html",
+  "LeakageResolve.dc.html",
+  "LeakageResolveDark.dc.html",
+  "LeakageResolveMobile.dc.html",
+  "LeakageLoading.dc.html",
+  "LeakageEmpty.dc.html",
+  "LeakageError.dc.html",
+  "LeakageOffline.dc.html",
+  "LeakageLoadingMobile.dc.html",
+  "LeakageEmptyMobile.dc.html",
+  "LeakageErrorMobile.dc.html",
+  "LeakageOfflineMobile.dc.html",
+  "LeakageOfflineDark.dc.html",
+  "LockPOSIdle.dc.html",
+  "POSSwitch.dc.html",
+  "DeviceRegisterTablet.dc.html",
+  "LockPOSDark.dc.html",
+  "ApprovalPOSDark.dc.html",
+  "ApprovalPhone.dc.html",
+  "HKSwitch.dc.html",
+  "LockHKDark.dc.html",
+  "DevicesMobile.dc.html",
+  "DevicesLoading.dc.html",
+  "DevicesEmpty.dc.html",
+  "DevicesError.dc.html",
+  "DevicesOffline.dc.html",
+  "DevicesLoadingMobile.dc.html",
+  "DevicesEmptyMobile.dc.html",
+  "DevicesErrorMobile.dc.html",
+  "DevicesOfflineMobile.dc.html",
+  "DevicesOfflineDark.dc.html",
+  "ImportUndo.dc.html",
+  "ImportValidateDark.dc.html",
+  "ImportValidateMobile.dc.html",
+  "ImportDoneMobile.dc.html",
+  "ImportLoading.dc.html",
+  "ImportEmpty.dc.html",
+  "ImportError.dc.html",
+  "ImportOffline.dc.html",
+  "ImportLoadingMobile.dc.html",
+  "ImportEmptyMobile.dc.html",
+  "ImportErrorMobile.dc.html",
+  "ImportOfflineMobile.dc.html",
+  "ImportOfflineDark.dc.html",
+  "LeakageStates.dc.html",
+  "ImportStates.dc.html",
+  "DevicesStates.dc.html",
+  "AuthSignIn.dc.html",
+  "Auth2FA.dc.html",
+  "AuthForgot.dc.html",
+  "AuthForgotSent.dc.html",
+  "AuthInvite.dc.html",
+  "AuthLoading.dc.html",
+  "AuthError.dc.html",
+  "AuthNoProperty.dc.html",
+  "AuthDevice.dc.html",
+  "AuthExpired.dc.html",
+  "AuthOffline.dc.html",
+  "AccessNoAccess.dc.html",
+  "AccessNotFound.dc.html",
+  "AuthSignInDark.dc.html",
+  "AccessNoAccessDark.dc.html",
+  "AuthSignInM.dc.html",
+  "Auth2FAM.dc.html",
+  "AuthInviteM.dc.html",
+  "AuthErrorM.dc.html",
+  "AuthOfflineM.dc.html",
+  "AuthExpiredM.dc.html",
+  "AccessNoAccessM.dc.html",
+  "AccessNotFoundM.dc.html",
+  "SetProperty.dc.html",
+  "SetEntities.dc.html",
+  "SetMembers.dc.html",
+  "SetInvite.dc.html",
+  "SetDevices.dc.html",
+  "SetRevoke.dc.html",
+  "SetLoading.dc.html",
+  "SetEmpty.dc.html",
+  "SetError.dc.html",
+  "SetOffline.dc.html",
+  "SetMembersDark.dc.html",
+  "SetPropertyM.dc.html",
+  "SetMembersM.dc.html",
+  "SetLoadingM.dc.html",
+  "SetEmptyM.dc.html",
+  "SetErrorM.dc.html",
+  "SetOfflineM.dc.html",
+  "PermGrid.dc.html",
+  "PermGridDark.dc.html",
+  "PermRoleM.dc.html",
+  "PermOfflineM.dc.html",
+  "PermLoading.dc.html",
+  "PermEmpty.dc.html",
+  "PermError.dc.html",
+  "PermOffline.dc.html",
+  "TaxRules.dc.html",
+  "TaxSchedule.dc.html",
+  "PayMethods.dc.html",
+  "PayMethodsDark.dc.html",
+  "TaxLoading.dc.html",
+  "TaxEmpty.dc.html",
+  "TaxError.dc.html",
+  "TaxOffline.dc.html",
+  "TaxRulesM.dc.html",
+  "PayMethodsM.dc.html",
+  "AuditLogMain.dc.html",
+  "AuditOnReservation.dc.html",
+  "AuditOnPOS.dc.html",
+  "AuditOnRoom.dc.html",
+  "AuditLoading.dc.html",
+  "AuditEmpty.dc.html",
+  "AuditError.dc.html",
+  "AuditOffline.dc.html",
+  "AuditLogDark.dc.html",
+  "AuditLogM.dc.html",
+  "InboxApprovals.dc.html",
+  "InboxBell.dc.html",
+  "InboxNotifications.dc.html",
+  "InboxApprovalsDark.dc.html",
+  "InboxLoading.dc.html",
+  "InboxEmpty.dc.html",
+  "InboxError.dc.html",
+  "InboxOffline.dc.html",
+  "InboxApprovalsM.dc.html",
+  "InboxNotificationsM.dc.html",
+  "InboxOfflineM.dc.html",
+  "Auth.dc.html",
+  "AccessShell.dc.html",
+  "Settings.dc.html",
+  "Permissions.dc.html",
+  "TaxSetup.dc.html",
+  "AuditLog.dc.html",
+  "Inbox.dc.html",
+  "FDArrivals.dc.html",
+  "FDDepartures.dc.html",
+  "FDInHouse.dc.html",
+  "FDGroupCheckIn.dc.html",
+  "FDShortcuts.dc.html",
+  "FDArrivalsDark.dc.html",
+  "FDArrivalsM.dc.html",
+  "FDDeparturesM.dc.html",
+  "FDInHouseM.dc.html",
+  "FDLoading.dc.html",
+  "FDEmpty.dc.html",
+  "FDError.dc.html",
+  "FDOffline.dc.html",
+  "FDOfflineM.dc.html",
+  "FDEmptyM.dc.html",
+  "DlgModify.dc.html",
+  "DlgCancel.dc.html",
+  "DlgRoomMove.dc.html",
+  "DlgPostCharge.dc.html",
+  "DlgPayment.dc.html",
+  "DlgRefund.dc.html",
+  "DlgTransfer.dc.html",
+  "DlgPaymentDark.dc.html",
+  "DlgRoomMoveDark.dc.html",
+  "DlgModifyM.dc.html",
+  "DlgCancelM.dc.html",
+  "DlgRoomMoveM.dc.html",
+  "DlgPostChargeM.dc.html",
+  "DlgPaymentM.dc.html",
+  "DlgRefundM.dc.html",
+  "DlgTransferM.dc.html",
+  "GroupResMain.dc.html",
+  "GroupRooming.dc.html",
+  "GroupResDark.dc.html",
+  "GroupResM.dc.html",
+  "GroupLoading.dc.html",
+  "GroupEmpty.dc.html",
+  "GroupError.dc.html",
+  "GroupOffline.dc.html",
+  "GroupOfflineM.dc.html",
+  "RoomsManage.dc.html",
+  "RatePlanEdit.dc.html",
+  "RatePlanDark.dc.html",
+  "RoomsManageM.dc.html",
+  "RatePlanM.dc.html",
+  "RRLoading.dc.html",
+  "RREmpty.dc.html",
+  "RRError.dc.html",
+  "RROffline.dc.html",
+  "RROfflineM.dc.html",
+  "CashOpen.dc.html",
+  "CashBlind.dc.html",
+  "CashDeposits.dc.html",
+  "CashMatching.dc.html",
+  "CashMatchingDark.dc.html",
+  "CashLoading.dc.html",
+  "CashEmpty.dc.html",
+  "CashError.dc.html",
+  "CashOffline.dc.html",
+  "CashOfflineM.dc.html",
+  "CashDepositsM.dc.html",
+  "CashOpenM.dc.html",
+  "RepFlash.dc.html",
+  "RepRegister.dc.html",
+  "RepCatalogue.dc.html",
+  "RepFlashDark.dc.html",
+  "RepFlashM.dc.html",
+  "RepRegisterM.dc.html",
+  "RepLoading.dc.html",
+  "RepEmpty.dc.html",
+  "RepError.dc.html",
+  "RepOffline.dc.html",
+  "RepOfflineM.dc.html",
+  "SyncMain.dc.html",
+  "SyncDiscard.dc.html",
+  "SyncDark.dc.html",
+  "SyncM.dc.html",
+  "SyncLoading.dc.html",
+  "SyncEmpty.dc.html",
+  "SyncError.dc.html",
+  "SyncOffline.dc.html",
+  "SyncOfflineM.dc.html",
+  "SyncEmptyM.dc.html",
+  "FrontDesk.dc.html",
+  "GroupRes.dc.html",
+  "RoomsRates.dc.html",
+  "Cash.dc.html",
+  "Reports.dc.html",
+  "SyncQueue.dc.html",
+  "RequestsMain.dc.html",
+  "RequestsDark.dc.html",
+  "RequestsM.dc.html",
+  "ReqLoading.dc.html",
+  "ReqEmpty.dc.html",
+  "ReqError.dc.html",
+  "ReqOffline.dc.html",
+  "ReqOfflineM.dc.html",
+  "MenuItems.dc.html",
+  "MenuOutlets.dc.html",
+  "MenuItemsDark.dc.html",
+  "MenuItemsM.dc.html",
+  "MenuLoading.dc.html",
+  "MenuEmpty.dc.html",
+  "MenuError.dc.html",
+  "MenuOffline.dc.html",
+  "MenuOfflineM.dc.html",
+  "RCCheck.dc.html",
+  "RCAlert.dc.html",
+  "RCLost.dc.html",
+  "RCLaundry.dc.html",
+  "RCCheckDark.dc.html",
+  "RCOffline.dc.html",
+  "RCLoading.dc.html",
+  "RCEmpty.dc.html",
+  "RCError.dc.html",
+  "HKOfficeMain.dc.html",
+  "HKOfficeDark.dc.html",
+  "HKOfficeEmpty.dc.html",
+  "HKOfficeOffline.dc.html",
+  "OverbookMain.dc.html",
+  "OverbookDark.dc.html",
+  "OverbookM.dc.html",
+  "OverbookLoading.dc.html",
+  "OverbookEmpty.dc.html",
+  "OverbookError.dc.html",
+  "OverbookOffline.dc.html",
+  "OverbookOfflineM.dc.html",
+  "MergeList.dc.html",
+  "MergeCompare.dc.html",
+  "MergeCompareDark.dc.html",
+  "MergeCompareM.dc.html",
+  "MergeLoading.dc.html",
+  "MergeEmpty.dc.html",
+  "MergeError.dc.html",
+  "MergeOffline.dc.html",
+  "LicMain.dc.html",
+  "LicDark.dc.html",
+  "LicM.dc.html",
+  "LicLoading.dc.html",
+  "LicEmpty.dc.html",
+  "LicError.dc.html",
+  "LicOffline.dc.html",
+  "LicOfflineM.dc.html",
+  "MsgTemplates.dc.html",
+  "MsgLog.dc.html",
+  "MsgTemplatesDark.dc.html",
+  "MsgLogM.dc.html",
+  "MsgLoading.dc.html",
+  "MsgEmpty.dc.html",
+  "MsgError.dc.html",
+  "MsgOffline.dc.html",
+  "BOHReceive.dc.html",
+  "BOHClock.dc.html",
+  "BOHReceiveDark.dc.html",
+  "BOHClockOffline.dc.html",
+  "BOHEmpty.dc.html",
+  "BOHError.dc.html",
+  "BOHLoading.dc.html",
+  "AttendanceMain.dc.html",
+  "AttendanceDark.dc.html",
+  "AttendanceM.dc.html",
+  "AttendanceEmpty.dc.html",
+  "AttendanceOffline.dc.html",
+  "ARMain.dc.html",
+  "APMain.dc.html",
+  "BudgetMain.dc.html",
+  "APDark.dc.html",
+  "ARM.dc.html",
+  "ARAPLoading.dc.html",
+  "ARAPEmpty.dc.html",
+  "ARAPError.dc.html",
+  "ARAPOffline.dc.html",
+  "AccountPlan.dc.html",
+  "AccountSupport.dc.html",
+  "AccountSupportDark.dc.html",
+  "AccountSupportM.dc.html",
+  "AcctLoading.dc.html",
+  "AcctEmpty.dc.html",
+  "AcctError.dc.html",
+  "AcctOffline.dc.html",
+  "Requests.dc.html",
+  "MenuSetup.dc.html",
+  "RoomChecksPhone.dc.html",
+  "HKOffice.dc.html",
+  "Overbooking.dc.html",
+  "MergeGuests.dc.html",
+  "Licences.dc.html",
+  "Messages.dc.html",
+  "BOHPhone.dc.html",
+  "Attendance.dc.html",
+  "ARAP.dc.html",
+  "Account.dc.html"
+ ],
+ "notes": {
+  "t1": {
+   "x": 0,
+   "y": -320,
+   "text": "Desktop · light",
+   "kind": "title1",
+   "maxW": 5980,
+   "page": "screens"
+  },
+  "t2": {
+   "x": 0,
+   "y": 1580,
+   "text": "Desktop · light (continued)",
+   "kind": "title1",
+   "maxW": 5980,
+   "page": "screens"
+  },
+  "t3": {
+   "x": 0,
+   "y": 3240,
+   "text": "Dark mode (every screen has a Dark tweak)",
+   "kind": "title1",
+   "maxW": 4460,
+   "page": "screens"
+  },
+  "t4": {
+   "x": 0,
+   "y": 5180,
+   "text": "Phone · 390",
+   "kind": "title1",
+   "maxW": 1800,
+   "page": "screens"
+  },
+  "t5": {
+   "x": 0,
+   "y": -320,
+   "text": "Owner's report and leakage",
+   "kind": "title1",
+   "maxW": 4230,
+   "page": "owner"
+  },
+  "t6": {
+   "x": 0,
+   "y": -320,
+   "text": "Printed documents · black-and-white",
+   "kind": "title1",
+   "maxW": 3306,
+   "page": "print"
+  },
+  "t7": {
+   "x": 0,
+   "y": -320,
+   "text": "Vento design system",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "ds"
+  },
+  "t8": {
+   "x": 0,
+   "y": 6580,
+   "text": "9 · Booking engine · hotel brand",
+   "kind": "title1",
+   "maxW": 2850,
+   "page": "screens"
+  },
+  "t9": {
+   "x": 0,
+   "y": 8580,
+   "text": "11 · POS on tablet and kitchen display",
+   "kind": "title1",
+   "maxW": 5262,
+   "page": "screens"
+  },
+  "t10": {
+   "x": 0,
+   "y": 9880,
+   "text": "12 · Housekeeping",
+   "kind": "title1",
+   "maxW": 2850,
+   "page": "screens"
+  },
+  "t11": {
+   "x": 0,
+   "y": 11580,
+   "text": "13 · Maintenance",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "screens"
+  },
+  "t12": {
+   "x": 0,
+   "y": 13280,
+   "text": "17 · Guest app · hotel brand",
+   "kind": "title1",
+   "maxW": 2740,
+   "page": "screens"
+  },
+  "t13": {
+   "x": 0,
+   "y": 14980,
+   "text": "22 · Shared device sign-in",
+   "kind": "title1",
+   "maxW": 4458,
+   "page": "screens"
+  },
+  "t14": {
+   "x": 0,
+   "y": 16580,
+   "text": "8 · Rates and channels",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "screens"
+  },
+  "t15": {
+   "x": 0,
+   "y": 18180,
+   "text": "10 · Guests and sales",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "t16": {
+   "x": 0,
+   "y": 19780,
+   "text": "14 · Inventory",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "t17": {
+   "x": 0,
+   "y": 21580,
+   "text": "15 · Finance",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "screens"
+  },
+  "t18": {
+   "x": 0,
+   "y": 23180,
+   "text": "15 · Finance (continued)",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "screens"
+  },
+  "t19": {
+   "x": 0,
+   "y": 24780,
+   "text": "16 · HR and payroll",
+   "kind": "title1",
+   "maxW": 5354,
+   "page": "screens"
+  },
+  "t20": {
+   "x": 0,
+   "y": 26480,
+   "text": "19 · Onboarding",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "t21": {
+   "x": 0,
+   "y": 28180,
+   "text": "23 · Data import",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "screens"
+  },
+  "t22": {
+   "x": 0,
+   "y": -320,
+   "text": "Board pack · October 2026 · A4",
+   "kind": "title1",
+   "maxW": 4290,
+   "page": "board"
+  },
+  "u1": {
+   "x": 0,
+   "y": 0,
+   "text": "1 · Top bar: approvals count beside notifications",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u2": {
+   "x": 0,
+   "y": 576,
+   "text": "2 · Group executive home: Exceptions card",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u3": {
+   "x": 0,
+   "y": 2756,
+   "text": "2 · Property GM home: Exceptions card",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u4": {
+   "x": 0,
+   "y": 4876,
+   "text": "3–4 · Reservation detail: rate override with reason and approval · audit trail entry",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u5": {
+   "x": 0,
+   "y": 6656,
+   "text": "3–4 · Folio: void with reason and approval · audit trail drawer",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u6": {
+   "x": 0,
+   "y": 8496,
+   "text": "3 · 5 · POS order: void after the ticket was sent needs a manager",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u7": {
+   "x": 0,
+   "y": 9850,
+   "text": "5 · POS tables: PIN sign-in and lock on the shared tablet",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u8": {
+   "x": 0,
+   "y": 11204,
+   "text": "4 · Housekeeping board: room tile opens detail with audit trail",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u9": {
+   "x": 0,
+   "y": 13024,
+   "text": "6 · Attendant view: Room check task",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u10": {
+   "x": 0,
+   "y": 14544,
+   "text": "7 · Cashier shift close: blind count",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u11": {
+   "x": 0,
+   "y": 16164,
+   "text": "7 · Night audit: last step shows the owner's report was sent",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u12": {
+   "x": 0,
+   "y": 17784,
+   "text": "8 · Company names: made-up only",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u13": {
+   "x": 0,
+   "y": 19454,
+   "text": "8 · Company names: made-up only (continued)",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u14": {
+   "x": 0,
+   "y": 21124,
+   "text": "8 · Channel names: made-up local OTA",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u15": {
+   "x": 0,
+   "y": 22794,
+   "text": "8 · Supplier name",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "u16": {
+   "x": 0,
+   "y": 24364,
+   "text": "8 · Group name in the tape chart bar sample",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "update"
+  },
+  "o1": {
+   "x": 0,
+   "y": 1580,
+   "text": "20 · Email, discrepancy alerts",
+   "kind": "title1",
+   "maxW": 4700,
+   "page": "owner"
+  },
+  "o2": {
+   "x": 0,
+   "y": 3480,
+   "text": "20 · Leakage states",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "owner"
+  },
+  "o3": {
+   "x": 0,
+   "y": 4780,
+   "text": "20 · Leakage states · 390 and dark",
+   "kind": "title1",
+   "maxW": 3320,
+   "page": "owner"
+  },
+  "s1": {
+   "x": 0,
+   "y": 29980,
+   "text": "22 · Auto sign-out, switch, register",
+   "kind": "title1",
+   "maxW": 5016,
+   "page": "screens"
+  },
+  "s2": {
+   "x": 0,
+   "y": 31280,
+   "text": "22 · Approvals, phones, dark",
+   "kind": "title1",
+   "maxW": 3074,
+   "page": "screens"
+  },
+  "s3": {
+   "x": 0,
+   "y": 32580,
+   "text": "22 · Devices states",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "s4": {
+   "x": 0,
+   "y": 33880,
+   "text": "22 · Devices states · 390 and dark",
+   "kind": "title1",
+   "maxW": 3320,
+   "page": "screens"
+  },
+  "s5": {
+   "x": 0,
+   "y": 35180,
+   "text": "23 · Undo, dark, phone",
+   "kind": "title1",
+   "maxW": 3900,
+   "page": "screens"
+  },
+  "s6": {
+   "x": 0,
+   "y": 36680,
+   "text": "23 · Import states",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "s7": {
+   "x": 0,
+   "y": 37980,
+   "text": "23 · Import states · 390 and dark",
+   "kind": "title1",
+   "maxW": 3320,
+   "page": "screens"
+  },
+  "n1": {
+   "x": 0,
+   "y": 39680,
+   "text": "24 · Sign in",
+   "kind": "title1",
+   "maxW": 7520,
+   "page": "screens"
+  },
+  "n2": {
+   "x": 0,
+   "y": 41000,
+   "text": "24 · Access states",
+   "kind": "title1",
+   "maxW": 9040,
+   "page": "screens"
+  },
+  "n3": {
+   "x": 0,
+   "y": 42320,
+   "text": "24 · In-app access states and dark",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "n4": {
+   "x": 0,
+   "y": 43640,
+   "text": "24 · Phone",
+   "kind": "title1",
+   "maxW": 3680,
+   "page": "screens"
+  },
+  "n5": {
+   "x": 0,
+   "y": 44904,
+   "text": "25 · Settings",
+   "kind": "title1",
+   "maxW": 9040,
+   "page": "screens"
+  },
+  "n6": {
+   "x": 0,
+   "y": 46424,
+   "text": "25 · Settings states and dark",
+   "kind": "title1",
+   "maxW": 7520,
+   "page": "screens"
+  },
+  "n7": {
+   "x": 0,
+   "y": 47944,
+   "text": "25 · Settings on a phone",
+   "kind": "title1",
+   "maxW": 2740,
+   "page": "screens"
+  },
+  "n8": {
+   "x": 0,
+   "y": 49208,
+   "text": "26 · Permissions and limits",
+   "kind": "title1",
+   "maxW": 3900,
+   "page": "screens"
+  },
+  "n9": {
+   "x": 0,
+   "y": 51128,
+   "text": "26 · Permissions states",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "n10": {
+   "x": 0,
+   "y": 53048,
+   "text": "27 · Taxes, charges and payments",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "n11": {
+   "x": 0,
+   "y": 54818,
+   "text": "27 · States and phone",
+   "kind": "title1",
+   "maxW": 6940,
+   "page": "screens"
+  },
+  "n12": {
+   "x": 0,
+   "y": 56588,
+   "text": "28 · Audit log and trail on any record",
+   "kind": "title1",
+   "maxW": 5754,
+   "page": "screens"
+  },
+  "n13": {
+   "x": 0,
+   "y": 58308,
+   "text": "28 · Audit log states, dark and phone",
+   "kind": "title1",
+   "maxW": 7990,
+   "page": "screens"
+  },
+  "n14": {
+   "x": 0,
+   "y": 59878,
+   "text": "29 · Notifications and approvals",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "n15": {
+   "x": 0,
+   "y": 61348,
+   "text": "29 · States and phone",
+   "kind": "title1",
+   "maxW": 7410,
+   "page": "screens"
+  },
+  "n101": {
+   "x": 0,
+   "y": 62818,
+   "text": "30 · Arrivals, departures and in house",
+   "kind": "title1",
+   "maxW": 7520,
+   "page": "screens"
+  },
+  "n102": {
+   "x": 0,
+   "y": 64288,
+   "text": "30 · Dark and phone",
+   "kind": "title1",
+   "maxW": 2850,
+   "page": "screens"
+  },
+  "n103": {
+   "x": 0,
+   "y": 65758,
+   "text": "30 · Front desk · states",
+   "kind": "title1",
+   "maxW": 6940,
+   "page": "screens"
+  },
+  "n104": {
+   "x": 0,
+   "y": 67228,
+   "text": "31 · Front desk dialogs",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "n105": {
+   "x": 0,
+   "y": 68968,
+   "text": "31 · Front desk dialogs (continued) and dark",
+   "kind": "title1",
+   "maxW": 7520,
+   "page": "screens"
+  },
+  "n106": {
+   "x": 0,
+   "y": 70708,
+   "text": "31 · Dialogs on a phone",
+   "kind": "title1",
+   "maxW": 3210,
+   "page": "screens"
+  },
+  "n107": {
+   "x": 0,
+   "y": 72128,
+   "text": "32 · Group reservation and rooming list",
+   "kind": "title1",
+   "maxW": 4950,
+   "page": "screens"
+  },
+  "n108": {
+   "x": 0,
+   "y": 73698,
+   "text": "32 · Group · states",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "screens"
+  },
+  "n109": {
+   "x": 0,
+   "y": 75268,
+   "text": "33 · Rooms and rate plans",
+   "kind": "title1",
+   "maxW": 5420,
+   "page": "screens"
+  },
+  "n110": {
+   "x": 0,
+   "y": 76838,
+   "text": "33 · Rooms and plans · states",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "screens"
+  },
+  "n111": {
+   "x": 0,
+   "y": 78408,
+   "text": "34 · Cash and deposits",
+   "kind": "title1",
+   "maxW": 7520,
+   "page": "screens"
+  },
+  "n112": {
+   "x": 0,
+   "y": 79928,
+   "text": "34 · Matching · states",
+   "kind": "title1",
+   "maxW": 7410,
+   "page": "screens"
+  },
+  "n113": {
+   "x": 0,
+   "y": 81398,
+   "text": "35 · Report viewer",
+   "kind": "title1",
+   "maxW": 6940,
+   "page": "screens"
+  },
+  "n114": {
+   "x": 0,
+   "y": 82818,
+   "text": "35 · Reports · states",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "screens"
+  },
+  "n115": {
+   "x": 0,
+   "y": 84238,
+   "text": "36 · Sync queue and conflicts",
+   "kind": "title1",
+   "maxW": 4950,
+   "page": "screens"
+  },
+  "n116": {
+   "x": 0,
+   "y": 85758,
+   "text": "36 · Sync · states",
+   "kind": "title1",
+   "maxW": 6940,
+   "page": "screens"
+  },
+  "n201": {
+   "x": 0,
+   "y": 87278,
+   "text": "37 · Guest requests queue (touch)",
+   "kind": "title1",
+   "maxW": 3430,
+   "page": "screens"
+  },
+  "n202": {
+   "x": 0,
+   "y": 88848,
+   "text": "37 · Requests · states",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "screens"
+  },
+  "n203": {
+   "x": 0,
+   "y": 90418,
+   "text": "38 · Menu and outlet setup",
+   "kind": "title1",
+   "maxW": 4950,
+   "page": "screens"
+  },
+  "n204": {
+   "x": 0,
+   "y": 91988,
+   "text": "38 · Menu · states",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "screens"
+  },
+  "n205": {
+   "x": 0,
+   "y": 93558,
+   "text": "39 · Room checks, lost and found, laundry on a phone (touch)",
+   "kind": "title1",
+   "maxW": 4150,
+   "page": "screens"
+  },
+  "n206": {
+   "x": 0,
+   "y": 94978,
+   "text": "39 · Housekeeping office (desktop)",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "n207": {
+   "x": 0,
+   "y": 96348,
+   "text": "40 · Overbooking alert",
+   "kind": "title1",
+   "maxW": 3430,
+   "page": "screens"
+  },
+  "n208": {
+   "x": 0,
+   "y": 97818,
+   "text": "40 · Overbooking · states",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "screens"
+  },
+  "n209": {
+   "x": 0,
+   "y": 99288,
+   "text": "41 · Merge duplicate guests",
+   "kind": "title1",
+   "maxW": 4950,
+   "page": "screens"
+  },
+  "n210": {
+   "x": 0,
+   "y": 100708,
+   "text": "41 · Merge · states",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "n211": {
+   "x": 0,
+   "y": 102128,
+   "text": "42 · Licences and permits",
+   "kind": "title1",
+   "maxW": 3430,
+   "page": "screens"
+  },
+  "n212": {
+   "x": 0,
+   "y": 103648,
+   "text": "42 · Licences · states",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "screens"
+  },
+  "n213": {
+   "x": 0,
+   "y": 105168,
+   "text": "43 · Message templates and log",
+   "kind": "title1",
+   "maxW": 4950,
+   "page": "screens"
+  },
+  "n214": {
+   "x": 0,
+   "y": 106588,
+   "text": "43 · Messages · states",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "n215": {
+   "x": 0,
+   "y": 108008,
+   "text": "44 · Back-of-house on shared devices (touch)",
+   "kind": "title1",
+   "maxW": 3210,
+   "page": "screens"
+  },
+  "n216": {
+   "x": 0,
+   "y": 109428,
+   "text": "44 · Attendance (desktop)",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "screens"
+  },
+  "n217": {
+   "x": 0,
+   "y": 110798,
+   "text": "45 · Receivables, payables and budgets",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "screens"
+  },
+  "n218": {
+   "x": 0,
+   "y": 112218,
+   "text": "45 · Finance · states",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  },
+  "n219": {
+   "x": 0,
+   "y": 113638,
+   "text": "46 · Account and support",
+   "kind": "title1",
+   "maxW": 4950,
+   "page": "screens"
+  },
+  "n220": {
+   "x": 0,
+   "y": 115058,
+   "text": "46 · Account · states",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "screens"
+  }
+ },
+ "designSystems": []
+}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guest app · live bill</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#fff}</style>
+</helmet>
+<div class="kb" style="--k: {{accent}}; width: 390px; height: 1000px; overflow: hidden; display: flex; flex-direction: column; position: relative; background: #F7F8FA">
+  <header style="height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: #fff; border-bottom: 1px solid #E4E7EC">
+    <a href="#" aria-label="Back" style="color: #101828; display: flex"><svg class="ic ic-l" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+    <span class="kh" style="font-size: 16px">My bill</span>
+    <span style="margin-left: auto; font-size: 13px; color: #667085" class="num">updated 20:14</span>
+  </header>
+  <div style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <div class="kcard" style="padding: 16px; display: flex; flex-direction: column; gap: 4px">
+      <span class="klbl">To pay</span>
+      <span class="num" style="font-family: Poppins, sans-serif; font-size: 30px; line-height: 38px; font-weight: 600">₦54,512.50</span>
+      <span class="num" style="font-size: 13px; color: #475467">≈ $33.65 at ₦1,620.00 (CBN official rate today)</span>
+      <span style="font-size: 13px; color: #475467">Your room and breakfast are billed to Acme Energy Ltd.</span>
+    </div>
+    <div class="kcard" style="padding: 6px 16px">
+      <div class="num" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E7EC"><span style="display: flex; flex-direction: column"><b style="font-weight: 500">Calabash restaurant</b><span style="font-size: 13px; color: #667085">Wed 25 Nov · dinner</span></span><span>₦24,000.00</span></div>
+      <div class="num" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E7EC"><span style="display: flex; flex-direction: column"><b style="font-weight: 500">Room service</b><span style="font-size: 13px; color: #667085">Thu 26 Nov · 2 items + tray</span></span><span>₦14,500.00</span></div>
+      <div class="num" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #E4E7EC"><span style="display: flex; flex-direction: column"><b style="font-weight: 500">Laundry</b><span style="font-size: 13px; color: #667085">Thu 26 Nov · 3 pieces</span></span><span>₦6,000.00</span></div>
+      <div class="num" style="display: flex; flex-direction: column; gap: 4px; padding: 10px 0; font-size: 13px; color: #475467">
+        <div style="display: flex; justify-content: space-between"><span>Service charge 10%</span><span>₦4,450.00</span></div>
+        <div style="display: flex; justify-content: space-between"><span>VAT 7.5%</span><span>₦3,337.50</span></div>
+        <div style="display: flex; justify-content: space-between"><span>Lagos consumption tax 5%</span><span>₦2,225.00</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; color: #101828; border-top: 1px solid #E4E7EC; padding-top: 8px"><span>Total</span><span>₦54,512.50</span></div>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px"><button class="kchip on" style="height: 48px; border-radius: 12px; justify-content: center">Card · Paystack</button><button class="kchip" style="height: 48px; border-radius: 12px; justify-content: center">Bank transfer</button></div>
+    <a href="#" style="font-size: 14px; font-weight: 600; color: var(--k); display: flex; align-items: center; gap: 6px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Download invoice (PDF)</a>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #E4E7EC; padding: 12px 18px 18px; display: flex; flex-direction: column; gap: 6px">
+    <button class="kbtn" style="width: 100%">Pay ₦54,512.50 now</button>
+    <span style="font-size: 12px; color: #667085; text-align: center">Pay now and check-out is just handing in your key.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#1F5C66","options":["#1F5C66","#7A3E2B","#1D3A6B","#3E4A2F"]},"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#1F5C66' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guest app · review after the stay</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./vento.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#fff}</style>
+</helmet>
+<div class="kb" style="--k: {{accent}}; width: 390px; height: 844px; overflow: hidden; display: flex; flex-direction: column; position: relative">
+  <header style="height: 60px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #E4E7EC"><div style="display: flex; flex-direction: column; line-height: 1; align-items: center"><span class="kh" style="font-size: 18px; letter-spacing: .16em; color: var(--k)">KORA</span><span style="font-size: 10px; letter-spacing: .14em; color: #667085; margin-top: 3px">VICTORIA ISLAND</span></div></header>
+  <div style="padding: 24px 20px 120px; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; flex-direction: column; gap: 6px"><h1 style="font-size: 22px">How was your stay, James?</h1><span class="num" style="font-size: 14px; color: #475467">25–28 Nov 2026 · room 502. Takes 30 seconds; the general manager reads every reply.</span></div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="klbl">Overall</span>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 8px">
+        <button class="kchip" style="height: 52px; justify-content: center; font-size: 17px; border-radius: 12px">1</button>
+        <button class="kchip" style="height: 52px; justify-content: center; font-size: 17px; border-radius: 12px">2</button>
+        <button class="kchip" style="height: 52px; justify-content: center; font-size: 17px; border-radius: 12px">3</button>
+        <button class="kchip on" style="height: 52px; justify-content: center; font-size: 17px; border-radius: 12px; background: var(--k); color: #fff; border-color: var(--k)">4</button>
+        <button class="kchip" style="height: 52px; justify-content: center; font-size: 17px; border-radius: 12px">5</button>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #667085"><span>Poor</span><span>Excellent</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="klbl">What stood out?</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px"><span class="kchip on">Fast check-in</span><span class="kchip on">Room comfort</span><span class="kchip">Breakfast</span><span class="kchip">Staff</span><span class="kchip on">Power never went off</span><span class="kchip">Wi-Fi</span><span class="kchip">Value</span></div>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px"><span class="klbl">Anything we should fix?</span><span class="kin" style="height: 96px; align-items: flex-start; padding-top: 12px">Desk lamp flickered on the first night, fixed within 20 minutes.</span></label>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #E4E7EC; padding: 12px 18px 18px; display: flex; flex-direction: column; gap: 8px">
+    <button class="kbtn" style="width: 100%">Send to the hotel</button>
+    <span style="font-size: 12px; color: #667085; text-align: center">Next, you can choose to post it publicly too.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#1F5C66","options":["#1F5C66","#7A3E2B","#1D3A6B","#3E4A2F"]},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#1F5C66' };
+  }
+}
+</script>
+</body>
+</html>
