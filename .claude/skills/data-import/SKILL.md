@@ -43,6 +43,7 @@ Generated from the row schemas so the template, the validator and the docs never
 | Kind | Scope | Key columns (natural key in bold) | Notes |
 |---|---|---|---|
 | Room types | property | **code**, name, max occupancy, bed type, base occupancy | Before rooms. |
+| Rate plans | property | **code**, name, room types, meal plan, rate per room type (flat, from a date), cancellation policy, deposit rule | Before corporate accounts and reservations. Seasonal and daily rates are set in the rates grid after import. |
 | Rooms | property | **room number**, room type code, floor, features | Room type must exist (in DB or same file). |
 | Guests | organization | name, phone (E.164), email, nationality, ID type, ID number, vip, notes | ID numbers encrypted on write; dedupe on phone/email, flagged not merged. |
 | Corporate accounts | organization | **name**/RC number, credit limit, payment terms, contacts, negotiated rate per property | Rate plans must exist. |

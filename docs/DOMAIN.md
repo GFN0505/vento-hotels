@@ -17,7 +17,7 @@ Shared vocabulary for the Nigerian hotel group platform. Code, UI copy, table na
 | **Employee** | Staff member on payroll, or casual on a daily rate. | Belongs to an entity, works at one or more properties. |
 
 ## Permissions matrix
-Permissions are `module.action`, granted by role and optionally limited to properties or entities. Limits (amounts, %) are configuration per organization; the values below are **seed defaults**. Anything above a limit needs approval from a role that has a higher limit (approver signs in or enters their PIN on the same device). Every use is an audit event with a reason.
+Permissions are `module.action`, granted by role and optionally limited to properties or entities. Limits (amounts, %) are configuration per organization; the values below are **seed defaults**. Anything above a limit needs approval from a role that has a higher limit (the approver enters their PIN on the same device, or approves from the approvals inbox on their own phone). Every use is an audit event with a reason.
 
 | Action | front_desk | cashier | waiter | revenue_manager | fnb_manager | general_manager | finance | owner / group_admin |
 |---|---|---|---|---|---|---|---|---|
@@ -31,6 +31,7 @@ Permissions are `module.action`, granted by role and optionally limited to prope
 | Comp room night | – | – | – | – | – | ✓ | – | ✓ |
 | Settle to city ledger (within credit limit) | ✓ | – | – | – | – | ✓ | ✓ | ✓ |
 | Exceed a company's credit limit | – | – | – | – | – | ✓ | ✓ | ✓ |
+| Post POS bill to a room | – | ✓ | ✓ | – | ✓ | ✓ | – | ✓ |
 | POS void before ticket sent | – | ✓ | ✓ | – | ✓ | ✓ | – | ✓ |
 | POS void after ticket sent / comp item | – | – | – | – | ✓ | ✓ | – | ✓ |
 | POS discount on a bill | – | ≤ 5% | – | – | ≤ 20% | ≤ 50% | – | any |
@@ -42,7 +43,7 @@ Permissions are `module.action`, granted by role and optionally limited to prope
 | View owner's daily report and leakage alerts | – | – | – | – | – | ✓ | ✓ | ✓ |
 | Change permissions or limits | – | – | – | – | – | – | – | ✓ |
 
-Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get only their own module's actions. A member can't approve their own over-limit action.
+The night auditor is a `front_desk` member working the night shift; "(night)" means the run-night-audit permission is granted to night-shift front desk staff, not a separate role. Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get only their own module's actions: e.g. `room_attendant` and `housekeeping_supervisor` can change room status, do room checks and post minibar charges; only `housekeeping_supervisor` records inspections. A member can't approve their own over-limit action.
 
 ## Devices and sign-in
 | Term | Meaning | Notes |
@@ -134,7 +135,7 @@ Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get 
 ## Housekeeping & maintenance
 | Term | Meaning | Notes |
 |---|---|---|
-| **Assignment** | Rooms given to an attendant for a shift. | Credits per room type; status `pending → in_progress → done → inspected`. |
+| **Assignment** | Rooms given to an attendant for a shift. | Credits per room type; status `pending → in_progress → done → inspected`; a failed inspection sets it to `reclean` (room back to `dirty`) and it returns to `in_progress` when the attendant restarts. |
 | **Inspection** | Supervisor check of a cleaned room. | Pass → `inspected`; fail → back to `dirty` with notes. |
 | **Minibar posting** | Items consumed from the minibar. | Posts charges to the folio, deducts stock. |
 | **Lost and found** | Item found in a room or area. | Found by, where, storage location, status `stored → returned / disposed`. |
@@ -216,3 +217,4 @@ Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get 
 - Which legacy PMS exports to support for import first (e.g. Opera, eZee, Hotelogix, Excel).
 - Subscription pricing for customers: per property, per room, or per module.
 - Default permission limits and exception thresholds — confirm with pilot hotels.
+- Kitchen display while offline: does it need a local server/bridge on the hotel network, or do we rely on printed tickets during outages?

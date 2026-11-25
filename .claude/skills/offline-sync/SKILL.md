@@ -47,9 +47,9 @@ Receipts, bills and kitchen/bar tickets render from local data and print to a lo
 ## Allowed vs blocked offline
 | Allowed offline | Blocked offline (show why) |
 |---|---|
-| POS: open check, add/remove items, send tickets (to a local printer if reachable), split/merge, cash and POS-terminal payments (with terminal reference), voids and comps if the member has permission (reason still required) | New bookings, walk-ins, extensions or room-type changes that need live availability (e.g. new bookings for dates that may be sold out) |
-| Housekeeping: room status changes, assignment progress, inspection results, minibar consumption, lost and found | Online payments (Paystack, VCC charges), refunds |
-| Front desk: check-in of arrivals **already assigned** a room, record cash/POS-terminal deposits, guest registration details, key issued, notes | Post to room for a guest whose in-house status can't be confirmed from the cached in-house list; anything over the guest's cached credit limit |
+| POS: open check, add/remove items, send tickets (to a local printer if reachable; a kitchen display only if it's on the same local network and reachable — see open questions in `docs/DOMAIN.md`), split/merge, cash, POS-terminal and bank transfer payments (with reference; transfers stay "unverified" until matched online), voids and comps if the member has permission (reason still required) | New bookings, walk-ins, extensions or room-type changes that need live availability (e.g. new bookings for dates that may be sold out) |
+| Housekeeping: room status changes, room checks, assignment progress, inspection results, minibar consumption, lost and found, fault reports (work orders) | Online payments (Paystack, VCC charges), refunds |
+| Front desk: check-in of arrivals **already assigned** a room, record cash, POS-terminal and bank transfer deposits (transfers unverified until matched), guest registration details, key issued, notes | Post to room for a guest whose in-house status can't be confirmed from the cached in-house list; anything over the guest's cached credit limit |
 | Read: tape chart snapshot, in-house list, folios as of last sync (marked as such) | Night audit, rate changes, cashier shift close, check-out that needs a final folio balance (allow "express check-out pending sync" only if configured) |
 
 Offline-allowed commands are an explicit allow-list in `commands.ts`. Anything not on it is disabled in the UI while offline with a short reason.

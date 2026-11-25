@@ -24,7 +24,7 @@ const roomType = await createRoomType(property, { rooms: 2 })   // also creates 
 const guest = await createGuest(org)
 const ctx = contextFor(user, org)
 ```
-Factories take overrides and fill realistic defaults. Never depend on rows created by another test, or on `pnpm db:seed` data: the seed (the demo group) is for local development, demos and the Playwright smoke journey only, and CI runs it against a fresh database to prove it still loads. `createDevice(property, { shared: true })` and `createMember(org, { role, pin })` cover PIN sign-in on shared devices; `setPermissionLimits(org, { 'stay.discount': { front_desk: '10' } })` overrides the matrix seed defaults. Never use the wall clock: set the property's business date explicitly, and freeze time (`vi.setSystemTime`) when a rule depends on the hour (late check-out, auto-release of unguaranteed bookings).
+Factories take overrides and fill realistic defaults. Never depend on rows created by another test, or on `pnpm db:seed` data: the seed (the demo group) is for local development, demos, and the Playwright smoke and walkthrough journeys only, and CI runs it against a fresh database to prove it still loads. `createDevice(property, { shared: true })` and `createMember(org, { role, pin })` cover PIN sign-in on shared devices; `setPermissionLimits(org, { 'stay.discount': { front_desk: '10' } })` overrides the matrix seed defaults. Never use the wall clock: set the property's business date explicitly, and freeze time (`vi.setSystemTime`) when a rule depends on the hour (late check-out, auto-release of unguaranteed bookings).
 
 ## Required tests for every resource
 ```ts
@@ -112,7 +112,7 @@ Query by role and label (`getByRole('button', { name: 'Check in' })`). Use `user
 - One spec per journey: `reservations.spec.ts` → create, find in list, edit dates, cancel; `check-in.spec.ts` → walk-in to checked-in in one flow; `pos.spec.ts` → order, send, post to room, appears on folio.
 - Log in through a stored auth state (`e2e/.auth`) per role, not the UI in every test.
 - Selectors: `getByRole`, `getByLabel`, `getByText`. No CSS selectors, and no `waitForTimeout`.
-- Each spec seeds its own data through the API. The one exception is `smoke.spec.ts`, which runs the main journeys against the `pnpm db:seed` demo group to prove the seed and the demo stay usable.
+- Each spec seeds its own data through the API. The exceptions are `smoke.spec.ts` and the walkthrough journeys in `e2e/journeys/` (one per file in `docs/journeys/`), which run against a fresh `pnpm db:seed` demo group so names and numbers match the walkthroughs; each journey file starts from a fresh seed and freezes the business date.
 - Shared-device journeys sign in with the PIN pad, and cover an over-limit action approved by a second member's PIN.
 - Offline journeys use `context.setOffline(true)`, perform the action, go back online, and assert the server state.
 

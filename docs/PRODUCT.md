@@ -116,11 +116,11 @@ All ten modules are in v1, built in stages. Each stage ends usable by a real pil
 | Stage | Scope | A pilot hotel can… |
 |---|---|---|
 | **0. Foundation** | Monorepo, auth with organizations, properties and entities, permissions matrix, audit events, app shell, offline shell, PIN sign-in, demo seed, CI | sign in, set up a group and properties |
-| **1. Front office** | Room types and rooms, rate plans (manual), reservations, tape chart, check-in/out, walk-in, folios, payments, cashier shifts, night audit, guest register, core reports, owner's daily report, data import | run the front desk without its old PMS |
+| **1. Front office** | Room types and rooms, rate plans (manual), reservations, tape chart, check-in/out, walk-in, folios, payments, cashier shifts, corporate accounts with credit limits and settle-to-company (city ledger balances and statements), night audit, guest register, core reports, owner's daily report, data import | run the front desk without its old PMS |
 | **2. Housekeeping & maintenance** | Room status board, attendant app, inspections, discrepancy check, work orders, OOO, power and diesel log | run rooms and catch sleepers/skippers |
 | **3. Restaurant & bar** | Outlets, menus, POS offline, kitchen tickets, post to room, voids/comps controls | run F&B and charge rooms |
 | **4. Distribution & guests** | Booking engine, channel manager, restrictions, guest profiles, corporates, group blocks, events, guest messages, guest app | sell direct and on OTAs, manage corporates |
-| **5. Back office** | City ledger, ledger per entity, reconciliation, taxes, inventory and procurement, recipes, HR and payroll | close the books and pay staff |
+| **5. Back office** | City ledger invoicing, ageing and collections, ledger per entity, reconciliation, taxes, inventory and procurement, recipes, HR and payroll | close the books and pay staff |
 | **6. Group & analytics** | Group dashboards, KPIs, budgets, board pack, subscription billing, support console | run the whole group from one screen |
 
 Specs for each stage live in `docs/specs/`, written by the product-manager before the stage starts.
