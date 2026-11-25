@@ -1,10 +1,17 @@
 # Claude Design prompt
 
-Paste everything below the line into Claude Design. It's long on purpose: one consistent system across ten modules. Don't ask for all 23 screens at once, or the output gets thin. Work in three rounds in the same project:
+**Already have a Vento Hotels project in Claude Design?** Don't use this file. Use `claude-design-update-prompt.md`: it changes the existing screens and adds the new ones without starting over. This file is the full prompt for starting a new project from scratch.
+
+Paste everything below the line into Claude Design. It's long on purpose: one consistent system across ten modules. Don't ask for all 46 screens at once, or the output gets thin. Work in six rounds in the same project:
 
 1. **Round 1, system and front office:** paste the whole prompt, then ask for *the design system page and screens 1–7, 20 and 21*. Review it and fix the foundations (type, density, colours, tape chart) before going on.
 2. **Round 2, operations and guest-facing:** "Using the same design system, design screens 9, 11, 12, 13, 17 and 22."
 3. **Round 3, back office and group:** "Using the same design system, design screens 8, 10, 14, 15, 16, 18, 19 and 23."
+4. **Round 4, setup and admin:** "Using the same design system, design screens 24–29."
+5. **Round 5, front desk working screens:** "Using the same design system, design screens 30–36."
+6. **Round 6, operations support:** "Using the same design system, design screens 37–46."
+
+`docs/design/screen-inventory.md` lists every screen the product needs, which of these designs cover them, and which are expected to change later.
 
 ---
 
@@ -77,9 +84,38 @@ The bar is world-class: the craft and calm of Linear, Stripe Dashboard, Mercury,
 22. **Shared device sign-in:** POS tablet and housekeeping phone lock screen with staff avatars and a PIN pad, auto sign-out, quick user switch mid-shift, manager PIN approval for an over-limit action (e.g. a discount above the waiter's limit) on the same device, and device registration for a property.
 23. **Data import:** pick what to import (rooms, guests, corporates, future reservations, opening balances, stock, employees), download template, upload, row-by-row validation errors, preview, apply, and undo within 24 hours.
 
+### Setup and admin (round 4)
+24. **Sign in and access states:** sign in, 2FA, forgot password, accept invite; and the states around them: no property assigned, device not registered, session expired, no access to this page, page not found, first load while offline.
+25. **Settings:** one settings area with property settings (logo, address, time zone, check-in/out times, current business date, owning entity), entities and departments, members and roles (invite, assign roles, limit to properties or entities), and devices (register, name, bind to a property, revoke).
+26. **Permissions and limits:** roles × actions grid with limits in the cells (e.g. front desk discount ≤ 10%, refund ≤ ₦100,000), who can approve above each limit, owner only, with every change shown in the audit trail. Must stay readable with 16 roles and ~20 actions.
+27. **Taxes, charges and payments setup:** VAT, state consumption tax and service charge as rules with effective dates (current, scheduled, past), what each applies to, and inclusive/exclusive defaults; payment methods, bank accounts and POS terminals, each mapped to a ledger account.
+28. **Audit log:** filter by staff, action, property, device and date; each event shows who, when, device, before → after, reason and approver. Plus the same trail as a drawer on any record (reservation, folio, POS bill, room).
+29. **Notifications and approvals inbox:** bell menu and full list (what each role is alerted about), and one approvals inbox for over-limit requests, refunds, POs and payroll runs: approve or decline with a comment, from desktop or phone.
+
+### Front desk working screens (round 5)
+30. **Arrivals, departures and in-house:** the front desk's real home. Arrivals with room readiness, balance due and special requests; departures with balance and city ledger eligibility; in-house with folio balances. Bulk check-in for a group, print lists.
+31. **Front desk dialogs:** modify reservation (with rate impact), cancel (policy, penalty, refund, reason), room move (ready rooms first, rate change, reason), post charge, take payment (method, reference, currency and FX, split across methods), refund (limit and approval), transfer charges between folios.
+32. **Group reservation and rooming list:** many rooms under one booking, room types and counts, names added later (paste or upload a rooming list), master folio with routing, pick-up against the group block.
+33. **Rooms and rate plans:** room types and rooms management (ongoing, not just onboarding), rate plan editor (meal plan, cancellation policy, deposit rule, channels, derived from a parent plan with an offset).
+34. **Cash and deposits:** open cashier shift with float, blind count at close, deposits held (not yet applied, with ageing), and the payment matching queue (unmatched transfers and POS terminal settlements, suggested matches, match or mark for review).
+35. **Report viewer:** one layout used by all 14 catalogue reports: filters (property, business date or period), totals, table, export PDF and Excel, print. Show it with the manager's flash report and the guest register.
+36. **Sync queue and conflicts:** what is waiting to sync, what failed and why in plain words (e.g. "Room 214 was sold online while you were offline"), and what to do: retry, choose another room, or discard with a reason.
+
+### Operations support (round 6)
+37. **Guest requests queue:** where guest app requests land (towels, maintenance, late check-out, room service): assign, in progress, done, response time against target; room service orders flow to the POS and kitchen display.
+38. **Menu and outlet setup:** menu items with modifiers, prices per outlet, tax category, kitchen or bar station and availability (86'd items); outlets, table map editor and printers.
+39. **Room checks on a phone:** the attendant's discrepancy check (walk the floor, mark each room occupied or vacant, quick photo), the resulting sleeper/skipper alert, lost and found list, and laundry (guest charges and linen counts).
+40. **Overbooking alert:** when an OTA booking arrives for a room type with no rooms left: what happened, how many rooms short, which dates, and options (move, upgrade, walk the guest to a partner hotel) with the cost of each.
+41. **Merge duplicate guests:** suggested duplicates (same phone, email or name + ID), side-by-side comparison, choose which values to keep, merge with stay history combined; logged and undoable.
+42. **Licences and permits:** per property: state tourism registration, NIHOTOUR, liquor licence, fire certificate, health permits; expiry timeline, documents, alerts before expiry.
+43. **Message templates and log:** WhatsApp, SMS and email templates (confirmation, pre-arrival, receipt, review request, owner's daily report) with merge fields and approval status; log of messages sent per guest with delivery status.
+44. **Back-of-house on shared devices:** receiving a delivery on a phone at the gate (PO lines, counts, photo of the delivery note) and staff clock in / clock out with the PIN pad.
+45. **Receivables and payables:** city ledger invoices and credit notes, expenses and supplier bills with payments, and budgets entry by property, department and month.
+46. **Account and support:** the customer's Vento subscription (plan, invoices, payment), and granting Vento support time-limited access to the account (who, how long, revoke anytime, logged).
+
 ## Deliverables
 - The screens above, consistent with each other.
-- A design system page: colour tokens (light and dark), type scale, spacing, buttons, inputs, money input with currency, FX rate field, date range picker with nights count, status badges, table, **room status tile**, **tape chart bar**, **rate grid cell**, **folio line** (with tax lines and void state), **POS item button**, **PIN pad**, **exception row** (type, amount, staff, reason, approver), **approval prompt**, print layouts (A4 and 80mm), stat card, stepper, timeline, empty state, toast, offline banner and sync queue, command palette, property and entity switchers, sidebar and mobile nav.
+- A design system page: colour tokens (light and dark), type scale, spacing, buttons, inputs, money input with currency, FX rate field, date range picker with nights count, status badges, table, **room status tile**, **tape chart bar**, **rate grid cell**, **folio line** (with tax lines and void state), **POS item button**, **PIN pad**, **exception row** (type, amount, staff, reason, approver), **approval prompt**, print layouts (A4 and 80mm), **permissions grid cell** (allowed, limit, approver), **effective-dated rule row** (current, scheduled, past), **approval card**, **audit event row** with before → after, **report layout**, stat card, stepper, timeline, empty state, toast, offline banner and sync queue, command palette, property and entity switchers, sidebar and mobile nav.
 - Short notes on any UX decision that isn't obvious.
 
 Keep it lean: if an element doesn't help a user decide or act, leave it out.
