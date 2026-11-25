@@ -1,0 +1,31 @@
+{
+  "name": "vento-hotels",
+  "private": true,
+  "description": "Hotel management platform for Nigerian hotel groups",
+  "type": "module",
+  "packageManager": "pnpm@12.19.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=12.19.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "e2e": "echo \"e2e: Playwright arrives with the web app shell (Stage 0, brick 7)\"",
+    "db:up": "echo \"db:up: local Postgres arrives in Stage 0, brick 2\" && exit 1",
+    "db:generate": "echo \"db:generate: Drizzle arrives in Stage 0, brick 4\" && exit 1",
+    "db:migrate": "echo \"db:migrate: Drizzle arrives in Stage 0, brick 4\" && exit 1",
+    "db:seed": "echo \"db:seed: the demo seed arrives in Stage 0, brick 10\" && exit 1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.6",
+    "@types/node": "24.19.2",
+    "turbo": "2.11.10",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  }
+}

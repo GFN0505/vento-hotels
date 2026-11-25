@@ -24,11 +24,13 @@ Read before working:
 - **Package manager:** pnpm only. Never npm or yarn.
 
 ## Commands
+Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled with `corepack enable`). Commands not built yet print which brick adds them. Biome lints and formats code and config, not Markdown.
+- `pnpm install` — install all workspaces
 - `pnpm dev` — run web + api
 - `pnpm db:up` — start local Postgres (Docker)
 - `pnpm db:generate` / `pnpm db:migrate` — create / apply migrations
 - `pnpm db:seed` — load the demo group (two properties, rooms, rates, guests, a week of history) for development, tests and sales demos
-- `pnpm check` — Biome lint + format check
+- `pnpm check` — Biome lint + format check (`pnpm check:fix` to apply fixes)
 - `pnpm typecheck`, `pnpm test`, `pnpm e2e`
 - Before any commit: `pnpm check && pnpm typecheck && pnpm test`
 
@@ -58,5 +60,7 @@ Read before working:
 
 ## Workflow
 Feature: **product-manager** specs (`docs/specs/`) → **architect** plans → **backend** + **frontend** build (**payments** for folios, deposits, settlements and refunds, **finance** for night audit, ledger, tax, payroll and reporting, **distribution** for the booking engine, channel manager and rates) → **tester** covers → **reviewer** + **ui-designer** check → fix → commit.
+**Bricks, branches and pull requests.** Work is built in small bricks, in the order of the release plan (`docs/PRODUCT.md`). Each brick gets its own branch (`stage-<n>/<short-name>`, e.g. `stage-0/monorepo-skeleton`), ends working and tested, and lands through a pull request that CI must pass and the owner merges. Never commit to `main` directly. One brick per pull request; don't start the next brick on top of an unmerged one unless asked.
+**Attribution:** commits and pull requests carry no AI co-author or "generated with" lines.
 Periodic and pre-release: **security** audits. Build, CI, deploys and monitoring: **devops**.
 Project skills in `.claude/skills/` hold the step-by-step recipes (`add-module`, `add-list-page`, `db-migration`, `design-system`, `ux-writing`, `performance`, `offline-sync`, `printing`, `data-import`, `paystack`, `channel-manager`, `nigeria-compliance`, `testing-patterns`, `review-checklist`, `pre-commit-check`).

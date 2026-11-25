@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# build and tool output
+dist/
+coverage/
+.turbo/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# environment (never commit secrets; document keys in .env.example)
+.env
+.env.*
+!.env.example
+
+# local data
+.data/
+
+# OS and editors
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code local settings
+.claude/settings.local.json
