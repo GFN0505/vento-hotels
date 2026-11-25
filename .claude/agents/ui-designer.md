@@ -7,6 +7,7 @@ disallowedTools: Edit, Write, NotebookEdit
 skills:
   - performance
   - ux-writing
+  - brand
   - design-system
 ---
 

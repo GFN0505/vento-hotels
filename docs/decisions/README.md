@@ -31,5 +31,6 @@ Things still undecided stay under *Open questions* in `docs/DOMAIN.md` until the
 | [0016](0016-local-object-storage.md) | RustFS for local object storage, not MinIO | accepted |
 | [0017](0017-sign-in-and-tenancy.md) | Sign-in with Better Auth; property access closed by default | accepted |
 | [0018](0018-permissions-and-audit-in-practice.md) | Permissions as data with per-group overrides; audit in the same transaction | accepted |
+| [0019](0019-same-origin-web-and-api.md) | The web app and the API share one origin | accepted |
 
 Template: [0000-template.md](0000-template.md)

@@ -29,7 +29,7 @@ Read before working:
 ## Commands
 Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled with `corepack enable`). Commands not built yet print which brick adds them. Biome lints and formats code and config, not Markdown.
 - `pnpm install` — install all workspaces
-- `pnpm dev` — run web + api (the API serves `/health` and `/rpc` on `API_PORT`, default 3000)
+- `pnpm dev` — run web + api (the API serves `/health` and `/rpc` on `API_PORT`, default 3010; the web app on 5180. These ports differ from Vento Real Estate's 3000/5173 so both can run at once, decision 0015)
 - `pnpm db:up` — start local Postgres and RustFS storage (Docker), waiting until healthy
 - `pnpm db:down` / `pnpm db:reset` — stop them / delete their data and start fresh
 - `pnpm db:status` — check the database and storage are reachable
@@ -37,7 +37,7 @@ Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled 
 - `pnpm db:studio` — browse the local database in Drizzle Studio
 - `pnpm db:seed` — load the demo group (Kora Hotels Group, as in the designs and walkthroughs) for development, tests and sales demos
 - `pnpm check` — Biome lint + format check (`pnpm check:fix` to apply fixes)
-- `pnpm typecheck`, `pnpm test`, `pnpm e2e`
+- `pnpm typecheck`, `pnpm test`, `pnpm e2e` (Playwright, desktop and phone; starts its own API and web app on ports 3100/5174 against the test database)
 - Before any commit: `pnpm check && pnpm typecheck && pnpm test`
 
 ## Non-negotiables
@@ -66,7 +66,7 @@ Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled 
 
 ## Workflow
 Feature: **product-manager** specs (`docs/specs/`) → **architect** plans → **backend** + **frontend** build (**payments** for folios, deposits, settlements and refunds, **finance** for night audit, ledger, tax, payroll and reporting, **distribution** for the booking engine, channel manager and rates) → **tester** covers → **reviewer** + **ui-designer** check → fix → commit.
-**Bricks, branches and pull requests.** Work is built in small bricks, in the order of the release plan (`docs/PRODUCT.md`). Each brick gets its own branch (`stage-<n>/<short-name>`, e.g. `stage-0/monorepo-skeleton`), ends working and tested, and lands through a pull request that CI must pass and the owner merges. Never commit to `main` directly. One brick per pull request; don't start the next brick on top of an unmerged one unless asked.
+**Bricks, branches and pull requests.** Work is built in small bricks, in the order of the release plan (`docs/PRODUCT.md`). Each brick gets its own branch (`stage-<n>/<short-name>`, e.g. `stage-0/monorepo-skeleton`), ends working and tested, and lands through a pull request that CI must pass and the owner merges. Never commit to `main` directly. One brick per pull request; don't start the next brick on top of an unmerged one unless asked. **The owner reviews every user-facing feature hands-on before merge:** at the end of a brick with anything visible, run `pnpm dev`, open http://localhost:5180, and list exactly what to try.
 **Attribution:** commits and pull requests carry no AI co-author or "generated with" lines.
-Periodic and pre-release: **security** audits. Build, CI, deploys and monitoring: **devops**.
-Project skills in `.claude/skills/` hold the step-by-step recipes (`add-module`, `add-list-page`, `db-migration`, `design-system`, `ux-writing`, `performance`, `offline-sync`, `printing`, `data-import`, `paystack`, `channel-manager`, `nigeria-compliance`, `testing-patterns`, `review-checklist`, `pre-commit-check`).
+Periodic and pre-release: **security** audits. Build, CI, deploys and monitoring: **devops**. Naming, positioning and any brand or marketing copy (sign-in panel, website, pilot outreach, decks): **brand-marketing**, with the approved lines in `docs/marketing/`.
+Project skills in `.claude/skills/` hold the step-by-step recipes (`add-module`, `add-list-page`, `db-migration`, `design-system`, `ux-writing`, `brand`, `performance`, `offline-sync`, `printing`, `data-import`, `paystack`, `channel-manager`, `nigeria-compliance`, `testing-patterns`, `review-checklist`, `pre-commit-check`).

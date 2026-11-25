@@ -2,7 +2,7 @@
 // real HTTP endpoints (spec: docs/specs/stage-0-auth-and-tenancy.md).
 import type { Entity, Property } from '@vento/shared'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { createTestApp } from '../test/harness.ts'
+import { createTestApp, PASSWORD } from '../test/harness.ts'
 
 const url = process.env.TEST_DATABASE_URL
 
@@ -60,12 +60,33 @@ describe.skipIf(!url)('sign-in, organizations and properties', () => {
     it('refuses unverified emails', async () => {
       const email = `unverified.${Date.now()}@example.test`
       await t.call('/api/auth/sign-up/email', {
-        body: { name: 'Not Verified', email, password: 'correct-horse-battery-staple' },
+        body: { name: 'Not Verified', email, password: PASSWORD },
       })
       const signIn = await t.call('/api/auth/sign-in/email', {
-        body: { email, password: 'correct-horse-battery-staple' },
+        body: { email, password: PASSWORD },
       })
       expect(signIn.status).toBe(403)
+    })
+
+    it('refuses weak passwords at the API, whatever the screen allowed', async () => {
+      for (const password of [
+        'short1!A',
+        'alllowercase1!',
+        'ALLUPPERCASE1!',
+        'NoNumbers!!',
+        'NoSpecial123',
+      ]) {
+        const weak = password === 'short1!A' ? 'Sh1!' : password
+        const response = await t.call('/api/auth/sign-up/email', {
+          body: {
+            name: 'Weak Password',
+            email: `weak.${Date.now()}.${weak.length}@example.test`,
+            password: weak,
+          },
+        })
+        expect(response.status, weak).toBe(400)
+        expect(((await response.json()) as { code: string }).code).toBe('PASSWORD_TOO_WEAK')
+      }
     })
 
     it('answers 401 without a session', async () => {

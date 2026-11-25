@@ -15,7 +15,7 @@
     "check:fix": "biome check --write .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "e2e": "echo \"e2e: Playwright arrives with the web app shell (Stage 0, brick 7)\"",
+    "e2e": "pnpm --filter @vento/web e2e",
     "db:up": "docker compose up -d --wait",
     "db:generate": "pnpm --filter @vento/api db:generate",
     "db:migrate": "pnpm --filter @vento/api db:migrate && pnpm --filter @vento/api db:migrate:test",

@@ -7,8 +7,8 @@ import { createDatabase } from '../db/client.ts'
 import { MemoryEmailProvider } from '../providers/email.ts'
 import type { HealthCheck } from '../system/health.ts'
 
-export const WEB_ORIGIN = 'http://localhost:5173'
-const PASSWORD = 'correct-horse-battery-staple'
+export const WEB_ORIGIN = 'http://localhost:5180'
+export const PASSWORD = 'Correct-horse-42!'
 
 const healthy: HealthCheck = async () => ({
   status: 'ok',
@@ -16,22 +16,27 @@ const healthy: HealthCheck = async () => ({
   checkedAt: new Date().toISOString(),
 })
 
-export function createTestApp(databaseUrl: string) {
+export function createTestApp(databaseUrl: string, options: { rateLimit?: boolean } = {}) {
   const database = createDatabase(databaseUrl, { max: 4 })
   const email = new MemoryEmailProvider()
   const auth = createAuth({
     db: database.db,
     settings: {
       secret: 'test-only-secret-that-is-at-least-32-characters',
-      baseURL: 'http://localhost:3000',
+      baseURL: 'http://localhost:5180',
       webOrigin: WEB_ORIGIN,
+      rateLimit: options.rateLimit ?? false,
     },
     email,
   })
   const app = createApp({ db: database.db, auth, checkHealth: healthy })
 
-  async function call(path: string, init: { method?: string; body?: unknown; cookie?: string }) {
+  async function call(
+    path: string,
+    init: { method?: string; body?: unknown; cookie?: string; ip?: string },
+  ) {
     const headers: Record<string, string> = { origin: WEB_ORIGIN }
+    if (init.ip) headers['x-forwarded-for'] = init.ip
     if (init.body !== undefined) headers['content-type'] = 'application/json'
     if (init.cookie) headers.cookie = init.cookie
     return app.request(path, {

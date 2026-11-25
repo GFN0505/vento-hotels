@@ -35,12 +35,16 @@ The quality bar is Linear, Stripe Dashboard, Mercury and Mews: calm, fast, preci
 | Radius | 8px for controls (`rounded-md`), 10px for cards and tiles (`rounded-lg`), `rounded-full` for badges and avatars |
 | Shadow | almost none: 1px shadow on cards in light mode, borders do the work; a larger shadow only for overlays. No shadows in dark mode. |
 
+**Product name:** this is *Vento Hotels*, one of several Vento products. Wherever the product is introduced (sign-in panel, phone header, sidebar, tab title, emails), use the `Logo` lockup with `product` ("Vento | Hotels"), never "Vento" alone. Logo, lockup and colour-role rules are in the `brand` skill.
+
+**Light mode is the default** (owner's decision, 25 Nov 2026): Vento opens light whatever the device setting. Dark mode is opt-in per person (`vento.theme` = `dark` or `system`, set from their profile), applied by the script in `apps/web/index.html` through the `.dark` class. Every screen must still work in dark mode.
+
 The hex values here are for defining tokens in `styles.css` only. Port them from `docs/design/export/vento.css`, light and dark, and keep the two files in step.
 
 **Never** write hex, rgb or arbitrary colour values in components. If a colour is missing, add a token in `styles.css` with a dark-mode value.
 
 ## Typography
-**Inter** (self-hosted via `@fontsource-variable/inter`, with `cv11` and `ss01` features), chosen in the design over Poppins because it stays readable in dense tables, grids and folios. Base size is **13px / 20px**; the app is dense like Linear and Stripe, not marketing-sized. Scale (from `vento.css`):
+**Fraunces** (`font-display`) is for brand headlines on front-door and marketing surfaces only; see the `brand` skill. Everything in the app is **Inter** (self-hosted via `@fontsource-variable/inter`, with `cv11` and `ss01` features), chosen in the design over Poppins because it stays readable in dense tables, grids and folios. Base size is **13px / 20px**; the app is dense like Linear and Stripe, not marketing-sized. Scale (from `vento.css`):
 - Display 28/36 semibold (stat headlines), page title 22/30 semibold, section title 16/24 semibold, card title 14/20 semibold
 - Body 13/20, small 12/16, label 11/16 semibold uppercase with letter spacing (table headers, field labels)
 - Secondary text uses the secondary text token, captions the tertiary one
@@ -54,6 +58,15 @@ The hex values here are for defining tokens in `styles.css` only. Port them from
 - Max content width `max-w-7xl` for forms and detail pages. Lists, the tape chart and the room board use the full width.
 - Forms: one column on mobile, two columns from `md`, using container queries inside dialogs.
 - POS and housekeeping use their own full-screen touch shells (no sidebar).
+
+## Form fields
+Use `Field` (and `EmailField` for email) from `@/components/ui`; never a bare `<input>` in a form. They give every form the same behaviour:
+- Checked when the person moves on to another field (`validate`), re-checked live once a message shows, cleared the moment it's fixed. Never on tapping a button: a message appearing then pushes the button away mid-tap.
+- Submit errors show until the field is edited; on submit, focus moves to the first field with a problem (`focusFirstProblem`).
+- Password fields (`revealable`): show/hide button (44px on phones) and a Caps Lock warning; new passwords show the live rule checklist once typing starts, and confirm fields show "Passwords match".
+- Email fields: `inputMode="email"`, no auto-capitalise or autocorrect, `autoComplete="username"` on sign-in and `"email"` on sign-up, and a "Did you mean …?" fix for mistyped providers.
+- 16px text on phones (iPhones zoom into smaller fields), labels above, never placeholder-only.
+- Buttons that start an action take `loading` (spinner + disabled).
 
 ## Components (shadcn only, from `@/components/ui`)
 Button (`default`, `secondary`, `outline`, `ghost`, `destructive`; sizes `sm`, `default`, `lg`, `icon`), Input, Select, Combobox (Command + Popover), DatePicker and DateRangePicker (Calendar + Popover), Dialog, Sheet, DropdownMenu, Tabs, Table, Badge, Card, Skeleton, Tooltip, Sonner.

@@ -5,6 +5,8 @@ description: Voice, tone and copy patterns for every word in the product — but
 
 # UX writing
 
+This skill is for words inside the product. How Vento presents itself (the name, taglines, the sign-in brand panel, website and marketing copy) follows the `brand` skill.
+
 ## Voice
 Clear, warm, professional. Like a capable colleague at the desk, not a robot or a salesperson. To guests: the courtesy of a good Nigerian hotel, never stiff. Nigerian English spelling and usage (e.g. "cheque", "colour", "check-in", "folio", "city ledger", "NEPA", "generator"). No slang, no exclamation marks except for genuine celebrations ("Your first property is set up!", "Night audit complete for 25 Nov 2026!").
 

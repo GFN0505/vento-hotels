@@ -16,7 +16,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@hono/node-server": "1.19.18",
+    "@hono/node-server": "2.1.6",
     "@orpc/server": "1.16.2",
     "@vento/shared": "workspace:*",
     "better-auth": "1.7.20",
