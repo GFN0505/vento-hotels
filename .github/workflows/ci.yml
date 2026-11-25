@@ -17,6 +17,33 @@ jobs:
     name: Check, typecheck and test
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # Same images and ports as docker-compose.yml, so tests run against the same services as locally.
+    services:
+      postgres:
+        image: postgres:18.7-alpine
+        env:
+          POSTGRES_USER: vento_hotels
+          POSTGRES_PASSWORD: vento_hotels
+          POSTGRES_DB: vento_hotels_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U vento_hotels -d vento_hotels_test"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+      storage:
+        image: rustfs/rustfs:1.0.5
+        env:
+          RUSTFS_ACCESS_KEY: vento-hotels-local
+          RUSTFS_SECRET_KEY: vento-hotels-local-secret
+        ports:
+          - 9100:9000
+        options: >-
+          --health-cmd "curl -fsS http://localhost:9000/health"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      DATABASE_URL: postgres://vento_hotels:vento_hotels@localhost:5433/vento_hotels_test
+      TEST_DATABASE_URL: postgres://vento_hotels:vento_hotels@localhost:5433/vento_hotels_test
+      S3_ENDPOINT: http://localhost:9100
     steps:
       - uses: actions/checkout@v5
 
@@ -34,6 +61,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Services reachable
+        run: pnpm db:status
 
       - name: Test
         run: pnpm test

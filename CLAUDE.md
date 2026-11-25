@@ -19,7 +19,7 @@ Read before working:
 - **Web:** Vite + React 19, TanStack Router (file-based), TanStack Query via the oRPC client, TanStack Table, react-hook-form + zod, shadcn/ui + Tailwind v4, Sonner, lucide, Recharts
 - **Offline:** front desk and POS keep working through power and internet cuts — service worker + IndexedDB queue, synced with idempotency keys
 - **Background jobs:** pg-boss (Postgres-backed queue) for night audit steps, ARI pushes, webhooks, messages, reports and scheduled checks. No Redis.
-- **Files:** S3-compatible object storage (Cloudflare R2 in production, MinIO locally) with signed URLs; guest ID images in a private bucket with short-lived links.
+- **Files:** S3-compatible object storage (Cloudflare R2 in production, RustFS locally — see decision 0016) with signed URLs; guest ID images in a private bucket with short-lived links.
 - **PDFs:** `@react-pdf/renderer` on the API for invoices, folios, registration cards, statements, payslips and board packs. Thermal receipts and kitchen tickets are 80mm print layouts (see `printing` skill).
 - **Messaging:** email, SMS and WhatsApp each sit behind a provider interface (`EmailProvider`, `SmsProvider`, `WhatsAppProvider`); providers are open questions in `docs/DOMAIN.md`.
 - **Observability:** structured logs (pino), Sentry for errors in web and api, uptime checks. Every request carries `organizationId`, `propertyId` and a request id in logs, never guest personal data.
@@ -30,9 +30,11 @@ Read before working:
 Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled with `corepack enable`). Commands not built yet print which brick adds them. Biome lints and formats code and config, not Markdown.
 - `pnpm install` — install all workspaces
 - `pnpm dev` — run web + api
-- `pnpm db:up` — start local Postgres (Docker)
+- `pnpm db:up` — start local Postgres and RustFS storage (Docker), waiting until healthy
+- `pnpm db:down` / `pnpm db:reset` — stop them / delete their data and start fresh
+- `pnpm db:status` — check the database and storage are reachable
 - `pnpm db:generate` / `pnpm db:migrate` — create / apply migrations
-- `pnpm db:seed` — load the demo group (two properties, rooms, rates, guests, a week of history) for development, tests and sales demos
+- `pnpm db:seed` — load the demo group (Kora Hotels Group, as in the designs and walkthroughs) for development, tests and sales demos
 - `pnpm check` — Biome lint + format check (`pnpm check:fix` to apply fixes)
 - `pnpm typecheck`, `pnpm test`, `pnpm e2e`
 - Before any commit: `pnpm check && pnpm typecheck && pnpm test`
