@@ -9,6 +9,6 @@ export function checkNewPassword(password: string, confirm: string): PasswordErr
   if (!isStrongPassword(password))
     errors.password = "Your password doesn't meet every rule below yet."
   if (confirm.length === 0) errors.confirm = 'Enter your password again.'
-  else if (confirm !== password) errors.confirm = "Passwords don't match."
+  else if (confirm !== password) errors.confirm = "Passwords don't match. Type it again."
   return errors
 }

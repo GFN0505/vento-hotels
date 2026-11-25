@@ -44,7 +44,7 @@ The hex values here are for defining tokens in `styles.css` only. Port them from
 **Never** write hex, rgb or arbitrary colour values in components. If a colour is missing, add a token in `styles.css` with a dark-mode value.
 
 ## Typography
-**Fraunces** (`font-display`) is for brand headlines on front-door and marketing surfaces only; see the `brand` skill. Everything in the app is **Inter** (self-hosted via `@fontsource-variable/inter`, with `cv11` and `ss01` features), chosen in the design over Poppins because it stays readable in dense tables, grids and folios. Base size is **13px / 20px**; the app is dense like Linear and Stripe, not marketing-sized. Scale (from `vento.css`):
+**Fraunces** (`font-display`) is for brand headlines on front-door and marketing surfaces only; see the `brand` skill. Everything in the app is **Inter** (self-hosted via `@fontsource-variable/inter`, with `cv11` and `ss01` features), chosen in the design over Poppins because it stays readable in dense tables, grids and folios. Base size is **13px / 20px**, set on `body`, never on `html` (rem sizes must stay 16px-based, or every spacing and field shrinks); the app is dense like Linear and Stripe, not marketing-sized. Scale (from `vento.css`):
 - Display 28/36 semibold (stat headlines), page title 22/30 semibold, section title 16/24 semibold, card title 14/20 semibold
 - Body 13/20, small 12/16, label 11/16 semibold uppercase with letter spacing (table headers, field labels)
 - Secondary text uses the secondary text token, captions the tertiary one
@@ -101,7 +101,7 @@ Every data view needs loading (skeleton), empty (illustration + action), filtere
 
 ## Accessibility (WCAG 2.2 AA)
 - Text contrast ≥ 4.5:1 (≥ 3:1 for large text and UI parts), checked in both themes, including text on status-coloured tiles.
-- Visible focus on everything interactive. Full keyboard use (tape chart included), and focus is trapped in dialogs.
+- Visible focus on everything interactive: the global `:focus-visible` rule draws a 2px `--ring` outline; don't remove it. Field borders use `--input` (3:1 against the surface). Full keyboard use (tape chart included), and focus is trapped in dialogs.
 - Labels on every input. `aria-label` on icon-only buttons and tiles ("Room 204, dirty, vacant"). Errors linked with `aria-describedby`.
 - Touch targets ≥ 44px on mobile, ≥ 48px on POS and housekeeping screens. Respect `prefers-reduced-motion`.
 

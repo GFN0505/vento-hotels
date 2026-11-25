@@ -220,3 +220,4 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 - Subscription pricing for customers: per property, per room, or per module.
 - Default permission limits and exception thresholds — confirm with pilot hotels.
 - Kitchen display while offline: does it need a local server/bridge on the hotel network, or do we rely on printed tickets during outages?
+- Terms of Service and Privacy Policy (NDPA 2023): to be written, with legal review, before the first paying customer. Sign-up shows no consent line until these pages exist, so it never links to nothing.

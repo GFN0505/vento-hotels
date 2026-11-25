@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { EmailField } from '@/components/ui/email-field'
 import { authClient } from '@/lib/auth'
 import { emailProblem } from '@/lib/email'
+import { CANT_REACH_VENTO, isConnectionProblem } from '@/lib/errors'
+import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/forgot-password')({
   component: ForgotPassword,
@@ -15,6 +17,8 @@ function ForgotPassword() {
   const [sent, setSent] = useState<{ to: string; expiresAt: string }>()
   const [emailError, setEmailError] = useState<string>()
   const [pending, setPending] = useState(false)
+  const [failure, setFailure] = useState<string>()
+  usePageTitle('Reset your password')
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -25,14 +29,23 @@ function ForgotPassword() {
       return
     }
     setEmailError(undefined)
+    setFailure(undefined)
     setPending(true)
     // The answer is the same whether or not the account exists, so this page can't be used to find
     // out who has an account.
-    await authClient.requestPasswordReset({
+    const { error: failure } = await authClient.requestPasswordReset({
       email,
       redirectTo: `${window.location.origin}/reset-password`,
     })
     setPending(false)
+    if (isConnectionProblem(failure)) {
+      setFailure(CANT_REACH_VENTO)
+      return
+    }
+    if (failure?.status === 429) {
+      setFailure('Too many reset requests from this network. Wait 10 minutes, then try again.')
+      return
+    }
     const expiresAt = new Date(Date.now() + 30 * 60_000).toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
@@ -59,6 +72,11 @@ function ForgotPassword() {
   return (
     <AuthCard title="Reset your password" subtitle="We'll email a link that works for 30 minutes.">
       <form onSubmit={onSubmit} className="flex flex-col gap-[18px]" noValidate>
+        {failure ? (
+          <p role="alert" className="rounded-sm bg-ro-bg px-3 py-2 text-ro">
+            {failure}
+          </p>
+        ) : null}
         <EmailField autoComplete="username" autoFocus error={emailError} />
         <Button type="submit" variant="primary" size="lg" loading={pending}>
           {pending ? 'Sending…' : 'Send reset link'}

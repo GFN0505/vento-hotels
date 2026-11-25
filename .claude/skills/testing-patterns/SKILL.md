@@ -120,3 +120,8 @@ Test names are sentences describing behaviour. Arrange, act, assert, with no log
 
 ## Running
 `pnpm test` (all unit/integration), `pnpm --filter api test -- reservation`, `pnpm e2e`, `pnpm e2e --ui` for debugging.
+
+## Accessibility and speed
+- Every page is listed in `apps/web/e2e/accessibility.spec.ts` and scanned with `expectAccessible(page)` (axe, WCAG 2.2 AA) in light and dark mode on desktop and phone. A new page without a line there is unfinished.
+- Shared browser-test helpers (outbox links, sign-in, `signUpOwnerWithGroup`, `switchToDarkMode`, `expectAccessible`) live in `apps/web/e2e/support.ts`; reuse them rather than copying.
+- `pnpm --filter @vento/web size` checks the built app against `apps/web/bundle-budget.json`.

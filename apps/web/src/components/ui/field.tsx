@@ -36,8 +36,8 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cn(
-        'h-9 w-full rounded-sm border border-border-strong bg-surface px-2.5 text-base text-text placeholder:text-text-3 max-sm:text-[16px]',
-        'focus:border-brand focus:outline-none focus:ring-3 focus:ring-pri-line',
+        'h-9 w-full rounded-sm border border-input bg-surface px-2.5 text-base text-text placeholder:text-text-3 max-sm:text-[16px]',
+        'focus:border-ring focus-visible:outline-none focus:ring-3 focus:ring-pri-line',
         'aria-invalid:border-ro-dot aria-invalid:ring-3 aria-invalid:ring-ro-bg',
         className,
       )}
@@ -151,10 +151,10 @@ export function Field({
           <button
             type="button"
             onClick={() => setRevealed((value) => !value)}
-            aria-label={revealed ? 'Hide password' : 'Show password'}
+            aria-label={`${revealed ? 'Hide' : 'Show'} ${/confirm/i.test(label) ? 'confirm password' : 'password'}`}
             aria-pressed={revealed}
             aria-controls={inputId}
-            className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-sm text-text-3 hover:text-text focus-visible:text-text focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-pri-line lg:w-9"
+            className="absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-sm text-text-3 hover:text-text focus-visible:text-text focus-visible:outline-offset-[-2px] lg:w-9"
           >
             {revealed ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
@@ -167,12 +167,13 @@ export function Field({
           Caps Lock is on
         </span>
       ) : null}
+      {/* Messages are announced as they appear (screen readers hear them without moving focus). */}
       {shown ? (
-        <span id={messageId} className="text-sm text-ro">
+        <span id={messageId} className="text-sm text-ro" aria-live="polite">
           {shown}
         </span>
       ) : success ? (
-        <span id={messageId} className="text-sm text-em">
+        <span id={messageId} className="text-sm text-em" aria-live="polite">
           {success}
         </span>
       ) : hint ? (

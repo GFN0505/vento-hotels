@@ -13,9 +13,8 @@ export function Checkbox({
       <input
         type="checkbox"
         className={cn(
-          'peer size-4 cursor-pointer appearance-none rounded-[4px] border border-border-strong bg-surface',
+          'peer size-4 cursor-pointer appearance-none rounded-[4px] border border-input bg-surface',
           'checked:border-pri checked:bg-pri',
-          'focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-pri-line',
         )}
         {...props}
       />
