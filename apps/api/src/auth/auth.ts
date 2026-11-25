@@ -58,6 +58,9 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
       enabled: true,
       requireEmailVerification: true,
       minPasswordLength: 10,
+      // Reset links last 30 minutes (design 24), and a reset signs the account out everywhere else.
+      resetPasswordTokenExpiresIn: 30 * 60,
+      revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) => {
         await email.send({
           to: user.email,

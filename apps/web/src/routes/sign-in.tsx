@@ -14,7 +14,8 @@ function messageFor(code: string | undefined): string {
   if (code === 'EMAIL_NOT_VERIFIED') {
     return 'Confirm your email first. We sent you a link when you signed up.'
   }
-  if (code === 'INVALID_EMAIL_OR_PASSWORD') return "That email and password don't match."
+  if (code === 'INVALID_EMAIL_OR_PASSWORD' || code === 'INVALID_EMAIL')
+    return 'Invalid email or password'
   return "We couldn't sign you in. Check your connection and try again."
 }
 
@@ -29,7 +30,7 @@ function SignIn() {
     setPending(true)
     setError(undefined)
     const { error: failure } = await authClient.signIn.email({
-      email: String(form.get('email')),
+      email: String(form.get('email')).trim(),
       password: String(form.get('password')),
       rememberMe: form.get('remember') === 'on',
     })
@@ -49,7 +50,14 @@ function SignIn() {
             {error}
           </p>
         ) : null}
-        <Field label="Work email" name="email" type="email" autoComplete="email" required />
+        <Field
+          label="Work email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          autoFocus
+        />
         <div className="flex flex-col gap-1.5">
           <Field
             label="Password"
@@ -57,7 +65,11 @@ function SignIn() {
             type="password"
             autoComplete="current-password"
             required
+            revealable
           />
+          <Link to="/forgot-password" className="self-end text-sm text-pri-ink hover:underline">
+            Forgot password?
+          </Link>
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="remember" defaultChecked className="accent-pri" />

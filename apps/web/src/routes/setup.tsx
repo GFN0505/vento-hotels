@@ -67,25 +67,25 @@ function Setup() {
         <Field
           label="Group name"
           name="group"
-          placeholder="Kora Hotels Group"
+          placeholder="e.g. Kora Hotels Group"
           required
           minLength={2}
         />
         <Field
           label="Company (as registered with CAC)"
           name="company"
-          placeholder="Kora Hospitality Ltd"
+          placeholder="e.g. Kora Hospitality Ltd"
           required
           minLength={2}
         />
         <Field
           label="First hotel"
           name="hotel"
-          placeholder="Kora Victoria Island"
+          placeholder="e.g. Kora Victoria Island"
           required
           minLength={2}
         />
-        <Field label="State" name="state" placeholder="Lagos" />
+        <Field label="State" name="state" placeholder="e.g. Lagos" />
         <Button type="submit" variant="primary" size="lg" disabled={pending}>
           {pending ? 'Setting up…' : 'Continue'}
         </Button>
