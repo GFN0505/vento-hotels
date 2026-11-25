@@ -42,19 +42,27 @@ They share some features that run across all of them: leakage and fraud controls
 pnpm + Turborepo monorepo (`apps/web`, `apps/api`, `packages/shared`). API on Hono + oRPC (Node 24) with zod v4 contracts, PostgreSQL + Drizzle, Better Auth with organizations, pg-boss for background jobs, S3-compatible storage. Web on Vite + React 19, TanStack Router/Query/Table, shadcn/ui + Tailwind v4, offline support through a service worker and IndexedDB. Biome, Vitest, Playwright, GitHub Actions. Full details in [CLAUDE.md](CLAUDE.md).
 
 ## Getting started
-You need Node 24 (see `.nvmrc`), pnpm through corepack, and Docker (from Stage 0, brick 2).
+You need Node 24 (see `.nvmrc`), pnpm through corepack, and Docker Desktop running.
 
 ```bash
 corepack enable
 pnpm install
+cp .env.example .env
+pnpm db:up        # Postgres and file storage in Docker, waits until healthy
+pnpm db:status    # confirms both are reachable
 pnpm check && pnpm typecheck && pnpm test
 ```
+
+`pnpm db:down` stops the services; `pnpm db:reset` deletes their local data and starts fresh.
+
+### Looking at the local database and files
+- **Database:** open TablePlus, Postico or any Postgres app and connect to host `localhost`, port `5433`, user `vento_hotels`, password `vento_hotels`, database `vento_hotels` (tests use `vento_hotels_test`). These are local placeholder credentials, not secrets. From brick 4, `pnpm db:studio` opens Drizzle Studio in the browser.
+- **Files:** open http://localhost:9101/rustfs/console/ and sign in with `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` from `.env`.
 
 Once the rest of Stage 0 lands:
 
 ```bash
-cp .env.example .env
-pnpm db:up && pnpm db:migrate && pnpm db:seed
+pnpm db:migrate && pnpm db:seed
 pnpm dev
 ```
 

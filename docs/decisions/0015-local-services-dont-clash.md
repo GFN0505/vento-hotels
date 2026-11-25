@@ -7,7 +7,7 @@
 The owner runs Vento Real Estate on the same Mac, with its local Postgres on port 5432. Running both projects must not mix databases or fail on a busy port.
 
 ## Decision
-Vento Hotels' local services use their own Docker container names (prefixed `vento-hotels-`, e.g. `vento-hotels-postgres`) and their own ports. Local Postgres listens on **5433**. Other local services (e.g. MinIO) also pick ports that don't collide with the Real Estate project.
+Vento Hotels' local services use their own Docker container names (prefixed `vento-hotels-`, e.g. `vento-hotels-postgres`) and their own ports. Local Postgres listens on **5433**. Other local services (e.g. the RustFS storage on 9100 and 9101, decision 0016) also pick ports that don't collide with the Real Estate project.
 
 ## Consequences
 - `pnpm db:up` starts only this project's containers; `.env.example` points `DATABASE_URL` at port 5433.

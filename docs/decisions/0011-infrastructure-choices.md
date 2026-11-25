@@ -8,7 +8,7 @@ Night audit, ARI pushes, webhooks, messages and reports need background work. Gu
 
 ## Decision
 - **Jobs:** pg-boss on the same Postgres. No Redis.
-- **Files:** S3-compatible object storage with signed URLs (Cloudflare R2 planned for production, MinIO locally); guest ID images in a private bucket with short-lived links.
+- **Files:** S3-compatible object storage with signed URLs (Cloudflare R2 planned for production; locally MinIO was planned, replaced by RustFS in decision 0016); guest ID images in a private bucket with short-lived links.
 - **PDFs:** `@react-pdf/renderer` on the API; thermal receipts and kitchen tickets as 80mm print layouts.
 - **Third parties** (email, SMS, WhatsApp, channel manager, payments) each sit behind a provider interface with a mock for tests.
 - **Observability:** pino structured logs with `organizationId`, `propertyId` and request id (never guest personal data), Sentry for errors in web and API, uptime checks.

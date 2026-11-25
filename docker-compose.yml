@@ -1,0 +1,49 @@
+# Local development services only. The credentials below are local placeholders, not secrets.
+# Names and ports are unique to Vento Hotels so they never clash with other projects
+# (see docs/decisions/0015-local-services-dont-clash.md).
+name: vento-hotels
+
+services:
+  postgres:
+    image: postgres:18.7-alpine
+    container_name: vento-hotels-postgres
+    environment:
+      POSTGRES_USER: vento_hotels
+      POSTGRES_PASSWORD: vento_hotels
+      POSTGRES_DB: vento_hotels
+      TZ: UTC
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vento_hotels -d vento_hotels"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # S3-compatible object storage for local development (production uses Cloudflare R2).
+  # See docs/decisions/0016-local-object-storage.md for why this is RustFS, not MinIO.
+  storage:
+    image: rustfs/rustfs:1.0.5
+    container_name: vento-hotels-storage
+    environment:
+      RUSTFS_ACCESS_KEY: vento-hotels-local
+      RUSTFS_SECRET_KEY: vento-hotels-local-secret
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+    ports:
+      - "9100:9000"
+      - "9101:9001"
+    volumes:
+      - storage-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  postgres-data:
+  storage-data:

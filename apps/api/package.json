@@ -6,9 +6,14 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "infra:check": "node --env-file-if-exists=../../.env src/infra/check-cli.ts"
   },
   "dependencies": {
-    "@vento/shared": "workspace:*"
+    "@vento/shared": "workspace:*",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1"
   }
 }
