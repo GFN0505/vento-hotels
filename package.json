@@ -17,12 +17,13 @@
     "test": "turbo run test",
     "e2e": "echo \"e2e: Playwright arrives with the web app shell (Stage 0, brick 7)\"",
     "db:up": "docker compose up -d --wait",
-    "db:generate": "echo \"db:generate: Drizzle arrives in Stage 0, brick 4\" && exit 1",
-    "db:migrate": "echo \"db:migrate: Drizzle arrives in Stage 0, brick 4\" && exit 1",
+    "db:generate": "pnpm --filter @vento/api db:generate",
+    "db:migrate": "pnpm --filter @vento/api db:migrate && pnpm --filter @vento/api db:migrate:test",
     "db:seed": "echo \"db:seed: the demo seed arrives in Stage 0, brick 10\" && exit 1",
     "db:down": "docker compose down",
     "db:reset": "docker compose down --volumes && docker compose up -d --wait",
-    "db:status": "pnpm --filter @vento/api infra:check"
+    "db:status": "pnpm --filter @vento/api infra:check",
+    "db:studio": "pnpm --filter @vento/api db:studio"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.6",

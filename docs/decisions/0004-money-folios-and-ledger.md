@@ -12,6 +12,7 @@ Amounts are `numeric(14,2)` in Postgres, strings in TypeScript, calculated with 
 ## Consequences
 - No `number` type for money anywhere, enforced in review.
 - Folio balances are derived from postings, never stored as editable totals.
+- Append-only is enforced in Postgres as well as in code: these tables carry the `vento_forbid_update_delete()` trigger from migration 0000.
 - A change in tax rates never alters past postings.
 - Multi-table money writes always run in one transaction.
 

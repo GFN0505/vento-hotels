@@ -65,5 +65,16 @@ jobs:
       - name: Services reachable
         run: pnpm db:status
 
+      - name: Migrations match the schema
+        # Fails if a schema file changed without a generated migration being committed.
+        run: |
+          pnpm --filter @vento/api exec drizzle-kit check
+          pnpm db:generate
+          git diff --exit-code -- apps/api/drizzle || (echo "::error::Schema changed without a migration. Run pnpm db:generate and commit apps/api/drizzle." && exit 1)
+          test -z "$(git status --porcelain -- apps/api/drizzle)" || (echo "::error::Untracked migration files. Run pnpm db:generate and commit apps/api/drizzle." && exit 1)
+
+      - name: Migrations apply cleanly
+        run: pnpm --filter @vento/api db:migrate
+
       - name: Test
         run: pnpm test

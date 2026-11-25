@@ -50,20 +50,22 @@ pnpm install
 cp .env.example .env
 pnpm db:up        # Postgres and file storage in Docker, waits until healthy
 pnpm db:status    # confirms both are reachable
+pnpm db:migrate   # applies database migrations (dev and test databases)
+pnpm dev          # API on http://localhost:3000 — try /health
 pnpm check && pnpm typecheck && pnpm test
 ```
 
 `pnpm db:down` stops the services; `pnpm db:reset` deletes their local data and starts fresh.
 
 ### Looking at the local database and files
-- **Database:** open TablePlus, Postico or any Postgres app and connect to host `localhost`, port `5433`, user `vento_hotels`, password `vento_hotels`, database `vento_hotels` (tests use `vento_hotels_test`). These are local placeholder credentials, not secrets. From brick 4, `pnpm db:studio` opens Drizzle Studio in the browser.
+- **Database:** open TablePlus, Postico or any Postgres app and connect to host `localhost`, port `5433`, user `vento_hotels`, password `vento_hotels`, database `vento_hotels` (tests use `vento_hotels_test`). These are local placeholder credentials, not secrets. Or run `pnpm db:studio` to browse it in Drizzle Studio in your browser.
 - **Files:** open http://localhost:9101/rustfs/console/ and sign in with `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` from `.env`.
 
 Once the rest of Stage 0 lands:
 
 ```bash
-pnpm db:migrate && pnpm db:seed
-pnpm dev
+pnpm db:seed
+
 ```
 
 ## How we work
