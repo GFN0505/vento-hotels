@@ -2,16 +2,17 @@
 
 How the code is laid out and how a request flows through it. The *why* behind the big choices is in `docs/decisions/`. Keep this file current when the structure changes.
 
-Each section says honestly where it stands: **Built in brick N** (on `main`), **In review (brick N)** (open pull request, not merged), or **Planned (brick N)** for the Stage 0 bricks still to come: 1 monorepo skeleton, 2 local infra, 3 shared basics, 4 Drizzle, 5 auth, 6 permissions and audit, 7 web shell, 8 devices and PIN, 9 offline, 10 seed and deploy.
+Each section says honestly where it stands: **Built in brick N** (on `main`), **In review (brick N)** (open pull request, not merged), or **Planned (brick N)** for the Stage 0 bricks: 1 monorepo skeleton, 2 local infra, 3 shared basics, 4 Drizzle and the API server, 5 auth, 6 permissions and audit, 7 web shell, 8 devices and PIN, 9 offline, 10 seed and deploy.
 
 ## Layout
-*Built in brick 1 for the workspace, apps and packages; the folders inside them are planned for the bricks shown.*
+*Built in brick 1 for the workspace, apps and packages; `api/src/infra/` built in brick 2. The `shared` files marked brick 3 are in review; everything else is planned for the bricks shown.*
 ```
 apps/
   api/                       Hono + oRPC server on Node 24
     src/
-      app.ts                 middleware chain, /health, /rpc                          (brick 3)
-      env.ts                 zod-validated environment, fails fast on start           (brick 3)
+      app.ts                 middleware chain, /health, /rpc                          (brick 4)
+      env.ts                 zod-validated environment, fails fast on start           (brick 4)
+      infra/                 settings reader (zod) and database/storage checks        (bricks 2–3)
       db/schema/             Drizzle tables, one file per module                      (brick 4)
       db/migrate.ts          applies migrations as a release step, never on app start (brick 4)
       middleware/            auth, organization, property scope, permission + limit   (bricks 5–6)
@@ -31,7 +32,11 @@ apps/
 packages/
   shared/                    the single source of API types
     src/
-      common/                id (UUID v7), money, currency, isoDate, pagination, Decimal  (brick 3)
+      money.ts               Decimal, toAmount, money maths, FX, formatMoney           (brick 3)
+      ids.ts                 newId() UUID v7, idSchema                                 (brick 3)
+      dates.ts               calendar dates, nights, property-time-zone date           (brick 3)
+      pagination.ts          page query and { items, page, pageSize, total }           (brick 3)
+      locale.ts              NGN default, supported currencies, Africa/Lagos           (brick 1)
       permissions/           module × action list and limit keys                     (brick 6)
       <module>/              zod schemas and the oRPC contract per module             (from brick 5)
 ```

@@ -17,8 +17,21 @@ describe('readInfraConfig', () => {
     expect(() => readInfraConfig({ S3_ENDPOINT: 'http://localhost:9100' })).toThrow(
       MissingSettingError,
     )
-    expect(() => readInfraConfig({ DATABASE_URL: ' ', S3_ENDPOINT: 'x' })).toThrow(
-      /DATABASE_URL is not set/,
-    )
+    expect(() =>
+      readInfraConfig({ DATABASE_URL: ' ', S3_ENDPOINT: 'http://localhost:9100' }),
+    ).toThrow(/DATABASE_URL is not set/)
+  })
+
+  it('rejects malformed settings without echoing their values', () => {
+    const attempt = () =>
+      readInfraConfig({
+        DATABASE_URL: 'mysql://user:s3cret@host/db',
+        S3_ENDPOINT: 'http://localhost:9100',
+      })
+    expect(attempt).toThrow(/DATABASE_URL is not valid/)
+    expect(attempt).not.toThrow(/s3cret/)
+    expect(() =>
+      readInfraConfig({ DATABASE_URL: 'postgres://u:p@h/db', S3_ENDPOINT: 'ftp://x' }),
+    ).toThrow(/S3_ENDPOINT is not valid/)
   })
 })
