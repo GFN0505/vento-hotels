@@ -67,7 +67,7 @@ Use these as written; propose changes to the owner instead of drifting.
 ## Formats
 | Surface | Shape |
 |---|---|
-| Sign-in brand panel | Lockup · eyebrow · headline · one support line · footer. No feature list. |
+| Sign-in brand panel | Lockup · eyebrow · headline · one support line · footer. No feature list. Motion: slow drifting light, a faint dot grid, the mark drawing itself, copy rising in; calm, never looping text or flashing, and still with reduced motion. |
 | Website hero | Headline · support line · one call to action ("Book a demo" or "Start your setup") · a calm product screenshot from the demo world. |
 | Pilot outreach (email or WhatsApp, with consent) | Under 120 words: who we are, the one outcome, what a pilot involves, one question to reply to. |
 | One-pager | Promise · the four proof pillars, one line each · how a pilot works · contact. |

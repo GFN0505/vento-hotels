@@ -166,20 +166,127 @@
   }
 }
 
-/* Sign-in brand panel: navy with a soft glow in the logo's own colours. */
+/* Sign-in brand panel: navy with light that slowly drifts in the logo's own colours, a faint
+   dot grid, a mark that draws itself and copy that rises in. Only transform and opacity animate
+   (cheap on mid-range phones), and everything is still for people who ask for reduced motion. */
 @layer components {
   .auth-panel {
-    background:
-      radial-gradient(
-        110% 70% at 0% 100%,
-        color-mix(in srgb, var(--brand) 32%, transparent) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        80% 55% at 100% 0%,
-        color-mix(in srgb, var(--logo-dot) 16%, transparent) 0%,
-        transparent 65%
-      ),
-      var(--side);
+    background: var(--side);
+    isolation: isolate;
+  }
+
+  .auth-glow {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: -1;
+    will-change: transform;
+  }
+  .auth-glow-violet {
+    width: 70%;
+    aspect-ratio: 1;
+    left: -20%;
+    bottom: -25%;
+    background: color-mix(in srgb, var(--brand) 45%, transparent);
+    animation: auth-drift-a 26s ease-in-out infinite alternate;
+  }
+  .auth-glow-cyan {
+    width: 55%;
+    aspect-ratio: 1;
+    right: -18%;
+    top: -18%;
+    background: color-mix(in srgb, var(--logo-dot) 24%, transparent);
+    animation: auth-drift-b 32s ease-in-out infinite alternate;
+  }
+  .auth-glow-indigo {
+    width: 45%;
+    aspect-ratio: 1;
+    left: 30%;
+    top: 30%;
+    background: color-mix(in srgb, var(--logo-v) 22%, transparent);
+    animation: auth-drift-c 22s ease-in-out infinite alternate;
+  }
+
+  .auth-grid {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse 70% 60% at 30% 55%, #000 10%, transparent 75%);
+  }
+
+  .auth-draw path {
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    animation: auth-draw 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.2s forwards;
+  }
+  .auth-draw circle {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: auth-dot 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 1.6s forwards;
+  }
+
+  .auth-rise {
+    opacity: 0;
+    animation: auth-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+
+@keyframes auth-drift-a {
+  to {
+    transform: translate(18%, -14%) scale(1.15);
+  }
+}
+@keyframes auth-drift-b {
+  to {
+    transform: translate(-22%, 16%) scale(0.9);
+  }
+}
+@keyframes auth-drift-c {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-25%, 20%) scale(1.2);
+  }
+}
+@keyframes auth-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes auth-dot {
+  from {
+    opacity: 0;
+    transform: translateY(-40%) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-glow,
+  .auth-draw path,
+  .auth-draw circle,
+  .auth-rise {
+    animation: none;
+    opacity: 1;
+    stroke-dashoffset: 0;
   }
 }

@@ -36,14 +36,23 @@ export function AuthCard({
   )
 }
 
+// Each piece of copy rises in a beat after the one before.
+const rise = (step: number) => ({ animationDelay: `${0.35 + step * 0.12}s` })
+
 function BrandPanel() {
   return (
     <aside className="auth-panel relative hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex xl:p-16">
-      {/* A large, faint mark in the corner: texture, not decoration that competes with the copy. */}
+      {/* Light that drifts slowly behind everything, and a faint dot grid for depth. */}
+      <div className="auth-glow auth-glow-violet" aria-hidden="true" />
+      <div className="auth-glow auth-glow-cyan" aria-hidden="true" />
+      <div className="auth-glow auth-glow-indigo" aria-hidden="true" />
+      <div className="auth-grid" aria-hidden="true" />
+
+      {/* A large, faint mark in the corner that draws itself when the page opens. */}
       <svg
         viewBox="0 0 100 100"
         aria-hidden="true"
-        className="pointer-events-none absolute -right-48 -bottom-56 size-[560px] opacity-[0.05]"
+        className="auth-draw pointer-events-none absolute -right-48 -bottom-56 size-[560px] opacity-[0.07]"
       >
         <path
           d="M24 22 L50 78 L76 22"
@@ -56,23 +65,29 @@ function BrandPanel() {
         <circle cx="50" cy="27" r="9" fill="currentColor" />
       </svg>
 
-      <Logo size={30} wordmark product className="relative text-[18px]" />
+      <Logo size={30} wordmark product className="auth-rise relative text-[18px]" />
 
       <div className="relative">
-        <p className="mb-5 text-xs font-semibold tracking-[0.14em] text-logo-dot uppercase">
+        <p
+          className="auth-rise mb-5 text-xs font-semibold tracking-[0.14em] text-logo-dot uppercase"
+          style={rise(0)}
+        >
           For hotel groups in Nigeria
         </p>
         <h2 className="mb-6 text-[34px] leading-[1.15] font-semibold tracking-[-0.025em] xl:text-[44px]">
-          Every room. Every naira.
-          <br />
-          Every night, <span className="text-logo-dot">accounted for.</span>
+          <span className="auth-rise block" style={rise(1)}>
+            Every room. Every naira.
+          </span>
+          <span className="auth-rise block" style={rise(2)}>
+            Every night, <span className="text-logo-dot">accounted for.</span>
+          </span>
         </h2>
-        <p className="max-w-[460px] text-lg leading-7 text-side-text">
+        <p className="auth-rise max-w-[460px] text-lg leading-7 text-side-text" style={rise(3)}>
           Run every hotel in your group from one place, and know exactly how each one is doing.
         </p>
       </div>
 
-      <div className="relative flex flex-wrap gap-4 text-sm text-side-mute">
+      <div className="auth-rise relative flex flex-wrap gap-4 text-sm text-side-mute" style={rise(4)}>
         <span>© 2026 Vento</span>
         <span>Privacy (NDPA 2023)</span>
         <span>Terms</span>

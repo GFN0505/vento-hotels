@@ -149,3 +149,32 @@ test('an expired or used reset link says so', async ({ page }) => {
   await page.goto('/reset-password?error=INVALID_TOKEN')
   await expect(page.getByRole('heading', { name: 'This link has expired' })).toBeVisible()
 })
+
+test.describe('sign-in brand panel motion', () => {
+  test.skip(({ isMobile }) => isMobile, 'The brand panel only shows on desktop')
+
+  test('drifts gently and finishes its entrance with all copy visible', async ({ page }) => {
+    await page.goto('/sign-in')
+    const headline = page.getByRole('heading', { name: /accounted for/ })
+    await expect(headline).toBeVisible()
+    await expect(page.getByText('For hotel groups in Nigeria')).toHaveCSS('opacity', '1')
+    const running = await page.evaluate(() =>
+      document
+        .getAnimations()
+        .filter((a) => a.playState === 'running')
+        .map((a) => (a as CSSAnimation).animationName),
+    )
+    expect(running).toEqual(expect.arrayContaining(['auth-drift-a', 'auth-drift-b', 'auth-drift-c']))
+  })
+
+  test('stays still, with everything visible, for people who ask for reduced motion', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/sign-in')
+    await expect(page.getByText('For hotel groups in Nigeria')).toHaveCSS('opacity', '1')
+    await expect(page.getByRole('heading', { name: /accounted for/ })).toBeVisible()
+    const animations = await page.evaluate(() => document.getAnimations().length)
+    expect(animations).toBe(0)
+  })
+})
