@@ -199,6 +199,9 @@ importers:
       pg:
         specifier: 8.23.1
         version: 8.23.1
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@types/pg':
         specifier: 8.23.1
@@ -210,7 +213,17 @@ importers:
         specifier: workspace:*
         version: link:../../packages/shared
 
-  packages/shared: {}
+  packages/shared:
+    dependencies:
+      decimal.js:
+        specifier: 10.6.0
+        version: 10.6.0
+      uuid:
+        specifier: 14.0.3
+        version: 14.0.3
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
 
 packages:
 
@@ -606,6 +619,9 @@ packages:
     resolution: {integrity: sha512-XWAtwJ6OHO+tj0EKCs0Y2UamnyOxseZWltU4x2U2wh8g4AigdjwvtUjvLP2tqkA/avxHEtzxNaqGq/YGNwckKg==}
     engines: {node: '>=18'}
 
+  decimal.js@10.6.0:
+    resolution: {integrity: sha512-YpgQiITW3JXGntzdUmyUR1V812Hn8T1YVXhCu+wO3OpS4eU9l4YdD3qjyiKdV6mvV29zapkMeD390UVEf2lkUg==}
+
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
@@ -824,6 +840,10 @@ packages:
   undici-types@7.24.6:
     resolution: {integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==}
 
+  uuid@14.0.3:
+    resolution: {integrity: sha512-Sc5u1VVln93y1Xnz4R+CunOZc7R9LUcTmhj7Rc7Eg3HVcf7rVn2FOoa812fe0W8p3jD7xeoGSYbfqCGGH2B6xw==}
+    hasBin: true
+
   vite@8.3.8:
     resolution: {integrity: sha512-LzOn3h9rG/0vhLdXrV4yJ4QFA9eEoqCl+Yx+kGJd7aB9w6nfNgVHKSYwLPZUHrz4ZGa+t+kXjV9itvcHDLQouA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -916,6 +936,9 @@ packages:
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
     engines: {node: '>=0.4'}
+
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
 
@@ -1167,6 +1190,8 @@ snapshots:
 
   chai@6.3.0: {}
 
+  decimal.js@10.6.0: {}
+
   detect-libc@2.1.2: {}
 
   es-module-lexer@2.3.2: {}
@@ -1370,6 +1395,8 @@ snapshots:
 
   undici-types@7.24.6: {}
 
+  uuid@14.0.3: {}
+
   vite@8.3.8(@types/node@24.19.2):
     dependencies:
       lightningcss: 1.33.0
@@ -1405,3 +1432,5 @@ snapshots:
   why-is-node-running@3.2.1: {}
 
   xtend@4.0.2: {}
+
+  zod@4.6.7: {}

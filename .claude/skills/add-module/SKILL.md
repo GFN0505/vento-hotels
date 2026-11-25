@@ -108,7 +108,7 @@ Then follow the `db-migration` skill.
 - Enforce domain rules here (e.g. `open → assigned → in_progress → resolved → closed` only; a room can't be put out of order for dates with in-house or arriving stays → `CONFLICT` "Room 204 has a guest arriving on 26 Nov 2026. Move the stay first.").
 - Anything that changes availability goes inside `ctx.db.transaction(async (tx) => …)` and takes the inventory lock first: `lockInventory(tx, { roomTypeId, from, to })` (`SELECT … FOR UPDATE` on the room-type inventory rows per date). Putting a room OOO marks the room's housekeeping status `out_of_order`, reduces availability for each date, and queues an ARI push to channels in the same transaction. Resolving the work order returns the room to inventory the same way (status `dirty`, so housekeeping inspects it before it's sold).
 - **Audit every write.** Each create, update, status change and resolve calls `recordAudit(tx, { action: 'work_order.resolve', entity: 'work_order', entityId, before, after, reason })` inside the same transaction; actor, device, property and business date come from `ctx`. Putting a room OOO is also a room status change, so it audits on the room too. Never update or delete audit rows.
-- Use the decimal library for any maths on `cost`.
+- Use the decimal helpers from `@vento/shared` (`dec`, `toAmount`) for any maths on `cost`; validate input with `amountSchema` / `moneySchema`, ids with `idSchema`, lists with `pageQuerySchema` / `pageSchema`.
 - Lists: build filters with `and(...)`, return `{ items, page, pageSize, total }` using the shared `paginate` helper.
 
 ## 5. Router — `apps/api/src/modules/work-order/work-order.router.ts`
