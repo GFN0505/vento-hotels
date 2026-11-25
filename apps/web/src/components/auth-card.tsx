@@ -1,8 +1,7 @@
 // The "front door" screens (sign in, get started, forgot and reset password, setup): a navy brand
-// panel beside the form on desktop, the form alone under a small logo on phones. Same layout as
+// panel taking half the page beside the form on desktop, the form alone under a small logo on phones. Same layout as
 // Vento Real Estate's sign-in, so the two products feel like one family (logged in
 // docs/design/CHANGES.md, since the Hotels design export shows a centred card).
-import { Building2, ShieldCheck, Zap } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Logo } from '@/components/logo'
 
@@ -16,7 +15,7 @@ export function AuthCard({
   children: ReactNode
 }) {
   return (
-    <div className="min-h-dvh bg-surface lg:grid lg:grid-cols-[520px_1fr]">
+    <div className="min-h-dvh bg-surface lg:grid lg:grid-cols-2">
       <BrandPanel />
       <main className="flex min-h-dvh flex-col gap-5 px-6 pt-4 pb-8 lg:items-center lg:p-12 lg:pt-[14vh]">
         <div className="flex min-h-10 items-center lg:hidden">
@@ -37,23 +36,14 @@ export function AuthCard({
   )
 }
 
-const PROOF = [
-  {
-    icon: ShieldCheck,
-    text: 'Leakage caught, not guessed: every discount, void and unrecorded room, by name.',
-  },
-  { icon: Zap, text: 'Keeps working when the power or the internet doesn’t.' },
-  { icon: Building2, text: 'One view across every hotel in your group.' },
-]
-
 function BrandPanel() {
   return (
-    <aside className="auth-panel relative hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex">
+    <aside className="auth-panel relative hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex xl:p-16">
       {/* A large, faint mark in the corner: texture, not decoration that competes with the copy. */}
       <svg
         viewBox="0 0 100 100"
         aria-hidden="true"
-        className="pointer-events-none absolute -right-40 -bottom-48 size-[440px] opacity-[0.05]"
+        className="pointer-events-none absolute -right-48 -bottom-56 size-[560px] opacity-[0.05]"
       >
         <path
           d="M24 22 L50 78 L76 22"
@@ -72,25 +62,14 @@ function BrandPanel() {
         <p className="mb-5 text-xs font-semibold tracking-[0.14em] text-logo-dot uppercase">
           For hotel groups in Nigeria
         </p>
-        <h2 className="mb-5 text-[30px] leading-[1.2] font-semibold tracking-[-0.025em]">
+        <h2 className="mb-6 text-[34px] leading-[1.15] font-semibold tracking-[-0.025em] xl:text-[44px]">
           Every room. Every naira.
           <br />
           Every night, <span className="text-logo-dot">accounted for.</span>
         </h2>
-        <p className="mb-8 max-w-[400px] text-md leading-6 text-side-text">
-          Front desk, restaurant, housekeeping and night audit in one calm place, with the owner’s
-          report on WhatsApp before breakfast.
+        <p className="max-w-[460px] text-lg leading-7 text-side-text">
+          Run every hotel in your group from one place, and know exactly how each one is doing.
         </p>
-        <ul className="flex max-w-[400px] flex-col gap-3.5">
-          {PROOF.map(({ icon: Icon, text }) => (
-            <li key={text} className="flex items-start gap-3 text-base text-side-text">
-              <span className="grid size-7 flex-none place-items-center rounded-sm border border-white/10 bg-white/5">
-                <Icon className="size-4 text-white" />
-              </span>
-              <span className="pt-1">{text}</span>
-            </li>
-          ))}
-        </ul>
       </div>
 
       <div className="relative flex flex-wrap gap-4 text-sm text-side-mute">
