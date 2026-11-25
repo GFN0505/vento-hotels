@@ -35,6 +35,8 @@ The quality bar is Linear, Stripe Dashboard, Mercury and Mews: calm, fast, preci
 | Radius | 8px for controls (`rounded-md`), 10px for cards and tiles (`rounded-lg`), `rounded-full` for badges and avatars |
 | Shadow | almost none: 1px shadow on cards in light mode, borders do the work; a larger shadow only for overlays. No shadows in dark mode. |
 
+**Product name:** this is *Vento Hotels*, one of several Vento products. Wherever the product is introduced (sign-in panel, phone header, sidebar, tab title, emails), use the `Logo` lockup with `product` ("Vento | Hotels"), never "Vento" alone.
+
 **Light mode is the default** (owner's decision, 25 Nov 2026): Vento opens light whatever the device setting. Dark mode is opt-in per person (`vento.theme` = `dark` or `system`, set from their profile), applied by the script in `apps/web/index.html` through the `.dark` class. Every screen must still work in dark mode.
 
 The hex values here are for defining tokens in `styles.css` only. Port them from `docs/design/export/vento.css`, light and dark, and keep the two files in step.

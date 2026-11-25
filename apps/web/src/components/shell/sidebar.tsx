@@ -19,10 +19,9 @@ export function Sidebar({ groupName, onNavigate }: { groupName: string; onNaviga
       aria-label="Main"
       className="flex h-full w-[232px] flex-none flex-col gap-0.5 bg-side px-2.5 py-3.5 text-side-text"
     >
-      <div className="flex items-center gap-2.5 px-2 pt-1 pb-3.5 text-[15px] font-semibold text-white">
-        <Logo size={28} />
-        <span>Vento</span>
-        <span className="ml-auto truncate text-xs font-medium text-side-mute">{groupName}</span>
+      <div className="flex flex-col gap-1 px-2 pt-1 pb-3.5">
+        <Logo size={26} wordmark product className="text-[15px] text-white" />
+        <span className="truncate pl-[36px] text-xs font-medium text-side-mute">{groupName}</span>
       </div>
       {NAV.map((section) => (
         <div key={section.group ?? 'main'} className="flex flex-col gap-0.5">

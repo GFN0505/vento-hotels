@@ -165,3 +165,21 @@
     font-feature-settings: "tnum", "cv11";
   }
 }
+
+/* Sign-in brand panel: navy with a soft glow in the logo's own colours. */
+@layer components {
+  .auth-panel {
+    background:
+      radial-gradient(
+        110% 70% at 0% 100%,
+        color-mix(in srgb, var(--brand) 32%, transparent) 0%,
+        transparent 60%
+      ),
+      radial-gradient(
+        80% 55% at 100% 0%,
+        color-mix(in srgb, var(--logo-dot) 16%, transparent) 0%,
+        transparent 65%
+      ),
+      var(--side);
+  }
+}
