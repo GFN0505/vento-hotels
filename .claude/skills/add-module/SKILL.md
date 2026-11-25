@@ -108,22 +108,22 @@ Then follow the `db-migration` skill.
 - Dates come from the property: `reportedOn` defaults to the property's current **business date** (`getBusinessDate(tx, propertyId)`), never `new Date()`.
 - Enforce domain rules here (e.g. `open → assigned → in_progress → resolved → closed` only; a room can't be put out of order for dates with in-house or arriving stays → `CONFLICT` "Room 204 has a guest arriving on 26 Nov 2026. Move the stay first.").
 - Anything that changes availability goes inside `ctx.db.transaction(async (tx) => …)` and takes the inventory lock first: `lockInventory(tx, { roomTypeId, from, to })` (`SELECT … FOR UPDATE` on the room-type inventory rows per date). Putting a room OOO marks the room's housekeeping status `out_of_order`, reduces availability for each date, and queues an ARI push to channels in the same transaction. Resolving the work order returns the room to inventory the same way (status `dirty`, so housekeeping inspects it before it's sold).
-- **Audit every write.** Each create, update, status change and resolve calls `recordAudit(tx, { action: 'work_order.resolve', entity: 'work_order', entityId, before, after, reason })` inside the same transaction; actor, device, property and business date come from `ctx`. Putting a room OOO is also a room status change, so it audits on the room too. Never update or delete audit rows.
+- **Audit every write.** Each create, update, status change and resolve calls `recordAudit(tx, access, { action: 'work_order.resolved', entityType: 'work_order', entityId, propertyId, before, after, reason, businessDate })` (`apps/api/src/audit/record.ts`) inside the same transaction; the actor comes from `access`. See `tenancy/service.ts` for the pattern. Putting a room OOO is also a room status change, so it audits on the room too. Never update or delete audit rows.
 - Use the decimal helpers from `@vento/shared` (`dec`, `toAmount`) for any maths on `cost`; validate input with `amountSchema` / `moneySchema`, ids with `idSchema`, lists with `pageQuerySchema` / `pageSchema`.
 - Lists: build filters with `and(...)`, return `{ items, page, pageSize, total }` using the shared `paginate` helper.
 
 ## 5. Router — `apps/api/src/modules/work-order/work-order.router.ts`
+Add the procedures to `apps/api/src/router.ts` on the `inOrganization` implementer, which has already loaded `access` (organization, property scope, effective rules):
 ```ts
-export const workOrderRouter = {
-  list: authed.use(requirePermission('maintenance', 'read')).workOrder.list.handler(({ input, context }) => list(context, input)),
-  create: authed.use(requirePermission('maintenance', 'create')).workOrder.create.handler(({ input, context }) => create(context, input)),
-  resolve: authed.use(requirePermission('maintenance', 'update')).workOrder.resolve.handler(({ input, context }) => resolve(context, input)),
-  // …
-}
+workOrders: {
+  list: inOrganization.workOrders.list.handler(({ context, input }) => workOrders.list(context.db, context.access, input)),
+  create: inOrganization.workOrders.create.handler(({ context, input }) => workOrders.create(context.db, context.access, input)),
+  resolve: inOrganization.workOrders.resolve.handler(({ context, input }) => workOrders.resolve(context.db, context.access, input)),
+},
 ```
-No try/catch. Throw `ORPCError` in the service, and the central handler formats it. Register in `apps/api/src/router.ts` and add the module's actions to the permission map. `requirePermission` also checks the input's `propertyId` against the member's allowed properties; the service still scopes every query because `get`/`update` take only an `id`.
+The service starts with `requirePermission(access, 'maintenance.manage')` (add new keys to `PERMISSIONS` and the default matrix in `packages/shared/src/permissions.ts`, and to the DOMAIN.md table). No try/catch: throw `ORPCError` in the service. The service also scopes every query, because `get`/`update` take only an `id`.
 
-**Permission limits.** If an action has a limit in the permissions matrix in `docs/DOMAIN.md` (a discount %, a refund amount, a cost above which a work order needs GM approval), add its row to the matrix seed defaults and check it in the service with `assertWithinLimit(ctx, 'maintenance.approve_cost', input.cost, input.approval)`. The helper reads the organization's configured limit, and over the limit it verifies the approver's credentials (password or PIN on the same device), rejects an approver who is the actor or whose own limit is too low, and returns the approver id for the audit event. Never compare against a constant or a limit sent by the client. If the action is on the exception list (void, comp, discount, override, refund…), make sure its audit event carries what the owner's daily report needs (amount, staff, reason, approver).
+**Permission limits.** If an action has a limit in the permissions matrix in `docs/DOMAIN.md` (a discount %, a refund amount, a cost above which a work order needs GM approval), add its row to the matrix seed defaults and check it in the service with `requireWithinLimit(access, 'maintenance.approve_cost', input.cost)` (`apps/api/src/tenancy/access.ts`). It reads the organization's effective limit and, over it, throws `FORBIDDEN` with `data.code = 'APPROVAL_REQUIRED'` and the limit. Approval by an approver's PIN on the same device (never the actor, never someone whose own limit is too low, approver id on the audit event) arrives in Stage 0 brick 8 and plugs into this same call. Never compare against a constant or a limit sent by the client. If the action is on the exception list (void, comp, discount, override, refund…), make sure its audit event carries what the owner's daily report needs (amount, staff, reason, approver).
 
 ## 6. Tests — `work-order.service.test.ts`
 Cover the happy path, validation, permission denied, not found, the domain conflict (OOO over an arriving stay), the availability change (OOO reduces sellable rooms for exactly those dates, resolve restores them), **cross-organization access returns NOT_FOUND**, **a member limited to property A gets NOT_FOUND for a work order at property B**, **an audit event for each write** (with before/after and reason), and for limited actions **at, over and self-approved limit cases**. See `testing-patterns`.

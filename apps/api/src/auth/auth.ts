@@ -5,6 +5,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { organization } from 'better-auth/plugins/organization'
 import { adminAc, memberAc, ownerAc } from 'better-auth/plugins/organization/access'
+import { recordSystemAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import {
   accounts,
@@ -90,6 +91,35 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
                 input: false,
               },
             },
+          },
+        },
+        // Membership changes made through Better Auth's endpoints go into the audit log too.
+        // Its hooks don't say who acted, so these events record the subject and the change only.
+        organizationHooks: {
+          afterAddMember: async ({ member, user, organization: org }) => {
+            await recordSystemAudit(db, org.id, {
+              action: 'member.added',
+              entityType: 'member',
+              entityId: member.id,
+              after: { userId: user.id, name: user.name, role: member.role },
+            })
+          },
+          afterRemoveMember: async ({ member, user, organization: org }) => {
+            await recordSystemAudit(db, org.id, {
+              action: 'member.removed',
+              entityType: 'member',
+              entityId: member.id,
+              before: { userId: user.id, name: user.name, role: member.role },
+            })
+          },
+          afterUpdateMemberRole: async ({ member, previousRole, user, organization: org }) => {
+            await recordSystemAudit(db, org.id, {
+              action: 'member.role_changed',
+              entityType: 'member',
+              entityId: member.id,
+              before: { userId: user.id, name: user.name, role: previousRole },
+              after: { userId: user.id, name: user.name, role: member.role },
+            })
           },
         },
         sendInvitationEmail: async ({ email: to, organization: org, inviter, id }) => {
