@@ -68,26 +68,27 @@ export const workOrderContract = {
   remove: oc.input(z.object({ id })).output(z.void()),
 }
 ```
-Register it in `packages/shared/src/contract.ts`.
+Register it in `packages/shared/src/contracts/index.ts`.
 
 ## 3. Table — `apps/api/src/db/schema/work-order.ts`
+Use the column helpers from `apps/api/src/db/columns.ts` (`id`, `timestamps`, `archivedAt`, `amount`, `currency`, `calendarDate`) and export the table from `db/schema/index.ts`.
 ```ts
 export const workOrders = pgTable('work_orders', {
-  id: uuid().primaryKey().$defaultFn(uuidv7),
-  organizationId: text().notNull().references(() => organization.id, { onDelete: 'cascade' }),
+  id: id(),
+  organizationId: uuid().notNull().references(() => organizations.id, { onDelete: 'restrict' }),
   propertyId: uuid().notNull().references(() => properties.id),
   roomId: uuid().references(() => rooms.id),
   assetId: uuid().references(() => assets.id),
   title: text().notNull(),
   priority: workOrderPriorityEnum().notNull().default('normal'),
   status: workOrderStatusEnum().notNull().default('open'),
-  assigneeId: text().references(() => member.id),
-  reportedOn: date().notNull(),
-  outOfOrderFrom: date(),
-  outOfOrderTo: date(),
+  assigneeId: uuid().references(() => members.id),
+  reportedOn: calendarDate().notNull(),
+  outOfOrderFrom: calendarDate(),
+  outOfOrderTo: calendarDate(),
   outOfOrderReason: text(),
-  cost: numeric({ precision: 14, scale: 2 }),
-  currency: char({ length: 3 }).notNull().default('NGN'),
+  cost: amount(),
+  currency: currency(),
   ...timestamps,
 }, (t) => [
   index().on(t.organizationId),
@@ -102,7 +103,7 @@ export const workOrders = pgTable('work_orders', {
 Then follow the `db-migration` skill.
 
 ## 4. Service — `apps/api/src/modules/work-order/work-order.service.ts`
-- Functions take `ctx: { db, organizationId, userId, propertyIds }` first. Every `where` includes `eq(workOrders.organizationId, ctx.organizationId)` **and** the property scope: `inArray(workOrders.propertyId, ctx.propertyIds)` when the member is limited to properties. Use the shared `scopeToProperties(ctx, workOrders.propertyId)` helper rather than writing it by hand.
+- Functions take `(db, access, input)`, where `access` comes from the `inOrganization` middleware (`apps/api/src/tenancy/access.ts`: `organizationId`, `memberId`, `role`, `allProperties`, `propertyIds`). Every `where` includes `eq(workOrders.organizationId, access.organizationId)` **and** `scopeToProperties(access, workOrders.propertyId)`, combined with `and(...)`. Never write the property filter by hand, and never take `organizationId` from input. Reads outside scope throw `NOT_FOUND`. See `tenancy/service.ts` for the pattern and `tenancy/tenancy.test.ts` for the isolation and scoping tests to copy.
 - Check that referenced rows (property, room, asset, assignee) belong to the same organization *and* the same property before you insert. A room from another hotel in the group is `NOT_FOUND`, not a silent link.
 - Dates come from the property: `reportedOn` defaults to the property's current **business date** (`getBusinessDate(tx, propertyId)`), never `new Date()`.
 - Enforce domain rules here (e.g. `open → assigned → in_progress → resolved → closed` only; a room can't be put out of order for dates with in-house or arriving stays → `CONFLICT` "Room 204 has a guest arriving on 26 Nov 2026. Move the stay first.").

@@ -19,6 +19,7 @@
     "@hono/node-server": "1.19.18",
     "@orpc/server": "1.16.2",
     "@vento/shared": "workspace:*",
+    "better-auth": "1.7.20",
     "drizzle-orm": "0.45.4",
     "hono": "4.13.17",
     "pg": "8.23.1",

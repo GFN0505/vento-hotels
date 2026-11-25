@@ -4,6 +4,7 @@ import { loadEnv } from './env.ts'
 const base = {
   DATABASE_URL: 'postgres://u:p@localhost:5433/db',
   S3_ENDPOINT: 'http://localhost:9100',
+  BETTER_AUTH_SECRET: 'test-only-secret-that-is-at-least-32-characters',
 }
 
 describe('loadEnv', () => {
@@ -18,6 +19,9 @@ describe('loadEnv', () => {
   it('stops on a bad setting, naming it', () => {
     expect(() => loadEnv({ ...base, API_PORT: 'eighty' })).toThrow(/API_PORT is not valid/)
     expect(() => loadEnv({ ...base, NODE_ENV: 'staging' })).toThrow(/NODE_ENV is not valid/)
-    expect(() => loadEnv({ S3_ENDPOINT: base.S3_ENDPOINT })).toThrow(/DATABASE_URL is not set/)
+    expect(() => loadEnv({ ...base, DATABASE_URL: undefined })).toThrow(/DATABASE_URL is not set/)
+    expect(() => loadEnv({ ...base, BETTER_AUTH_SECRET: 'short' })).toThrow(
+      /BETTER_AUTH_SECRET is not valid/,
+    )
   })
 })
