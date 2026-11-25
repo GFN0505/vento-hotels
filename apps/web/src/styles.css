@@ -2,6 +2,9 @@
    Components use these through Tailwind classes only: no hex values in components. */
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
+/* Brand headlines only (sign-in panel, marketing): an elegant serif, see the brand skill. */
+@import "@fontsource-variable/fraunces/opsz.css";
+@import "@fontsource-variable/fraunces/opsz-italic.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -90,6 +93,7 @@
 
 @theme inline {
   --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-display: "Fraunces Variable", Georgia, serif;
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);

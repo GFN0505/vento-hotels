@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
 import { AuthCard, AuthFootnote } from '@/components/auth-card'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Field } from '@/components/ui/field'
 import { authClient } from '@/lib/auth'
 
@@ -67,13 +68,16 @@ function SignIn() {
             required
             revealable
           />
-          <Link to="/forgot-password" className="self-start text-sm text-pri-ink hover:underline">
+          <Link
+            to="/forgot-password"
+            className="self-start text-[13px] text-pri-ink hover:underline"
+          >
             Forgot password?
           </Link>
         </div>
         <hr className="border-border" />
-        <label className="flex items-start gap-2.5">
-          <input type="checkbox" name="remember" className="mt-0.5 size-4 accent-pri" />
+        <label htmlFor="remember" className="flex cursor-pointer items-start gap-2.5">
+          <Checkbox id="remember" name="remember" className="mt-0.5" />
           <span className="flex flex-col">
             <span className="font-medium">Keep me signed in on this device</span>
             <span className="text-sm text-text-2">
@@ -85,11 +89,7 @@ function SignIn() {
           {pending ? 'Signing in…' : 'Sign in'}
         </Button>
         <AuthFootnote>
-          New to Vento? <Link to="/get-started">Set up your hotel group</Link>. Invited by a
-          colleague? Use the link in your email.
-        </AuthFootnote>
-        <AuthFootnote>
-          On a shared tablet or phone? Staff sign in with their PIN on the device lock screen.
+          New to Vento? <Link to="/get-started">Set up your hotel group</Link>
         </AuthFootnote>
       </form>
     </AuthCard>

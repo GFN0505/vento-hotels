@@ -25,7 +25,8 @@ The voice for words *inside* the product (buttons, errors, guest messages) is th
 - **Navy** (`--side`, `#0E1630`) is the brand ground: sign-in panel, sidebar, decks.
 - **Violet** (`--brand` `#7677FB`, buttons `--pri`) is for action. Don't use it for decoration.
 - **Cyan** (`--logo-dot` `#5EC4EA`) is the accent: at most one short phrase or detail per surface (e.g. "accounted for.").
-- **Inter** for everything. Headlines semibold with tight tracking; body regular. No second typeface.
+- **Fraunces** (`font-display`, the variable font with optical sizing) for brand headlines only: the sign-in panel and phone band, website and deck titles. Regular weight, slight negative tracking, and the one accent phrase in Fraunces italic and cyan ("*accounted for.*").
+- **Inter** for everything else, including every screen inside the app, forms, labels and body copy. Never use Fraunces for UI, numbers, tables or buttons.
 - Light mode is the default everywhere people first meet Vento.
 
 ## Positioning
