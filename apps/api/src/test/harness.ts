@@ -7,7 +7,7 @@ import { createDatabase } from '../db/client.ts'
 import { MemoryEmailProvider } from '../providers/email.ts'
 import type { HealthCheck } from '../system/health.ts'
 
-export const WEB_ORIGIN = 'http://localhost:5173'
+export const WEB_ORIGIN = 'http://localhost:5180'
 const PASSWORD = 'correct-horse-battery-staple'
 
 const healthy: HealthCheck = async () => ({
@@ -23,7 +23,7 @@ export function createTestApp(databaseUrl: string) {
     db: database.db,
     settings: {
       secret: 'test-only-secret-that-is-at-least-32-characters',
-      baseURL: 'http://localhost:3000',
+      baseURL: 'http://localhost:5180',
       webOrigin: WEB_ORIGIN,
     },
     email,

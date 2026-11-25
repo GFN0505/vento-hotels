@@ -9,7 +9,7 @@ const base = {
 
 describe('loadEnv', () => {
   it('applies defaults for port and environment', () => {
-    expect(loadEnv(base)).toMatchObject({ NODE_ENV: 'development', API_PORT: 3000 })
+    expect(loadEnv(base)).toMatchObject({ NODE_ENV: 'development', API_PORT: 3010 })
   })
 
   it('reads the port from text', () => {

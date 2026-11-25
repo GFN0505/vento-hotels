@@ -50,10 +50,10 @@ pnpm install
 cp .env.example .env      # then set BETTER_AUTH_SECRET: openssl rand -base64 32
 pnpm db:up                # Postgres and file storage in Docker, waits until healthy
 pnpm db:migrate           # applies database migrations (dev and test databases)
-pnpm dev                  # web app on http://localhost:5173, API behind it
+pnpm dev                  # web app on http://localhost:5180, API behind it
 ```
 
-Open http://localhost:5173 and choose **Set up your hotel group**. Emails aren't sent locally: with `EMAIL_OUTBOX_DIR` set (it is in `.env.example`), each one is saved as a file in `apps/api/.data/outbox/`. Open the newest file and copy the confirmation link into your browser.
+Open http://localhost:5180 and choose **Set up your hotel group**. Emails aren't sent locally: with `EMAIL_OUTBOX_DIR` set (it is in `.env.example`), each one is saved as a file in `apps/api/.data/outbox/`. Open the newest file and copy the confirmation link into your browser.
 
 Checks: `pnpm check && pnpm typecheck && pnpm test`, and `pnpm e2e` for the browser tests (desktop and phone; first time, run `pnpm --filter @vento/web exec playwright install chromium`). `pnpm db:status` confirms the database and storage are reachable; `pnpm db:down` stops them and `pnpm db:reset` deletes their local data.
 
