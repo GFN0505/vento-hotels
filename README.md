@@ -23,6 +23,7 @@ They share some features that run across all of them: leakage and fraud controls
 ## Documentation
 | Document | What it covers |
 |---|---|
+| [docs/README.md](docs/README.md) | The documentation map and the definition of done for docs. Start here |
 | [docs/PRODUCT.md](docs/PRODUCT.md) | Vision, principles, personas, the ten modules, cross-cutting features, release plan |
 | [docs/DOMAIN.md](docs/DOMAIN.md) | Vocabulary, statuses and rules, permissions matrix, reports catalogue, open questions |
 | [docs/journeys/](docs/journeys/README.md) | Step-by-step user walkthroughs on the demo hotel group |
@@ -30,7 +31,11 @@ They share some features that run across all of them: leakage and fraud controls
 | [docs/design/claude-design-update-prompt.md](docs/design/claude-design-update-prompt.md) | Update prompts for an existing Claude Design project |
 | [docs/design/export/](docs/design/export/README.md) | Approved designs exported from Claude Design (all 46 screens, tokens) |
 | [docs/design/screen-inventory.md](docs/design/screen-inventory.md) | Every screen the product needs, its status, and what will change |
-| [docs/specs/](docs/specs/) | Feature specs, written per release stage |
+| [docs/specs/](docs/specs/README.md) | Feature specs, written per release stage |
+| [docs/decisions/](docs/decisions/README.md) | Decision records: why the big choices were made |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the code is laid out and how a request flows |
+| [docs/help/](docs/help/README.md) | Help-centre articles for customers |
+| [CHANGELOG.md](CHANGELOG.md) | What changed, in customers' words |
 | [CLAUDE.md](CLAUDE.md) | Stack, commands, non-negotiables and code style for contributors and AI agents |
 
 ## Stack

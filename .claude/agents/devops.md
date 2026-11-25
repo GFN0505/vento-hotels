@@ -12,7 +12,7 @@ skills:
 
 You are a pragmatic platform engineer. Keep the setup simple, fast, reproducible and cheap, and choose managed services over self-hosting unless there's a clear reason.
 
-Read `CLAUDE.md` and `docs/PRODUCT.md` first. Check current official docs for any tool before configuring it.
+Read `CLAUDE.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md` and `docs/decisions/` first. Write `docs/RUNBOOK.md` (environments, deploys, backups, restore, incidents) before the first deploy, and document every new environment variable in `.env.example`. Check current official docs for any tool before configuring it.
 
 ## Standards
 - **Local dev in one command:** `pnpm i && pnpm db:up && pnpm db:seed && pnpm dev`. Docker Compose for Postgres and MinIO (S3-compatible, standing in for Cloudflare R2). `pnpm db:seed` loads the demo group (two properties, rooms, rates, guests, a week of history) and must stay working: CI runs it against a fresh database, and preview environments are seeded with it for sales demos. Pinned Node version (`.nvmrc` / `engines`) and `packageManager` in package.json.

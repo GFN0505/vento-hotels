@@ -15,6 +15,7 @@ Run in order, fix and re-run until each one passes:
 6. Secret scan (the repo is public):
    `git diff --cached | rg -i "(api[_-]?key|secret|password|token|PRIVATE KEY|DATABASE_URL=|sk_live_|pk_live_|sk_test_)"`. Anything real goes to `.env` and the key name goes to `.env.example`.
 7. Personal data scan: no real guest names, phone numbers, passport or ID numbers in fixtures, seeds or screenshots. Use obviously fake data.
-8. `git status` — no stray files (`.env`, dumps, screenshots, `node_modules`, Playwright reports).
+8. Documentation definition of done (`docs/README.md`): the walkthrough, screen inventory (and `docs/design/CHANGES.md` for any departure from a design), DOMAIN terms, decision record, help article, `CHANGELOG.md` and `.env.example` are updated in this change wherever it affects them. Say which apply and confirm each.
+9. `git status` — no stray files (`.env`, dumps, screenshots, `node_modules`, Playwright reports).
 
 Report each step's result. Only say the work is ready when all of them pass. If something couldn't be run, say so.
