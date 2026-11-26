@@ -1,6 +1,6 @@
 # Vento Hotels on one server (decision 0026): Caddy (HTTPS, the web app, routing), the API with its
 # background jobs, Postgres, and backups to R2. Same file for staging and production; each server
-# has its own /opt/vento/.env (see .env.server.example). Deploys set VENTO_TAG to the image to run.
+# has its own /opt/vento/.env (see server.env.example). Deploys set VENTO_TAG to the image to run.
 name: vento
 
 x-images: &images # Public images built by .github/workflows/deploy.yml.
