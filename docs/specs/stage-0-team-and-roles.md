@@ -1,6 +1,6 @@
 # Team: invites, members and roles, permissions and limits
 
-- **Status:** built (brick 8, in review)
+- **Status:** built (brick 8)
 - **Stage:** 0
 - **Module:** Platform
 - **Walkthroughs:** `going-live.md` (the owner invites the GM and front desk), `front-desk-morning.md` step 1 (a member limited to Kora Victoria Island)

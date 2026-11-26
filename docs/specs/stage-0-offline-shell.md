@@ -1,6 +1,6 @@
 # Offline shell
 
-- **Status:** built (brick 16, in review)
+- **Status:** built (brick 16)
 - **Stage:** 0
 - **Module:** Platform
 - **Walkthroughs:** `waiter-dinner-service.md` (the power cut), `front-desk-morning.md`

@@ -8,7 +8,7 @@ Everything about Vento Hotels that isn't code lives in `docs/`. If you're new, r
 | [DOMAIN.md](DOMAIN.md) | Vocabulary, statuses, permissions matrix and limits, business rules, open questions | product-manager, architect | A new term, status, rule or limit appears |
 | [journeys/](journeys/README.md) | Step-by-step walkthroughs on the demo hotel group, starting with [00-golden-thread](journeys/00-golden-thread.md); each becomes an e2e test and a help article | product-manager (writes), tester (tests) | A flow is added or changes |
 | [specs/](specs/README.md) | One spec per feature, per stage: problem, flow, acceptance criteria | product-manager | Before building any feature |
-| [ops/](ops/deploy.md) | How the servers are set up, how releases reach them, backups and restores | devops | Anything about servers, deploys or backups changes |
+| [ops/](ops/deploy.md) | The runbook: how the servers are set up, how releases reach them, everyday operations, backups and restores (night audit and job failure steps join it when those jobs ship) | devops | Anything about servers, deploys or backups changes |
 | [research/](research/role-homes.md) | Research that feeds later work, e.g. what each role's Home should show at a glance | product-manager, ui-designer | Before a large UX build; refresh when it's used |
 | [decisions/](decisions/README.md) | Why the big choices were made | architect proposes, implementer commits | A hard-to-reverse or cross-module choice |
 | [design/export/](design/export/README.md) | The approved designs from Claude Design: source of truth for the UI | (exported, never hand-edited) | A new design round is exported |
@@ -20,8 +20,7 @@ Everything about Vento Hotels that isn't code lives in `docs/`. If you're new, r
 | [marketing/](marketing/README.md) | Approved brand and marketing copy: headline, taglines, boilerplate, website and outreach pieces | brand-marketing (owner approves) | Positioning changes, or a new public piece |
 | [../CHANGELOG.md](../CHANGELOG.md) | What changed, release by release, in customers' words | whoever ships | Every user-visible change |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How the code is laid out, a request end to end, offline path, data, jobs, build and quality gates | architect | Structure changes |
-| `RUNBOOK.md` *(before first deploy)* | Environments, deploys, backups and restores, night audit and job failures, incident steps | devops | Infrastructure changes |
-| [../.env.example](../.env.example) *(arrives with brick 1)* | Every environment variable and what it's for | backend, devops | A variable is added |
+| [../.env.example](../.env.example) | Every environment variable and what it's for | backend, devops | A variable is added |
 
 Specialists keep their parts of these documents true: **payments** (folios, deposits, settlements, refunds), **finance** (night audit, ledger, tax, payroll, reports), **distribution** (booking engine, channel manager, rates), **security** (audits before releases), **reviewer** (checks the definition of done below on every change).
 

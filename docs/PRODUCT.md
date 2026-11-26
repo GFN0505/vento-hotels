@@ -115,12 +115,14 @@ All ten modules are in v1, built in stages. Each stage ends usable by a real pil
 
 | Stage | Scope | A pilot hotel can… |
 |---|---|---|
-| **0. Foundation** | Monorepo, auth with organizations, properties and entities, permissions matrix, audit events, app shell with a role-shaped Home and an All hotels view, offline shell, PIN sign-in, demo seed, CI | sign in, set up a group and properties |
+| **0. Foundation** *(complete)* | Monorepo, sign-in with organizations, properties and entities, permissions matrix and limits, audit events, team invites and roles, feature switches per group, shared devices with PIN sign-in, two-step sign-in, app shell with the full menu and preview as a role, a role-shaped Home with an All hotels view, offline shell, background jobs, structured logs and error tracking, demo seed, CI with UX gates, deploy setup for Contabo | sign in, set up a group and its hotels, invite the team, register shared devices |
 | **1. Front office** | Room types and rooms, rate plans (manual), reservations, tape chart, check-in/out, walk-in, folios, payments, cashier shifts, corporate accounts with credit limits and settle-to-company (city ledger balances and statements), night audit, guest register, core reports, owner's daily report, data import | run the front desk without its old PMS |
 | **2. Housekeeping & maintenance** | Room status board, attendant app, inspections, discrepancy check, work orders, OOO, power and diesel log | run rooms and catch sleepers/skippers |
 | **3. Restaurant & bar** | Outlets, menus, POS offline, kitchen tickets, post to room, voids/comps controls | run F&B and charge rooms |
 | **4. Distribution & guests** | Booking engine, channel manager, restrictions, guest profiles, corporates, group blocks, events, guest messages, guest app | sell direct and on OTAs, manage corporates |
 | **5. Back office** | City ledger invoicing, ageing and collections, ledger per entity, reconciliation, taxes, inventory and procurement, recipes, HR and payroll | close the books and pay staff |
 | **6. Group & analytics** | Group dashboards, KPIs, budgets, board pack, subscription billing, support console | run the whole group from one screen |
+
+Stage 0 is complete except going live on servers: the deploy setup is built and waits for the owner's Contabo servers (one-time setup in `docs/ops/deploy.md`).
 
 Specs for each stage live in `docs/specs/`, written by the product-manager before the stage starts.

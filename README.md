@@ -2,7 +2,7 @@
 
 A hotel management platform for Nigerian hotel groups and chains. One place to run every property: selling rooms direct and on OTAs, the front desk, restaurant and bar, housekeeping and maintenance, stores, night audit, finance, payroll, and the owner's view across the group. It keeps working through power and internet cuts, and it makes revenue leakage visible to the owner the next morning.
 
-> **Status:** building Stage 0 of the [release plan](docs/PRODUCT.md#release-plan). The product, domain and walkthrough docs are written and all 46 screens are designed.
+> **Status:** Stage 0 (foundation) of the [release plan](docs/PRODUCT.md#release-plan) is complete: sign-in and hotel groups, team and roles, shared devices with PIN sign-in, two-step sign-in, a role-shaped Home, the offline shell, background jobs and the deploy setup. Going live waits for the servers ([docs/ops/deploy.md](docs/ops/deploy.md)). Stage 1 (front office) is planned, starting with room types and rooms.
 
 ## What's in v1
 Ten modules, built in stages:
@@ -35,6 +35,7 @@ They share some features that run across all of them: leakage and fraud controls
 | [docs/decisions/](docs/decisions/README.md) | Decision records: why the big choices were made |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the code is laid out and how a request flows |
 | [docs/help/](docs/help/README.md) | Help-centre articles for customers |
+| [docs/ops/deploy.md](docs/ops/deploy.md) | The runbook: servers, deploys, backups and restores |
 | [CHANGELOG.md](CHANGELOG.md) | What changed, in customers' words |
 | [CLAUDE.md](CLAUDE.md) | Stack, commands, non-negotiables and code style for contributors and AI agents |
 
@@ -50,10 +51,11 @@ pnpm install
 cp .env.example .env      # then set BETTER_AUTH_SECRET: openssl rand -base64 32
 pnpm db:up                # Postgres and file storage in Docker, waits until healthy
 pnpm db:migrate           # applies database migrations (dev and test databases)
+pnpm db:seed              # optional: the demo group, Kora Hotels Group
 pnpm dev                  # web app on http://localhost:5180, API behind it
 ```
 
-Open http://localhost:5180 and choose **Set up your hotel group**. Emails aren't sent locally: with `EMAIL_OUTBOX_DIR` set (it is in `.env.example`), each one is saved as a file in `apps/api/.data/outbox/`. Open the newest file and copy the confirmation link into your browser.
+Open http://localhost:5180 and choose **Set up your hotel group**. Emails aren't sent locally: with `EMAIL_OUTBOX_DIR` set (it is in `.env.example`), each one is saved as a file in `apps/api/.data/outbox/`. Open the newest file and copy the confirmation link into your browser. Or, after `pnpm db:seed`, sign in as `adaeze@kora.example` (the owner) or anyone the seed prints, with `DEMO_PASSWORD` from `.env`.
 
 Checks: `pnpm check && pnpm typecheck && pnpm test`, and `pnpm e2e` for the browser tests (desktop and phone; first time, run `pnpm --filter @vento/web exec playwright install chromium`). `pnpm db:status` confirms the database and storage are reachable; `pnpm db:down` stops them and `pnpm db:reset` deletes their local data.
 
