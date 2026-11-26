@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppSectionRouteImport } from './routes/_app/$section'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
@@ -63,6 +64,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSectionRoute = AppSectionRouteImport.update({
+  id: '/$section',
+  path: '/$section',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
+  '/$section': typeof AppSectionRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/join/$token': typeof JoinTokenRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
+  '/$section': typeof AppSectionRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof AppIndexRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
+  '/_app/$section': typeof AppSectionRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/join/$token': typeof JoinTokenRoute
   '/_app/': typeof AppIndexRoute
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/sign-in'
+    | '/$section'
     | '/settings'
     | '/join/$token'
     | '/settings/devices'
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/sign-in'
+    | '/$section'
     | '/join/$token'
     | '/'
     | '/settings/devices'
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/setup'
     | '/sign-in'
+    | '/_app/$section'
     | '/_app/settings'
     | '/join/$token'
     | '/_app/'
@@ -257,6 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/$section': {
+      id: '/_app/$section'
+      path: '/$section'
+      fullPath: '/$section'
+      preLoaderRoute: typeof AppSectionRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
@@ -321,11 +340,13 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppSectionRoute: typeof AppSectionRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppSectionRoute: AppSectionRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
 }

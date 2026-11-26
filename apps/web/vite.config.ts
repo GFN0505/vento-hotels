@@ -23,10 +23,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // The sign-in library changes rarely, so it gets its own file: phones keep it cached when
-        // the app updates, and no single file outgrows its budget (apps/web/bundle-budget.json).
-        manualChunks: (id) =>
-          /node_modules\/.*(better-auth|@better-fetch|nanostores)/.test(id) ? 'auth' : undefined,
+        // Libraries that change rarely get their own files: phones keep them cached when the app
+        // updates, and no single file outgrows its budget (apps/web/bundle-budget.json).
+        manualChunks: (id) => {
+          if (/node_modules\/.*(better-auth|@better-fetch|nanostores)/.test(id)) return 'auth'
+          if (/node_modules\/.*\/(react|react-dom|scheduler)\//.test(id)) return 'react'
+          return undefined
+        },
       },
     },
   },
