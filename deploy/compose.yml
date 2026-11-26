@@ -1,0 +1,94 @@
+# Vento Hotels on one server (decision 0026): Caddy (HTTPS, the web app, routing), the API with its
+# background jobs, Postgres, and backups to R2. Same file for staging and production; each server
+# has its own /opt/vento/.env (see .env.server.example). Deploys set VENTO_TAG to the image to run.
+name: vento
+
+x-images: &images # Public images built by .github/workflows/deploy.yml.
+  api: &api-image ghcr.io/gfn0505/vento-hotels-api:${VENTO_TAG:-main}
+  web: &web-image ghcr.io/gfn0505/vento-hotels-web:${VENTO_TAG:-main}
+
+services:
+  caddy:
+    image: *web-image
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    image: *api-image
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      API_PORT: "3010"
+      DATABASE_URL: postgres://vento:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/vento
+      BETTER_AUTH_URL: https://${DOMAIN}
+      WEB_ORIGIN: https://${DOMAIN}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3010/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18.7-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vento
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: vento
+      TZ: UTC
+    # Never published to the internet; only the API and backups reach it.
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vento -d vento"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    shm_size: 256mb
+
+  backup:
+    build: ./backup
+    image: vento-backup:local
+    restart: unless-stopped
+    environment:
+      PGHOST: postgres
+      PGUSER: vento
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: vento
+      BACKUP_BUCKET: ${BACKUP_BUCKET:?Set BACKUP_BUCKET in .env}
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ENDPOINT: ${BACKUP_S3_ENDPOINT:?Set BACKUP_S3_ENDPOINT in .env}
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:?Set BACKUP_S3_ACCESS_KEY_ID in .env}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:?Set BACKUP_S3_SECRET_ACCESS_KEY in .env}
+      RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  caddy-data:
+  caddy-config:
+  postgres-data:

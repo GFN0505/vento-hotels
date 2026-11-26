@@ -32,6 +32,12 @@ describe('VENTO_ALL_FEATURES', () => {
     expect(loadEnv({ ...base, VENTO_ALL_FEATURES: 'true' }).VENTO_ALL_FEATURES).toBe(true)
   })
 
+  it('can never be on for a production server, even if the build says otherwise', () => {
+    expect(() =>
+      loadEnv({ ...base, DEPLOY_ENV: 'production', VENTO_ALL_FEATURES: 'true' }),
+    ).toThrow()
+  })
+
   it('can never be on in production', () => {
     expect(() => loadEnv({ ...base, NODE_ENV: 'production', VENTO_ALL_FEATURES: 'true' })).toThrow(
       'VENTO_ALL_FEATURES',

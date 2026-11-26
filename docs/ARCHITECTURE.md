@@ -115,11 +115,10 @@ pg-boss on the same Postgres, no Redis. `apps/api/src/jobs/queue.ts` holds each 
 Every outside service sits behind an interface in `apps/api/src/providers/` with a fake for tests and local work: `EmailProvider`, `SmsProvider`, `WhatsAppProvider`, `PaymentProvider` (Paystack), `ChannelProvider` (one certified channel manager), `StorageProvider`. Which provider to use is an open question in `docs/DOMAIN.md` until decided in `docs/decisions/`.
 
 ## Environments
-*Hosting is undecided (brick 18, needs the owner's choice). Logs and error tracking are ready for it (decision 0025).*
+*In review (brick 18): Contabo servers running Docker Compose, deployed from GitHub Actions (decision 0026). Runbook: docs/ops/deploy.md.*
 | Environment | Purpose | Data |
 |---|---|---|
 | local | Development on a laptop: Docker Postgres (5433) and RustFS storage (9100, console 9101) | demo seed |
-| preview | One per pull request, for design and product review | demo seed |
 | staging | Release candidate, migrations rehearsed here first | demo seed + import tests |
 | production | Customers | real; daily backups, monthly restore test |
 

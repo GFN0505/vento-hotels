@@ -1,0 +1,109 @@
+name: Deploy
+
+# Builds the API and web images on every push to main and deploys them to staging. Production is
+# deployed by hand (Actions › Deploy › Run workflow), from an image already on staging.
+# Servers are set up once by following docs/ops/deploy.md; until then the deploy steps are skipped.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Where to deploy
+        type: choice
+        options: [staging, production]
+        default: staging
+      tag:
+        description: Image to deploy (a commit SHA from main). Empty means the newest.
+        required: false
+
+concurrency:
+  group: deploy-${{ inputs.target || 'staging' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io/gfn0505
+
+jobs:
+  images:
+    name: Build images
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/api.Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/vento-hotels-api:${{ github.sha }},${{ env.REGISTRY }}/vento-hotels-api:main
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/web.Dockerfile
+          push: true
+          build-args: VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
+          tags: ${{ env.REGISTRY }}/vento-hotels-web:${{ github.sha }},${{ env.REGISTRY }}/vento-hotels-web:main
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+  deploy:
+    name: Deploy to ${{ inputs.target || 'staging' }}
+    needs: [images]
+    # Runs after images on a push, or on its own when started by hand.
+    if: always() && (needs.images.result == 'success' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Each environment holds its own server settings; add required reviewers to "production".
+    environment: ${{ inputs.target || 'staging' }}
+    env:
+      HOST: ${{ vars.DEPLOY_HOST }}
+      DOMAIN: ${{ vars.DEPLOY_DOMAIN }}
+      TAG: ${{ inputs.tag || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Skip until the server is set up
+        if: env.HOST == ''
+        run: echo "::notice::No DEPLOY_HOST for this environment yet (docs/ops/deploy.md). Skipping."
+      - name: SSH key
+        if: env.HOST != ''
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Copy the server files
+        if: env.HOST != ''
+        run: scp -i ~/.ssh/deploy -r deploy/compose.yml deploy/backup "deploy@${HOST}:/opt/vento/"
+      - name: Migrate and start
+        if: env.HOST != ''
+        run: |
+          ssh -i ~/.ssh/deploy "deploy@${HOST}" "cd /opt/vento && export VENTO_TAG=${TAG} \
+            && docker compose pull api caddy \
+            && docker compose build backup \
+            && docker compose run --rm -T api node src/db/migrate.ts \
+            && docker compose up -d --remove-orphans \
+            && docker image prune -f"
+      - name: Check it's up
+        if: env.HOST != ''
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS "https://${DOMAIN}/health" | grep -q '"status":"ok"'; then echo "Healthy"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::https://${DOMAIN}/health did not report ok within 150 seconds"
+          exit 1
