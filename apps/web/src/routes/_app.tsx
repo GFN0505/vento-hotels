@@ -15,13 +15,16 @@ import { loadSignedIn } from '@/lib/session'
 import { ViewAsProvider } from '@/lib/view-as'
 
 export const Route = createFileRoute('/_app')({
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const signedIn = await loadSignedIn()
     if (!signedIn) {
       // Loaded only here, so the API client isn't part of the first download for signed-out visitors.
       const { api } = await import('@/lib/api')
       const lock = await api.devices.lockScreen().catch(() => undefined)
-      throw redirect({ to: lock && lock.status !== 'unregistered' ? '/lock' : '/sign-in' })
+      if (lock && lock.status !== 'unregistered') throw redirect({ to: '/lock' })
+      // Back to where they were going after signing in.
+      const here = location.href === '/' ? undefined : location.href
+      throw redirect({ to: '/sign-in', search: here ? { redirect: here } : {} })
     }
     if (!signedIn.organizationId) throw redirect({ to: '/setup' })
     return { user: signedIn.user }
@@ -82,7 +85,11 @@ function Shell() {
         <div className="flex min-w-0 grow flex-col">
           <PreviewBanner />
           <TopBar user={user} onOpenMenu={() => setMenuOpen(true)} />
-          <main id="main" tabIndex={-1} className="flex-1 p-4 outline-none sm:p-6">
+          <main
+            id="main"
+            tabIndex={-1}
+            className="flex-1 px-4 pt-5 pb-14 outline-none sm:px-6 lg:px-8 lg:pt-7"
+          >
             <Outlet />
           </main>
         </div>

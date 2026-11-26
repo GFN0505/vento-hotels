@@ -59,7 +59,7 @@ packages/
 ```
 
 ## A request, end to end
-*Steps 3.1–3.3 built in brick 5: `authed` and `inOrganization` in `apps/api/src/router.ts`, scoping with `scopeToProperties()`. Steps 3.4 and 5 built in brick 6: `requirePermission` / `requireWithinLimit` in each service and `recordAudit` in its transaction; approval by PIN in brick 12; device sessions in brick 10. Step 1 (the typed web client) in review (brick 7), same origin as the API (decision 0019).*
+*Steps 3.1–3.3 built in brick 5: `authed` and `inOrganization` in `apps/api/src/router.ts`, scoping with `scopeToProperties()`. Steps 3.4 and 5 built in brick 6: `requirePermission` / `requireWithinLimit` in each service and `recordAudit` in its transaction; approval by PIN in Stage 1 (with rate overrides); device sessions in brick 10. Step 1 (the typed web client) in review (brick 7), same origin as the API (decision 0019).*
 1. A screen calls the typed oRPC client. Its input and output types come from the contract in `packages/shared`, so a mismatch is a compile error.
 2. The browser sends `POST /rpc/<module>/<procedure>`. Hono adds a request id and security headers.
 3. oRPC validates the input against the zod schema, then runs the middleware in this order:

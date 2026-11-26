@@ -69,7 +69,9 @@ function MembersPage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end gap-3">
         <div className="flex min-w-0 grow flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-[-0.015em]">Members and roles</h1>
+          <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.02em] sm:text-2xl">
+            Members and roles
+          </h1>
           <p className="text-text-2">
             Who can sign in to {groupName}, their role, and which hotels they see.
           </p>
@@ -380,6 +382,11 @@ function MemberTable({
                       {member.name}
                       {member.isYou ? (
                         <span className="font-normal text-text-3"> (you)</span>
+                      ) : null}
+                      {member.twoStep ? (
+                        <span className="ml-2 rounded-full bg-em-bg px-1.5 py-0.5 text-xs font-medium text-em">
+                          Two-step
+                        </span>
                       ) : null}
                     </span>
                     <span className="truncate text-sm text-text-2" title={member.email}>

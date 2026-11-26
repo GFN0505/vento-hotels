@@ -2,7 +2,9 @@
 // arrive with the modules that feed them.
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { ProtectAccountPrompt } from '@/components/two-step/protect-account-prompt'
 import { Card } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
 import { orpc } from '@/lib/api'
 import { usePageTitle } from '@/lib/title'
 
@@ -25,13 +27,9 @@ function Home() {
   const properties = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold tracking-[-0.015em]">
-          {organization.data?.organization.name ?? ' '}
-        </h1>
-        <span className="text-text-2">Your hotels</span>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader title={organization.data?.organization.name ?? ' '} description="Your hotels" />
+      <ProtectAccountPrompt />
 
       {properties.isPending ? (
         <div className="grid gap-4 sm:grid-cols-2" aria-busy="true">

@@ -2,6 +2,7 @@
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
 import { AuthCard, AuthFootnote } from '@/components/auth-card'
+import { CodeStep } from '@/components/two-step/code-step'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { EmailField } from '@/components/ui/email-field'
@@ -10,13 +11,20 @@ import { authClient } from '@/lib/auth'
 import { emailProblem } from '@/lib/email'
 import { CANT_REACH_VENTO, isConnectionProblem } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
+import { safeRedirect } from '@/lib/redirect'
 import { usePageTitle } from '@/lib/title'
 
+type SignInSearch = { redirect?: string | undefined }
+
 export const Route = createFileRoute('/sign-in')({
-  // Already signed in: go straight home.
-  beforeLoad: async () => {
+  validateSearch: (search: Record<string, unknown>): SignInSearch => {
+    const target = safeRedirect(search.redirect)
+    return target ? { redirect: target } : {}
+  },
+  // Already signed in: go straight on.
+  beforeLoad: async ({ search }) => {
     const { data } = await authClient.getSession()
-    if (data) throw redirect({ to: '/' })
+    if (data) throw redirect({ href: search.redirect ?? '/' })
   },
   component: SignIn,
 })
@@ -39,6 +47,9 @@ function messageFor(code: string | undefined, status: number): string {
 function SignIn() {
   usePageTitle('Sign in')
   const navigate = useNavigate()
+  const search = Route.useSearch()
+  const [codeFor, setCodeFor] = useState<string>()
+  const goOn = () => navigate({ href: search.redirect ?? '/' })
   const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<{
@@ -63,7 +74,7 @@ function SignIn() {
       return
     }
     setPending(true)
-    const { error: failure } = await authClient.signIn.email({
+    const { data, error: failure } = await authClient.signIn.email({
       email,
       password,
       rememberMe: form.get('remember') === 'on',
@@ -75,7 +86,16 @@ function SignIn() {
       )
       return
     }
-    await navigate({ to: '/' })
+    // Two-step sign-in is on for this account: ask for the code before going in.
+    if (data && 'twoFactorRedirect' in data && data.twoFactorRedirect) {
+      setCodeFor(email)
+      return
+    }
+    await goOn()
+  }
+
+  if (codeFor) {
+    return <CodeStep email={codeFor} onDone={goOn} onBack={() => setCodeFor(undefined)} />
   }
 
   return (

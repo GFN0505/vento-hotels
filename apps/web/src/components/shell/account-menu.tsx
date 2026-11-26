@@ -2,8 +2,9 @@
 // click outside, and when focus leaves it, and hands focus back to the avatar on Escape.
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { Eye, KeyRound, LogOut } from 'lucide-react'
+import { Eye, KeyRound, LogOut, ShieldCheck } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
+import { TwoStepDialog } from '@/components/two-step/two-step-dialog'
 import { authClient } from '@/lib/auth'
 import { lockDevice } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
@@ -25,6 +26,7 @@ export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
   const me = useMe()
   const [settingPin, setSettingPin] = useState(false)
   const [previewing, setPreviewing] = useState(false)
+  const [twoStep, setTwoStep] = useState(false)
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -107,6 +109,20 @@ export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
               type="button"
               onClick={() => {
                 setOpen(false)
+                setTwoStep(true)
+              }}
+              className="flex h-11 w-full items-center gap-2 rounded-sm px-3 text-left hover:bg-surface-2 lg:h-9"
+            >
+              <ShieldCheck className="size-4 text-text-2" aria-hidden="true" />
+              <span className="grow">Two-step sign-in</span>
+              <span className="text-sm text-text-3">{me.data?.twoStep ? 'On' : 'Off'}</span>
+            </button>
+          )}
+          {onSharedDevice ? null : (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
                 setSettingPin(true)
               }}
               className="flex h-11 w-full items-center gap-2 rounded-sm px-3 text-left hover:bg-surface-2 lg:h-9"
@@ -126,6 +142,11 @@ export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
         </div>
       ) : null}
       <PreviewRoleDialog open={previewing} onClose={() => setPreviewing(false)} />
+      <TwoStepDialog
+        open={twoStep}
+        onClose={() => setTwoStep(false)}
+        isOn={me.data?.twoStep ?? false}
+      />
       <SetPinDialog
         open={settingPin}
         onClose={() => setSettingPin(false)}

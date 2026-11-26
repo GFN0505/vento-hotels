@@ -13,7 +13,7 @@ export function FeatureGate({ feature, children }: { feature: Feature; children:
   if (me.isPending) return null
   if (me.has(feature)) return <>{children}</>
   return (
-    <Card className="mx-auto flex max-w-xl flex-col items-start gap-2 p-6">
+    <Card className="flex max-w-xl flex-col items-start gap-2 p-6">
       <Sparkles className="size-5 text-text-3" aria-hidden="true" />
       <h1 className="text-lg font-semibold">This isn't switched on for your group</h1>
       <p className="text-text-2">Ask Vento if you'd like to use it.</p>

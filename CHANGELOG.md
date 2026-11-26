@@ -8,6 +8,8 @@ User-visible changes, newest first, written for customers. Format: [Keep a Chang
 - Emails now name the product: "Confirm your email for Vento Hotels" and "Reset your Vento Hotels password".
 
 ### Added
+- Two-step sign-in: turn it on from the account menu with an authenticator app, save 10 backup codes, and sign in with a 6-digit code after your password. "Don't ask again on this computer for 30 days" for your own computer. Owners and group admins see a prompt on Home until they turn it on, and Members and roles shows who has it.
+- A calmer, more polished look: page titles with status badges, full-width cards for anything not built yet, more generous margins, and the hotel shown as a quiet pill at the top left.
 - The full menu: every module, grouped as Front office, Revenue, Operations and Back office, with Settings at the foot. Each person sees only the modules their role uses, and only modules switched on for their group. Modules still being built say what they'll do and which stage brings them.
 - Preview as a role: owners and group admins can see the app as a front desk agent, waiter, GM or any other role would, with a clear banner and one click back.
 - Shared devices: register a restaurant tablet, front desk PC or housekeeping phone to a hotel in Settings › Devices, then staff tap their name and enter a 4-digit PIN to sign in. Devices sign people out when left idle (90 seconds on restaurant tablets, 5 minutes elsewhere), and there's a Lock button for the next person. Everyone sets their own PIN from the account menu; managers can reset one. Five wrong PINs lock it for 15 minutes. A lost device can be revoked, signing everyone out of it. On a shared device you only see that hotel, and settings need your email and password.

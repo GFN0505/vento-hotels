@@ -35,5 +35,6 @@ Things still undecided stay under *Open questions* in `docs/DOMAIN.md` until the
 | [0020](0020-invitations.md) | Invitations are Vento's, with a secret link that also confirms the email | accepted |
 | [0021](0021-feature-switches.md) | Modules and features ship behind switches | accepted |
 | [0022](0022-shared-devices-and-pin.md) | Shared devices are registered, and staff sign in on them with a PIN | accepted |
+| [0023](0023-two-step-sign-in.md) | Two-step sign-in with an authenticator app, optional for now | accepted |
 
 Template: [0000-template.md](0000-template.md)
