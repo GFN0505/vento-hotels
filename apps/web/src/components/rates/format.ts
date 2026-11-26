@@ -17,6 +17,9 @@ export const NEEDS_CONNECTION = 'Needs a connection'
 export const CHANGE_DENIED =
   'Only a revenue manager, GM or the owner can change rates. Ask your GM.'
 
+// Read-only members, under the page title.
+export const CHANGE_DENIED_SHORT = 'Only a revenue manager, GM or the owner can change rates.'
+
 export { formatNaira }
 
 // "165,000": the calendar's cells, where the header already says ₦.

@@ -21,6 +21,7 @@ import type { RoomHotel } from './rooms.ts'
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
 type Code = 'STQ' | 'DLK' | 'EXK' | 'JRS'
+// `businessDate` is the setup-week date the events are recorded on (before go-live).
 type Hotel = { id: string; businessDate: string }
 
 // Best available's weekday price per room type, per hotel.

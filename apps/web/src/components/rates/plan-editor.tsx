@@ -132,6 +132,11 @@ export function PlanEditor({ overview, plan, copy, plans, addRoomTypes }: Props)
                   Duplicate
                 </Link>
               ) : null}
+              {state.dirty && !readOnly ? (
+                <span className="self-center text-sm text-text-2 max-md:hidden" role="status">
+                  Unsaved changes
+                </span>
+              ) : null}
               {saveButton(true)}
             </>
           ) : null

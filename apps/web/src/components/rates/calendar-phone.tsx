@@ -3,7 +3,7 @@
 import type { RateCalendar, RatePlanView } from '@vento/shared'
 import { cn } from '@/lib/cn'
 import { CalendarCellView } from './calendar-cell'
-import type { CellRef } from './calendar-model'
+import { bandLabel, type CellRef, seasonBands, seasonByDate } from './calendar-model'
 import { PlanLabel } from './calendar-plan-label'
 import { shortDate } from './format'
 import type { CellEditing } from './use-cell-editing'
@@ -20,10 +20,14 @@ type Props = {
 export function CalendarPhone({ calendar, plans, canEdit, selected, editing, onSelect }: Props) {
   const type = calendar.roomTypes[0]
   if (!type) return null
+  const seasons = seasonByDate(
+    seasonBands(calendar),
+    calendar.dates.map((d) => d.date),
+  )
   return (
     <ol className="flex flex-col gap-3" aria-label={`${type.name}, night by night`}>
       {calendar.dates.map((d, c) => {
-        const season = calendar.seasons.find((s) => s.from <= d.date && d.date <= s.to)?.name
+        const season = seasons.get(d.date)
         return (
           <li
             key={d.date}
@@ -32,15 +36,20 @@ export function CalendarPhone({ calendar, plans, canEdit, selected, editing, onS
               d.weekend && 'border-l-4 border-l-pri-line',
             )}
           >
-            <h3 className="flex flex-wrap items-center gap-2 border-b border-border bg-surface-2/60 px-4 py-2 font-semibold">
+            <h3
+              className={cn(
+                'flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 font-semibold',
+                d.weekend ? 'bg-weekend' : 'bg-surface-2/60',
+              )}
+            >
               <span className="num">{shortDate(d.date)}</span>
               {d.date === calendar.businessDate ? (
                 <span className="text-sm font-medium text-pri-ink">Business date</span>
               ) : null}
-              {d.weekend ? <span className="text-sm font-normal text-text-3">Weekend</span> : null}
+              {d.weekend ? <span className="text-sm font-normal text-text-2">Weekend</span> : null}
               {season ? (
                 <span className="ml-auto rounded-[4px] bg-pri-soft px-2 py-0.5 text-xs font-semibold text-pri-ink">
-                  {season}
+                  {bandLabel(season)}
                 </span>
               ) : null}
             </h3>
@@ -60,6 +69,7 @@ export function CalendarPhone({ calendar, plans, canEdit, selected, editing, onS
                       row={row}
                       cell={cell}
                       past={d.past}
+                      season={season}
                       canEdit={canEdit}
                       tabStop
                       selected={selected?.planId === row.ratePlanId && selected.date === d.date}

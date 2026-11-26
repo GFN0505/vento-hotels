@@ -150,6 +150,41 @@ describe.skipIf(!url)('quoting a stay', () => {
     })
   })
 
+  it('quotes only from the business date, within 2 years, for up to 365 nights', async () => {
+    await expect(
+      quoteStay(t.db, desk, stay({ arrival: '2026-11-24', departure: '2026-11-26' })),
+    ).rejects.toMatchObject({ data: { code: 'PAST_DATE' } })
+    await expect(
+      quoteStay(t.db, desk, stay({ arrival: '2028-11-25', departure: '2028-11-27' })),
+    ).rejects.toMatchObject({ data: { code: 'TOO_FAR_AHEAD' } })
+    await expect(
+      quoteStay(t.db, desk, stay({ arrival: '2026-12-01', departure: '2027-12-02' })),
+    ).rejects.toMatchObject({ data: { code: 'STAY_TOO_LONG' } })
+    const year = await quoteStay(
+      t.db,
+      desk,
+      stay({ arrival: '2026-12-01', departure: '2027-12-01' }),
+    )
+    expect(year.nights).toHaveLength(365)
+  })
+
+  it("changes the quote hash, not the plan's version, when the parent's dates change", async () => {
+    const before = await quoteStay(t.db, desk, stay())
+    await t.rpc(kora.gm.cookie, 'rates/setDates', {
+      ratePlanId: bar.id,
+      batchId: batch(),
+      roomTypeIds: [kora.types.dlk.id],
+      from: '2026-12-06',
+      to: '2026-12-06',
+      prices: [{ roomTypeId: kora.types.dlk.id, price: '160000' }],
+    })
+    const after = await quoteStay(t.db, desk, stay())
+    expect(after.ratePlanVersion).toBe(before.ratePlanVersion)
+    expect(after.quoteHash).not.toBe(before.quoteHash)
+    expect(after.total).toBe('529000.00')
+    expect((await quoteStay(t.db, desk, stay())).quoteHash).toBe(after.quoteHash)
+  })
+
   it('offers plans open to anyone that sell the room type, in plan order', async () => {
     const plans = await listBookablePlans(t.db, desk, {
       propertyId: kora.vi.id,

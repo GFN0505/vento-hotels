@@ -19,6 +19,15 @@ type Props = {
   error?: string | undefined
   onConfirm: (reason: string) => void
   onClose: () => void
+  // For "below Best available" when a new plan undercuts the base plan tonight.
+  basePlanName?: string | undefined
+}
+
+// What the "before" price is, when it isn't simply tonight's price before this change.
+export function againstNote(row: Pick<LoweredTonight, 'against'>, basePlanName?: string): string {
+  if (row.against === 'earlier_today') return 'Lower than it was earlier today'
+  if (row.against === 'base_plan') return `Below ${basePlanName ?? 'the base plan'} tonight`
+  return ''
 }
 
 export function LoweredDialog({
@@ -28,6 +37,7 @@ export function LoweredDialog({
   error,
   onConfirm,
   onClose,
+  basePlanName,
 }: Props) {
   const shown = lowered.slice(0, 6)
   return (
@@ -57,6 +67,11 @@ export function LoweredDialog({
               {formatNaira(row.before)} →{' '}
               <span className="font-medium text-text">{formatNaira(row.after)}</span>
             </span>
+            {row.against === 'this_save' ? null : (
+              <span className="basis-full text-sm text-text-3">
+                {againstNote(row, basePlanName)}
+              </span>
+            )}
           </li>
         ))}
         {lowered.length > shown.length ? (

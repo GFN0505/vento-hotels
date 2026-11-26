@@ -26,14 +26,14 @@ A derived plan follows its parent automatically: change Best available, or close
 Use **Duplicate** to start a new plan from an existing one. **Who can book it: Corporate accounts only** keeps a plan for companies with a contract; linking companies comes later.
 
 ## Change prices for dates
-Go to **Rate calendar**. It shows 14 nights from today's business date (choose 30 nights if you like), with each room type's plans underneath. Friday and Saturday are shaded; a season's name sits above its dates. Derived plans are greyed with a link icon: change their parent instead.
+Go to **Rate calendar**. It shows 14 nights from today's business date (choose 30 nights if you like), with each room type's plans underneath. Friday and Saturday are tinted, and tonight's column says **Tonight**. A season sits above its dates with its range and min stay ("Festive season · 18 Dec–2 Jan · min 2"); click it to change those dates. On phones and tablets, **Key** explains the marks. Derived plans are greyed with a link icon: change their parent instead.
 
 - **One night:** click the price, type the new one and press Enter. A toast confirms it with **Undo**.
 - **A range:** click **Change dates**. Choose the plan, room types, dates and days of the week, then **New prices** (one per room type) or **Back to standard price**. Add a **Season name** such as Festive season if you like, and set **Min stay**, **Closed to arrival** or **Closed** (each stays as it is unless you choose On or Off). The sheet says how many dates change and which plans follow. Click **Apply**, and **Undo** in the toast if it wasn't right.
 
 With the keyboard, Tab into the calendar and use the arrow keys to move between nights and plans; press Enter or start typing to change a price. Click any price to see it in words, ready to read to a caller: "Deluxe King · Bed & breakfast · Sat 5 Dec · ₦183,000 · min stay 2".
 
-On a phone, the calendar shows one room type at a time, night by night. Pick the room type at the top.
+On a phone, the calendar shows one room type at a time, night by night. Pick the room type at the top; **Change dates** sits beside it. Tap a price to change it.
 
 Dates before the business date can't change. Bookings already made keep the price they were sold at.
 

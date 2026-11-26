@@ -3,7 +3,6 @@
 // Best available (and Bed & breakfast) with the recommended terms.
 import { useMutation } from '@tanstack/react-query'
 import { BREAKFAST_SUPPLEMENT, type RatesOverview } from '@vento/shared'
-import { Check } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -15,8 +14,10 @@ import { api } from '@/lib/api'
 import { problemMessage } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
 import { useOnline } from '@/offline/connection'
+import { FirstRateAside } from './first-rate-aside'
 import * as M from './first-rate-model'
 import { EXCL, formatNaira, NEEDS_CONNECTION, plural } from './format'
+import { groupTyped } from './money-input'
 import { useRatesRefresh } from './queries'
 
 export function FirstRate({ overview }: { overview: RatesOverview }) {
@@ -68,6 +69,9 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
               {problems.form}
             </p>
           ) : null}
+          <p className="text-text-2">
+            Per room per night, {EXCL}. Weekday is Sunday to Thursday nights.
+          </p>
           <Card className="overflow-hidden">
             <table className="w-full border-collapse text-left">
               <thead>
@@ -79,7 +83,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                     Rooms
                   </th>
                   <th scope="col" className="px-3 py-2">
-                    Weekday price, excl. taxes
+                    Weekday (Sun–Thu)
                   </th>
                   <th scope="col" className="w-[34%] px-3 py-2 pr-4 sm:w-40 sm:pr-5">
                     Fri and Sat
@@ -111,6 +115,9 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                         error={problems[M.weekdayName(type.id)]}
                         validate={(v) => M.priceProblem(v, true)}
                         onChange={(event) => set(type.id, { weekday: event.target.value })}
+                        onBlur={(event) =>
+                          set(type.id, { weekday: groupTyped(event.target.value) })
+                        }
                       />
                     </td>
                     <td className="px-3 py-3 pr-4 sm:pr-5">
@@ -127,6 +134,9 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                         error={problems[M.weekendName(type.id)]}
                         validate={(v) => M.priceProblem(v, false)}
                         onChange={(event) => set(type.id, { weekend: event.target.value })}
+                        onBlur={(event) =>
+                          set(type.id, { weekend: groupTyped(event.target.value) })
+                        }
                       />
                     </td>
                   </tr>
@@ -140,7 +150,8 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
               checked={breakfast}
               onChange={(e) => setBreakfast(e.target.checked)}
             />
-            Also create a Bed &amp; breakfast plan at +{formatNaira(BREAKFAST_SUPPLEMENT)}
+            Also create Bed &amp; breakfast: these prices +{formatNaira(BREAKFAST_SUPPLEMENT)} a
+            night, breakfast included
           </label>
           <div className="flex flex-wrap items-center justify-end gap-3">
             {!online ? <span className="text-sm text-text-3">{NEEDS_CONNECTION}</span> : null}
@@ -156,37 +167,8 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
             </Button>
           </div>
         </form>
-        <Defaults breakfast={breakfast} />
+        <FirstRateAside breakfast={breakfast} types={types} rows={rows} />
       </div>
     </div>
-  )
-}
-
-// What the new plans come with, so nobody has to guess (the recommended terms, spec OQ 9 and 10).
-function Defaults({ breakfast }: { breakfast: boolean }) {
-  const lines = [
-    'Room only',
-    'Free cancellation until 48 hours before arrival, then the first night',
-    'Deposit: first night, within 48 hours of booking',
-    `Prices ${EXCL}`,
-  ]
-  return (
-    <Card className="flex flex-col gap-3 p-5">
-      <h2 className="text-md font-semibold">Best available comes with</h2>
-      <ul className="flex flex-col gap-2 text-text-2">
-        {lines.map((line) => (
-          <li key={line} className="flex gap-2">
-            <Check className="mt-0.5 size-4 flex-none text-em" aria-hidden="true" />
-            {line}
-          </li>
-        ))}
-      </ul>
-      <p className="text-sm text-text-3">
-        {breakfast
-          ? `Bed & breakfast follows it at +${formatNaira(BREAKFAST_SUPPLEMENT)} a night, all of it breakfast. `
-          : ''}
-        Change any of this later in the plan.
-      </p>
-    </Card>
   )
 }

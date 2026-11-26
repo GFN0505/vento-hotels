@@ -2,10 +2,17 @@
 // row per plan, a sticky first column, season bands over the dates and Fri and Sat shaded. One tab
 // stop for the grid; arrows move between cells, Enter or a digit opens an own-price cell.
 import type { RateCalendar, RatePlanView } from '@vento/shared'
-import { type KeyboardEvent, type ReactNode, useRef, useState } from 'react'
+import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
 import { CalendarCellView } from './calendar-cell'
-import { type CellRef, moveCell, seasonBands } from './calendar-model'
+import {
+  type Band,
+  bandLabel,
+  type CellRef,
+  moveCell,
+  seasonBands,
+  seasonByDate,
+} from './calendar-model'
 import { PlanLabel } from './calendar-plan-label'
 import { dayName, formatRateDate } from './format'
 import type { CellEditing } from './use-cell-editing'
@@ -17,27 +24,39 @@ type Props = {
   selected: CellRef | undefined
   editing: CellEditing
   onSelect: (ref: CellRef) => void
+  // A season band opens Change dates on its range.
+  onSeason?: ((from: string, to: string) => void) | undefined
 }
 
 const STICKY = 'sticky left-0 z-10 bg-surface'
 
-export function CalendarGrid({ calendar, plans, canEdit, selected, editing, onSelect }: Props) {
+export function CalendarGrid(props: Props) {
+  const { calendar, plans, canEdit, selected, editing, onSelect, onSeason } = props
   const grid = useRef<HTMLDivElement>(null)
   const [stop, setStop] = useState({ row: 0, col: 0 })
   const dates = calendar.dates
-  const bands = seasonBands(
+  const bands = seasonBands(calendar)
+  const seasons = seasonByDate(
+    bands,
     dates.map((d) => d.date),
-    calendar.seasons,
   )
+  // A new page opens at its first night (the business date), not where the last one was scrolled.
+  const first = dates[0]?.date
+  useEffect(() => {
+    if (first && grid.current) grid.current.scrollLeft = 0
+  }, [first])
   const rows = calendar.roomTypes.flatMap((type) => type.rows.map((row) => ({ type, row })))
   const size = { rows: rows.length, cols: dates.length }
   const focusCell = (at: { row: number; col: number }) => {
     setStop(at)
-    requestAnimationFrame(() =>
-      grid.current
-        ?.querySelector<HTMLElement>(`[data-row="${at.row}"][data-col="${at.col}"]`)
-        ?.focus(),
-    )
+    requestAnimationFrame(() => {
+      const el = grid.current?.querySelector<HTMLElement>(
+        `[data-row="${at.row}"][data-col="${at.col}"]`,
+      )
+      // Scroll only when the cell is out of view, and only as far as needed.
+      el?.focus({ preventScroll: true })
+      el?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    })
   }
   function navigate(event: KeyboardEvent<HTMLElement>, at: { row: number; col: number }) {
     const next = moveCell(event.key, at, size)
@@ -49,37 +68,31 @@ export function CalendarGrid({ calendar, plans, canEdit, selected, editing, onSe
   return (
     <div
       ref={grid}
-      className="overflow-x-auto rounded-md border border-border bg-surface shadow-card"
+      // Its own scroll area, so the dates stay at the top while the room types scroll by.
+      className="max-h-[calc(100dvh-13rem)] overflow-auto rounded-md border border-border bg-surface shadow-card"
     >
       <table className="w-full border-collapse text-left">
         <caption className="sr-only">
           Prices per night, excl. taxes and service charge. Arrow keys move between nights and
           plans.
         </caption>
-        <thead>
-          {bands.some((b) => b.name) ? (
+        <thead className="sticky top-0 z-20 bg-surface">
+          {bands.some((b) => b.season) ? (
             <tr>
-              <td className={cn(STICKY, 'border-b border-border')} />
+              <td className={cn(STICKY, 'z-30 border-b border-border')} />
               {bands.map((band) => (
                 <td
                   key={band.key}
                   colSpan={band.span}
                   className="border-b border-border px-1 pt-2 pb-1"
                 >
-                  {band.name ? (
-                    <span
-                      className="block truncate rounded-[4px] bg-pri-soft px-2 py-0.5 text-xs font-semibold text-pri-ink ring-1 ring-pri-line"
-                      title={band.name}
-                    >
-                      {band.name}
-                    </span>
-                  ) : null}
+                  {band.season ? <SeasonBand season={band.season} onOpen={onSeason} /> : null}
                 </td>
               ))}
             </tr>
           ) : null}
           <tr className="border-b border-border text-xs text-text-3">
-            <th scope="col" className={cn(STICKY, 'w-56 min-w-48 px-4 py-2 font-medium')}>
+            <th scope="col" className={cn(STICKY, 'z-30 w-56 min-w-48 px-4 py-2 font-medium')}>
               Room type · plan
             </th>
             {dates.map((d) => {
@@ -90,7 +103,7 @@ export function CalendarGrid({ calendar, plans, canEdit, selected, editing, onSe
                   scope="col"
                   className={cn(
                     'px-1 py-2 text-center font-medium',
-                    d.weekend && 'bg-surface-2',
+                    d.weekend && 'bg-weekend text-pri-ink',
                     today && 'text-pri-ink',
                   )}
                 >
@@ -103,6 +116,12 @@ export function CalendarGrid({ calendar, plans, canEdit, selected, editing, onSe
                   >
                     {formatRateDate(d.date, false)}
                   </span>
+                  {d.weekend ? <span className="sr-only">, weekend</span> : null}
+                  {today ? (
+                    <span className="block text-[10px] font-semibold tracking-wide uppercase">
+                      Tonight
+                    </span>
+                  ) : null}
                 </th>
               )
             })}
@@ -123,10 +142,7 @@ export function CalendarGrid({ calendar, plans, canEdit, selected, editing, onSe
                       const ref = { typeId: type.id, planId: row.ratePlanId, date: cell.date }
                       const meta = dates[c]
                       return (
-                        <td
-                          key={cell.date}
-                          className={cn('p-1', meta?.weekend && 'bg-surface-2/60')}
-                        >
+                        <td key={cell.date} className={cn('p-1', meta?.weekend && 'bg-weekend')}>
                           <CalendarCellView
                             typeName={type.name}
                             row={row}
@@ -142,6 +158,7 @@ export function CalendarGrid({ calendar, plans, canEdit, selected, editing, onSe
                             pending={editing.isPending(ref)}
                             editing={editing.editingValue(ref)}
                             coords={{ row: r, col: c }}
+                            season={seasons.get(cell.date)}
                             onActivate={() => {
                               setStop({ row: r, col: c })
                               onSelect(ref)
@@ -184,5 +201,36 @@ function TypeRows({ name, span, children }: { name: string; span: number; childr
       </tr>
       {children}
     </>
+  )
+}
+
+// "Festive season · 18 Dec–2 Jan · min 2": opens Change dates on the season's dates for editors.
+function SeasonBand({
+  season,
+  onOpen,
+}: {
+  season: NonNullable<Band['season']>
+  onOpen: ((from: string, to: string) => void) | undefined
+}) {
+  const label = bandLabel(season)
+  const style =
+    'block w-full truncate rounded-[4px] bg-pri-soft px-2 py-0.5 text-left text-xs font-semibold text-pri-ink ring-1 ring-pri-line'
+  if (!onOpen) {
+    return (
+      <span className={style} title={label}>
+        {label}
+      </span>
+    )
+  }
+  return (
+    <button
+      type="button"
+      className={cn(style, 'hover:bg-pri-line/40')}
+      title={`${label}. Change these dates`}
+      aria-label={`${label}. Change these dates`}
+      onClick={() => onOpen(season.from, season.to)}
+    >
+      {label}
+    </button>
   )
 }

@@ -20,6 +20,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import { amount, archivedAt, calendarDate, currency, id, timestamps } from '../columns.ts'
 import { organizations } from './auth.ts'
+import { auditEvents } from './governance.ts'
 import { roomTypes } from './rooms.ts'
 import { properties } from './tenancy.ts'
 
@@ -245,5 +246,42 @@ export const rateDates = pgTable(
       'rate_dates_not_empty',
       sql`${t.price} is not null or ${t.closed} or ${t.closedToArrival} or ${t.minStay} is not null or ${t.seasonName} is not null`,
     ),
+  ],
+)
+
+// One row per Change dates apply (and per Undo), keyed by the browser's batch id: a resent batch
+// is answered from here, and Undo finds what it restores (the audit event's before/after), whether
+// it was undone already, and the business date it was made on (Undo lasts until night audit).
+export const rateDateBatches = pgTable(
+  'rate_date_batches',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    propertyId: uuid().notNull(),
+    ratePlanId: uuid().notNull(),
+    batchId: uuid().notNull(),
+    // The business date the change was made on.
+    businessDate: calendarDate().notNull(),
+    // The rates.dates_changed event holding every cell's before and after.
+    auditEventId: uuid()
+      .notNull()
+      .references(() => auditEvents.id, { onDelete: 'restrict' }),
+    // Set on an apply once undone: the batch id of the undo.
+    undoneByBatchId: uuid(),
+    // Set on an undo: the batch it undid.
+    undoOfBatchId: uuid(),
+    ...timestamps,
+  },
+  (t) => [
+    inProperty('rate_date_batches_property_fk', t),
+    index().on(t.organizationId),
+    index().on(t.ratePlanId),
+    index().on(t.auditEventId),
+    unique('rate_date_batches_batch_id_unique').on(t.batchId),
+    foreignKey({
+      name: 'rate_date_batches_plan_fk',
+      columns: [t.propertyId, t.ratePlanId],
+      foreignColumns: [ratePlans.propertyId, ratePlans.id],
+    }).onDelete('cascade'),
   ],
 )

@@ -19,6 +19,7 @@ type Props = {
     planId?: string | undefined
     date?: string | undefined
     typeId?: string | undefined
+    to?: string | undefined
     // The first night in view, when no night was picked.
     from?: string | undefined
   }
@@ -37,7 +38,7 @@ function start(props: Props, own: readonly RatePlanView[]): M.DatesForm {
     planId,
     roomTypeIds: initial.typeId && onPlan.includes(initial.typeId) ? [initial.typeId] : onPlan,
     from,
-    to: initial.date ?? addDays(from, 6),
+    to: initial.to ?? initial.date ?? addDays(from, 6),
     days: [0, 1, 2, 3, 4, 5, 6],
     priceMode: 'keep',
     prices: {},

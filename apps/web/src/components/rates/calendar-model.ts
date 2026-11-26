@@ -1,7 +1,7 @@
 // The rate calendar's pure parts (design #8, Rates tab): what each cell says to a screen reader,
 // the season bands over the dates, arrow-key moves between cells, and paging by nights.
 import { addDays, type CalendarCell, type CalendarDate, type RateCalendar } from '@vento/shared'
-import { formatNaira, shortDate } from './format'
+import { formatNaira, formatRateDate, shortDate } from './format'
 
 export type CalendarRow = RateCalendar['roomTypes'][number]['rows'][number]
 export type CellRef = { typeId: string; planId: string; date: CalendarDate }
@@ -28,21 +28,79 @@ export function editable(row: CalendarRow, past: boolean, canEdit: boolean): boo
   return canEdit && !past && row.pricing === 'own'
 }
 
-export type Band = { key: string; name: string | null; span: number }
+export type Band = {
+  key: string
+  span: number
+  // The season over these dates (its whole range, which may run past the view), or a gap.
+  season: { name: string; from: CalendarDate; to: CalendarDate; minStay: number | null } | null
+}
 
-// Runs of dates under the same season name, for one header row of colSpans.
-export function seasonBands(
-  dates: readonly CalendarDate[],
-  seasons: RateCalendar['seasons'],
-): Band[] {
+// The min stay every own-price cell in the season shares, or null when they differ or have none.
+function seasonMinStay(
+  calendar: RateCalendar,
+  from: CalendarDate,
+  to: CalendarDate,
+): number | null {
+  const values = new Set<number | null>()
+  for (const type of calendar.roomTypes) {
+    for (const row of type.rows) {
+      if (row.pricing !== 'own') continue
+      for (const cell of row.cells) {
+        if (cell.date >= from && cell.date <= to) values.add(cell.dateMinStay)
+      }
+    }
+  }
+  const [only] = [...values]
+  return values.size === 1 && typeof only === 'number' && only > 1 ? only : null
+}
+
+// Runs of dates under the same season, for one header row of colSpans.
+export function seasonBands(calendar: RateCalendar): Band[] {
   const bands: Band[] = []
-  for (const date of dates) {
-    const name = seasons.find((s) => s.from <= date && date <= s.to)?.name ?? null
+  for (const { date } of calendar.dates) {
+    const found = calendar.seasons.find((s) => s.from <= date && date <= s.to)
     const last = bands.at(-1)
-    if (last && last.name === name) last.span += 1
-    else bands.push({ key: `${date}-${name ?? ''}`, name, span: 1 })
+    if (last && last.season?.name === found?.name && last.season?.from === found?.from) {
+      last.span += 1
+      continue
+    }
+    bands.push({
+      key: `${date}-${found?.name ?? ''}`,
+      span: 1,
+      season: found ? { ...found, minStay: seasonMinStay(calendar, found.from, found.to) } : null,
+    })
   }
   return bands
+}
+
+// "Festive season · 18 Dec–2 Jan · min 2".
+export function bandLabel(season: NonNullable<Band['season']>): string {
+  const range = `${formatRateDate(season.from, false)}–${formatRateDate(season.to, false)}`
+  return [season.name, range, season.minStay ? `min ${season.minStay}` : null]
+    .filter(Boolean)
+    .join(' · ')
+}
+
+// What a cell marks on its own: the dot for a date price outside any season (inside one, the band
+// says it), and MIN only when it differs from the season's (or is above 1 outside one).
+export function cellMarks(cell: CalendarCell, season: Band['season'] | undefined) {
+  return {
+    dot: cell.from === 'date' && !season,
+    min: cell.minStay > 1 && cell.minStay !== (season?.minStay ?? 1) ? cell.minStay : null,
+  }
+}
+
+// The season (if any) over each date in view.
+export function seasonByDate(bands: readonly Band[], dates: readonly CalendarDate[]) {
+  const out = new Map<CalendarDate, Band['season']>()
+  let i = 0
+  for (const band of bands) {
+    for (let n = 0; n < band.span; n++) {
+      const date = dates[i++]
+      if (date) out.set(date, band.season)
+    }
+  }
+  return out
 }
 
 // Arrow keys, Home and End move one cell (rows run down all room types, columns across dates).

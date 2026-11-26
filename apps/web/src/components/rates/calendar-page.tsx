@@ -4,20 +4,22 @@
 // front desk; the next pages are fetched ahead so they open offline too.
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { addDays, type Property, type RatePlanView } from '@vento/shared'
-import { CalendarRange, Link2 } from 'lucide-react'
+import { CalendarRange } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
 import { useMediaQuery } from '@/lib/media'
 import { useOnline } from '@/offline/connection'
+import { CalendarEmpty } from './calendar-empty'
 import { CalendarGrid } from './calendar-grid'
+import { CalendarLegend } from './calendar-legend'
 import { type CellRef, pageFrom } from './calendar-model'
 import { CalendarPhone } from './calendar-phone'
 import type { CalendarSearch, OnCalendarSearch } from './calendar-search'
 import { CalendarToolbar } from './calendar-toolbar'
 import { CellDetail } from './cell-detail'
 import { ChangeDatesSheet } from './change-dates-sheet'
-import { dateRange, NEEDS_CONNECTION, PER_NIGHT_EXCL } from './format'
+import { CHANGE_DENIED_SHORT, dateRange, NEEDS_CONNECTION, PER_NIGHT_EXCL } from './format'
 import { LiveBadge } from './plans-page'
 import { calendarQuery, plansQuery, useRatesOverview } from './queries'
 import { RatesHotel } from './rates-hotel'
@@ -40,6 +42,7 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
   const online = useOnline()
   const queryClient = useQueryClient()
   const phone = !useMediaQuery('(min-width: 768px)')
+  const wide = useMediaQuery('(min-width: 1024px)')
   const overview = useRatesOverview(hotel.id)
   const plans = useQuery(plansQuery(hotel.id))
   const o = overview.data
@@ -100,9 +103,26 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
   const data = calendar.data
   const planMap = new Map<string, RatePlanView>((plans.data?.items ?? []).map((p) => [p.id, p]))
   const canEdit = Boolean(data?.canEdit) && online
-  const openSheet = (ref?: CellRef) =>
-    onSearch({ sheet: 'dates', plan: ref?.planId, date: ref?.date }, { push: true })
+  const openSheet = (ref?: CellRef, to?: string) =>
+    onSearch({ sheet: 'dates', plan: ref?.planId, date: ref?.date, to }, { push: true })
+  // A season band opens Change dates on its dates from the business date on.
+  const openSeason = (start: string, end: string) => {
+    const first = [start, o.property.businessDate].sort().at(-1) ?? start
+    openSheet({ typeId: '', planId: '', date: first }, end)
+  }
   const empty = data?.roomTypes.every((t) => t.rows.length === 0)
+  const changeDates = (
+    <Button
+      variant="primary"
+      size="lg"
+      className="flex-none max-lg:h-11"
+      disabled={!online || o.activePlans === 0}
+      onClick={() => openSheet()}
+    >
+      <CalendarRange className="size-4" aria-hidden="true" />
+      Change dates
+    </Button>
+  )
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -112,26 +132,18 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
           <span className="num">{`${PER_NIGHT_EXCL} · ${dateRange(from, addDays(from, nights - 1))}`}</span>
         }
         actions={
-          o.canEdit ? (
+          o.canEdit && !phone ? (
             <>
               {!online ? (
                 <span className="self-center text-sm text-text-3">{NEEDS_CONNECTION}</span>
               ) : null}
-              <Button
-                variant="primary"
-                size="lg"
-                className="max-lg:h-11"
-                disabled={!online || o.activePlans === 0}
-                onClick={() => openSheet()}
-              >
-                <CalendarRange className="size-4" aria-hidden="true" />
-                Change dates
-              </Button>
+              {changeDates}
             </>
           ) : null
         }
       />
-      <RatesOffline />
+      {o.canEdit ? null : <p className="-mt-2 text-text-2">{CHANGE_DENIED_SHORT}</p>}
+      <RatesOffline updatedAt={calendar.dataUpdatedAt} />
       <CalendarToolbar
         overview={o}
         search={search}
@@ -139,18 +151,10 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
         nights={nights}
         phone={phone}
         roomTypeId={typeId}
+        changeDates={phone && o.canEdit ? changeDates : null}
+        legend={<CalendarLegend compact={!wide} />}
         onSearch={onSearch}
       />
-      <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-3">
-        <span className="inline-flex items-center gap-1">
-          <Link2 className="size-3.5" aria-hidden="true" /> derived plan, edit its parent
-        </span>
-        <span>MIN = minimum stay · CTA = closed to arrival</span>
-        <span className="inline-flex items-center gap-1.5">
-          <span aria-hidden="true" className="size-1.5 rounded-full bg-pri" /> price set for that
-          date
-        </span>
-      </p>
       {data && !empty ? (
         <>
           <CellDetail
@@ -176,6 +180,7 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
               selected={selected}
               editing={editing}
               onSelect={setSelected}
+              onSeason={canEdit ? openSeason : undefined}
             />
           )}
         </>
@@ -190,39 +195,23 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
         <ChangeDatesSheet
           overview={o}
           plans={plans.data?.items ?? []}
-          initial={{ planId: search.plan, date: search.date, typeId: search.type, from }}
+          initial={{
+            planId: search.plan || undefined,
+            date: search.date,
+            to: search.to,
+            typeId: search.type,
+            from,
+          }}
           rateDates={rateDates}
           onClose={() =>
-            onSearch({ sheet: undefined, plan: undefined, date: undefined }, { push: true })
+            onSearch(
+              { sheet: undefined, plan: undefined, date: undefined, to: undefined },
+              { push: true },
+            )
           }
         />
       ) : null}
       {rateDates.dialog}
-    </div>
-  )
-}
-
-function CalendarEmpty({
-  filtered,
-  corporate,
-  onClear,
-}: {
-  filtered: boolean
-  corporate: boolean
-  onClear: () => void
-}) {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-surface px-6 py-12 text-center shadow-card">
-      <p className="max-w-sm text-text-2">
-        {filtered || corporate
-          ? 'No rate plans match these filters.'
-          : 'No rate plans yet. A rate plan sets the price and conditions for a room type.'}
-      </p>
-      {filtered || corporate ? (
-        <Button className="max-lg:h-11" onClick={onClear}>
-          Clear filters
-        </Button>
-      ) : null}
     </div>
   )
 }

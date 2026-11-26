@@ -20,6 +20,7 @@ function readSearch(search: Record<string, unknown>): CalendarSearch {
     sheet: search.sheet === 'dates' ? 'dates' : undefined,
     plan: text(search.plan),
     date: date(search.date),
+    to: date(search.to),
   }
 }
 

@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createType } from '../rooms/testing.ts'
 import { ABUJA_ADDRESS } from '../test/addresses.ts'
 import { createTestApp } from '../test/harness.ts'
-import { formOf, type Kora, koraWithRates, setBusinessDate, TERMS } from './testing.ts'
+import { batch, formOf, type Kora, koraWithRates, setBusinessDate, TERMS } from './testing.ts'
 
 const url = process.env.TEST_DATABASE_URL
 
@@ -132,5 +132,39 @@ describe.skipIf(!url)('rates under concurrent edits', () => {
     const after = (await t.rpc<RatePlanView>(kora.owner.cookie, 'ratePlans/get', { id: child.id }))
       .data
     expect(after.roomTypes.map((row) => row.roomTypeId)).toContain(villa.id)
+  })
+  it('lets a room type archive and a date change on it queue cleanly', async () => {
+    for (let round = 1; round <= 5; round++) {
+      const spare = await createType(t, kora.owner.cookie, hotel.id, {
+        name: `Spare ${round}`,
+        code: `SP${round}`,
+      })
+      const plan = (
+        await t.rpc<RatePlanView>(kora.owner.cookie, 'ratePlans/create', {
+          propertyId: hotel.id,
+          name: `Spares ${round}`,
+          code: `SPARE${round}`,
+          pricing: 'own',
+          roomTypes: [{ roomTypeId: spare.id, weekday: '90000' }],
+          ...TERMS,
+        })
+      ).data
+      const [archive, dates] = await Promise.all([
+        t.rpc<{ data?: { code?: string } }>(kora.owner.cookie, 'roomTypes/archive', {
+          id: spare.id,
+        }),
+        t.rpc<{ data?: { code?: string } }>(kora.owner.cookie, 'rates/setDates', {
+          ratePlanId: plan.id,
+          batchId: batch(),
+          roomTypeIds: [spare.id],
+          from: '2026-12-01',
+          to: '2026-12-31',
+          prices: [{ roomTypeId: spare.id, price: '95000' }],
+        }),
+      ])
+      expect(archive.status).toBe(200)
+      // Either the dates went in first, or they found the type archived: never a server error.
+      if (dates.status !== 200) expect(dates.data.data?.code).toBe('ROOM_TYPE_ARCHIVED')
+    }
   })
 })

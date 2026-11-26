@@ -112,6 +112,33 @@ export const undoExpired = () =>
     data: { code: 'UNDO_EXPIRED' },
   })
 
+export type CellsRemoved = {
+  count: number
+  prices: number
+  closures: number
+  minStays: number
+  seasons: string[]
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+// "Its 16 date prices and 3 closures from 25 Nov 2026 are removed." The web shows it in a confirm
+// and saves again with confirmDateCellsRemoved: data.count.
+export const dateCellsRemoved = (removed: CellsRemoved) => {
+  const parts = [
+    removed.prices ? plural(removed.prices, 'date price', 'date prices') : '',
+    removed.closures ? plural(removed.closures, 'closure', 'closures') : '',
+    removed.minStays ? plural(removed.minStays, 'min stay', 'min stays') : '',
+  ].filter(Boolean)
+  const what = parts.length
+    ? names(parts)
+    : plural(removed.count, 'dated setting', 'dated settings')
+  return new ORPCError('CONFLICT', {
+    message: `Its ${what} ${removed.count === 1 && parts.length <= 1 ? 'is' : 'are'} removed. Confirm to save.`,
+    data: { code: 'DATE_CELLS_REMOVED', ...removed },
+  })
+}
+
 export const pastDate = (date: string) =>
   new ORPCError('BAD_REQUEST', {
     message: `${formatRateDate(date)} is before the business date. Past rates can't change.`,
@@ -156,6 +183,25 @@ export const plansExist = () =>
   new ORPCError('CONFLICT', {
     message: 'This hotel already has rate plans. Add another with New rate plan.',
     data: { code: 'PLANS_EXIST' },
+  })
+
+export const plansArchived = () =>
+  new ORPCError('CONFLICT', {
+    message:
+      "This hotel's rate plans are all archived. Restore one from Archived, or add a new plan.",
+    data: { code: 'PLANS_ARCHIVED' },
+  })
+
+export const batchReused = () =>
+  new ORPCError('BAD_REQUEST', {
+    message: 'That change was already applied to another rate plan. Reload and try again.',
+    data: { code: 'BATCH_REUSED' },
+  })
+
+export const stayTooLong = () =>
+  new ORPCError('BAD_REQUEST', {
+    message: 'A stay can be up to 365 nights.',
+    data: { code: 'STAY_TOO_LONG' },
   })
 
 export const undoNotFound = () =>

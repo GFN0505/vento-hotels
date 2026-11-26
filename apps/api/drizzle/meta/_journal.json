@@ -99,6 +99,13 @@
       "when": 1795709448294,
       "tag": "0013_rate_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795713984369,
+      "tag": "0014_rate_date_batches",
+      "breakpoints": true
     }
   ]
 }

@@ -1,12 +1,13 @@
 // Archive, restore and delete a rate plan, from the list or the editor. Archive asks first (it
 // stops new bookings on the plan) and then offers Undo; delete for good asks with the plan's name.
 import { useMutation } from '@tanstack/react-query'
-import type { RatePlanView } from '@vento/shared'
+import type { LoweredTonight, RatePlanView } from '@vento/shared'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
-import { problemMessage } from '@/lib/errors'
+import { errorCode, problemMessage } from '@/lib/errors'
 import { ConfirmDialog } from './confirm-dialog'
+import { LoweredDialog, loweredFrom } from './lowered-dialog'
 import { useRatesRefresh } from './queries'
 
 type Plan = Pick<RatePlanView, 'id' | 'name'>
@@ -17,13 +18,25 @@ export function usePlanActions(options: { onDeleted?: () => void } = {}) {
   const [ask, setAsk] = useState<Ask>()
   const [error, setError] = useState<string>()
 
+  // Restoring after go-live can bring a price back cheaper than earlier today: that asks why.
+  const [restoreAsk, setRestoreAsk] = useState<{ plan: Plan; rows: LoweredTonight[] }>()
+  const [restoreError, setRestoreError] = useState<string>()
   const restore = useMutation({
-    mutationFn: (plan: Plan) => api.ratePlans.restore({ id: plan.id }),
+    mutationFn: ({ plan, reason }: { plan: Plan; reason?: string }) =>
+      api.ratePlans.restore({ id: plan.id, ...(reason ? { reason } : {}) }),
     onSuccess: async (plan) => {
+      setRestoreAsk(undefined)
       await refresh()
       toast.success(`${plan.name} restored`)
     },
-    onError: (failure) => toast.error(problemMessage(failure)),
+    onError: (failure, { plan }) => {
+      if (errorCode(failure) === 'REASON_REQUIRED') {
+        if (restoreAsk) setRestoreError(problemMessage(failure))
+        else setRestoreAsk({ plan, rows: loweredFrom(failure) })
+        return
+      }
+      toast.error(problemMessage(failure))
+    },
   })
 
   const archive = useMutation({
@@ -32,7 +45,7 @@ export function usePlanActions(options: { onDeleted?: () => void } = {}) {
       setAsk(undefined)
       await refresh()
       toast.success(`${plan.name} archived`, {
-        action: { label: 'Undo', onClick: () => restore.mutate(plan) },
+        action: { label: 'Undo', onClick: () => restore.mutate({ plan }) },
       })
     },
     onError: (failure) => setError(problemMessage(failure)),
@@ -88,8 +101,25 @@ export function usePlanActions(options: { onDeleted?: () => void } = {}) {
   return {
     archive: (plan: Plan) => open('archive', plan),
     remove: (plan: Plan) => open('delete', plan),
-    restore: (plan: Plan) => restore.mutate(plan),
-    restoring: restore.isPending ? restore.variables?.id : undefined,
-    dialog,
+    restore: (plan: Plan) => restore.mutate({ plan }),
+    restoring: restore.isPending ? restore.variables?.plan.id : undefined,
+    dialog: (
+      <>
+        {dialog}
+        {restoreAsk ? (
+          <LoweredDialog
+            lowered={restoreAsk.rows}
+            confirmLabel={`Restore ${restoreAsk.plan.name}`}
+            pending={restore.isPending}
+            error={restoreError}
+            onConfirm={(reason) => restore.mutate({ plan: restoreAsk.plan, reason })}
+            onClose={() => {
+              setRestoreAsk(undefined)
+              setRestoreError(undefined)
+            }}
+          />
+        ) : null}
+      </>
+    ),
   }
 }

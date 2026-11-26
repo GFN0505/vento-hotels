@@ -47,21 +47,14 @@ function HotelPlans({ hotel, archived, onArchived }: Props & { hotel: Property }
       </div>
     )
   }
-  if (o.activePlans === 0 && !archived) {
+  // Every plan archived: the archived list, to restore one (createFirst answers PLANS_ARCHIVED).
+  const allArchived = o.activePlans === 0 && o.archivedPlans > 0
+  if (o.activePlans === 0 && o.archivedPlans === 0) {
     if (o.canEdit) {
       return (
         <div className="flex flex-col gap-4">
-          <RatesOffline />
+          <RatesOffline updatedAt={overview.dataUpdatedAt} />
           <FirstRate overview={o} />
-          {o.archivedPlans > 0 ? (
-            <button
-              type="button"
-              onClick={() => onArchived(true)}
-              className="inline-flex min-h-11 items-center self-start text-sm font-medium text-pri-ink hover:underline"
-            >
-              Show {plural(o.archivedPlans, 'archived plan')}
-            </button>
-          ) : null}
         </div>
       )
     }
@@ -111,7 +104,7 @@ function HotelPlans({ hotel, archived, onArchived }: Props & { hotel: Property }
       <Unpriced overview={o} canWrite={canWrite} />
       <PlansList
         propertyId={hotel.id}
-        archived={archived}
+        archived={archived || allArchived}
         counts={{ active: o.activePlans, archived: o.archivedPlans }}
         canWrite={canWrite}
         onArchived={onArchived}

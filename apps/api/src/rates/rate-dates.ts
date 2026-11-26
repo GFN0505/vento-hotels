@@ -5,10 +5,10 @@
 import type { CalendarDate, SetRateDatesInput } from '@vento/shared'
 import { lastRateDate, newId, noDatesMessage, selectDates, toAmount } from '@vento/shared'
 import { and, asc, desc, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
-import { recordAudit } from '../audit/record.ts'
+import { type AuditEvent, recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { auditEvents } from '../db/schema/governance.ts'
-import { rateDates, ratePlanRoomTypes, ratePlans } from '../db/schema/rates.ts'
+import { rateDateBatches, rateDates, ratePlanRoomTypes, ratePlans } from '../db/schema/rates.ts'
 import { roomTypes } from '../db/schema/rooms.ts'
 import type { Access } from '../tenancy/access.ts'
 import {
@@ -21,6 +21,7 @@ import {
 } from './context.ts'
 import {
   alreadyUndone,
+  batchReused,
   noDates,
   notOnPlan,
   pastDate,
@@ -204,27 +205,53 @@ async function followerNames(tx: Tx, planId: string): Promise<string[]> {
   return rows.map((row) => row.name)
 }
 
-// The apply's event, if this batch was already applied (a retry after a timeout).
-async function appliedBatch(tx: Tx, access: Access, planId: string, batchId: string) {
-  const [event] = await tx
+// A batch already applied in this organization, locked, with its audit event. A batch id used on
+// another plan is refused: batch ids are the browser's own, one per apply.
+async function findBatch(tx: Tx, access: Access, planId: string, batchId: string) {
+  const [batch] = await tx
     .select({
-      id: auditEvents.id,
+      id: rateDateBatches.id,
+      ratePlanId: rateDateBatches.ratePlanId,
+      businessDate: rateDateBatches.businessDate,
+      undoneByBatchId: rateDateBatches.undoneByBatchId,
+      eventId: auditEvents.id,
       createdAt: auditEvents.createdAt,
-      businessDate: auditEvents.businessDate,
+      before: auditEvents.before,
       after: auditEvents.after,
     })
-    .from(auditEvents)
+    .from(rateDateBatches)
+    .innerJoin(auditEvents, eq(auditEvents.id, rateDateBatches.auditEventId))
     .where(
       and(
-        eq(auditEvents.organizationId, access.organizationId),
-        eq(auditEvents.entityType, 'rate_plan'),
-        eq(auditEvents.entityId, planId),
-        eq(auditEvents.action, 'rates.dates_changed'),
-        sql`${auditEvents.after}->>'batchId' = ${batchId}`,
+        eq(rateDateBatches.organizationId, access.organizationId),
+        eq(rateDateBatches.batchId, batchId),
       ),
     )
-    .limit(1)
-  return event
+    .for('update', { of: rateDateBatches })
+  if (batch && batch.ratePlanId !== planId) throw batchReused()
+  return batch
+}
+
+// Records an apply or an undo: its audit event first, then the batch row pointing at it.
+async function recordBatch(
+  tx: Tx,
+  access: Access,
+  property: RatesProperty,
+  planId: string,
+  batch: { batchId: string; undoOfBatchId?: string },
+  event: Omit<AuditEvent, 'id'>,
+): Promise<void> {
+  const eventId = newId()
+  await recordAudit(tx, access, { ...event, id: eventId })
+  await tx.insert(rateDateBatches).values({
+    organizationId: access.organizationId,
+    propertyId: property.id,
+    ratePlanId: planId,
+    batchId: batch.batchId,
+    businessDate: property.businessDate,
+    auditEventId: eventId,
+    undoOfBatchId: batch.undoOfBatchId ?? null,
+  })
 }
 
 export async function setRateDates(
@@ -237,7 +264,7 @@ export async function setRateDates(
     await lockRatesOfPlan(tx, access, input.ratePlanId)
     const plan = await lockOwnPlan(tx, access, input.ratePlanId)
     const property = await holdRatesProperty(tx, access, plan.propertyId)
-    const done = await appliedBatch(tx, access, plan.id, input.batchId)
+    const done = await findBatch(tx, access, plan.id, input.batchId)
     if (done) return (done.after as { summary: SetDatesResult }).summary
 
     requireSettable(property, input.from, input.to)
@@ -289,26 +316,33 @@ export async function setRateDates(
       changed: after.length,
       followers: await followerNames(tx, plan.id),
     }
-    await recordAudit(tx, access, {
-      action: 'rates.dates_changed',
-      entityType: 'rate_plan',
-      entityId: plan.id,
-      ...auditAt(property),
-      before: { cells: before },
-      after: {
-        batchId: input.batchId,
-        planName: plan.name,
-        roomTypes: [...typeNames].map(([id, name]) => ({ roomTypeId: id, roomTypeName: name })),
-        from: input.from,
-        to: input.to,
-        days: input.days,
-        seasonName: input.seasonName ?? null,
-        summary,
-        cells: after,
-        ...flags,
+    await recordBatch(
+      tx,
+      access,
+      property,
+      plan.id,
+      { batchId: input.batchId },
+      {
+        action: 'rates.dates_changed',
+        entityType: 'rate_plan',
+        entityId: plan.id,
+        ...auditAt(property),
+        before: { cells: before },
+        after: {
+          batchId: input.batchId,
+          planName: plan.name,
+          roomTypes: [...typeNames].map(([id, name]) => ({ roomTypeId: id, roomTypeName: name })),
+          from: input.from,
+          to: input.to,
+          days: input.days,
+          seasonName: input.seasonName ?? null,
+          summary,
+          cells: after,
+          ...flags,
+        },
+        reason: input.reason ?? null,
       },
-      reason: input.reason ?? null,
-    })
+    )
     return summary
   })
 }
@@ -331,32 +365,13 @@ export async function undoRateDates(
     await lockRatesOfPlan(tx, access, input.ratePlanId)
     const plan = await lockOwnPlan(tx, access, input.ratePlanId)
     const property = await holdRatesProperty(tx, access, plan.propertyId)
-    const original = await appliedBatch(tx, access, plan.id, input.batchId)
+    const original = await findBatch(tx, access, plan.id, input.batchId)
     if (!original) throw undoNotFound()
+    if (original.undoneByBatchId) throw alreadyUndone()
     // Undo lasts until night audit moves the business date past the one the change was made on.
-    if (original.businessDate && original.businessDate < property.businessDate) {
-      throw undoExpired()
-    }
-    const [undone] = await tx
-      .select({ id: auditEvents.id })
-      .from(auditEvents)
-      .where(
-        and(
-          eq(auditEvents.organizationId, access.organizationId),
-          eq(auditEvents.entityType, 'rate_plan'),
-          eq(auditEvents.entityId, plan.id),
-          eq(auditEvents.action, 'rates.dates_changed'),
-          sql`${auditEvents.after}->>'undoOf' = ${input.batchId}`,
-        ),
-      )
-      .limit(1)
-    if (undone) throw alreadyUndone()
-    const [beforeRow] = await tx
-      .select({ before: auditEvents.before })
-      .from(auditEvents)
-      .where(eq(auditEvents.id, original.id))
+    if (original.businessDate < property.businessDate) throw undoExpired()
     const applied = (original.after as DatesEvent).cells
-    const previous = (beforeRow?.before as { cells: Cell[] } | null)?.cells ?? []
+    const previous = (original.before as { cells: Cell[] } | null)?.cells ?? []
 
     const typeIds = [...new Set(applied.map((cell) => cell.roomTypeId))]
     const dates = [...new Set(applied.map((cell) => cell.date))]
@@ -409,21 +424,33 @@ export async function undoRateDates(
     const flags = await tonightAfter(tx, access, property, tonight, input.reason)
     // Before this undo's own event, so the message names whoever changed the dates since.
     const message = await skipMessage(tx, access, plan.id, original.createdAt, changedSince, past)
-    await recordAudit(tx, access, {
-      action: 'rates.dates_changed',
-      entityType: 'rate_plan',
-      entityId: plan.id,
-      ...auditAt(property),
-      before: { cells: before },
-      after: {
-        batchId: newId(),
-        undoOf: input.batchId,
-        planName: plan.name,
-        cells: after,
-        ...flags,
+    const undoBatchId = newId()
+    await recordBatch(
+      tx,
+      access,
+      property,
+      plan.id,
+      { batchId: undoBatchId, undoOfBatchId: input.batchId },
+      {
+        action: 'rates.dates_changed',
+        entityType: 'rate_plan',
+        entityId: plan.id,
+        ...auditAt(property),
+        before: { cells: before },
+        after: {
+          batchId: undoBatchId,
+          undoOf: input.batchId,
+          planName: plan.name,
+          cells: after,
+          ...flags,
+        },
+        reason: input.reason ?? null,
       },
-      reason: input.reason ?? null,
-    })
+    )
+    await tx
+      .update(rateDateBatches)
+      .set({ undoneByBatchId: undoBatchId })
+      .where(eq(rateDateBatches.id, original.id))
     return {
       restored: after.length,
       skippedDates: new Set([...changedSince, ...past]).size,

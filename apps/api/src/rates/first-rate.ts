@@ -7,13 +7,14 @@ import {
   DEFAULT_DEPOSIT,
   type RatePlanView,
 } from '@vento/shared'
-import { and, count, eq, isNull } from 'drizzle-orm'
+import { and, count, eq, sql } from 'drizzle-orm'
+import { recordAuditMany } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { ratePlans } from '../db/schema/rates.ts'
 import type { Access } from '../tenancy/access.ts'
 import { holdRatesProperty, lockHotelRates, requireRatesEdit } from './context.ts'
-import { noRoomTypes, plansExist } from './errors.ts'
-import { loadRoomTypes } from './guards.ts'
+import { noRoomTypes, plansArchived, plansExist } from './errors.ts'
+import { loadRoomTypes, tonightAfter, tonightBefore } from './guards.ts'
 import type { PlanTerms } from './plan-model.ts'
 import { findPlan, plansInScope, planViews } from './plan-reads.ts'
 import { insertPlan } from './plan-writes.ts'
@@ -62,24 +63,30 @@ export async function createFirstRatePlans(
     const property = await holdRatesProperty(tx, access, input.propertyId)
     const scope = { organizationId: access.organizationId, propertyId: property.id }
     if ((await loadRoomTypes(tx, scope)).length === 0) throw noRoomTypes()
-    const [active] = await tx
-      .select({ value: count() })
+    const counts = await tx
+      .select({ archived: sql<boolean>`${ratePlans.archivedAt} is not null`, value: count() })
       .from(ratePlans)
-      .where(
-        and(
-          plansInScope(access),
-          eq(ratePlans.propertyId, property.id),
-          isNull(ratePlans.archivedAt),
-        ),
-      )
-    if ((active?.value ?? 0) > 0) throw plansExist()
+      .where(and(plansInScope(access), eq(ratePlans.propertyId, property.id)))
+      .groupBy(sql`${ratePlans.archivedAt} is not null`)
+    if (counts.some((row) => !row.archived && row.value > 0)) throw plansExist()
+    // Every plan archived: the first-rate table would clash with their codes, and they may just
+    // need restoring. The web shows the Archived list.
+    if (counts.some((row) => row.archived && row.value > 0)) throw plansArchived()
+    const tonight = await tonightBefore(tx, access, property)
     const extra = { firstRate: true }
-    const barId = await insertPlan(tx, access, property, BEST_AVAILABLE, input.prices, extra)
-    const ids = [barId]
+    const bar = await insertPlan(tx, access, property, BEST_AVAILABLE, input.prices, extra)
+    const created = [bar]
     if (input.withBreakfast) {
       const types = input.prices.map((p) => ({ roomTypeId: p.roomTypeId }))
-      ids.push(await insertPlan(tx, access, property, bedAndBreakfast(barId), types, extra))
+      created.push(await insertPlan(tx, access, property, bedAndBreakfast(bar.id), types, extra))
     }
+    const flags = await tonightAfter(tx, access, property, tonight, undefined)
+    await recordAuditMany(
+      tx,
+      access,
+      created.map(({ event }) => ({ ...event, after: { ...event.after, ...flags } })),
+    )
+    const ids = created.map((plan) => plan.id)
     const rows = await Promise.all(ids.map((id) => findPlan(tx, access, id)))
     return { plans: await planViews(tx, property, rows) }
   })

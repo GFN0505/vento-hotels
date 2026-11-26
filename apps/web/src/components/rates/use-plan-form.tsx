@@ -13,10 +13,10 @@ import type {
 import { type FormEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { api, orpc } from '@/lib/api'
-import { errorCode, problemMessage } from '@/lib/errors'
+import { errorCode, errorData, problemMessage } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
 import { ConfirmDialog } from './confirm-dialog'
-import { formatRateDate, listNames, plural } from './format'
+import { listNames, plural } from './format'
 import { LoweredDialog, loweredFrom } from './lowered-dialog'
 import * as F from './plan-form-model'
 import { useRatesRefresh } from './queries'
@@ -39,6 +39,8 @@ type Args = {
 }
 
 type Confirm = { title: string; label: string; lines: string[] }
+// One save: the checked form, and what the person has already agreed to.
+type Payload = { data: CreateRatePlanInput; reason?: string; cells?: number }
 
 export function usePlanForm({ overview, plan, copy = false, addRoomTypes = [] }: Args) {
   const navigate = useNavigate()
@@ -56,8 +58,8 @@ export function usePlanForm({ overview, plan, copy = false, addRoomTypes = [] }:
   const [form, setForm] = useState(start)
   const [problems, setProblems] = useState<F.Problems>({})
   const [stale, setStale] = useState(false)
-  const [confirm, setConfirm] = useState<Confirm & { data: CreateRatePlanInput }>()
-  const [lowered, setLowered] = useState<{ data: CreateRatePlanInput; rows: LoweredTonight[] }>()
+  const [confirm, setConfirm] = useState<Confirm & { payload: Payload }>()
+  const [lowered, setLowered] = useState<{ payload: Payload; rows: LoweredTonight[] }>()
   const [reasonError, setReasonError] = useState<string>()
   const dirty = F.isDirty(initial, form)
 
@@ -80,10 +82,16 @@ export function usePlanForm({ overview, plan, copy = false, addRoomTypes = [] }:
   }
 
   const save = useMutation({
-    mutationFn: ({ data, reason }: { data: CreateRatePlanInput; reason?: string }) => {
-      if (!base) return api.ratePlans.create(data)
+    mutationFn: ({ data, reason, cells }: Payload) => {
+      if (!base) return api.ratePlans.create({ ...data, ...(reason ? { reason } : {}) })
       const { propertyId: _, ...fields } = data
-      return api.ratePlans.update({ ...fields, id: base.id, version: base.version, reason })
+      return api.ratePlans.update({
+        ...fields,
+        id: base.id,
+        version: base.version,
+        reason,
+        ...(cells === undefined ? {} : { confirmDateCellsRemoved: cells }),
+      })
     },
     onSuccess: async (saved) => {
       setLowered(undefined)
@@ -95,13 +103,26 @@ export function usePlanForm({ overview, plan, copy = false, addRoomTypes = [] }:
       }
       await refresh()
     },
-    onError: (error, { data }) => {
+    onError: (error, payload) => {
       const code = errorCode(error) ?? ''
       const message = problemMessage(error)
       if (code === 'REASON_REQUIRED') {
         if (lowered) setReasonError(message)
-        else setLowered({ data, rows: loweredFrom(error) })
+        else setLowered({ payload, rows: loweredFrom(error) })
         return
+      }
+      // The save would delete dated prices or restrictions: the server counts them, the person
+      // agrees, and the save goes again with that count.
+      const count = errorData(error).count
+      if (code === 'DATE_CELLS_REMOVED' && typeof count === 'number') {
+        setLowered(undefined)
+        const ask = confirmFor(true)
+        return setConfirm({
+          title: ask?.title ?? `Save ${base?.name ?? 'the plan'}?`,
+          label: ask?.label ?? 'Save plan',
+          lines: [message.replace(/\s*Confirm to save\.$/, ''), ...(ask?.lines ?? [])],
+          payload: { ...payload, cells: count },
+        })
       }
       setLowered(undefined)
       setStale(code === 'STALE_VERSION')
@@ -112,30 +133,32 @@ export function usePlanForm({ overview, plan, copy = false, addRoomTypes = [] }:
     },
   })
 
-  function confirmFor(): Confirm | undefined {
+  // What a save removes, in words. Before saving it only asks when plans that follow lose a room
+  // type; the server asks (DATE_CELLS_REMOVED) when dated prices or restrictions would go.
+  function confirmFor(always = false): Confirm | undefined {
     if (!base) return undefined
-    const lines: string[] = []
-    let title = ''
-    let label = ''
-    if (base.pricing === 'own' && form.pricing === 'derived' && base.datedFromBusinessDate > 0) {
-      title = `Switch ${base.name} to derived prices?`
-      label = 'Switch to derived'
-      lines.push(
-        `Its ${plural(base.datedFromBusinessDate, 'date price')} from ${formatRateDate(overview.property.businessDate)} ${base.datedFromBusinessDate === 1 ? 'is' : 'are'} removed.`,
-      )
-    }
+    const switching = base.pricing === 'own' && form.pricing === 'derived'
     const removed = overview.roomTypes.filter(
       (t) => base.roomTypes.some((r) => r.roomTypeId === t.id) && !form.rows[t.id]?.on,
     )
-    if (removed.length > 0 && base.followers.length > 0) {
-      const names = listNames(removed.map((t) => t.name))
-      title ||= `Remove ${names} from ${base.name}?`
-      label ||= `Remove ${removed.length === 1 ? names : plural(removed.length, 'room type')}`
-      lines.push(`It also stops on ${listNames(base.followers.map((f) => f.name))}.`)
+    const names = listNames(removed.map((t) => t.name))
+    const lines =
+      removed.length > 0 && base.followers.length > 0
+        ? [
+            `${removed.length === 1 ? 'It' : 'They'} also stop on ${listNames(base.followers.map((f) => f.name))}.`,
+          ]
+        : []
+    if (!always && lines.length === 0) return undefined
+    if (switching)
+      return { title: `Switch ${base.name} to derived prices?`, label: 'Switch to derived', lines }
+    if (removed.length > 0) {
+      return {
+        title: `Remove ${names} from ${base.name}?`,
+        label: `Remove ${removed.length === 1 ? names : plural(removed.length, 'room type')}`,
+        lines,
+      }
     }
-    return lines.length > 0
-      ? { title, label: lines.length > 1 ? 'Save plan' : label, lines }
-      : undefined
+    return { title: `Save ${base.name}?`, label: 'Save plan', lines }
   }
 
   function submit(event?: FormEvent<HTMLFormElement>) {
@@ -148,7 +171,7 @@ export function usePlanForm({ overview, plan, copy = false, addRoomTypes = [] }:
       return
     }
     const ask = confirmFor()
-    if (ask) setConfirm({ ...ask, data: result.data })
+    if (ask) setConfirm({ ...ask, payload: { data: result.data } })
     else save.mutate({ data: result.data })
   }
 
@@ -160,7 +183,7 @@ export function usePlanForm({ overview, plan, copy = false, addRoomTypes = [] }:
           confirmLabel={confirm.label}
           destructive
           onConfirm={() => {
-            save.mutate({ data: confirm.data })
+            save.mutate(confirm.payload)
             setConfirm(undefined)
           }}
           onClose={() => setConfirm(undefined)}
@@ -174,9 +197,10 @@ export function usePlanForm({ overview, plan, copy = false, addRoomTypes = [] }:
         <LoweredDialog
           lowered={lowered.rows}
           confirmLabel="Save plan"
+          basePlanName={overview.basePlan?.name}
           pending={save.isPending}
           error={reasonError}
-          onConfirm={(reason) => save.mutate({ data: lowered.data, reason })}
+          onConfirm={(reason) => save.mutate({ ...lowered.payload, reason })}
           onClose={() => {
             setLowered(undefined)
             setReasonError(undefined)

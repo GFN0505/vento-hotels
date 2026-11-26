@@ -6,7 +6,7 @@ import { Loader2, Lock } from 'lucide-react'
 import { type KeyboardEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
-import { type CalendarRow, cellLabel, editable } from './calendar-model'
+import { type Band, type CalendarRow, cellLabel, cellMarks, editable } from './calendar-model'
 import { priceProblem } from './first-rate-model'
 import { nairaDigits } from './format'
 
@@ -22,6 +22,8 @@ type Props = {
   pending: boolean
   editing: string | undefined
   coords?: { row: number; col: number }
+  // The season over this night: its band says the date price and min stay, so the cell doesn't.
+  season?: Band['season'] | undefined
   onActivate: () => void
   onEdit: (initial: string) => void
   // `refocus`: put focus back on the cell (Enter or Esc), not when the person clicked elsewhere.
@@ -47,6 +49,7 @@ export function CalendarCellView(props: Props) {
   const { row, cell, past, canEdit, selected, pending, editing, coords } = props
   const open = editable(row, past, canEdit)
   const derived = row.pricing === 'derived'
+  const marks = cellMarks(cell, props.season)
   if (editing !== undefined) return <CellInput {...props} initial={editing} />
   return (
     <button
@@ -82,7 +85,7 @@ export function CalendarCellView(props: Props) {
         past && 'opacity-60',
       )}
     >
-      {cell.from === 'date' && !derived ? (
+      {marks.dot && !derived ? (
         <span aria-hidden="true" className="absolute top-1 left-1.5 size-1.5 rounded-full bg-pri" />
       ) : null}
       <span className={cn('num flex items-center gap-1', !derived && 'font-medium text-text')}>
@@ -96,7 +99,7 @@ export function CalendarCellView(props: Props) {
       </span>
       <span className="flex gap-0.5" aria-hidden="true">
         {cell.closedToArrival ? <Tag>CTA</Tag> : null}
-        {cell.minStay > 1 ? <Tag>{`MIN ${cell.minStay}`}</Tag> : null}
+        {marks.min ? <Tag>{`MIN ${marks.min}`}</Tag> : null}
       </span>
     </button>
   )
@@ -121,9 +124,8 @@ function CellInput(props: Props & { initial: string }) {
   }
   return (
     <input
-      // Opened by the person, so it takes focus at once.
-      // biome-ignore lint/a11y/noAutofocus: the inline editor opens on purpose, where they clicked.
-      autoFocus
+      // Opened by the person where they clicked: focus it without scrolling the grid.
+      ref={(el) => el?.focus({ preventScroll: true })}
       inputMode="numeric"
       aria-label={`New price, ${cellLabel(props.typeName, props.row, props.cell, false)}`}
       aria-invalid={problem ? true : undefined}

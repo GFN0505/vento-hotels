@@ -6,6 +6,7 @@ import { Segmented } from '@/components/ui/segmented'
 import { SelectField } from '@/components/ui/select-field'
 import { EditorCard } from './editor-card'
 import { listNames } from './format'
+import { groupTyped } from './money-input'
 import type { PlanFormState } from './use-plan-form'
 
 type Props = {
@@ -109,6 +110,7 @@ export function EditorPrice({ state, parents, readOnly, onOwnPrices }: Props) {
               readOnly={readOnly}
               error={problems.offset}
               onChange={(event) => state.set({ offset: event.target.value, percent: '' })}
+              onBlur={(event) => state.set({ offset: groupTyped(event.target.value) })}
               className="num"
             />
             <Field

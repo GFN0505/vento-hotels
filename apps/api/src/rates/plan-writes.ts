@@ -8,9 +8,10 @@ import {
   newId,
   type RatePlanView,
   type StandardPrice,
+  toAmount,
   type UpdateRatePlanInput,
 } from '@vento/shared'
-import { and, asc, eq, gte, inArray, isNull, ne, type SQL, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, isNull, ne, or, type SQL, sql } from 'drizzle-orm'
 import { type AuditEvent, recordAudit, recordAuditMany } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
@@ -31,6 +32,7 @@ import {
   type Tx,
 } from './context.ts'
 import {
+  dateCellsRemoved,
   hasFollowers,
   hasHistory,
   listChanged,
@@ -45,7 +47,7 @@ import {
   roomTypeArchived,
   roomTypeNotFound,
 } from './errors.ts'
-import { requireValidPrices, tonightAfter, tonightBefore } from './guards.ts'
+import { onlyLive, requireValidPrices, tonightAfter, tonightBefore } from './guards.ts'
 import { type PlanRow, type PlanTerms, termColumns, termsOf } from './plan-model.ts'
 import { findPlan, planHasHistory, plansInScope, planView } from './plan-reads.ts'
 
@@ -220,7 +222,7 @@ export async function insertPlan(
   terms: PlanTerms,
   types: readonly PlanRoomTypeInput[],
   extra: Record<string, unknown> = {},
-): Promise<string> {
+): Promise<{ id: string; event: AuditEvent & { after: Record<string, unknown> } }> {
   const typeNames = await holdRoomTypes(
     tx,
     access,
@@ -255,7 +257,7 @@ export async function insertPlan(
       }
     }),
   )
-  await recordAudit(tx, access, {
+  const event: AuditEvent & { after: Record<string, unknown> } = {
     action: 'rate_plan.created',
     entityType: 'rate_plan',
     entityId: row.id,
@@ -266,8 +268,8 @@ export async function insertPlan(
       ...extra,
       liveProperty: isLive(property),
     },
-  })
-  return row.id
+  }
+  return { id: row.id, event }
 }
 
 const stripPrices = (types: readonly PlanRoomTypeInput[]) =>
@@ -306,8 +308,16 @@ export async function createRatePlan(
     return await db.transaction(async (tx) => {
       await lockHotelRates(tx, input.propertyId)
       const property = await holdRatesProperty(tx, access, input.propertyId)
-      const id = await insertPlan(tx, access, property, terms, input.roomTypes)
+      const tonight = await tonightBefore(tx, access, property)
+      const { id, event } = await insertPlan(tx, access, property, terms, input.roomTypes)
       await requireValidPrices(tx, access, property)
+      // A new plan open to anyone that undercuts the base plan tonight is a lowered price.
+      const flags = await tonightAfter(tx, access, property, tonight, input.reason)
+      await recordAudit(tx, access, {
+        ...event,
+        after: { ...event.after, ...flags },
+        reason: input.reason ?? null,
+      })
       return readBack(tx, access, property, id)
     })
   } catch (error) {
@@ -316,6 +326,66 @@ export async function createRatePlan(
 }
 
 // --- Update ---------------------------------------------------------------------------------------
+
+type DroppedCell = {
+  roomTypeId: string
+  date: string
+  price: string | null
+  closed: boolean
+  closedToArrival: boolean
+  minStay: number | null
+  seasonName: string | null
+}
+
+// The date cells a save would delete, in full, for the audit event's `before`.
+async function cellsToDrop(
+  tx: Tx,
+  planId: string,
+  removedTypes: readonly string[],
+  fromDate: string | null,
+): Promise<DroppedCell[]> {
+  if (removedTypes.length === 0 && fromDate === null) return []
+  const rows = await tx
+    .select({
+      roomTypeId: rateDates.roomTypeId,
+      date: rateDates.date,
+      price: rateDates.price,
+      closed: rateDates.closed,
+      closedToArrival: rateDates.closedToArrival,
+      minStay: rateDates.minStay,
+      seasonName: rateDates.seasonName,
+    })
+    .from(rateDates)
+    .where(
+      and(
+        eq(rateDates.ratePlanId, planId),
+        or(
+          removedTypes.length ? inArray(rateDates.roomTypeId, [...removedTypes]) : undefined,
+          fromDate ? gte(rateDates.date, fromDate) : undefined,
+        ),
+      ),
+    )
+    .orderBy(asc(rateDates.roomTypeId), asc(rateDates.date))
+    .for('update')
+  return rows.map((row) => ({ ...row, price: row.price && toAmount(row.price) }))
+}
+
+// Future cells (from the business date on) go only when the request confirms their exact count.
+function requireDropConfirmed(
+  cells: readonly DroppedCell[],
+  businessDate: string,
+  confirmed: number | undefined,
+): void {
+  const future = cells.filter((cell) => cell.date >= businessDate)
+  if (future.length === 0 || confirmed === future.length) return
+  throw dateCellsRemoved({
+    count: future.length,
+    prices: future.filter((cell) => cell.price !== null).length,
+    closures: future.filter((cell) => cell.closed || cell.closedToArrival).length,
+    minStays: future.filter((cell) => cell.minStay !== null).length,
+    seasons: [...new Set(future.flatMap((cell) => (cell.seasonName ? [cell.seasonName] : [])))],
+  })
+}
 
 // The fields that differ, as before/after pairs for the audit event.
 function changes<T extends Record<string, unknown>>(current: T, next: T) {
@@ -473,6 +543,27 @@ export async function updateRatePlan(
       const wantedIds = new Set(wanted.map((t) => t.roomTypeId))
       const removed = existing.filter((t) => !wantedIds.has(t.roomTypeId)).map((t) => t.roomTypeId)
       const own = next.pricing === 'own'
+      const toDerived = current.pricing === 'own' && !own
+      // Date cells this save deletes: every cell of a removed room type (its rows go with it), and
+      // on a switch to derived prices every cell from the business date on. Future cells need the
+      // caller to confirm their count, so nothing disappears that the confirm didn't show.
+      const dropping = await cellsToDrop(
+        tx,
+        plan.id,
+        removed,
+        toDerived ? property.businessDate : null,
+      )
+      requireDropConfirmed(dropping, property.businessDate, input.confirmDateCellsRemoved)
+      const oldStandard = toDerived
+        ? existing
+            .filter((t) => t.weekday !== null)
+            .map((t) => ({
+              roomTypeId: t.roomTypeId,
+              roomTypeName: t.name,
+              weekday: t.weekday,
+              weekend: t.weekend,
+            }))
+        : []
       const priceChanges: {
         roomTypeId: string
         roomTypeName: string | null
@@ -529,25 +620,41 @@ export async function updateRatePlan(
           )
       }
       // Own → derived: its own date prices from the business date on go (the confirm said so).
-      let droppedDates = 0
-      if (current.pricing === 'own' && !own) {
-        const dropped = await tx
+      if (toDerived) {
+        await tx
           .delete(rateDates)
           .where(and(eq(rateDates.ratePlanId, plan.id), gte(rateDates.date, property.businessDate)))
-          .returning({ id: rateDates.id })
-        droppedDates = dropped.length
         await tx
           .update(ratePlanRoomTypes)
           .set({ weekdayPrice: null, weekendPrice: null })
           .where(eq(ratePlanRoomTypes.ratePlanId, plan.id))
       }
+      // Derived → own: archived room types have no price to take, so they leave the plan rather
+      // than stay as an own-price row without a price.
+      let archivedDropped = 0
+      if (current.pricing === 'derived' && own) {
+        const gone = await tx
+          .delete(ratePlanRoomTypes)
+          .where(
+            and(eq(ratePlanRoomTypes.ratePlanId, plan.id), isNull(ratePlanRoomTypes.weekdayPrice)),
+          )
+          .returning({ id: ratePlanRoomTypes.id })
+        archivedDropped = gone.length
+      }
+      const droppedDates = dropping.length
 
       const diff = changes(current, next)
       const typesChanged =
         removed.length > 0 ||
         wanted.some((t) => !existing.some((e) => e.roomTypeId === t.roomTypeId))
       const pricesChanged = own && priceChanges.length > 0
-      if (!diff.changed && !typesChanged && !pricesChanged && droppedDates === 0) {
+      if (
+        !diff.changed &&
+        !typesChanged &&
+        !pricesChanged &&
+        droppedDates === 0 &&
+        !archivedDropped
+      ) {
         return readBack(tx, access, property, plan.id)
       }
       await tx
@@ -562,7 +669,9 @@ export async function updateRatePlan(
       const flags = await tonightAfter(tx, access, property, tonight, input.reason)
 
       const events: AuditEvent[] = []
-      if (diff.changed || typesChanged || droppedDates > 0) {
+      // The exception goes on one event: prices_changed when standard prices moved, else changed.
+      const changedFlags = pricesChanged ? onlyLive(flags) : flags
+      if (diff.changed || typesChanged || droppedDates > 0 || archivedDropped > 0) {
         events.push({
           id: changeId,
           action: 'rate_plan.changed',
@@ -579,6 +688,8 @@ export async function updateRatePlan(
                   })),
                 }
               : {}),
+            ...(dropping.length ? { dateCellsRemoved: dropping } : {}),
+            ...(oldStandard.length ? { standardPrices: oldStandard } : {}),
           },
           after: {
             ...diff.after,
@@ -590,7 +701,8 @@ export async function updateRatePlan(
                 }
               : {}),
             ...(droppedDates ? { datePricesRemoved: droppedDates } : {}),
-            ...flags,
+            ...(archivedDropped ? { archivedRoomTypesRemoved: archivedDropped } : {}),
+            ...changedFlags,
           },
           reason: input.reason ?? null,
         })
@@ -652,17 +764,20 @@ export async function archiveRatePlan(
         'Archive them first, or point them to another plan.',
       )
     }
+    const tonight = await tonightBefore(tx, access, property)
     await tx
       .update(ratePlans)
       .set({ archivedAt: new Date(), version: plan.version + 1 })
       .where(eq(ratePlans.id, plan.id))
+    // Archiving lowers nothing, but records tonight's prices so a restore later today is compared.
+    const flags = await tonightAfter(tx, access, property, tonight, undefined)
     await recordAudit(tx, access, {
       action: 'rate_plan.archived',
       entityType: 'rate_plan',
       entityId: plan.id,
       ...auditAt(property),
       before: { archived: false },
-      after: { archived: true, ...planEvent(property, plan) },
+      after: { archived: true, ...planEvent(property, plan), ...flags },
     })
     return readBack(tx, access, property, plan.id)
   })
@@ -672,7 +787,7 @@ export async function archiveRatePlan(
 export async function restoreRatePlan(
   db: Database,
   access: Access,
-  input: { id: string },
+  input: { id: string; reason?: string | undefined },
 ): Promise<RatePlanView> {
   requireRatesEdit(access)
   let propertyId: string | undefined
@@ -687,6 +802,7 @@ export async function restoreRatePlan(
       name = plan.name
       if (plan.parentId) await holdParent(tx, access, plan.propertyId, plan.parentId, plan.id)
       await requireNoClash(tx, plan.propertyId, { name: plan.name }, plan.id)
+      const tonight = await tonightBefore(tx, access, property)
       await tx
         .update(ratePlans)
         .set({
@@ -696,13 +812,15 @@ export async function restoreRatePlan(
         })
         .where(eq(ratePlans.id, plan.id))
       await requireValidPrices(tx, access, property)
+      const flags = await tonightAfter(tx, access, property, tonight, input.reason)
       await recordAudit(tx, access, {
         action: 'rate_plan.restored',
         entityType: 'rate_plan',
         entityId: plan.id,
         ...auditAt(property),
         before: { archived: true },
-        after: { archived: false, ...planEvent(property, plan) },
+        after: { archived: false, ...planEvent(property, plan), ...flags },
+        reason: input.reason ?? null,
       })
       return readBack(tx, access, property, plan.id)
     })

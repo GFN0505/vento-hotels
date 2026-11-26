@@ -7,7 +7,10 @@ import type {
   RatesOverview,
   RoomTypeView,
 } from '@vento/shared'
+import { and, desc, eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { auditEvents } from '../db/schema/governance.ts'
+import { ratePlanRoomTypes } from '../db/schema/rates.ts'
 import { switchFeature } from '../features/switches.ts'
 import { createTestApp } from '../test/harness.ts'
 import {
@@ -335,15 +338,39 @@ describe.skipIf(!url)('rate plans', () => {
       prices: [{ roomTypeId: kora.types.stq.id, price: '99000' }],
     })
     expect((await get(copy.id)).datedFromBusinessDate).toBe(12)
-    const switched = await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/update', {
+    const form = {
       ...formOf(await get(copy.id)),
       pricing: 'derived',
       parentId: bar.id,
       adjustment: { kind: 'percent', value: '5' },
       roomTypes: copy.roomTypes.map((row) => ({ roomTypeId: row.roomTypeId })),
+    }
+    // Nothing dated goes without the caller confirming exactly how much.
+    const unconfirmed = await t.rpc<Problem>(kora.gm.cookie, 'ratePlans/update', form)
+    expect(unconfirmed.data).toMatchObject({
+      message: 'Its 12 date prices are removed. Confirm to save.',
+      data: { code: 'DATE_CELLS_REMOVED', count: 12, prices: 12, closures: 0 },
+    })
+    const wrong = await t.rpc<Problem>(kora.gm.cookie, 'ratePlans/update', {
+      ...form,
+      confirmDateCellsRemoved: 11,
+    })
+    expect(wrong.data.data?.code).toBe('DATE_CELLS_REMOVED')
+    const switched = await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/update', {
+      ...form,
+      confirmDateCellsRemoved: 12,
     })
     expect(switched.data).toMatchObject({ pricing: 'derived', datedFromBusinessDate: 0 })
-    expect((await events(copy.id))[0]?.after).toMatchObject({ datePricesRemoved: 12 })
+    const [event] = await events(copy.id)
+    expect(event?.after).toMatchObject({ datePricesRemoved: 12 })
+    expect(event?.before).toMatchObject({
+      dateCellsRemoved: expect.arrayContaining([
+        expect.objectContaining({ date: '2026-12-01', price: '99000.00' }),
+      ]),
+      standardPrices: expect.arrayContaining([
+        expect.objectContaining({ roomTypeName: 'Standard Queen', weekday: '120000.00' }),
+      ]),
+    })
   })
 
   it('archives, restores and deletes for good from Archived', async () => {
@@ -589,6 +616,115 @@ describe.skipIf(!url)('rate plans', () => {
       after: expect.objectContaining({ followsRestoreOf: 'Garden Villa' }),
     })
     await t.rpc(kora.owner.cookie, 'roomTypes/archive', { id: villa.id })
+  })
+
+  it('records archive, restore, delete and reorder each with their own event', async () => {
+    const plan = await nonRefundable(t, kora, bar.id, { name: 'Audit me', code: 'AUD' })
+    await t.rpc(kora.gm.cookie, 'ratePlans/archive', { id: plan.id })
+    expect((await events(plan.id))[0]).toMatchObject({
+      action: 'rate_plan.archived',
+      actorName: 'Tunde Bello',
+      before: { archived: false },
+      after: { archived: true, name: 'Audit me', code: 'AUD', liveProperty: false },
+    })
+    await t.rpc(kora.gm.cookie, 'ratePlans/restore', { id: plan.id })
+    expect((await events(plan.id))[0]).toMatchObject({
+      action: 'rate_plan.restored',
+      before: { archived: true },
+      after: { archived: false, code: 'AUD' },
+    })
+    await t.rpc(kora.gm.cookie, 'ratePlans/archive', { id: plan.id })
+    await t.rpc(kora.gm.cookie, 'ratePlans/delete', { id: plan.id })
+    expect((await events(plan.id))[0]).toMatchObject({
+      action: 'rate_plan.deleted',
+      before: expect.objectContaining({ code: 'AUD', pricing: 'derived', parentId: bar.id }),
+      after: { deleted: true, liveProperty: false },
+    })
+    const list = await t.rpc<Page<RatePlanView>>(kora.gm.cookie, 'ratePlans/list', {
+      propertyId: kora.vi.id,
+    })
+    const ids = list.data.items.map((p) => p.id)
+    const swapped = [ids[1], ids[0], ...ids.slice(2)]
+    await t.rpc(kora.gm.cookie, 'ratePlans/reorder', { propertyId: kora.vi.id, ids: swapped })
+    const [reordered] = await t.db
+      .select()
+      .from(auditEvents)
+      .where(
+        and(eq(auditEvents.propertyId, kora.vi.id), eq(auditEvents.action, 'rate_plans.reordered')),
+      )
+      .orderBy(desc(auditEvents.createdAt))
+      .limit(1)
+    expect(reordered).toMatchObject({
+      actorName: 'Tunde Bello',
+      entityType: 'rate_plan',
+      before: { ids },
+      after: { ids: swapped, liveProperty: false },
+    })
+    await t.rpc(kora.gm.cookie, 'ratePlans/reorder', { propertyId: kora.vi.id, ids })
+  })
+
+  it('drops archived room types when a derived plan switches to its own prices', async () => {
+    const spare = (
+      await t.rpc<RoomTypeView>(kora.owner.cookie, 'roomTypes/create', {
+        propertyId: kora.vi.id,
+        name: 'Spare Twin',
+        code: 'SPT',
+        bed: 'twin',
+      })
+    ).data
+    const parent = (
+      await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/create', {
+        propertyId: kora.vi.id,
+        name: 'Twins',
+        code: 'TWIN',
+        pricing: 'own',
+        roomTypes: [
+          { roomTypeId: kora.types.stq.id, weekday: '100000' },
+          { roomTypeId: spare.id, weekday: '90000' },
+        ],
+        ...TERMS,
+      })
+    ).data
+    const child = await nonRefundable(t, kora, parent.id, {
+      name: 'Twins NR',
+      code: 'TWIN-NR',
+      roomTypes: [{ roomTypeId: kora.types.stq.id }, { roomTypeId: spare.id }],
+    })
+    await t.rpc(kora.owner.cookie, 'roomTypes/archive', { id: spare.id })
+    const own = await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/update', {
+      ...formOf(await get(child.id)),
+      pricing: 'own',
+      parentId: null,
+      adjustment: null,
+      roomTypes: [{ roomTypeId: kora.types.stq.id, weekday: '90000' }],
+    })
+    expect(own.status).toBe(200)
+    const rows = await t.db
+      .select({ roomTypeId: ratePlanRoomTypes.roomTypeId, weekday: ratePlanRoomTypes.weekdayPrice })
+      .from(ratePlanRoomTypes)
+      .where(eq(ratePlanRoomTypes.ratePlanId, child.id))
+    expect(rows).toEqual([{ roomTypeId: kora.types.stq.id, weekday: '90000.00' }])
+    // Both events of one save share a timestamp, so find the right one by action.
+    const changed = (await events(child.id)).find((e) => e.action === 'rate_plan.changed')
+    expect(changed?.after).toMatchObject({ archivedRoomTypesRemoved: 1 })
+  })
+
+  it('points to the Archived list when every plan is archived', async () => {
+    const list = await t.rpc<Page<RatePlanView>>(kora.owner.cookie, 'ratePlans/list', {
+      propertyId: kora.abuja.id,
+    })
+    for (const plan of list.data.items) {
+      await t.rpc(kora.owner.cookie, 'ratePlans/archive', { id: plan.id })
+    }
+    const first = await t.rpc<Problem>(kora.owner.cookie, 'ratePlans/createFirst', {
+      propertyId: kora.abuja.id,
+      prices: [{ roomTypeId: kora.abujaType.id, weekday: '110000' }],
+    })
+    expect(first.data).toMatchObject({
+      message:
+        "This hotel's rate plans are all archived. Restore one from Archived, or add a new plan.",
+      data: { code: 'PLANS_ARCHIVED' },
+    })
   })
 
   it('shows the last three events on a plan for its Change history card', async () => {

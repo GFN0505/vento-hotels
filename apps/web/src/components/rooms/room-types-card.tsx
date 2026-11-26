@@ -93,17 +93,21 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
             <th scope="col" className="px-3 py-2">
               Max guests
             </th>
-            <th scope="col" className="px-3 py-2">
+            <th scope="col" className="px-3 py-2 max-xl:hidden">
               Size
             </th>
             <th
               scope="col"
               className="px-3 py-2 text-right"
-              title="Best available's weekday price, excl. taxes and service charge"
+              title="Best available, weekday, excl. taxes and service charge"
             >
-              Base rate<span className="sr-only">, excl. taxes and service charge</span>
+              Base rate / night
+              <span className="block font-normal text-text-3">
+                Best available, weekday<span className="max-xl:hidden">, excl. taxes</span>
+                <span className="sr-only xl:hidden">, excl. taxes and service charge</span>
+              </span>
             </th>
-            <th scope="col" className="w-40 px-3 py-2">
+            <th scope="col" className="px-3 py-2">
               <span className="sr-only">Actions</span>
             </th>
           </tr>
@@ -158,7 +162,7 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
                 {bedLabel(type)}
               </td>
               <td className="num px-3 py-2.5 text-text-2 max-md:hidden">{type.maxGuests}</td>
-              <td className="num px-3 py-2.5 whitespace-nowrap text-text-2 max-md:hidden">
+              <td className="num px-3 py-2.5 whitespace-nowrap text-text-2 max-xl:hidden">
                 {type.sizeSqm ? (
                   `${Number(type.sizeSqm)} m²`
                 ) : (

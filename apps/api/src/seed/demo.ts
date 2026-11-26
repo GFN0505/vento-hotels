@@ -257,7 +257,15 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
     const expected = Object.values(HOTELS).reduce((sum, hotel) => sum + hotel.rooms, 0)
     if (roomCount !== expected) throw new Error(`Seeded ${roomCount} rooms, expected ${expected}`)
     // Kora Victoria Island's five plans and the other hotels' three each.
-    const planCount = await seedRates(tx, actor, organizationId, hotels)
+    // Rates were set up in setup week (going-live.md step 4, 13 Nov for a 16 Nov go-live), so their
+    // events carry that business date and liveProperty: false, consistent with liveSince.
+    const setupWeek = Object.fromEntries(
+      Object.entries(hotels).map(([key, hotel]) => [
+        key,
+        { ...hotel, businessDate: addDays(businessDate, -(LIVE_DAYS_AGO + 3)) },
+      ]),
+    ) as typeof hotels
+    const planCount = await seedRates(tx, actor, organizationId, setupWeek)
     if (planCount !== 14) throw new Error(`Seeded ${planCount} rate plans, expected 14`)
 
     // Shared devices. Their secrets are random and thrown away: to use one, register a real

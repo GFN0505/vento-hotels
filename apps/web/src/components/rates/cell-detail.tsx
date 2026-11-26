@@ -21,44 +21,51 @@ export function CellDetail({ calendar, selected, canEdit, onChangeDate }: Props)
   const cell = row?.cells[index]
   const past = calendar.dates[index]?.past ?? false
   return (
+    // A fixed height, so picking a night never moves the calendar under the pointer.
     <div
       aria-live="polite"
-      className="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border bg-surface px-4 py-2 text-text-2 shadow-card"
+      className="flex h-[4.75rem] items-center gap-3 overflow-hidden rounded-md border border-border bg-surface px-4 text-text-2 shadow-card lg:h-16"
     >
       {type && row && cell ? (
         <>
-          <p className="num grow">
-            <span className="font-medium text-text">{cellSummary(type.name, row, cell)}</span>{' '}
-            <span className="text-text-3">{row.pricesIncludeTaxes ? 'incl. taxes' : EXCL}</span>
-            {row.parent ? (
-              <span className="block text-sm text-text-3">
-                Follows {row.parent.name}. Change {row.parent.name} to change it.
-              </span>
-            ) : past ? (
-              <span className="block text-sm text-text-3">
-                Before the business date. Past rates can't change.
-              </span>
+          <div className="num min-w-0 grow">
+            <p className="line-clamp-2">
+              <span className="font-medium text-text">{cellSummary(type.name, row, cell)}</span>{' '}
+              <span className="text-text-3">{row.pricesIncludeTaxes ? 'incl. taxes' : EXCL}</span>
+            </p>
+            {row.parent || past ? (
+              <p className="truncate text-sm text-text-3 max-lg:hidden">
+                {row.parent
+                  ? `Follows ${row.parent.name}. Change ${row.parent.name} to change it.`
+                  : "Before the business date. Past rates can't change."}
+              </p>
             ) : null}
-          </p>
+          </div>
           {canEdit && editable(row, past, canEdit) ? (
             <Button
               size="sm"
-              className="max-lg:h-11"
+              className="flex-none max-lg:size-11 max-lg:p-0"
+              aria-label="Change this date"
               onClick={() =>
                 onChangeDate({ typeId: type.id, planId: row.ratePlanId, date: cell.date })
               }
             >
               <CalendarDays className="size-4" aria-hidden="true" />
-              Change this date
+              <span className="max-lg:hidden">Change this date</span>
             </Button>
           ) : null}
         </>
       ) : (
         <p className="flex items-center gap-2 text-sm">
           <Info className="size-4 flex-none text-text-3" aria-hidden="true" />
-          {canEdit
-            ? 'Click a price to change it, or pick a night to see its details.'
-            : 'Pick a night to see its price and conditions.'}
+          <span className="lg:hidden">
+            {canEdit ? 'Tap a price to change it.' : 'Tap a price to see it in words.'}
+          </span>
+          <span className="max-lg:hidden">
+            {canEdit
+              ? 'Click a price to change it, or pick a night to see its details.'
+              : 'Pick a night to see its price and conditions.'}
+          </span>
         </p>
       )}
     </div>

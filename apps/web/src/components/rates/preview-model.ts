@@ -2,6 +2,7 @@
 // price on the business date and what this plan costs with the adjustment as typed, with the same
 // shared maths the server uses (derivePrice: Decimal, rounded once, half-up, to the whole naira).
 import { dec, derivePrice, rateAdjustmentSchema } from '@vento/shared'
+import { nairaField } from './money-input'
 import { adjustmentOf, type PlanForm } from './plan-form-model'
 
 export type PreviewRow = {
@@ -39,7 +40,7 @@ export function previewRows(
 export function ownPricesFromPreview(rows: readonly PreviewRow[]): Record<string, string> {
   const out: Record<string, string> = {}
   for (const row of rows) {
-    if (row.price && !row.notPositive) out[row.roomTypeId] = String(Number.parseInt(row.price, 10))
+    if (row.price && !row.notPositive) out[row.roomTypeId] = nairaField(row.price)
   }
   return out
 }

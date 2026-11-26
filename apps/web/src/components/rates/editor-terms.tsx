@@ -5,6 +5,7 @@ import { Field } from '@/components/ui/field'
 import { SelectField } from '@/components/ui/select-field'
 import { EditorCard } from './editor-card'
 import { MEAL_PLAN_LABELS } from './format'
+import { groupTyped } from './money-input'
 import type { PlanFormState } from './use-plan-form'
 
 type Props = { state: PlanFormState; readOnly: boolean }
@@ -43,6 +44,7 @@ export function EditorTerms({ state, readOnly }: Props) {
             value={form.mealAllocation}
             error={problems.mealAllocation}
             onChange={(event) => state.set({ mealAllocation: event.target.value })}
+            onBlur={(event) => state.set({ mealAllocation: groupTyped(event.target.value) })}
           />
         )}
       </div>
@@ -187,6 +189,7 @@ export function EditorTerms({ state, readOnly }: Props) {
             value={form.extraAdult}
             error={problems.extraAdult}
             onChange={(event) => state.set({ extraAdult: event.target.value })}
+            onBlur={(event) => state.set({ extraAdult: groupTyped(event.target.value) })}
           />
         ) : (
           <p className="self-center text-sm text-text-3">

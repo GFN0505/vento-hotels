@@ -12,7 +12,7 @@ function clock(at: number): string {
 }
 
 // "Offline since 17:32. Rate plans and rates are read-only offline."
-export function RatesOffline() {
+export function RatesOffline({ updatedAt }: { updatedAt?: number | undefined } = {}) {
   const online = useOnline()
   if (online) return null
   const since = offlineSince()
@@ -27,6 +27,7 @@ export function RatesOffline() {
           {since ? `Offline since ${clock(since)}.` : 'Offline.'}
         </span>{' '}
         Rate plans and rates are read-only offline.
+        {updatedAt ? ` Last updated ${clock(updatedAt)}.` : ''}
       </p>
     </div>
   )

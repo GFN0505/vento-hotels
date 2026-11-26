@@ -390,6 +390,45 @@ describe.skipIf(!url)('rate calendar and date changes', () => {
     expect(frontDesk.status).toBe(403)
   })
 
+  it('refuses date changes and undo on a plan outside the member’s hotels or group', async () => {
+    const abujaPlan = (
+      await t.rpc<RatePlanView>(kora.owner.cookie, 'ratePlans/create', {
+        propertyId: kora.abuja.id,
+        name: 'Best available',
+        code: 'BAR',
+        pricing: 'own',
+        roomTypes: [{ roomTypeId: kora.abujaType.id, weekday: '110000' }],
+        ...TERMS,
+      })
+    ).data
+    const applied = await setDates(
+      {
+        ratePlanId: abujaPlan.id,
+        roomTypeIds: [kora.abujaType.id],
+        from: '2026-12-01',
+        to: '2026-12-01',
+        closed: true,
+      },
+      kora.owner.cookie,
+    )
+    expect(applied.status).toBe(200)
+    const asGm = await setDates({
+      ratePlanId: abujaPlan.id,
+      roomTypeIds: [kora.abujaType.id],
+      from: '2026-12-02',
+      to: '2026-12-02',
+      closed: true,
+    })
+    expect(asGm.status).toBe(404)
+    for (const cookie of [kora.gm.cookie, kora.outsider.cookie]) {
+      const undo = await t.rpc(cookie, 'rates/undoDates', {
+        ratePlanId: abujaPlan.id,
+        batchId: applied.data.batchId,
+      })
+      expect(undo.status).toBe(404)
+    }
+  })
+
   describe('after go-live', () => {
     beforeAll(async () => {
       await setLive(t, kora.vi.id, '2026-11-16')
@@ -492,6 +531,139 @@ describe.skipIf(!url)('rate calendar and date changes', () => {
       })
       expect(response.status).toBe(200)
       await setBusinessDate(t, kora.vi.id, '2026-11-25')
+    })
+
+    const getPlan = async (id: string) =>
+      (await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/get', { id })).data
+    const tonightOf = async (type: string, plan: string) =>
+      cellOf(await calendar('2026-11-25', 1), type, plan, '2026-11-25')?.price
+
+    it('needs a reason when undoing a raise lowers tonight', async () => {
+      const was = await tonightOf('DLK', 'BAR')
+      const raise = await tonight('190000')
+      expect(raise.status).toBe(200)
+      const undo = () =>
+        t.rpc<Problem & { restored: number }>(kora.gm.cookie, 'rates/undoDates', {
+          ratePlanId: bar.id,
+          batchId: raise.data.batchId,
+        })
+      expect((await undo()).data.data?.code).toBe('REASON_REQUIRED')
+      const done = await t.rpc(kora.gm.cookie, 'rates/undoDates', {
+        ratePlanId: bar.id,
+        batchId: raise.data.batchId,
+        reason: 'Raised by mistake',
+      })
+      expect(done.status).toBe(200)
+      expect(await tonightOf('DLK', 'BAR')).toBe(was)
+      expect(await lastEvent(bar.id)).toMatchObject({
+        reason: 'Raised by mistake',
+        after: expect.objectContaining({
+          undoOf: raise.data.batchId,
+          exception: 'rate_lowered_tonight',
+        }),
+      })
+    })
+
+    it('flags a plain standard price cut once, on the prices event', async () => {
+      const current = await getPlan(bar.id)
+      const form = formOf(current)
+      const jrs = form.roomTypes.findIndex((row) => row.roomTypeId === kora.types.jrs.id)
+      form.roomTypes[jrs] = { roomTypeId: kora.types.jrs.id, weekday: '300000', weekend: null }
+      const cut = { ...form, minStay: 1 + current.minStay }
+      const refused = await t.rpc<Problem>(kora.gm.cookie, 'ratePlans/update', cut)
+      expect(refused.data.data?.code).toBe('REASON_REQUIRED')
+      const saved = await t.rpc(kora.gm.cookie, 'ratePlans/update', {
+        ...cut,
+        reason: 'Suite promo',
+      })
+      expect(saved.status).toBe(200)
+      const recent = (
+        await t.rpc<Page<AuditEventView>>(kora.owner.cookie, 'audit/list', {
+          entityType: 'rate_plan',
+          entityId: bar.id,
+        })
+      ).data.items.slice(0, 2)
+      const byAction = Object.fromEntries(recent.map((e) => [e.action, e.after]))
+      expect(byAction['rate_plan.prices_changed']).toMatchObject({
+        exception: 'rate_lowered_tonight',
+        lowered: expect.arrayContaining([
+          expect.objectContaining({
+            planName: 'Best available',
+            roomTypeName: 'Junior Suite',
+            against: 'this_save',
+          }),
+          expect.objectContaining({ planName: 'Bed & breakfast', roomTypeName: 'Junior Suite' }),
+        ]),
+      })
+      expect(byAction['rate_plan.changed']).toMatchObject({ liveProperty: true })
+      expect(byAction['rate_plan.changed']).not.toHaveProperty('exception')
+    })
+
+    it('catches a room type removed and added back cheaper in a second save', async () => {
+      const form = formOf(await getPlan(bar.id))
+      const without = {
+        ...form,
+        roomTypes: form.roomTypes.filter((row) => row.roomTypeId !== kora.types.exk.id),
+      }
+      const ask = await t.rpc<Problem>(kora.gm.cookie, 'ratePlans/update', without)
+      const count = (ask.data.data as { count: number }).count
+      expect(ask.data.data?.code).toBe('DATE_CELLS_REMOVED')
+      const removed = await t.rpc(kora.gm.cookie, 'ratePlans/update', {
+        ...without,
+        confirmDateCellsRemoved: count,
+      })
+      expect(removed.status).toBe(200)
+      const readd = formOf(await getPlan(bar.id))
+      readd.roomTypes.push({ roomTypeId: kora.types.exk.id, weekday: '180000', weekend: null })
+      const cheaper = await t.rpc<Problem>(kora.gm.cookie, 'ratePlans/update', readd)
+      expect(cheaper.data.data).toMatchObject({
+        code: 'REASON_REQUIRED',
+        lowered: [
+          expect.objectContaining({
+            roomTypeName: 'Executive King',
+            before: '210000.00',
+            after: '180000.00',
+            against: 'earlier_today',
+          }),
+        ],
+      })
+      readd.roomTypes[readd.roomTypes.length - 1] = {
+        roomTypeId: kora.types.exk.id,
+        weekday: '210000',
+        weekend: null,
+      }
+      expect((await t.rpc(kora.gm.cookie, 'ratePlans/update', readd)).status).toBe(200)
+    })
+
+    it('needs a reason for a new plan open to anyone that undercuts the base plan tonight', async () => {
+      const plan = {
+        propertyId: kora.vi.id,
+        name: 'Walk-in special',
+        code: 'WALK',
+        pricing: 'own',
+        roomTypes: [{ roomTypeId: kora.types.stq.id, weekday: '60000' }],
+        ...TERMS,
+      }
+      const refused = await t.rpc<Problem>(kora.gm.cookie, 'ratePlans/create', plan)
+      expect(refused.data.data).toMatchObject({
+        code: 'REASON_REQUIRED',
+        lowered: [expect.objectContaining({ against: 'base_plan', after: '60000.00' })],
+      })
+      const corporate = await t.rpc(kora.gm.cookie, 'ratePlans/create', {
+        ...plan,
+        name: 'Staff family',
+        code: 'FAM',
+        bookableBy: 'corporate_only',
+      })
+      expect(corporate.status).toBe(200)
+      const created = await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/create', {
+        ...plan,
+        reason: 'Walk-ins after 22:00',
+      })
+      expect(await lastEvent(created.data.id)).toMatchObject({
+        action: 'rate_plan.created',
+        after: expect.objectContaining({ exception: 'rate_lowered_tonight' }),
+      })
     })
   })
 })

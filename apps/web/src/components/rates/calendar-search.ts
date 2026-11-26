@@ -8,6 +8,8 @@ export type CalendarSearch = {
   sheet?: 'dates' | undefined
   plan?: string | undefined
   date?: string | undefined
+  // The last night, when Change dates opens on a range (a season).
+  to?: string | undefined
 }
 
 export type OnCalendarSearch = (

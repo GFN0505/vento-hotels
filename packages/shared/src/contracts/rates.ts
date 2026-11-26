@@ -53,6 +53,10 @@ export const RATE_ERROR_CODES = [
   'HAS_HISTORY',
   'LIST_CHANGED',
   'PLANS_EXIST',
+  'PLANS_ARCHIVED', // createFirst while every plan is archived: show the Archived list
+  'DATE_CELLS_REMOVED', // data: { count, prices, closures, minStays, seasons }
+  'BATCH_REUSED',
+  'STAY_TOO_LONG',
   'UNDO_NOT_FOUND',
   'ALREADY_UNDONE',
   'UNDO_EXPIRED', // night audit has run since the change
@@ -264,8 +268,9 @@ const allocationGiven = {
   },
 }
 
+// After go-live, a new plan open to anyone that undercuts the base plan tonight needs a reason.
 export const createRatePlanSchema = planFields
-  .extend({ propertyId: idSchema })
+  .extend({ propertyId: idSchema, reason })
   .superRefine(checkPlanFields)
   .transform(withAllocation)
   .refine(allocationGiven.check, allocationGiven.issue)
@@ -274,7 +279,14 @@ export type CreateRatePlanInput = z.output<typeof createRatePlanSchema>
 // The whole form, as saved from the editor. Room types left out are removed from the plan (and
 // from the plans that derive from it); archived room types are kept.
 export const updateRatePlanSchema = planFields
-  .extend({ id: idSchema, version: z.number().int().min(1), reason })
+  .extend({
+    id: idSchema,
+    version: z.number().int().min(1),
+    reason,
+    // When the save deletes date cells from the business date on (a room type removed, or a switch
+    // to derived prices), DATE_CELLS_REMOVED answers with their count; save again with that count.
+    confirmDateCellsRemoved: z.number().int().min(0).optional(),
+  })
   .superRefine(checkPlanFields)
   .transform(withAllocation)
   .refine(allocationGiven.check, allocationGiven.issue)
@@ -465,6 +477,10 @@ export const loweredTonightSchema = z.object({
   roomTypeName: z.string(),
   before: z.string(),
   after: z.string(),
+  // What `before` is: the price tonight before this save ('this_save'), what it cost earlier this
+  // business date before it was removed and added back ('earlier_today'), or, for a plan new
+  // tonight, the base plan's price for the room type ('base_plan').
+  against: z.enum(['this_save', 'earlier_today', 'base_plan']),
 })
 export type LoweredTonight = z.infer<typeof loweredTonightSchema>
 
@@ -486,7 +502,9 @@ export const ratesContract = {
     update: oc.input(updateRatePlanSchema).output(ratePlanViewSchema),
     // Refused while active plans derive from it (HAS_DERIVED_PLANS).
     archive: oc.input(byId).output(ratePlanViewSchema),
-    restore: oc.input(byId).output(ratePlanViewSchema),
+    // After go-live a restored plan open to anyone that undercuts the base plan tonight, or comes
+    // back cheaper than earlier today, needs a reason.
+    restore: oc.input(z.object({ id: idSchema, reason })).output(ratePlanViewSchema),
     // Archived plans never used on a booking only.
     delete: oc.input(byId).output(ok),
     // `ids` is every active plan of the hotel, in the new order (LIST_CHANGED otherwise).

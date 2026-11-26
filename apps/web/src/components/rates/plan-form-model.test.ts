@@ -42,8 +42,8 @@ describe('plan form', () => {
   it('round-trips a plan with its own prices into the same input', () => {
     const input = toInput(formFrom(bar, TYPES), HOTEL, TYPES)
     expect(input.roomTypes).toEqual([
-      { roomTypeId: STQ, weekday: '120000', weekend: null },
-      { roomTypeId: DLK, weekday: '150000', weekend: '165000' },
+      { roomTypeId: STQ, weekday: '120,000', weekend: null },
+      { roomTypeId: DLK, weekday: '150,000', weekend: '165,000' },
     ])
     expect(input.cancellation).toEqual(bar.cancellation)
     expect(input.deposit).toEqual(bar.deposit)
@@ -53,7 +53,7 @@ describe('plan form', () => {
     const copy = formFrom(bar, TYPES, { copy: true })
     expect(copy.name).toBe('Best available copy')
     expect(copy.code).toBe('')
-    expect(copy.rows[DLK]).toEqual({ on: true, weekday: '150000', weekend: '165000' })
+    expect(copy.rows[DLK]).toEqual({ on: true, weekday: '150,000', weekend: '165,000' })
   })
 
   it('names the room type whose weekday price is missing', () => {
@@ -89,7 +89,7 @@ describe('preview', () => {
     const form = { ...formFrom(undefined, TYPES), pricing: 'derived' as const, percent: '-12.5' }
     const rows = previewRows(form, TYPES, parent)
     expect(rows.map((r) => r.price)).toEqual(['105000.00', '131250.00'])
-    expect(ownPricesFromPreview(rows)).toEqual({ [STQ]: '105000', [DLK]: '131250' })
+    expect(ownPricesFromPreview(rows)).toEqual({ [STQ]: '105,000', [DLK]: '131,250' })
   })
 
   it('flags a price of ₦0 or less and waits for a valid adjustment', () => {

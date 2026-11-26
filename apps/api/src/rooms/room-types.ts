@@ -9,6 +9,7 @@ import { isUniqueViolation } from '../db/errors.ts'
 import { rooms, roomTypes } from '../db/schema/rooms.ts'
 import { type BaseRate, baseRates } from '../rates/base-rate.ts'
 import { lockHotelRates } from '../rates/context.ts'
+import { tonightAfter, tonightBefore } from '../rates/guards.ts'
 import { roomTypeRestored } from '../rates/room-type-restored.ts'
 import { type Access, scopeToProperties } from '../tenancy/access.ts'
 import {
@@ -344,7 +345,10 @@ export async function archiveRoomType(
       .from(rooms)
       .where(and(eq(rooms.roomTypeId, type.id), isNull(rooms.archivedAt)))
     if (active && active.value > 0) throw typeHasRooms(type.name, active.value)
+    const tonight = await tonightBefore(tx, access, property)
     await tx.update(roomTypes).set({ archivedAt: new Date() }).where(eq(roomTypes.id, type.id))
+    // Records tonight's prices for the type, so a restore later today is compared with them.
+    const rates = await tonightAfter(tx, access, property, tonight, undefined)
     await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [type.id] })
     await recordAudit(tx, access, {
       action: 'room_type.archived',
@@ -352,7 +356,7 @@ export async function archiveRoomType(
       entityId: type.id,
       ...auditAt(property),
       before: { archived: false },
-      after: { archived: true, ...typeEvent(property, type) },
+      after: { archived: true, ...typeEvent(property, type), ...rates },
       reason: input.reason ?? null,
     })
     return view(tx, access, await findType(tx, access, type.id))
@@ -379,19 +383,22 @@ export async function restoreRoomType(
       name = type.name
       const property = await holdProperty(tx, access, type.propertyId)
       await requireNoClash(tx, property.id, { name: type.name }, type.id)
+      const tonight = await tonightBefore(tx, access, property)
       await tx
         .update(roomTypes)
         .set({ archivedAt: null, sortOrder: nextSortOrder(property.id) })
         .where(eq(roomTypes.id, type.id))
       await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [type.id] })
       await roomTypeRestored(tx, access, property, { id: type.id, name: type.name })
+      // Back on its plans: cheaper tonight than before it was archived needs a reason.
+      const rates = await tonightAfter(tx, access, property, tonight, input.reason)
       await recordAudit(tx, access, {
         action: 'room_type.restored',
         entityType: 'room_type',
         entityId: type.id,
         ...auditAt(property),
         before: { archived: true },
-        after: { archived: false, ...typeEvent(property, type) },
+        after: { archived: false, ...typeEvent(property, type), ...rates },
         reason: input.reason ?? null,
       })
       return view(tx, access, await findType(tx, access, type.id))

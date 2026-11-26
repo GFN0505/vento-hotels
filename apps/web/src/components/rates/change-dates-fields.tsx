@@ -7,6 +7,7 @@ import { Segmented } from '@/components/ui/segmented'
 import { SelectField } from '@/components/ui/select-field'
 import { cn } from '@/lib/cn'
 import type { DatesForm, DatesProblems, Tri } from './change-dates-model'
+import { groupTyped } from './money-input'
 
 type Props = {
   form: DatesForm
@@ -182,6 +183,9 @@ export function ChangeDatesFields({ form, problems, plans, plan, overview, onCha
                 value={form.prices[t.id] ?? ''}
                 error={problems[`price-${t.id}`]}
                 onChange={(e) => onChange({ prices: { ...form.prices, [t.id]: e.target.value } })}
+                onBlur={(e) =>
+                  onChange({ prices: { ...form.prices, [t.id]: groupTyped(e.target.value) } })
+                }
               />
             ))}
         </div>

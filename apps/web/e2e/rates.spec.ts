@@ -24,7 +24,7 @@ async function firstRate(page: Page) {
   await expect(page.getByRole('heading', { name: 'Your first rate' })).toBeVisible()
   await page.getByLabel('Standard Queen, weekday price').fill('120000')
   await page.getByLabel('Deluxe King, weekday price').fill('150,000')
-  await expect(page.getByLabel('Also create a Bed & breakfast plan at +₦18,000')).toBeChecked()
+  await expect(page.getByLabel(/^Also create Bed & breakfast/)).toBeChecked()
   await page.getByRole('button', { name: 'Create Best available' }).click()
   await expect(page.getByText('Best available and Bed & breakfast created')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Bed & breakfast', exact: true })).toBeVisible()
@@ -153,6 +153,9 @@ test.describe('on the demo group', () => {
     await expect(page.getByText('You can read rates.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'New rate plan' })).toHaveCount(0)
     await page.getByRole('link', { name: 'Rate calendar' }).click()
+    await expect(
+      page.getByText('Only a revenue manager, GM or the owner can change rates.'),
+    ).toBeVisible()
     await visible(page, /^Standard Queen, Bed & breakfast, /).click()
     // Bed & breakfast follows Best available (+₦18,000), read as a caller hears it.
     await expect(

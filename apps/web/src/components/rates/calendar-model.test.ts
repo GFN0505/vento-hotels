@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  bandLabel,
   type CalendarRow,
   cellLabel,
+  cellMarks,
   editable,
   moveCell,
   pageFrom,
@@ -54,15 +56,40 @@ describe('rate calendar', () => {
     expect(editable(row(), false, false)).toBe(false)
   })
 
-  it('groups dates under their season into bands', () => {
-    const dates = ['2026-12-16', '2026-12-17', '2026-12-18', '2026-12-19', '2026-12-20']
-    const bands = seasonBands(dates, [
-      { name: 'Festive season', from: '2026-12-18', to: '2027-01-02' },
-    ])
-    expect(bands.map((b) => [b.name, b.span])).toEqual([
+  it('bands a season over its dates, with its range and shared min stay', () => {
+    const dates = ['2026-12-16', '2026-12-17', '2026-12-18', '2026-12-19']
+    const own = row({
+      cells: dates.map((date) => ({ ...cell, date, dateMinStay: date >= '2026-12-18' ? 2 : null })),
+    })
+    const calendar = {
+      propertyId: BAR,
+      propertyName: 'Kora Victoria Island',
+      businessDate: '2026-12-16',
+      lastRateDate: '2028-12-16',
+      live: false,
+      canEdit: true,
+      dates: dates.map((date) => ({ date, weekend: false, past: false })),
+      seasons: [{ name: 'Festive season', from: '2026-12-18', to: '2027-01-02' }],
+      roomTypes: [{ id: BAR, name: 'Standard Queen', code: 'STQ', rows: [own] }],
+    }
+    const bands = seasonBands(calendar)
+    expect(bands.map((b) => [b.season?.name ?? null, b.span])).toEqual([
       [null, 2],
-      ['Festive season', 3],
+      ['Festive season', 2],
     ])
+    const festive = bands[1]?.season
+    if (!festive) throw new Error('no season')
+    expect(bandLabel(festive)).toBe('Festive season · 18 Dec–2 Jan · min 2')
+    // Inside the season the band says it; a different min stay still shows on the cell.
+    expect(cellMarks({ ...cell, from: 'date', minStay: 2 }, festive)).toEqual({
+      dot: false,
+      min: null,
+    })
+    expect(cellMarks({ ...cell, from: 'date', minStay: 3 }, festive)).toEqual({
+      dot: false,
+      min: 3,
+    })
+    expect(cellMarks({ ...cell, from: 'date', minStay: 1 }, null)).toEqual({ dot: true, min: null })
   })
 
   it('moves one cell with the arrows and stops at the edges', () => {

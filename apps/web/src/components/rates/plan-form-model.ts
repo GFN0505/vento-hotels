@@ -11,6 +11,7 @@ import {
   type MealPlan,
   type RatePlanView,
 } from '@vento/shared'
+import { nairaField } from './money-input'
 
 export type PriceRow = { on: boolean; weekday: string; weekend: string }
 
@@ -62,8 +63,7 @@ export function fieldOrder(typeIds: readonly string[]): string[] {
   ]
 }
 
-const naira = (amount: string | null | undefined) =>
-  amount ? String(Number.parseInt(amount, 10)) : ''
+const naira = nairaField
 const percent = (value: string) => value.replace(/\.?0+$/, '')
 
 export function formFrom(
