@@ -34,4 +34,4 @@ A spec that is dropped is deleted, with the reason in the commit message.
 | [Room types and rooms](stage-1-room-types-and-rooms.md) | 1 | Reservations & Front Desk | going-live | approved |
 | [Hotels and companies](stage-1-hotels-and-companies.md) | 1 | Platform | going-live | approved |
 | [The hotel switch scopes every page](stage-1-hotel-switch-scope.md) | 1 | Platform | owner-morning, going-live | approved (owner, 2026-11-26, for the agreed rule) |
-| [Rate plans and rates (manual)](stage-1-rate-plans.md) | 1 | Reservations & Front Desk | going-live, front-desk-morning, golden thread, guest-stay | draft |
+| [Rate plans and rates (manual)](stage-1-rate-plans.md) | 1 | Reservations & Front Desk | going-live, front-desk-morning, golden thread, guest-stay | approved |

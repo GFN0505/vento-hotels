@@ -1,6 +1,6 @@
 # Rate plans and rates (manual)
 
-- **Status:** draft
+- **Status:** approved (owner, 2026-11-26: every pricing decision at its recommended default)
 - **Stage:** 1 (brick 2 of the plan in [stage-1-plan.md](stage-1-plan.md)). Depends on brick 1 (room types and rooms), hotels and companies (business date, check-in time, go-live) and brick 1b (hotel switch). Feeds brick 3 (tax lines on rates), brick 4 (the nightly price of a booking), brick 6 (cancellation and no-show penalties), brick 12 (corporate rates), brick 13 (room and breakfast charges at night audit) and brick 17 (rate plan import). Channels, the booking engine and the rest of the rates grid stay in Stage 4.
 - **Module:** Reservations & Front Desk (rate plans with seasons and restrictions, per `docs/PRODUCT.md` module 1)
 - **Walkthroughs:** `going-live.md` step 4 (changed, see "Changes needed in walkthroughs"); the Home setup checklist (`OnbHome`); read by every later step that prices a stay: `front-desk-morning.md` steps 7–8 and 11, `00-golden-thread.md` hop 1, `guest-stay.md` step 1 (Stage 4).
