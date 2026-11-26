@@ -2,7 +2,8 @@
 // (Kora Victoria Island with a placeholder logo when storage is given) and the people in the
 // walkthroughs, each with a role, hotels, a sign-in and a staff PIN; room types and 382 rooms;
 // devices at Kora Victoria Island and Kora Ikeja GRA (none at Abuja or Port Harcourt, for the empty
-// state); a pending invite; and one permission change with its reason. Used for local development, browser tests and sales demos. Everything here is
+// state); taxes, payment methods, bank accounts, POS terminals and 30 days of FX rates; a pending
+// invite; and one permission change with its reason. Used for local development, browser tests and sales demos. Everything here is
 // made up.
 import { createHash, randomBytes } from 'node:crypto'
 import { addDays, calendarDateIn, type DeviceKind, type MemberRole, newId } from '@vento/shared'
@@ -21,6 +22,7 @@ import {
   properties,
 } from '../db/schema/tenancy.ts'
 import type { StorageProvider } from '../providers/storage.ts'
+import { seedFinance } from './finance.ts'
 import { seedLogo } from './logo.ts'
 import { seedRooms } from './rooms.ts'
 
@@ -254,6 +256,15 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
     const roomCount = await seedRooms(tx, actor, organizationId, hotels)
     const expected = Object.values(HOTELS).reduce((sum, hotel) => sum + hotel.rooms, 0)
     if (roomCount !== expected) throw new Error(`Seeded ${roomCount} rooms, expected ${expected}`)
+
+    // Taxes, payment setup and FX rates, set up by Kunle Ade (finance).
+    const kunle = seeded.find((person) => person.role === 'finance')
+    if (!kunle) throw new Error('The demo needs Kunle Ade (finance)')
+    await seedFinance(
+      tx,
+      { organizationId, userId: kunle.userId, memberId: kunle.memberId, userName: kunle.name },
+      { organizationId, hotels: hotelIds, companies: companyIds, businessDate },
+    )
 
     // Shared devices. Their secrets are random and thrown away: to use one, register a real
     // browser from Settings › Devices.
