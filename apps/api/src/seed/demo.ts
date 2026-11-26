@@ -1,6 +1,7 @@
 // The demo world from docs/journeys/README.md: Kora Hotels Group, its three companies, four hotels
 // (Kora Victoria Island with a placeholder logo when storage is given) and the people in the
 // walkthroughs, each with a role, hotels, a sign-in and a staff PIN; room types and 382 rooms;
+// rate plans (Kora Victoria Island's five with the Festive season, the others' three each);
 // devices at Kora Victoria Island and Kora Ikeja GRA (none at Abuja or Port Harcourt, for the empty
 // state); taxes, payment methods, bank accounts, POS terminals and 30 days of FX rates; a pending
 // invite; and one permission change with its reason. Used for local development, browser tests and sales demos. Everything here is
@@ -24,6 +25,7 @@ import {
 import type { StorageProvider } from '../providers/storage.ts'
 import { seedFinance } from './finance.ts'
 import { seedLogo } from './logo.ts'
+import { seedRates } from './rates.ts'
 import { seedRooms } from './rooms.ts'
 
 // The demo hotels went live on Vento this many business days before the seed was loaded.
@@ -256,6 +258,17 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
     const roomCount = await seedRooms(tx, actor, organizationId, hotels)
     const expected = Object.values(HOTELS).reduce((sum, hotel) => sum + hotel.rooms, 0)
     if (roomCount !== expected) throw new Error(`Seeded ${roomCount} rooms, expected ${expected}`)
+    // Kora Victoria Island's five plans and the other hotels' three each.
+    // Rates were set up in setup week (going-live.md step 4, 13 Nov for a 16 Nov go-live), so their
+    // events carry that business date and liveProperty: false, consistent with liveSince.
+    const setupWeek = Object.fromEntries(
+      Object.entries(hotels).map(([key, hotel]) => [
+        key,
+        { ...hotel, businessDate: addDays(businessDate, -(LIVE_DAYS_AGO + 3)) },
+      ]),
+    ) as typeof hotels
+    const planCount = await seedRates(tx, actor, organizationId, setupWeek)
+    if (planCount !== 14) throw new Error(`Seeded ${planCount} rate plans, expected 14`)
 
     // Taxes, payment setup and FX rates, set up by Kunle Ade (finance).
     const kunle = seeded.find((person) => person.role === 'finance')

@@ -17,6 +17,11 @@ import { noteOrganization } from './observability/request-context.ts'
 import type { EmailProvider } from './providers/email.ts'
 import type { StorageProvider } from './providers/storage.ts'
 import { clientAddress, type RateLimiter } from './rate-limit.ts'
+import * as rateCalendar from './rates/calendar.ts'
+import * as firstRate from './rates/first-rate.ts'
+import * as planReads from './rates/plan-reads.ts'
+import * as planWrites from './rates/plan-writes.ts'
+import * as rateDates from './rates/rate-dates.ts'
 import * as inspected from './rooms/inspected.ts'
 import * as roomBatch from './rooms/room-batch.ts'
 import * as roomBulk from './rooms/room-bulk.ts'
@@ -304,6 +309,52 @@ export const router = base.router({
     ),
     undoMarkInspected: inOrganization.rooms.undoMarkInspected.handler(({ context, input }) =>
       inspected.undoMarkInspected(context.db, context.access, input),
+    ),
+  },
+  ratePlans: {
+    list: inOrganization.ratePlans.list.handler(({ context, input }) =>
+      planReads.listRatePlans(context.db, context.access, input),
+    ),
+    overview: inOrganization.ratePlans.overview.handler(({ context, input }) =>
+      planReads.ratesOverview(context.db, context.access, input),
+    ),
+    get: inOrganization.ratePlans.get.handler(({ context, input }) =>
+      planReads.getRatePlan(context.db, context.access, input.id),
+    ),
+    history: inOrganization.ratePlans.history.handler(({ context, input }) =>
+      planReads.ratePlanHistory(context.db, context.access, input.id),
+    ),
+    create: inOrganization.ratePlans.create.handler(({ context, input }) =>
+      planWrites.createRatePlan(context.db, context.access, input),
+    ),
+    createFirst: inOrganization.ratePlans.createFirst.handler(({ context, input }) =>
+      firstRate.createFirstRatePlans(context.db, context.access, input),
+    ),
+    update: inOrganization.ratePlans.update.handler(({ context, input }) =>
+      planWrites.updateRatePlan(context.db, context.access, input),
+    ),
+    archive: inOrganization.ratePlans.archive.handler(({ context, input }) =>
+      planWrites.archiveRatePlan(context.db, context.access, input),
+    ),
+    restore: inOrganization.ratePlans.restore.handler(({ context, input }) =>
+      planWrites.restoreRatePlan(context.db, context.access, input),
+    ),
+    delete: inOrganization.ratePlans.delete.handler(({ context, input }) =>
+      planWrites.deleteRatePlan(context.db, context.access, input),
+    ),
+    reorder: inOrganization.ratePlans.reorder.handler(({ context, input }) =>
+      planWrites.reorderRatePlans(context.db, context.access, input),
+    ),
+  },
+  rates: {
+    calendar: inOrganization.rates.calendar.handler(({ context, input }) =>
+      rateCalendar.rateCalendar(context.db, context.access, input),
+    ),
+    setDates: inOrganization.rates.setDates.handler(({ context, input }) =>
+      rateDates.setRateDates(context.db, context.access, input),
+    ),
+    undoDates: inOrganization.rates.undoDates.handler(({ context, input }) =>
+      rateDates.undoRateDates(context.db, context.access, input),
     ),
   },
   taxes: {

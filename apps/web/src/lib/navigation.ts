@@ -111,11 +111,12 @@ export const MODULES: readonly NavGroup[] = [
         tagline: 'Rooms, rates, booking engine and OTAs',
         label: 'Rates & channels',
         icon: Tag,
-        // Rooms ship first (Stage 1, front desk); rates.edit joins `needs` with rate plans (brick 2),
-        // and channels get their own booking_engine gate.
+        // Rooms (rooms.setup), rate plans and the rate calendar (rates.edit, and read-only for
+        // reservation.manage so the front desk can quote by phone); /rates opens the first tab a
+        // member can see. Channels get their own booking_engine gate.
         feature: 'front_desk',
         roles: ['general_manager', 'revenue_manager'],
-        needs: ['rooms.setup'],
+        needs: ['rooms.setup', 'rates.edit', 'reservation.manage'],
         stage: 1,
         about: 'Rooms, rate plans, restrictions, your booking engine and the OTAs, in one place.',
       },

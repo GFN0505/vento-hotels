@@ -110,6 +110,38 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
+    test('rates: the first rate, the plans, the editor, the calendar and Change dates have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      await signUpOwnerWithGroup(page, `a11y-rates-${theme}-${testInfo.project.name}`)
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.goto('/rates/rooms')
+      await buildRooms(page)
+      await page.goto('/rates/plans')
+      await page.getByRole('heading', { name: 'Your first rate' }).waitFor()
+      await expectAccessible(page)
+      await page.getByLabel('Standard Queen, weekday price').fill('120000')
+      await page.getByLabel('Deluxe King, weekday price').fill('150000')
+      await page.getByRole('button', { name: 'Create Best available' }).click()
+      await page.getByRole('link', { name: 'Bed & breakfast', exact: true }).waitFor()
+      await expectAccessible(page)
+      await page.getByRole('link', { name: 'Bed & breakfast', exact: true }).click()
+      await page.getByRole('heading', { name: 'Rate plan · Bed & breakfast' }).waitFor()
+      await page.getByText('Plan created').waitFor()
+      await expectAccessible(page)
+      await page.goto('/rates/calendar')
+      await page.getByRole('heading', { name: 'Rate calendar', level: 1 }).waitFor()
+      await page
+        .getByRole('button', { name: /^Standard Queen, Best available, / })
+        .filter({ visible: true })
+        .first()
+        .waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Change dates' }).click()
+      await page.getByRole('dialog', { name: 'Change dates · Best available' }).waitFor()
+      await expectAccessible(page)
+    })
+
     test('hotels and companies: settings, add a hotel, the list, archive, companies and a company have no accessibility problems', async ({
       page,
     }, testInfo) => {
@@ -226,6 +258,21 @@ for (const theme of ['light', 'dark'] as const) {
       }
       await page.goto('/rates/rooms')
       await page.getByRole('heading', { name: 'Rooms', level: 1 }).waitFor()
+      await expectAccessible(page)
+      // Rates on a live hotel, read as the owner, and the plans with All hotels (Pick a hotel).
+      await page.goto('/rates/plans')
+      await page.getByRole('link', { name: 'Best available', exact: true }).waitFor()
+      await expectAccessible(page)
+      await page.goto('/rates/calendar')
+      await page.getByRole('heading', { name: 'Rate calendar', level: 1 }).waitFor()
+      await page
+        .getByRole('button', { name: /^Standard Queen, Best available, / })
+        .filter({ visible: true })
+        .first()
+        .waitFor()
+      await expectAccessible(page)
+      await page.getByLabel('Hotel', { exact: true }).selectOption({ label: 'All hotels' })
+      await page.getByText('Rates are set per hotel. Pick a hotel.').waitFor()
       await expectAccessible(page)
     })
 

@@ -22,6 +22,7 @@ import { Route as AppRatesRouteImport } from './routes/_app/rates'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AppRatesIndexRouteImport } from './routes/_app/rates/index'
+import { Route as AppRatesCalendarRouteImport } from './routes/_app/rates/calendar'
 import { Route as AppRatesRoomsRouteImport } from './routes/_app/rates/rooms'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsCompaniesRouteImport } from './routes/_app/settings/companies'
@@ -32,6 +33,9 @@ import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/m
 import { Route as AppSettingsPaymentsRouteImport } from './routes/_app/settings/payments'
 import { Route as AppSettingsPermissionsRouteImport } from './routes/_app/settings/permissions'
 import { Route as AppSettingsTaxesRouteImport } from './routes/_app/settings/taxes'
+import { Route as AppRatesPlansIndexRouteImport } from './routes/_app/rates/plans/index'
+import { Route as AppRatesPlansPlanIdRouteImport } from './routes/_app/rates/plans/$planId'
+import { Route as AppRatesPlansNewRouteImport } from './routes/_app/rates/plans/new'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -97,6 +101,11 @@ const AppRatesIndexRoute = AppRatesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRatesRoute,
 } as any)
+const AppRatesCalendarRoute = AppRatesCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AppRatesRoute,
+} as any)
 const AppRatesRoomsRoute = AppRatesRoomsRouteImport.update({
   id: '/rooms',
   path: '/rooms',
@@ -147,6 +156,21 @@ const AppSettingsTaxesRoute = AppSettingsTaxesRouteImport.update({
   path: '/taxes',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppRatesPlansIndexRoute = AppRatesPlansIndexRouteImport.update({
+  id: '/plans/',
+  path: '/plans/',
+  getParentRoute: () => AppRatesRoute,
+} as any)
+const AppRatesPlansPlanIdRoute = AppRatesPlansPlanIdRouteImport.update({
+  id: '/plans/$planId',
+  path: '/plans/$planId',
+  getParentRoute: () => AppRatesRoute,
+} as any)
+const AppRatesPlansNewRoute = AppRatesPlansNewRouteImport.update({
+  id: '/plans/new',
+  path: '/plans/new',
+  getParentRoute: () => AppRatesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -160,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/rates': typeof AppRatesRouteWithChildren
   '/settings': typeof AppSettingsRouteWithChildren
   '/join/$token': typeof JoinTokenRoute
+  '/rates/calendar': typeof AppRatesCalendarRoute
   '/rates/rooms': typeof AppRatesRoomsRoute
   '/settings/companies': typeof AppSettingsCompaniesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
@@ -171,6 +196,9 @@ export interface FileRoutesByFullPath {
   '/settings/taxes': typeof AppSettingsTaxesRoute
   '/rates/': typeof AppRatesIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
+  '/rates/plans/$planId': typeof AppRatesPlansPlanIdRoute
+  '/rates/plans/new': typeof AppRatesPlansNewRoute
+  '/rates/plans/': typeof AppRatesPlansIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -182,6 +210,7 @@ export interface FileRoutesByTo {
   '/$section': typeof AppSectionRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof AppIndexRoute
+  '/rates/calendar': typeof AppRatesCalendarRoute
   '/rates/rooms': typeof AppRatesRoomsRoute
   '/settings/companies': typeof AppSettingsCompaniesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
@@ -193,6 +222,9 @@ export interface FileRoutesByTo {
   '/settings/taxes': typeof AppSettingsTaxesRoute
   '/rates': typeof AppRatesIndexRoute
   '/settings': typeof AppSettingsIndexRoute
+  '/rates/plans/$planId': typeof AppRatesPlansPlanIdRoute
+  '/rates/plans/new': typeof AppRatesPlansNewRoute
+  '/rates/plans': typeof AppRatesPlansIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -208,6 +240,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/join/$token': typeof JoinTokenRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/rates/calendar': typeof AppRatesCalendarRoute
   '/_app/rates/rooms': typeof AppRatesRoomsRoute
   '/_app/settings/companies': typeof AppSettingsCompaniesRoute
   '/_app/settings/devices': typeof AppSettingsDevicesRoute
@@ -219,6 +252,9 @@ export interface FileRoutesById {
   '/_app/settings/taxes': typeof AppSettingsTaxesRoute
   '/_app/rates/': typeof AppRatesIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
+  '/_app/rates/plans/$planId': typeof AppRatesPlansPlanIdRoute
+  '/_app/rates/plans/new': typeof AppRatesPlansNewRoute
+  '/_app/rates/plans/': typeof AppRatesPlansIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -234,6 +270,7 @@ export interface FileRouteTypes {
     | '/rates'
     | '/settings'
     | '/join/$token'
+    | '/rates/calendar'
     | '/rates/rooms'
     | '/settings/companies'
     | '/settings/devices'
@@ -245,6 +282,9 @@ export interface FileRouteTypes {
     | '/settings/taxes'
     | '/rates/'
     | '/settings/'
+    | '/rates/plans/$planId'
+    | '/rates/plans/new'
+    | '/rates/plans/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -256,6 +296,7 @@ export interface FileRouteTypes {
     | '/$section'
     | '/join/$token'
     | '/'
+    | '/rates/calendar'
     | '/rates/rooms'
     | '/settings/companies'
     | '/settings/devices'
@@ -267,6 +308,9 @@ export interface FileRouteTypes {
     | '/settings/taxes'
     | '/rates'
     | '/settings'
+    | '/rates/plans/$planId'
+    | '/rates/plans/new'
+    | '/rates/plans'
   id:
     | '__root__'
     | '/_app'
@@ -281,6 +325,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/join/$token'
     | '/_app/'
+    | '/_app/rates/calendar'
     | '/_app/rates/rooms'
     | '/_app/settings/companies'
     | '/_app/settings/devices'
@@ -292,6 +337,9 @@ export interface FileRouteTypes {
     | '/_app/settings/taxes'
     | '/_app/rates/'
     | '/_app/settings/'
+    | '/_app/rates/plans/$planId'
+    | '/_app/rates/plans/new'
+    | '/_app/rates/plans/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -398,6 +446,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRatesIndexRouteImport
       parentRoute: typeof AppRatesRoute
     }
+    '/_app/rates/calendar': {
+      id: '/_app/rates/calendar'
+      path: '/calendar'
+      fullPath: '/rates/calendar'
+      preLoaderRoute: typeof AppRatesCalendarRouteImport
+      parentRoute: typeof AppRatesRoute
+    }
     '/_app/rates/rooms': {
       id: '/_app/rates/rooms'
       path: '/rooms'
@@ -468,17 +523,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsTaxesRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/rates/plans/': {
+      id: '/_app/rates/plans/'
+      path: '/plans'
+      fullPath: '/rates/plans/'
+      preLoaderRoute: typeof AppRatesPlansIndexRouteImport
+      parentRoute: typeof AppRatesRoute
+    }
+    '/_app/rates/plans/$planId': {
+      id: '/_app/rates/plans/$planId'
+      path: '/plans/$planId'
+      fullPath: '/rates/plans/$planId'
+      preLoaderRoute: typeof AppRatesPlansPlanIdRouteImport
+      parentRoute: typeof AppRatesRoute
+    }
+    '/_app/rates/plans/new': {
+      id: '/_app/rates/plans/new'
+      path: '/plans/new'
+      fullPath: '/rates/plans/new'
+      preLoaderRoute: typeof AppRatesPlansNewRouteImport
+      parentRoute: typeof AppRatesRoute
+    }
   }
 }
 
 interface AppRatesRouteChildren {
+  AppRatesCalendarRoute: typeof AppRatesCalendarRoute
   AppRatesRoomsRoute: typeof AppRatesRoomsRoute
   AppRatesIndexRoute: typeof AppRatesIndexRoute
+  AppRatesPlansPlanIdRoute: typeof AppRatesPlansPlanIdRoute
+  AppRatesPlansNewRoute: typeof AppRatesPlansNewRoute
+  AppRatesPlansIndexRoute: typeof AppRatesPlansIndexRoute
 }
 
 const AppRatesRouteChildren: AppRatesRouteChildren = {
+  AppRatesCalendarRoute: AppRatesCalendarRoute,
   AppRatesRoomsRoute: AppRatesRoomsRoute,
   AppRatesIndexRoute: AppRatesIndexRoute,
+  AppRatesPlansPlanIdRoute: AppRatesPlansPlanIdRoute,
+  AppRatesPlansNewRoute: AppRatesPlansNewRoute,
+  AppRatesPlansIndexRoute: AppRatesPlansIndexRoute,
 }
 
 const AppRatesRouteWithChildren = AppRatesRoute._addFileChildren(

@@ -13,6 +13,8 @@
   --surface: #ffffff;
   --surface-2: #f9fafb;
   --surface-3: #f2f4f7;
+  /* Friday and Saturday columns in the rate calendar: a faint violet wash, visible beside white. */
+  --weekend: #eef0fd;
   --border: #e4e7ec;
   --border-strong: #d0d5dd;
   /* Field and checkbox outlines: at least 3:1 on the surface (WCAG 1.4.11). */
@@ -68,6 +70,7 @@
   --surface: #111729;
   --surface-2: #0e1424;
   --surface-3: #182036;
+  --weekend: #1a2142;
   --border: #222b42;
   --border-strong: #2e3854;
   --input: #5b6683;
@@ -117,6 +120,7 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
+  --color-weekend: var(--weekend);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-input: var(--input);

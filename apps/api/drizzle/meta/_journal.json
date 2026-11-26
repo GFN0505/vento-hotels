@@ -96,8 +96,22 @@
     {
       "idx": 13,
       "version": "7",
-      "when": 1795726849245,
-      "tag": "0013_taxes_payments_fx",
+      "when": 1795709448294,
+      "tag": "0013_rate_plans",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795713984369,
+      "tag": "0014_rate_date_batches",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1795728727559,
+      "tag": "0015_taxes_payments_fx",
       "breakpoints": true
     }
   ]

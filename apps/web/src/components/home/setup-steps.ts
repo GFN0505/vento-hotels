@@ -5,6 +5,7 @@ import type { PaymentSetup, TaxSetup } from '@vento/shared'
 import { useProperty } from '@/components/shell/property-context'
 import { orpc } from '@/lib/api'
 import { useMe } from '@/lib/me'
+import { ratesStep } from './rates-step'
 
 export type SetupStepKey =
   | 'group'
@@ -12,12 +13,20 @@ export type SetupStepKey =
   | 'details'
   | 'rooms'
   | 'taxes'
+  | 'rates'
   | 'team'
   | 'pin'
   | 'devices'
   | 'two-step'
 
-export type SetupStep = { key: SetupStepKey; label: string; why: string; done: boolean }
+export type SetupStep = {
+  key: SetupStepKey
+  label: string
+  why: string
+  done: boolean
+  // The hotel the step's link opens on (?hotel=), when it's about one hotel.
+  hotel?: string | undefined
+}
 
 export function useSetupSteps(): { steps: SetupStep[]; done: number; ready: boolean } {
   const me = useMe()
@@ -63,6 +72,12 @@ export function useSetupSteps(): { steps: SetupStep[]; done: number; ready: bool
             label: 'Set up rooms',
             why: 'Room types and rooms, so you can sell them',
             done: s.rooms > 0,
+          },
+          {
+            key: 'rates' as const,
+            label: 'Set rates',
+            why: 'Prices for each room type, so you can take bookings',
+            ...ratesStep(s.byHotel, current?.id),
           },
         ]
       : []),

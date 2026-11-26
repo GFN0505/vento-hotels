@@ -108,8 +108,8 @@
 ## Open questions
 - **The Okoro family in a Standard Queen (step 7):** four guests (2 adults, 2 children), but Standard Queen in the demo seed sleeps 2 adults and no children (`STQ`, Queen bed). Step 7 is left as written until the walk-in brick (Stage 1 brick 8) settles it: a larger type (e.g. Deluxe King allows 1 child, Junior Suite 3 adults + 1 child), two rooms (e.g. connecting 401/402), or an over-capacity warning the agent can override.
 - **Is the front desk PC a shared device** (PIN sign-in) or a personal device (password + 2FA)? (Settled: front desk PCs are one of the three shared-device kinds, with PIN sign-in. Decision 0022.)
-- The demo world gives Acme's **Executive King rate** (₦180,000.00) without saying whether breakfast is included. This assumes room only, with breakfast on the guest folio; confirm with the design.
-- How is a rate that includes breakfast (Acme's Deluxe King ₦130,000.00) split between rooms and food revenue at night audit?
+- *Settled (rate plans spec):* Acme's **Executive King rate** (₦180,000.00, plan `ACME`) is room only; breakfast goes on the guest folio.
+- *Settled (rate plans spec):* a rate that includes breakfast (Acme's Deluxe King ₦130,000.00, plan `ACME-BB`) carries a **meal allocation** (₦18,000 per room per night) that night audit posts to food; the rest is rooms revenue.
 - The 502 departure needs a **second Acme guest** and 503 an in-house guest; the demo world names neither.
 - Can a key be issued before a bank transfer is matched? Up to what amount, and by whom?
 - Does Acme's credit check count charges already routed to Acme on open folios (Mr Mensah's stay), or only invoiced city ledger balances?

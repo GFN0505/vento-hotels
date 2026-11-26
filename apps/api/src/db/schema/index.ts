@@ -2,5 +2,6 @@
 export * from './auth.ts'
 export * from './finance.ts'
 export * from './governance.ts'
+export * from './rates.ts'
 export * from './rooms.ts'
 export * from './tenancy.ts'
