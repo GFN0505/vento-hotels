@@ -57,7 +57,7 @@ export function SetupChecklist({ className }: { className?: string }) {
       case 'taxes':
         return (
           <Link to="/settings/taxes" className={cls}>
-            Set up
+            Set up taxes
           </Link>
         )
       case 'rates':
