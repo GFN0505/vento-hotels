@@ -6,20 +6,33 @@ import { cn } from '@/lib/cn'
 
 type EmptyStateProps = {
   icon: LucideIcon
+  // 'brand' tints the icon tile for page-level empties, so it isn't grey on grey.
+  tone?: 'neutral' | 'brand'
   children: ReactNode
   action?: ReactNode
   className?: string
 }
 
-export function EmptyState({ icon: Icon, children, action, className }: EmptyStateProps) {
+export function EmptyState({
+  icon: Icon,
+  tone = 'neutral',
+  children,
+  action,
+  className,
+}: EmptyStateProps) {
   return (
     <div
       className={cn(
-        'flex flex-col items-center gap-4 rounded-md border border-border bg-surface px-6 py-12 text-center sm:py-16',
+        'flex flex-col items-center gap-4 rounded-lg border border-border bg-surface px-6 py-12 text-center shadow-card sm:py-16',
         className,
       )}
     >
-      <span className="grid size-12 place-items-center rounded-xl bg-surface-2 text-text-2">
+      <span
+        className={cn(
+          'grid size-12 place-items-center rounded-xl ring-1 ring-border',
+          tone === 'brand' ? 'bg-pri-soft text-pri-ink' : 'bg-surface-2 text-text-2',
+        )}
+      >
         <Icon aria-hidden="true" className="size-6" strokeWidth={1.7} />
       </span>
       <div className="max-w-md text-[14px] leading-relaxed text-text-2">{children}</div>

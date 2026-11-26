@@ -66,6 +66,9 @@ export const router = base.router({
     current: inOrganization.organization.current.handler(({ context }) =>
       tenancy.currentOrganization(context.db, context.access),
     ),
+    home: inOrganization.organization.home.handler(({ context }) =>
+      tenancy.homeSummary(context.db, context.access),
+    ),
   },
   entities: {
     list: inOrganization.entities.list.handler(({ context, input }) =>

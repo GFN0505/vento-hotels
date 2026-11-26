@@ -16,7 +16,11 @@ export function PageHeader({ title, badge, description, actions, className }: Pa
     <div className={cn('flex flex-wrap items-end justify-between gap-3', className)}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.02em] sm:text-2xl">
+          {/* Focusable so screen readers can be brought to the page's title after navigating. */}
+          <h1
+            tabIndex={-1}
+            className="text-[22px] leading-tight font-semibold tracking-[-0.02em] focus:outline-none sm:text-[24px]"
+          >
             {title}
           </h1>
           {badge}

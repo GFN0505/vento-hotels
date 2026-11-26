@@ -24,8 +24,9 @@ test('an owner turns on two-step sign-in, then signs in with a code', async ({
 }, testInfo) => {
   const email = await signUpOwnerWithGroup(page, `two-step-${testInfo.project.name}`)
 
-  await expect(page.getByText('Protect your account with two-step sign-in')).toBeVisible()
-  await page.getByRole('button', { name: 'Turn on', exact: true }).click()
+  // Home's setup checklist offers it.
+  const checklist = page.getByRole('region', { name: 'Finish setting up' })
+  await checklist.getByRole('button', { name: 'Turn on', exact: true }).click()
   const start = page.getByRole('dialog', { name: 'Turn on two-step sign-in' })
   await start.getByLabel('Your password', { exact: true }).fill(PASSWORD)
   await start.getByRole('button', { name: 'Continue' }).click()
@@ -47,7 +48,12 @@ test('an owner turns on two-step sign-in, then signs in with a code', async ({
   await codes.getByRole('button', { name: 'Download' }).click()
   await codes.getByRole('button', { name: 'Done' }).click()
   await expect(page.getByText('Two-step sign-in is on')).toBeVisible()
-  await expect(page.getByText('Protect your account with two-step sign-in')).toHaveCount(0)
+  // The checklist step is now done, so its button has gone.
+  await expect(
+    page
+      .getByRole('region', { name: 'Finish setting up' })
+      .getByRole('button', { name: 'Turn on' }),
+  ).toHaveCount(0)
 
   // Signing in again now asks for a code after the password.
   await page.context().clearCookies()
@@ -56,5 +62,7 @@ test('an owner turns on two-step sign-in, then signs in with a code', async ({
   await expectAccessible(page)
   // Six digits check themselves; no button needed.
   await page.getByLabel('6-digit code').fill(totp(key))
-  await expect(page.getByRole('heading', { name: 'Kora Hotels Group' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /^Good (morning|afternoon|evening)/ }),
+  ).toBeVisible()
 })

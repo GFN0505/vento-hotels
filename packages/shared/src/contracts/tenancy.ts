@@ -90,9 +90,19 @@ export const setPropertyAccessSchema = z.discriminatedUnion('allProperties', [
   }),
 ])
 
+// Figures for Home. Team and device counts are only for people who manage them (null otherwise).
+export const homeSummarySchema = z.object({
+  hotels: z.number().int(),
+  members: z.number().int().nullable(),
+  pendingInvites: z.number().int().nullable(),
+  devices: z.number().int().nullable(),
+})
+export type HomeSummary = z.infer<typeof homeSummarySchema>
+
 export const tenancyContract = {
   organization: {
     current: oc.output(currentOrganizationSchema),
+    home: oc.output(homeSummarySchema),
   },
   entities: {
     list: oc.input(pageQuerySchema).output(pageSchema(entitySchema)),
