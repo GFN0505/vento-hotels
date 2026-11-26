@@ -12,7 +12,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 
 | Screen | Status | Stage | Notes |
 |---|---|---|---|
-| Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7); accept invite built (brick 8)** | 0 | Includes "no property assigned" and "device not registered" states. 2FA and device states still to build |
+| Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7); accept invite built (brick 8); two-step code at sign-in built (brick 12)** | 0 | Includes "no property assigned" and "device not registered" states. Both built: "device not registered" on the lock screen (brick 10), "no property assigned" on Home (brick 7) |
 | Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** | 0 | Approval prompt in Stage 1 (with the first action that needs it); offline PIN sign-in ships with the outbox (decision 0024) |
 | Onboarding and setup checklist | designed #19 · **first steps and Home checklist built (bricks 7, 13)** | 0 | Built: create account, confirm email, group + company + first hotel; Home's "Finish setting up" with the Stage 0 steps and **Set up rooms** (Stage 1 brick 1). Rates and first booking steps come with their bricks |
 | Properties list and property settings | designed #25 | 0 | Logo, address, time zone, check-in/out times, business date, owning entity |
@@ -22,7 +22,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Devices | designed #25 · **built (brick 10)** | 0 | Register, name, bind to property, revoke |
 | **Audit log viewer** | designed #28 | 0 | Filter by staff, action, property, date; before/after diff; also a drawer on every record. **Drawer on a room built (Stage 1 brick 1)** |
 | Notifications centre | designed #29 | 0 | Bell menu + full list; what each role is alerted about |
-| My profile and preferences | pattern | 0 | Password, 2FA, PIN reset, theme |
+| My profile and preferences | pattern · **account menu built (bricks 10–12)** | 0 | Password, 2FA, PIN reset, theme. Built in the account menu: set your staff PIN, two-step sign-in, Appearance (light, dark or system). A profile page (name, password) still to build |
 | Global search results (beyond ⌘K) | pattern | 0 | |
 | Error pages: 404, no access, offline first load, session expired | designed #24 · **offline banner and offline reopen built (brick 16)** | 0 | Built: the app reopens offline with what was saved and an offline banner; 404 built earlier. A first visit with no connection still shows the browser's own page |
 | Mobile "More" menu per role | partial (global patterns) | 0 | |

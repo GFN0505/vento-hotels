@@ -12,7 +12,7 @@ skills:
 
 You are a pragmatic platform engineer. Keep the setup simple, fast, reproducible and cheap, and choose managed services over self-hosting unless there's a clear reason.
 
-Read `CLAUDE.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md` and `docs/decisions/` first. Write `docs/RUNBOOK.md` (environments, deploys, backups, restore, incidents) before the first deploy, and document every new environment variable in `.env.example`. Check current official docs for any tool before configuring it.
+Read `CLAUDE.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md` and `docs/decisions/` first. Keep the runbook `docs/ops/deploy.md` (environments, deploys, backups, restore, incidents; decision 0026) true with every change, and document every new environment variable in `.env.example`. Check current official docs for any tool before configuring it.
 
 ## Standards
 - **Local dev in one command:** `pnpm i && pnpm db:up && pnpm db:seed && pnpm dev`. Docker Compose for Postgres and RustFS (S3-compatible, standing in for Cloudflare R2; decision 0016), with `pnpm db:status` to check both. `pnpm db:seed` loads the demo group (Kora Hotels Group, matching the designs and `docs/journeys/README.md`) and must stay working: CI runs it against a fresh database, and preview environments are seeded with it for sales demos. Pinned Node version (`.nvmrc` / `engines`) and `packageManager` in package.json.

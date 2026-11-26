@@ -2,10 +2,10 @@
 
 How the code is laid out and how a request flows through it. The *why* behind the big choices is in `docs/decisions/`. Keep this file current when the structure changes.
 
-Each section says honestly where it stands: **Built in brick N** (on `main`), **In review (brick N)** (open pull request, not merged), or **Planned (brick N)** for the Stage 0 bricks: 1 monorepo skeleton, 2 local infra, 3 shared basics, 4 Drizzle and the API server, 5 auth, 6 permissions and audit, 7 web shell, 8 devices and PIN, 9 offline, 10 seed and deploy.
+Each section says honestly where it stands: **Built in brick N** (on `main`) or **Planned** (with the stage that brings it). Stage 0 is complete. Its bricks, as they were built: 1 monorepo skeleton, 2 local infrastructure, 3 shared basics, 4 database layer and API server, 5 sign-in and tenancy, 6 permissions and audit, 7 web shell, 8 team and roles, 9 feature switches, 10 shared devices and PIN, 11 app shell, 12 two-step sign-in, 13 visual pass on Home, 14 demo seed, 15 role homes, 16 offline shell, 17 jobs and monitoring, 18 deploy. The documentation system and the UX quality gates landed alongside them without a brick number. Stage 1 bricks are numbered afresh in `docs/specs/stage-1-plan.md`.
 
 ## Layout
-*Built in bricks 1–4: the workspace, `api/src/infra/`, the `shared` basics, the API server and database layer. Built in brick 5: `auth/`, `tenancy/`, `providers/email.ts`, `db/schema/auth.ts` and `tenancy.ts`, `shared/src/roles.ts` and `contracts/tenancy.ts`. In review (brick 6): `audit/`, `governance/`, `db/schema/governance.ts`, `shared/src/permissions.ts` and `contracts/governance.ts`. In review (Stage 1, brick 1): `rooms/`, `db/schema/rooms.ts`, `seed/rooms.ts`, `shared/src/rooms.ts` and `contracts/rooms.ts`. Everything else is planned for the bricks shown.*
+*Everything below is built, in the brick shown, except what is marked Stage 1 or later.*
 ```
 apps/
   api/                       Hono + oRPC server on Node 24
@@ -14,43 +14,49 @@ apps/
       router.ts              implements the shared contract; context per request     (brick 4)
       server.ts              starts the server, graceful shutdown                    (brick 4)
       env.ts                 zod-validated environment, fails fast on start           (brick 4)
+      rate-limit.ts          per-key limits for Vento's own public procedures         (brick 8)
+      system/health.ts       database, storage and jobs checks behind /health          (bricks 4, 17)
       infra/                 settings reader (zod) and database/storage checks        (bricks 2–3)
       db/columns.ts          id (uuidv7), timestamps, archivedAt, amount, currency    (brick 4)
       db/client.ts           pg pool + Drizzle, snake_case columns                    (brick 4)
-      db/schema/             auth.ts (Better Auth), tenancy.ts (entities, properties) (brick 5); rooms.ts (Stage 1)
+      db/schema/             auth.ts (Better Auth), tenancy.ts, governance.ts          (bricks 5–12); rooms.ts (Stage 1)
       db/migrate.ts          applies migrations as a release step, never on app start (brick 4)
-      auth/auth.ts           Better Auth: email + password, organizations, /api/auth/* (brick 5)
+      auth/auth.ts           Better Auth: email + password, organizations, two-step, /api/auth/* (bricks 5, 12)
       tenancy/access.ts      loadAccess, scopeToProperties, requirePermission, requireWithinLimit (bricks 5–6)
-      tenancy/service.ts     entities, properties, member property access            (brick 5)
+      tenancy/service.ts     entities, properties, member property access, Home figures (bricks 5, 15)
       audit/record.ts        recordAudit / recordAuditMany(tx, access, …), same transaction (brick 6)
       governance/service.ts  audit log, permissions matrix list/set                  (brick 6)
       team/                  members list/update/remove, invitations, join from link   (brick 8)
       features/              feature switches per group, `pnpm features` command       (brick 9)
-      devices/               shared devices, staff PINs, PIN sign-in checks            (brick 10)
+      devices/               shared devices, staff PINs, PIN sign-in, PIN session rules (brick 10)
       rooms/                 room types and rooms per property: reads, writes, bulk, locks,
                              connecting rooms, "Add rooms by floor" with new types (room-batch.ts),
                              Mark inspected, the roomCountChanged hook (Stage 1)
       seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14); rooms.ts: 382 rooms (Stage 1)
       jobs/                  pg-boss queue, email retries, heartbeat                   (brick 17); business jobs from Stage 1
       observability/         pino logs with request ids, Sentry error reports          (brick 17)
-      providers/             email, SMS, WhatsApp, payments, channel manager, storage (as needed)
+      providers/email.ts     EmailProvider and its console, file and memory versions   (brick 5); SMS, WhatsApp, payments, channel manager, storage as each stage needs them
+      test/harness.ts        signs real people in for tests through Better Auth        (brick 5)
       pdf/                   @react-pdf/renderer documents                            (Stage 1)
-      modules/<module>/      <module>.service.ts, <module>.router.ts, tests next to them
-    drizzle/                 generated SQL migrations, committed                      (brick 4)
+    drizzle/                 generated SQL migrations, committed (0000–0007)          (bricks 4–12)
   web/                       Vite + React 19 SPA
     src/
-      routes/                sign-in, get-started, setup, _app (shell) and home       (brick 7)
-      components/ui/         Button, Field, Card: shadcn-style, design tokens only    (brick 7)
-      components/shell/      sidebar, top bar, property switcher                      (brick 7); full menu, preview as a role (brick 11)
+      routes/                sign-in, get-started, setup, forgot/reset password, join, lock, _app (shell): Home, module pages, settings (bricks 7–12)
+      components/ui/         Button, Field, Card, Dialog, PageHeader, StatTile, EmptyState…: design tokens only (bricks 7–13)
+      components/shell/      sidebar, top bar, hotel switch, account menu, preview and offline banners (bricks 7–16)
+      components/home/       Home by role and hotel: banner, figures, hotels, attention, workspace (bricks 13, 15)
+      components/team/, two-step/  invite and member dialogs, two-step set-up          (bricks 8, 12)
       components/logo.tsx    the Vento mark from the designs                          (brick 7)
       styles.css             tokens ported from design/export/vento.css, light + dark (brick 7)
       lib/api.ts             typed oRPC client + TanStack Query utils                 (brick 7)
       lib/auth.ts, session.ts  Better Auth client; picks the member's group on sign-in (brick 7)
+      lib/device-session.ts  PIN sessions: idle lock and the Lock button               (brick 10)
       lib/navigation.ts      the menu: modules, their feature switch, which roles use them (brick 11)
       lib/me.ts, view-as.tsx the member's role, permissions and features; role preview  (bricks 9–11)
+      observability/         Sentry for the web app, loaded after first paint          (brick 17)
       offline/               connection state, saved data in IndexedDB, update prompt (brick 16); outbox, sync queue (with the first offline command)
     sw/                      the service worker and the build step that emits /sw.js   (brick 16)
-    e2e/                     Playwright, desktop + phone; onboarding.spec.ts now, one spec per walkthrough later (brick 7)
+    e2e/                     Playwright, desktop + phone: onboarding, team, devices, shell, two-step, home, offline, accessibility (bricks 7–16)
 packages/
   shared/                    the single source of API types
     src/
@@ -58,15 +64,19 @@ packages/
       ids.ts                 newId() UUID v7, idSchema                                 (brick 3)
       dates.ts               calendar dates, nights, property-time-zone date           (brick 3)
       pagination.ts          page query and { items, page, pageSize, total }           (brick 3)
-      contracts/             the oRPC contract, one file per module (system, tenancy, governance, team, devices, rooms) (from brick 4)
       locale.ts              NGN default, supported currencies, Africa/Lagos           (brick 1)
+      roles.ts, password.ts  the 16 hotel roles; the password rule                     (bricks 5, 7)
       permissions.ts         permission keys, limit kinds, default matrix            (brick 6)
       rooms.ts               room fields, numbering, "Add rooms by floor" expansion   (Stage 1)
-      <module>/              zod schemas and the oRPC contract per module             (from brick 5)
+      features.ts            the feature catalog (decision 0021)                       (brick 9)
+      devices.ts, pin.ts     device kinds and idle times; the PIN rule                 (brick 10)
+      contracts/             the oRPC contract: system, tenancy, governance, team, devices (bricks 4–10), rooms (Stage 1)
+deploy/                      images, compose.yml, Caddyfile, backups, server bootstrap (brick 18)
 ```
+New modules from Stage 1 add their own folder in `apps/api/src/` (service, router, tests next to them) and their schemas and contract in `packages/shared/src/`, following the `add-module` skill.
 
 ## A request, end to end
-*Steps 3.1–3.3 built in brick 5: `authed` and `inOrganization` in `apps/api/src/router.ts`, scoping with `scopeToProperties()`. Steps 3.4 and 5 built in brick 6: `requirePermission` / `requireWithinLimit` in each service and `recordAudit` in its transaction; approval by PIN in Stage 1 (with rate overrides); device sessions in brick 10. Step 1 (the typed web client) in review (brick 7), same origin as the API (decision 0019).*
+*Steps 3.1–3.3 built in brick 5: `authed` and `inOrganization` in `apps/api/src/router.ts`, scoping with `scopeToProperties()`. Steps 3.4 and 5 built in brick 6: `requirePermission` / `requireWithinLimit` in each service and `recordAudit` in its transaction; approval by PIN in Stage 1 (with rate overrides); device sessions in brick 10. Step 1 (the typed web client) built in brick 7, same origin as the API (decision 0019). Step 6's request logs and error reports built in brick 17.*
 1. A screen calls the typed oRPC client. Its input and output types come from the contract in `packages/shared`, so a mismatch is a compile error.
 2. The browser sends `POST /rpc/<module>/<procedure>`. Hono adds a request id and security headers.
 3. oRPC validates the input against the zod schema, then runs the middleware in this order:
@@ -79,7 +89,7 @@ packages/
 6. The **response** is validated against the output schema and returned. One JSON log line per request with request id, organization id and property id, never guest personal data. Unexpected errors go to Sentry with the request id; the client sees a generic message.
 
 ## Offline path
-*In review (brick 16): the shell. Planned: the outbox, with the first offline command (decision 0024).*
+*Built in brick 16: the shell. Planned: the outbox, with the first offline command in Stage 1 (decision 0024).*
 - **Built:** the service worker keeps the built app on the device (pages network-first, built files cache-first, never API calls). Before the first render, `offline/saved-data.ts` restores the reference data last seen from IndexedDB (an allow-list of queries), and `lib/session.ts` falls back to the remembered person when Vento can't be reached. `offline/connection.ts` treats a request that never reached Vento as offline; the shell shows `OfflineBanner`. Sign-out and device lock clear it all.
 - Front desk, POS and housekeeping run from a cached app shell and local data in IndexedDB.
 - Each change offline becomes a **command** in an outbox with a client UUID v7 and an idempotency key, the device id and the time it happened.
@@ -94,7 +104,7 @@ packages/
 - `apps/api/src/infra/` holds the reachability checks; their tests run against the real services locally (with `.env`) and in CI.
 
 ## Data
-*Built in brick 4 (database layer, column helpers, append-only guard). Built in brick 5: users, sessions, organizations, members, invitations, entities, properties and member_properties (migration 0001). In review (brick 6): audit_events (append-only trigger) and permission_overrides (migration 0002).*
+*Built in brick 4 (database layer, column helpers, append-only guard). Built in brick 5: users, sessions, organizations, members, invitations, entities, properties and member_properties (migration 0001). Built in brick 6: audit_events (append-only trigger) and permission_overrides (migration 0002). Built since: invitation_properties (0003, brick 8), organization_features (0004, brick 9), devices, member_pins and sessions.device_id (0005–0006, brick 10), two_factors (0007, brick 12).*
 - **PostgreSQL 18** with Drizzle ORM; migrations generated by drizzle-kit into `apps/api/drizzle/`, reviewed before applying (`db-migration` skill), and applied by `pnpm db:migrate` as a release step, never on API start. Locally in Docker on port **5433** (brick 2).
 - **Append-only guard:** migration 0000 adds `vento_forbid_update_delete()`. Every append-only table (folio postings, payments, ledger entries, stock movements, audit events) attaches it as a `BEFORE UPDATE OR DELETE` trigger, so history can't be changed even by a hand-written query.
 - Every domain table has `organizationId`; operational tables also have `propertyId`. Both NOT NULL and indexed.
@@ -107,7 +117,7 @@ packages/
 - Statutory rates (VAT, consumption tax, service charge, payroll deductions) are versioned configuration with effective dates.
 
 ## Background jobs
-*In review (brick 17): the queue, email retries and the heartbeat (decision 0025). Stage 1 adds the first business jobs.*
+*Built in brick 17: the queue, email retries and the heartbeat (decision 0025). Stage 1 adds the first business jobs.*
 pg-boss on the same Postgres, no Redis. `apps/api/src/jobs/queue.ts` holds each job's zod schema, queue options and handler; the API process starts the workers when `JOBS_ENABLED` is true, and `/health` reports `jobs` from a heartbeat every minute. Email already goes through the `email.send` queue. Used for night audit steps, ARI pushes to the channel manager, payment and channel webhooks, guest messages, the owner's daily report, scheduled checks (room discrepancy, deposits due) and large imports. Every job is idempotent and retried with backoff; failures are visible to devops.
 
 ## Files and PDFs
@@ -116,11 +126,11 @@ pg-boss on the same Postgres, no Redis. `apps/api/src/jobs/queue.ts` holds each 
 - **PDFs** (registration cards, invoices, folios, statements, payslips, board packs) are rendered on the API with `@react-pdf/renderer`. Thermal receipts and kitchen tickets are 80mm browser print layouts (`printing` skill).
 
 ## Providers behind interfaces
-*Planned (as each stage needs them).*
+*Built in brick 5: `EmailProvider` (console, file and memory versions; no real provider chosen yet). The others are planned, as each stage needs them.*
 Every outside service sits behind an interface in `apps/api/src/providers/` with a fake for tests and local work: `EmailProvider`, `SmsProvider`, `WhatsAppProvider`, `PaymentProvider` (Paystack), `ChannelProvider` (one certified channel manager), `StorageProvider`. Which provider to use is an open question in `docs/DOMAIN.md` until decided in `docs/decisions/`.
 
 ## Environments
-*In review (brick 18): Contabo servers running Docker Compose, deployed from GitHub Actions (decision 0026). Runbook: docs/ops/deploy.md.*
+*Built in brick 18: Contabo servers running Docker Compose, deployed from GitHub Actions (decision 0026). Runbook: [ops/deploy.md](ops/deploy.md). The servers themselves aren't set up yet, so deploy steps are skipped until they are.*
 | Environment | Purpose | Data |
 |---|---|---|
 | local | Development on a laptop: Docker Postgres (5433) and RustFS storage (9100, console 9101) | demo seed |
@@ -130,7 +140,7 @@ Every outside service sits behind an interface in `apps/api/src/providers/` with
 Every variable is listed in `.env.example` and validated on start. Secrets never enter the repo.
 
 ## Build and quality gates
-*Built in brick 1: pnpm workspace, Turborepo, strict TypeScript, Biome, Vitest and a CI workflow. Built in brick 2: CI runs Postgres and RustFS as service containers. Built in brick 4: CI checks migrations match the schema and apply cleanly. In review (brick 7): Playwright end-to-end tests on desktop and phone in CI, with the report kept on failure.*
+*Built in brick 1: pnpm workspace, Turborepo, strict TypeScript, Biome, Vitest and a CI workflow. Built in brick 2: CI runs Postgres and RustFS as service containers. Built in brick 4: CI checks migrations match the schema and apply cleanly. Built in brick 7: Playwright end-to-end tests on desktop and phone in CI, with the report kept on failure; since brick 16 they run against the production build. UX gates (accessibility scans, light and dark, desktop and phone, and speed budgets) added between bricks 7 and 8.*
 - `pnpm check` (Biome lint + format), `pnpm typecheck` (strict TS), `pnpm test` (Vitest), `pnpm e2e` (Playwright, desktop and 375px mobile).
 - Run before every commit: `pnpm check && pnpm typecheck && pnpm test`.
 - CI (`.github/workflows/ci.yml`) runs the same gates on every pull request, with Postgres and RustFS as service containers (same images and ports as `docker-compose.yml`) a `pnpm db:status` step, a check that every schema change has a committed migration, and a migration run. The test database is rebuilt and migrated before every run (only a database named `*_test`). From brick 5, tests cover organization isolation and property scoping through the real sign-in flow (`src/test/harness.ts`); no-overbooking concurrency arrives with reservations (`testing-patterns` skill).

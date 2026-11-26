@@ -25,7 +25,7 @@
 1. **PIN sign-in (07:02).**
    - *Does:* picks up the housekeeping phone, taps her avatar on the lock screen, enters her 4-digit PIN.
    - *Sees:* "My rooms · 8" for floors 4 and 5, with the time and "Kora Victoria Island".
-   - *Behind the scenes:* the PIN is checked against the cached salted hash on the device (screen 22); nothing is sent. A `member.signed_in` audit event records Blessing, the device and the property. Reference data (her assignment, room statuses, minibar price list) is already cached for offline use.
+   - *Behind the scenes:* the PIN is checked against the cached salted hash on the device (screen 22); nothing is sent. A `member.signed_in_with_pin` audit event records Blessing, the device and the property. Reference data (her assignment, room statuses, minibar price list) is already cached for offline use.
 
 2. **Her rooms in order.**
    - *Does:* reads the list.
@@ -80,7 +80,7 @@
 
 12. **Device left signed in (13:00).**
     - *Does:* Blessing goes for lunch with the phone on the trolley, still signed in.
-    - *Sees (on return):* the lock screen with "Signed out after 2 minutes idle". She signs in again with her PIN at 13:40.
+    - *Sees (on return):* the lock screen with "Blessing was signed out. Tap your name to sign in." (housekeeping phones sign out after 5 minutes idle). She signs in again with her PIN at 13:40.
     - *Behind the scenes:* auto sign-out ends her session after the configured idle time; the outbox and cached data stay on the device (they belong to the device and property). Any action taken while she is signed out would need a PIN, so nothing can be done in her name. Sign-out and sign-in are audit events.
 
 13. **End of shift (14:50).**
@@ -89,7 +89,7 @@
     - *Behind the scenes:* assignment summary for the shift (rooms, times, credits per room type) is available to Grace and on the room status report.
 
 ## What can go wrong
-- **Wrong PIN:** "That PIN didn't match. Try again." After the configured number of tries: "Too many tries. Try again in 5 minutes." The lockout counts locally and syncs.
+- **Wrong PIN:** "Wrong PIN. 4 tries left." After five wrong tries: "Too many wrong PINs. Try again at 07:17, or ask a manager to reset your PIN." The lockout counts locally and syncs.
 - **Guest still in a departure room:** 504 shows "Due out 12:00 · guest still in". Tapping Start asks "Guest may still be in the room. Start anyway?" and logs the answer.
 - **Do not disturb on a stayover:** she marks "DND" with time; the room moves to the end of the list and Grace sees it.
 - **Minibar for a guest who has checked out:** the item goes to the departed stay's folio only if it is still open; otherwise it is recorded as a late charge for the front desk to decide. Offline, it is blocked if the guest is not in the cached in-house list.
@@ -111,7 +111,7 @@
 
 ## Becomes tests
 `apps/web/e2e/journeys/room-attendant-shift.spec.ts`, on the demo seed:
-- PIN sign-in on a registered shared device; wrong PIN shows the right copy; audit event `member.signed_in` with device id.
+- PIN sign-in on a registered shared device; wrong PIN shows the right copy; audit event `member.signed_in_with_pin` with device id.
 - Room order is 502 (early arrival) first, departures before stayovers, VIP 405 first among stayovers, 504 (still occupied) below vacated departures.
 - Start → Done moves 502 to `clean` and the assignment to `done`; the board shows it.
 - Minibar posting creates a folio charge on 405 with separate tax lines and business date 25 Nov 2026; stock deducted.
@@ -119,7 +119,7 @@
 - Room check marking 406 occupied while it is `vacant` creates a `skipper` discrepancy and a GM notification; the alert cannot be closed without a reason.
 - Grace fails 404 with notes → `dirty` and back on Blessing's list; passes 502 → `inspected`; arrivals shows 502 as ready and first in room assignment.
 - Offline (`context.setOffline(true)`): banner shown, Done and minibar queue with "Saved on this device" and a queue count; **Report a fault** is disabled with a reason; back online the queue drains and server state matches.
-- Idle for the configured time → lock screen with "Signed out after 2 minutes idle"; outbox still present after the next PIN sign-in.
+- Idle for the configured time → lock screen with "Blessing was signed out. Tap your name to sign in."; outbox still present after the next PIN sign-in.
 
 ## Open questions
 - **Room order rules:** does a VIP stayover outrank an ordinary departure? Should the attendant be able to reorder her own list?
@@ -129,5 +129,5 @@
 - **Permissions for housekeeping roles:** the matrix in `DOMAIN.md` has no rows for minibar posting, lost and found, room checks or fault reports. Minibar posting writes to a folio (Finance); confirm a room attendant may do it and whether there is a limit.
 - **What the skipper does to 406:** after Blessing marks it used, should 406 move to `dirty` automatically, or stay `inspected` until Tunde resolves the alert?
 - **Assignment status on inspection fail:** `DOMAIN.md` says fail → `dirty` for the room, but assignment status only goes `pending → in_progress → done → inspected`. Does a failed inspection reset the assignment to `pending` or add a `failed` state?
-- **Auto sign-out time:** the demo world uses 2 minutes for housekeeping phones and 90 seconds for POS; are these defaults configurable per property?
+- **Auto sign-out time:** built as 90 seconds on restaurant tablets and 5 minutes on front desk PCs and housekeeping phones (decision 0022). Should they be configurable per property?
 - **Minibar department and stock:** `beverage` or a separate minibar revenue code; which store the stock comes from.

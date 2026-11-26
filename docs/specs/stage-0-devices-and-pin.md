@@ -1,9 +1,9 @@
 # Shared devices and staff PIN sign-in
 
-- **Status:** built (brick 10, in review)
+- **Status:** built (brick 10)
 - **Stage:** 0
 - **Module:** Platform
-- **Walkthroughs:** `going-live.md` (Tunde registers the devices; staff set PINs), `restaurant-power-cut.md` and `room-attendant-shift.md` (staff switch on a shared tablet or phone)
+- **Walkthroughs:** `going-live.md` (Tunde registers the devices; staff set PINs), `waiter-dinner-service.md` and `room-attendant-shift.md` (staff switch on a shared tablet or phone)
 - **Screens:** Devices (#25, `SetDevices.dc.html`, `Devices*.dc.html`), Device not registered (#24, `AuthDevice.dc.html`), lock screens (#22, `LockPOS*.dc.html`, `LockHK*.dc.html`)
 - **Decisions:** `docs/decisions/0008-permission-limits-approvals-audit.md`, `docs/decisions/0022-shared-devices-and-pin.md`
 
@@ -60,7 +60,7 @@ A restaurant tablet, a front desk PC or a housekeeping phone is used by many peo
 - PIN sessions make every later exception (void, discount, comp) attributable to a person and device. Reports come in Stage 1.
 
 ### Offline behaviour
-- Not in this brick: the lock screen needs a connection. Signing in with PINs saved on the device while offline comes with the offline shell (brick 15).
+- Not in this brick: the lock screen needs a connection. Signing in with PINs saved on the device while offline comes with the first offline command, not the offline shell (decision 0024).
 
 ### Business date, tax lines, foreign currency, availability locking
 Not relevant.
@@ -79,7 +79,7 @@ Not relevant.
 "Tap your name", "Enter your PIN", "Musa was signed out", "Register this device", "Lock this device", "Set staff PIN", "Reset PIN".
 
 ## Out of scope
-Manager approval by PIN and the approvals inbox (Stage 1), two-step codes (brick 12), offline PIN sign-in (brick 15), PIN-only staff without an email (HR, Stage 5), kitchen display screens, and showing open checks on the lock screen (Stage 3).
+Manager approval by PIN and the approvals inbox (Stage 1), two-step codes (brick 12), offline PIN sign-in (with the first offline command, decision 0024), PIN-only staff without an email (HR, Stage 5), kitchen display screens, and showing open checks on the lock screen (Stage 3).
 
 ## Open questions
 None.

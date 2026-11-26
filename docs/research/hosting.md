@@ -2,6 +2,8 @@
 
 *Research brief for the owner, 26 November 2026. Prices and regions change. Check each provider's live pricing page before signing up. Items marked **(unverified)** came from one source or a third-party site.*
 
+> **Outcome:** the owner chose Contabo servers that we run ourselves, not the managed platform recommended below ([decision 0026](../decisions/0026-hosting-on-contabo.md), runbook in [ops/deploy.md](../ops/deploy.md)). The latency and NDPA findings still apply.
+
 ## 1. Recommendation
 
 **Host on Render in Frankfurt, with Cloudflare in front. DigitalOcean in Amsterdam is the runner-up.** Vento needs managed services, deploys from GitHub, a full copy of the app for every pull request, and a database with point-in-time restore. Of the options here, Render covers all four with the least setup. Its [preview environments](https://render.com/docs/preview-environments) give each pull request its own database, which can load the demo group on first deploy. Its Postgres keeps [7 days of point-in-time restore on the Pro plan](https://render.com/pricing). The fixed cost at pilot scale is roughly **$90–125 a month**. Europe also turned out to be faster from Lagos than South Africa (section 4). Frankfurt adds about 15 ms over Amsterdam, which staff won't notice on a mobile connection.

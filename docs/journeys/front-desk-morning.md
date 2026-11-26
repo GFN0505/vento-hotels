@@ -14,7 +14,7 @@
 1. **06:52 Sign in.**
    - *Does:* taps her avatar on the lock screen of front desk PC 1 and enters her 4-digit PIN.
    - *Sees:* Arrivals, departures and in-house (#30). Top bar: "Kora Victoria Island · Business date 25 Nov 2026". No property switcher: she is limited to Kora Victoria Island.
-   - *Behind the scenes:* PIN checked against the device's cached salted hash, so sign-in works offline. Audit event `member.signed_in` (Chiamaka, PC 1, Kora Victoria Island, business date 25 Nov).
+   - *Behind the scenes:* PIN checked against the device's cached salted hash, so sign-in works offline. Audit event `member.signed_in_with_pin` (Chiamaka, PC 1, Kora Victoria Island, business date 25 Nov).
 
 2. **06:55 Open her cashier shift.**
    - *Does:* ⌘K → "Open shift", counts the float and enters ₦50,000.00.
@@ -93,7 +93,7 @@
 
 ## Becomes tests
 `apps/web/e2e/journeys/front-desk-morning.spec.ts`
-- PIN sign-in lands on #30 with "Business date 25 Nov 2026"; audit has `member.signed_in` with the device id.
+- PIN sign-in lands on #30 with "Business date 25 Nov 2026"; audit has `member.signed_in_with_pin` with the device id.
 - Take payment is disabled until a shift is open; the opening float is stored.
 - Check-out of 502 splits across POS terminal (reference required) and city ledger; settlement checks Acme's credit limit and creates an invoice; over-limit needs approval.
 - Room move records reason and before/after; 503 can't go OOO while occupied; once OOO it is removed from Executive King availability for 25–26 Nov with the work order linked.
@@ -107,7 +107,7 @@
 
 ## Open questions
 - **The Okoro family in a Standard Queen (step 7):** four guests (2 adults, 2 children), but Standard Queen in the demo seed sleeps 2 adults and no children (`STQ`, Queen bed). Step 7 is left as written until the walk-in brick (Stage 1 brick 8) settles it: a larger type (e.g. Deluxe King allows 1 child, Junior Suite 3 adults + 1 child), two rooms (e.g. connecting 401/402), or an over-capacity warning the agent can override.
-- Is the **front desk PC a shared device** (PIN sign-in) or a personal device (password + 2FA)? DOMAIN names only POS and housekeeping devices as shared.
+- **Is the front desk PC a shared device** (PIN sign-in) or a personal device (password + 2FA)? (Settled: front desk PCs are one of the three shared-device kinds, with PIN sign-in. Decision 0022.)
 - The demo world gives Acme's **Executive King rate** (₦180,000.00) without saying whether breakfast is included. This assumes room only, with breakfast on the guest folio; confirm with the design.
 - How is a rate that includes breakfast (Acme's Deluxe King ₦130,000.00) split between rooms and food revenue at night audit?
 - The 502 departure needs a **second Acme guest** and 503 an in-house guest; the demo world names neither.

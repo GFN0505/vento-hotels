@@ -1,9 +1,9 @@
 # Two-step sign-in
 
-- **Status:** built (brick 12, in review)
+- **Status:** built (brick 12)
 - **Stage:** 0
 - **Module:** Platform
-- **Walkthroughs:** `going-live.md` (Folake turns on two-step sign-in on day one), `owner-morning.md` (signing in on a new laptop)
+- **Walkthroughs:** `going-live.md` (Mrs Okafor sets up two-step sign-in on day one), `owner-morning.md` (signing in on a new laptop)
 - **Screens:** Two-step code (#24, `Auth2FA.dc.html`, `Auth2FAM.dc.html`); set-up is a dialog from the account menu
 - **Decisions:** `docs/decisions/0017-sign-in-and-tenancy.md`, `docs/decisions/0023-two-step-sign-in.md`
 
