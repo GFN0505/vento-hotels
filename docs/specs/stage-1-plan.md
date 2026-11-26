@@ -29,8 +29,8 @@
 **Stage 1 is done when** `front-desk-morning`, `night-audit`, `owner-morning` and `going-live` pass their Stage 1 steps, and golden-thread hops 1, 4, 8 and 9 pass. Room status board, discrepancy checks and work orders stay in Stage 2; the rates grid, channels and guest profiles beyond what check-in needs stay in Stage 4.
 
 ## ⚑ Owner decisions (from `docs/DOMAIN.md` and walkthrough open questions)
-- **Brick 1:** let GMs set up rooms with a new `rooms.setup` permission (recommended) or keep it owner/admin only.
-- **Brick 7:** bring a minimal room status (mark clean or dirty, out of order with dates and reason) into Stage 1. Without it, rooms stay dirty after check-out until Stage 2. Recommended: yes.
+- **Brick 1 (decided 2026-11-26):** GMs set up rooms with a new `rooms.setup` permission.
+- **Brick 7 (decided 2026-11-26):** minimal room status (clean or dirty, out of order with dates and reason) is in Stage 1.
 - **Brick 3 and 10:** finance or legal confirms VAT and Lagos consumption tax under the 2025 acts before the pilot; and whether foreign guests settle in USD at the desk or in NGN at a set rate.
 - **Brick 12:** Stage 1 city ledger = balances, credit limit and statements only, with invoices (and any e-invoicing) in Stage 5? And does the credit check count charges already routed to the company on open folios?
 - **Brick 16:** owner's daily report by email first, WhatsApp once a provider is chosen.

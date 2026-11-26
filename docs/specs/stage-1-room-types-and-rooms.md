@@ -1,6 +1,6 @@
 # Room types and rooms
 
-- **Status:** draft
+- **Status:** approved (owner, 2026-11-26)
 - **Stage:** 1 (brick 1 of the plan in [stage-1-plan.md](stage-1-plan.md))
 - **Module:** Reservations & Front Desk (property setup)
 - **Walkthroughs:** `going-live.md` step 3 (changed: rooms by hand with "Add rooms by floor", the import stays for brick 17); the setup checklist on Home (`OnbHome`). Every later Stage 1 walkthrough step that names a room (`front-desk-morning.md`, `night-audit.md`, `00-golden-thread.md`) depends on the seed below.
@@ -182,8 +182,10 @@ Matches `RoomsManage`, `TapeChart`, `HKBoard`, `AuditOnRoom` and the walkthrough
 - Room credits for housekeeping (Stage 2 settings), key-card encoder room mapping (after v1).
 - Import from CSV/Excel (brick 17), floor plans and maps.
 
-## Open questions
-1. **Who sets up rooms:** add `rooms.setup` for GMs (recommended), or keep rooms with `setup.manage` so only owners and group admins can do it?
-2. **Max guests:** is adults + children enough for v1, or do Kora's hotels need a lower total cap? Related demo-world conflict: in `front-desk-morning.md` step 7 the Okoro family (2 adults, 2 children) walk into a Standard Queen, which the design caps at 2 guests. Change the walk-in to a Junior Suite or two rooms, or let children under an age not count (a rate-plan rule, brick 2)?
-3. **Ground-floor numbering:** is `G01` right for Kora's hotels, or do they number ground-floor rooms `001` / `101`?
-4. **Exception scope:** should changing a room's features or connecting rooms after go-live also reach the owner's report? (Recommended: no; only count and type changes.)
+## Decisions
+1. **Who sets up rooms (owner, 2026-11-26):** a new `rooms.setup` permission for owner, group admin and general manager.
+2. **Max guests:** adults + children is enough for v1. The Okoro walk-in conflict is settled in brick 8 (walk-in), not here.
+3. **Ground-floor numbering:** `G01` by default; any room number can be typed, so hotels that use `001` or `101` aren't blocked.
+4. **Exception scope:** only room count and type changes after go-live reach the owner's report; features and connecting rooms don't.
+
+Decisions 2–4 follow the recommendations above; the owner can change them before the build is merged.

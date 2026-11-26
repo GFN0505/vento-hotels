@@ -31,4 +31,4 @@ A spec that is dropped is deleted, with the reason in the commit message.
 | [Role-shaped Home and All hotels](stage-0-role-homes.md) | 0 | Platform | owner-morning, front-desk-morning, room-attendant-shift | built |
 | [Offline shell](stage-0-offline-shell.md) | 0 | Platform | waiter-dinner-service, front-desk-morning | built (in review) |
 | [Stage 1 plan: front office bricks](stage-1-plan.md) | 1 | Reservations & Front Desk, Finance | all Stage 1 journeys | draft |
-| [Room types and rooms](stage-1-room-types-and-rooms.md) | 1 | Reservations & Front Desk | going-live | draft |
+| [Room types and rooms](stage-1-room-types-and-rooms.md) | 1 | Reservations & Front Desk | going-live | approved |
