@@ -105,3 +105,15 @@ export const storageOff = () =>
 
 export const logoProblem = (code: 'LOGO_INVALID' | 'LOGO_NOT_UPLOADED', message: string) =>
   new ORPCError('BAD_REQUEST', { message, data: { code } })
+
+export const bookingPrefixTaken = (prefix: string, hotel: string) =>
+  new ORPCError('CONFLICT', {
+    message: `${hotel} already uses ${prefix}. Pick other letters.`,
+    data: { code: 'BOOKING_PREFIX_TAKEN', field: 'bookingPrefix' },
+  })
+
+export const bookingPrefixLocked = (hotel: string) =>
+  new ORPCError('CONFLICT', {
+    message: `${hotel} has reservations, so its booking prefix can't change.`,
+    data: { code: 'BOOKING_PREFIX_LOCKED', field: 'bookingPrefix' },
+  })

@@ -79,6 +79,25 @@ export function IdentityCard({ state, canManage, online }: Props) {
             />
           </div>
         </div>
+        <Field
+          label="Booking prefix"
+          name="bookingPrefix"
+          value={form.bookingPrefix}
+          maxLength={4}
+          readOnly={locked || hotel.bookingPrefixLocked}
+          autoCapitalize="characters"
+          spellCheck={false}
+          hint={
+            hotel.bookingPrefixLocked
+              ? `Used in ${hotel.name}'s reservation numbers, so it can't change now.`
+              : `2–4 letters at the start of reservation numbers, e.g. ${form.bookingPrefix || 'VI'}-2611-0483. Fixed once the hotel takes its first booking.`
+          }
+          error={problems.bookingPrefix}
+          onChange={(event) =>
+            set({ bookingPrefix: event.target.value.toUpperCase().replace(/[^A-Z]/g, '') })
+          }
+          className="max-lg:h-11 md:max-w-48"
+        />
         {asking ? (
           <Field
             label="Reason for changing the owning company"

@@ -4,6 +4,7 @@ import type { Property } from '@vento/shared'
 import { and, asc, count, eq, isNotNull, isNull, type SQL, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import type { Database } from '../db/client.ts'
+import { reservations } from '../db/schema/reservations.ts'
 import { rooms } from '../db/schema/rooms.ts'
 import { entities, fileUploads, properties } from '../db/schema/tenancy.ts'
 import type { StorageProvider } from '../providers/storage.ts'
@@ -22,6 +23,9 @@ const pendingEntities = alias(entities, 'pending_entities')
 // Written with an alias: Drizzle leaves columns unqualified in subqueries.
 const activeRooms = sql<number>`(select count(*) from ${rooms} r where r.property_id = ${properties}.id and r.archived_at is null)::int`
 
+// The prefix is fixed once the hotel has a reservation (numbers already given out use it).
+const hasReservations = sql<boolean>`exists (select 1 from ${reservations} b where b.property_id = ${properties}.id)`
+
 const viewColumns = {
   id: properties.id,
   entityId: properties.entityId,
@@ -32,6 +36,8 @@ const viewColumns = {
   pendingEntityName: pendingEntities.name,
   pendingEntityFrom: properties.pendingEntityFrom,
   name: properties.name,
+  bookingPrefix: properties.bookingPrefix,
+  bookingPrefixLocked: hasReservations,
   addressLine1: properties.addressLine1,
   area: properties.area,
   lga: properties.lga,
@@ -78,6 +84,8 @@ async function toView(row: ViewRow, storage: StorageProvider | undefined): Promi
         ? { id: row.pendingEntityId, name: row.pendingEntityName, from: row.pendingEntityFrom }
         : null,
     name: row.name,
+    bookingPrefix: row.bookingPrefix,
+    bookingPrefixLocked: row.bookingPrefixLocked,
     addressLine1: row.addressLine1,
     area: row.area,
     lga: row.lga,

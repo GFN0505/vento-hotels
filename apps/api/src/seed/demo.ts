@@ -47,6 +47,8 @@ const HOTELS: Record<
   HotelKey,
   {
     name: string
+    // Booking prefixes from the reservations spec (Open question 5).
+    prefix: string
     company: CompanyKey
     street: string | null
     area: string
@@ -57,6 +59,7 @@ const HOTELS: Record<
 > = {
   vi: {
     name: 'Kora Victoria Island',
+    prefix: 'VI',
     company: 'hospitality',
     street: 'Plot 1412 Ahmadu Bello Way',
     area: 'Victoria Island',
@@ -66,6 +69,7 @@ const HOTELS: Record<
   },
   ikeja: {
     name: 'Kora Ikeja GRA',
+    prefix: 'IKJ',
     company: 'hospitality',
     street: null,
     area: 'Ikeja GRA',
@@ -75,6 +79,7 @@ const HOTELS: Record<
   },
   abuja: {
     name: 'Kora Abuja',
+    prefix: 'ABJ',
     company: 'abuja',
     street: 'Plot 12 Aminu Kano Crescent',
     area: 'Wuse 2',
@@ -84,6 +89,7 @@ const HOTELS: Record<
   },
   ph: {
     name: 'Kora Port Harcourt',
+    prefix: 'PH',
     company: 'ph',
     street: '15 Tombia Street',
     area: 'GRA Phase 2',
@@ -192,6 +198,7 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
         organizationId,
         entityId: companyIds[hotel.company],
         name: hotel.name,
+        bookingPrefix: hotel.prefix,
         addressLine1: hotel.street,
         area: hotel.area,
         lga: hotel.lga,

@@ -22,6 +22,8 @@ function hotel(overrides: Partial<Property> = {}): Property {
     entityDetailsMissing: false,
     pendingEntity: null,
     name: 'Kora Victoria Island',
+    bookingPrefix: 'VI',
+    bookingPrefixLocked: false,
     addressLine1: 'Plot 1412 Ahmadu Bello Way',
     area: 'Victoria Island',
     lga: 'Eti-Osa',
@@ -157,5 +159,15 @@ describe('archiveSummary', () => {
 describe('timeZoneLabel', () => {
   it('names Lagos time as people say it', () => {
     expect(timeZoneLabel('Africa/Lagos')).toBe('Africa/Lagos · WAT')
+  })
+})
+
+describe('booking prefix', () => {
+  it('sends a changed prefix and checks its letters', () => {
+    const form = { ...formFrom(hotel()), bookingPrefix: 'KVI' }
+    expect(changesFrom(hotel(), form)).toEqual({ bookingPrefix: 'KVI' })
+    expect(checkChanges(hotel(), { ...form, bookingPrefix: 'V1' }).bookingPrefix).toBe(
+      'Use 2 to 4 letters, like VI',
+    )
   })
 })

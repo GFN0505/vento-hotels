@@ -4,6 +4,8 @@ import { addPropertyFormSchema, DEFAULT_TIME_ZONE, isLgaOf, type Property } from
 
 export type HotelForm = {
   name: string
+  // Settings only: a new hotel's prefix is suggested by the server from its name.
+  bookingPrefix: string
   entityId: string
   addressLine1: string
   area: string
@@ -20,6 +22,7 @@ export type Problems = Partial<Record<keyof HotelForm | 'form', string>>
 
 export const FIELD_ORDER: readonly (keyof HotelForm)[] = [
   'name',
+  'bookingPrefix',
   'entityId',
   'reason',
   'addressLine1',
@@ -34,6 +37,7 @@ export const FIELD_ORDER: readonly (keyof HotelForm)[] = [
 export function emptyForm(entityId: string): HotelForm {
   return {
     name: '',
+    bookingPrefix: '',
     entityId,
     addressLine1: '',
     area: '',
@@ -49,6 +53,7 @@ export function emptyForm(entityId: string): HotelForm {
 export function formFrom(hotel: Property): HotelForm {
   return {
     name: hotel.name,
+    bookingPrefix: hotel.bookingPrefix,
     // A scheduled change shows as the company it's heading for (choosing the current one cancels).
     entityId: hotel.pendingEntity?.id ?? hotel.entityId,
     addressLine1: hotel.addressLine1 ?? '',
@@ -80,6 +85,7 @@ export function checkNew(form: HotelForm): Problems {
 function trimmed(form: HotelForm) {
   return {
     name: form.name.trim(),
+    bookingPrefix: form.bookingPrefix.trim() || undefined,
     entityId: form.entityId,
     addressLine1: form.addressLine1.trim(),
     area: form.area.trim(),
@@ -102,7 +108,7 @@ export function needsReason(hotel: Property, form: HotelForm): boolean {
   return hotel.liveSince !== null && changesCompany(hotel, form)
 }
 
-const TEXT_FIELDS = ['name', 'addressLine1', 'area', 'state', 'lga'] as const
+const TEXT_FIELDS = ['name', 'bookingPrefix', 'addressLine1', 'area', 'state', 'lga'] as const
 const OTHER_FIELDS = ['timeZone', 'checkInTime', 'checkOutTime'] as const
 
 // Settings: an address can be completed later but never cleared, and each part is checked by the
@@ -111,10 +117,10 @@ export function checkChanges(hotel: Property, form: HotelForm): Problems {
   const all = checkNew(form)
   const problems: Problems = {}
   for (const field of [...TEXT_FIELDS, ...OTHER_FIELDS]) {
-    const before = field === 'name' ? hotel.name : (hotel[field] ?? '')
+    const before = hotel[field] ?? ''
     const now = form[field].trim()
     // Left empty as it was (onboarding's hotel): fine, the address banner stays.
-    if (!now && !before && field !== 'name') continue
+    if (!now && !before && field !== 'name' && field !== 'bookingPrefix') continue
     if (now !== before && all[field]) problems[field] = all[field]
   }
   if (form.lga && form.state && !isLgaOf(form.state, form.lga)) {
@@ -136,7 +142,7 @@ export type HotelChanges = Partial<
 export function changesFrom(hotel: Property, form: HotelForm): HotelChanges {
   const changes: HotelChanges = {}
   for (const field of [...TEXT_FIELDS, ...OTHER_FIELDS]) {
-    const before = field === 'name' ? hotel.name : (hotel[field] ?? '')
+    const before = hotel[field] ?? ''
     const now = form[field].trim()
     if (now && now !== before) changes[field] = now
   }
@@ -151,7 +157,7 @@ export function changesFrom(hotel: Property, form: HotelForm): HotelChanges {
 export function isDirty(hotel: Property, form: HotelForm): boolean {
   if (changesCompany(hotel, form)) return true
   return [...TEXT_FIELDS, ...OTHER_FIELDS].some((field) => {
-    const before = field === 'name' ? hotel.name : (hotel[field] ?? '')
+    const before = hotel[field] ?? ''
     return form[field].trim() !== before
   })
 }

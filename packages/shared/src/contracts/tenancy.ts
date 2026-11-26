@@ -12,6 +12,7 @@ import { DEFAULT_TIME_ZONE, isNigerianState } from '../locale.ts'
 import { currencySchema } from '../money.ts'
 import { pageQuerySchema, pageSchema } from '../pagination.ts'
 import { permissionSchema } from '../permissions.ts'
+import { bookingPrefixSchema } from '../reservations.ts'
 import { memberRoleSchema } from '../roles.ts'
 
 const name = z
@@ -98,6 +99,9 @@ export const propertySchema = z.object({
   // A change of owning company on a live hotel waits for the next business date.
   pendingEntity: z.object({ id: idSchema, name: z.string(), from: calendarDateSchema }).nullable(),
   name: z.string(),
+  // 2–4 letters used in reservation numbers (VI-2611-0483); fixed once the hotel has a reservation.
+  bookingPrefix: z.string(),
+  bookingPrefixLocked: z.boolean(),
   addressLine1: z.string().nullable(),
   area: z.string().nullable(),
   lga: z.string().nullable(),
@@ -142,6 +146,8 @@ const lgaIssue = { path: ['lga'], message: 'Choose an LGA in this state' }
 const propertyFields = {
   entityId: idSchema,
   name,
+  // Suggested from the name when left out.
+  bookingPrefix: bookingPrefixSchema.optional(),
   timeZone: timeZone.default(DEFAULT_TIME_ZONE),
   checkInTime: clockTime.optional(),
   checkOutTime: clockTime.optional(),
@@ -169,6 +175,7 @@ export const updatePropertySchema = z.object({
   id: idSchema,
   version: z.number().int().min(1),
   name: name.optional(),
+  bookingPrefix: bookingPrefixSchema.optional(),
   entityId: idSchema.optional(),
   addressLine1: street.optional(),
   area: area.optional(),
