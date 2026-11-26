@@ -34,5 +34,6 @@ Things still undecided stay under *Open questions* in `docs/DOMAIN.md` until the
 | [0019](0019-same-origin-web-and-api.md) | The web app and the API share one origin | accepted |
 | [0020](0020-invitations.md) | Invitations are Vento's, with a secret link that also confirms the email | accepted |
 | [0021](0021-feature-switches.md) | Modules and features ship behind switches | accepted |
+| [0022](0022-shared-devices-and-pin.md) | Shared devices are registered, and staff sign in on them with a PIN | accepted |
 
 Template: [0000-template.md](0000-template.md)

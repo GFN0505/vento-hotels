@@ -73,6 +73,10 @@ export const currentOrganizationSchema = z.object({
   permissions: z.array(permissionSchema),
   // Modules switched on for this group (decision 0021).
   features: z.array(featureSchema),
+  // Set when signed in with a PIN on a shared device: lock after this long without a touch.
+  device: z.object({ id: idSchema, name: z.string(), idleSeconds: z.number().int() }).nullable(),
+  // Whether this member has set a staff PIN.
+  hasPin: z.boolean(),
 })
 
 export const setPropertyAccessSchema = z.discriminatedUnion('allProperties', [

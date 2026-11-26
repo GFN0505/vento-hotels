@@ -2,10 +2,12 @@
 // status and the account menu. Search (⌘K), offline sync and approvals arrive with their bricks.
 
 import { calendarDateIn } from '@vento/shared'
-import { Menu } from 'lucide-react'
+import { Lock, Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
+import { lockDevice } from '@/lib/device-session'
+import { useMe } from '@/lib/me'
 import { AccountMenu } from './account-menu'
 import { useProperty } from './property-context'
 
@@ -44,6 +46,7 @@ function useOnline(): boolean {
 type TopBarProps = { user: { name: string; email: string }; onOpenMenu: () => void }
 
 export function TopBar({ user, onOpenMenu }: TopBarProps) {
+  const me = useMe()
   const { properties, current, select } = useProperty()
   const online = useOnline()
 
@@ -103,7 +106,18 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
         />
         <span className="sr-only md:not-sr-only">{online ? 'Online' : 'Offline'}</span>
       </span>
-      <AccountMenu name={user.name} email={user.email} />
+      {me.data?.device ? (
+        <Button
+          variant="ghost"
+          onClick={() => void lockDevice()}
+          className="max-lg:h-11"
+          title={`Lock ${me.data.device.name} for the next person`}
+        >
+          <Lock className="size-4" aria-hidden="true" />
+          Lock
+        </Button>
+      ) : null}
+      <AccountMenu name={user.name} email={user.email} onSharedDevice={Boolean(me.data?.device)} />
     </header>
   )
 }

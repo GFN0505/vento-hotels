@@ -51,7 +51,7 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 | Term | Meaning | Notes |
 |---|---|---|
 | **Device** | A registered phone, tablet or PC used at a property (front desk PC, POS tablet, housekeeping phone). | Registered by a manager, bound to a property, revocable. Offline data and the outbox live on it. |
-| **Shared device** | A device used by many staff (POS, housekeeping). | Staff sign in with a personal **PIN**, auto sign-out after inactivity; full password + 2FA only on personal devices and for managers. |
+| **Shared device** | A device used by many staff (POS, housekeeping). | Staff sign in with a personal 4-digit **PIN**. Sign-out after inactivity (90 seconds on restaurant tablets, 5 minutes elsewhere), enforced by the server too, and after a 12-hour shift at most. A PIN session sees only the device's hotel and can't manage people, permissions, devices or the account. Five wrong PINs lock it for 15 minutes; after three lockouts a manager must reset it. Full password (and two-step codes, brick 11) on personal devices and for managers. |
 | **Feature switch** | Whether a module (front desk, restaurant & bar…) is on for a hotel group. | Set by the Vento team, never the hotel (decision 0021). Off means the module isn't shown and its actions are refused; its data is kept. |
 | **Audit event** | Append-only record of an action. | Actor, device, property, business date, action, entity, before/after, reason, approver. |
 

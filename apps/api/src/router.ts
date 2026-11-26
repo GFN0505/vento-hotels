@@ -4,6 +4,8 @@ import { implement, ORPCError } from '@orpc/server'
 import { contract } from '@vento/shared'
 import type { Auth } from './auth/auth.ts'
 import type { Database } from './db/client.ts'
+import * as devices from './devices/service.ts'
+import { guardDeviceSession } from './devices/session-guard.ts'
 import * as governance from './governance/service.ts'
 import type { EmailProvider } from './providers/email.ts'
 import { clientAddress, type RateLimiter } from './rate-limit.ts'
@@ -24,13 +26,22 @@ export type AppDeps = {
   // Every module on, released or not: development and browser tests only (decision 0021).
   allFeatures?: boolean
 }
-export type RequestContext = AppDeps & { headers: Headers }
+export type RequestContext = AppDeps & { headers: Headers; resHeaders?: Headers }
 
 const base = implement(contract).$context<RequestContext>()
 
 const authed = base.use(async ({ context, next }) => {
   const result = await context.auth.api.getSession({ headers: context.headers })
   if (!result) throw new ORPCError('UNAUTHORIZED', { message: 'Sign in to continue' })
+  // PIN sessions on shared devices: idle time, shift length and device cookie, checked here.
+  const { deviceId } = result.session as { deviceId?: string | null }
+  if (deviceId) {
+    await guardDeviceSession(
+      context.db,
+      { id: result.session.id, createdAt: new Date(result.session.createdAt), deviceId },
+      context.headers,
+    )
+  }
   return next({ context: { user: result.user, session: result.session } })
 })
 
@@ -41,6 +52,7 @@ const inOrganization = authed.use(async ({ context, next }) => {
   }
   const access = await loadAccess(context.db, organizationId, context.user, {
     allFeatures: context.allFeatures ?? false,
+    deviceId: (context.session as { deviceId?: string | null }).deviceId ?? null,
   })
   if (!access) throw new ORPCError('FORBIDDEN', { message: "You don't have access to this" })
   return next({ context: { access } })
@@ -115,6 +127,40 @@ export const router = base.router({
     }),
     accept: authed.invitations.accept.handler(({ context, input }) =>
       invitations.acceptInvitation(context.db, context.user, input.token),
+    ),
+  },
+  devices: {
+    list: inOrganization.devices.list.handler(({ context, input }) =>
+      devices.listDevices(context.db, context.access, input, context.headers),
+    ),
+    register: inOrganization.devices.register.handler(async ({ context, input }) => {
+      const { device, secret } = await devices.registerDevice(context.db, context.access, input)
+      context.resHeaders?.append(
+        'set-cookie',
+        devices.deviceCookie(secret, context.webOrigin.startsWith('https://')),
+      )
+      return device
+    }),
+    rename: inOrganization.devices.rename.handler(({ context, input }) =>
+      devices.renameDevice(context.db, context.access, input),
+    ),
+    revoke: inOrganization.devices.revoke.handler(({ context, input }) =>
+      devices.revokeDevice(context.db, context.access, input),
+    ),
+    // Public: reads this browser's device cookie, if any.
+    lockScreen: base.devices.lockScreen.handler(({ context }) => {
+      context.limiter.take(`lock-screen:${clientAddress(context.headers)}`, 120, 600)
+      return devices.lockScreen(context.db, context.headers)
+    }),
+  },
+  pins: {
+    // The password check here mustn't become a way round sign-in's attempt limit.
+    set: inOrganization.pins.set.handler(({ context, input }) => {
+      context.limiter.take(`pin-set:${context.access.userId}`, 5, 600)
+      return devices.setOwnPin(context.db, context.access, input)
+    }),
+    reset: inOrganization.pins.reset.handler(({ context, input }) =>
+      devices.resetPin(context.db, context.access, input.memberId),
     ),
   },
   audit: {

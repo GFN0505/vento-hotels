@@ -29,6 +29,7 @@ export const memberViewSchema = z.object({
   properties: z.array(propertyRef),
   joinedAt: z.iso.datetime(),
   isYou: z.boolean(),
+  hasPin: z.boolean(),
 })
 export type MemberView = z.infer<typeof memberViewSchema>
 

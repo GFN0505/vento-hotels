@@ -8,7 +8,7 @@ Stage 0, brick 5 needs sign-in, organizations (hotel groups), and a way to limit
 
 ## Decision
 - **Better Auth** owns users, sessions, accounts, verifications, organizations, members and invitations, through its Drizzle adapter on our own tables (plural names, UUID v7 ids from `newId()`).
-- **Email and password** sign-in with **verified emails required** and the password rule from `@vento/shared` (owner's decision, 25 Nov 2026, replacing an earlier 10-character minimum): at least 8 characters with a capital letter, a small letter, a number and a special character. The API enforces it on sign-up, reset and change, whatever the screen allowed. Two-factor sign-in comes in brick 10, alongside PIN sign-in on shared devices.
+- **Email and password** sign-in with **verified emails required** and the password rule from `@vento/shared` (owner's decision, 25 Nov 2026, replacing an earlier 10-character minimum): at least 8 characters with a capital letter, a small letter, a number and a special character. The API enforces it on sign-up, reset and change, whatever the screen allowed. Two-factor sign-in comes in brick 11; PIN sign-in on shared devices in brick 10.
 - The organization plugin uses our 16 hotel roles. For Better Auth's own organization management (invite, remove, change role), `owner` and `group_admin` are admins and every other role is a plain member. What each role may do in Vento comes from the permissions matrix (brick 6).
 - **Vento owns** `entities`, `properties` and `member_properties`.
 - **Property access is closed by default.** A member sees no properties until given all of them or a list. Owners and group admins always see all.

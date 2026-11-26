@@ -37,6 +37,7 @@ export function EditMemberDialog({
       : { allProperties: false, propertyIds: member.properties.map((p) => p.id) },
   )
   const [confirmingRemove, setConfirmingRemove] = useState(false)
+  const [confirmingReset, setConfirmingReset] = useState(false)
   const [problem, setProblem] = useState<{ access?: string; form?: string }>({})
 
   const done = async (message: string) => {
@@ -52,6 +53,14 @@ export function EditMemberDialog({
   const remove = useMutation({
     mutationFn: () => api.members.remove({ memberId: member.id }),
     onSuccess: () => done(`${member.name} removed from ${groupName}`),
+    onError: (error) => setProblem({ form: problemMessage(error) }),
+  })
+  const resetPin = useMutation({
+    mutationFn: () => api.pins.reset({ memberId: member.id }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: orpc.members.key() })
+      toast.success(`${member.name}'s PIN is reset. They set a new one from their account menu.`)
+    },
     onError: (error) => setProblem({ form: problemMessage(error) }),
   })
   const busy = save.isPending || remove.isPending
@@ -157,6 +166,46 @@ export function EditMemberDialog({
           canGrantWholeGroup={canGrantWholeGroup}
           error={problem.access}
         />
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-text-2">Staff PIN</span>
+          {member.hasPin && !resetPin.isSuccess ? (
+            confirmingReset ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-text-2">
+                  Reset {member.name.split(' ')[0]}'s PIN? They'll set a new one.
+                </span>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  className="max-lg:h-11"
+                  loading={resetPin.isPending}
+                  onClick={() => resetPin.mutate()}
+                >
+                  Reset
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="max-lg:h-11"
+                  onClick={() => setConfirmingReset(false)}
+                >
+                  Keep
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-text-2">Set. Used on shared devices.</span>
+                <Button size="sm" className="max-lg:h-11" onClick={() => setConfirmingReset(true)}>
+                  Reset PIN
+                </Button>
+              </div>
+            )
+          ) : (
+            <span className="text-text-2">
+              Not set. They set it from their account menu after signing in.
+            </span>
+          )}
+        </div>
       </form>
     </Dialog>
   )

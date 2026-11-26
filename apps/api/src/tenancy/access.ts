@@ -14,12 +14,12 @@ import {
   type Permission,
   type PermissionRule,
 } from '@vento/shared'
-import { and, eq, inArray, type SQL, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, type SQL, sql } from 'drizzle-orm'
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 import type { Database } from '../db/client.ts'
 import { members } from '../db/schema/auth.ts'
 import { organizationFeatures, permissionOverrides } from '../db/schema/governance.ts'
-import { memberProperties, properties } from '../db/schema/tenancy.ts'
+import { devices, memberProperties, properties } from '../db/schema/tenancy.ts'
 
 export type Access = {
   organizationId: string
@@ -35,7 +35,12 @@ export type Access = {
   rules: Record<Permission, PermissionRule>
   // Modules switched on for this group (decision 0021).
   features: Feature[]
+  // The shared device of a PIN session (decision 0022); null for password sign-ins.
+  deviceId: string | null
 }
+
+// What a PIN session on a shared device may never do: those need a password sign-in.
+const NOT_ON_SHARED_DEVICES: Permission[] = ['setup.manage', 'permissions.manage']
 
 export async function effectiveRules(
   db: Pick<Database, 'select'>,
@@ -84,7 +89,7 @@ export async function loadAccess(
   db: Pick<Database, 'select'>,
   organizationId: string,
   user: { id: string; name: string },
-  options: { allFeatures?: boolean } = {},
+  options: { allFeatures?: boolean; deviceId?: string | null } = {},
 ): Promise<Access | undefined> {
   const [member] = await db
     .select({ id: members.id, role: members.role, allProperties: members.allProperties })
@@ -94,9 +99,25 @@ export async function loadAccess(
   if (!member) return undefined
 
   const role = member.role as MemberRole
-  const allProperties = isGroupAdmin(role) || member.allProperties
+  // A PIN session is confined to its device's hotel, and the device must still be live.
+  let deviceProperty: string | null = null
+  if (options.deviceId) {
+    const [device] = await db
+      .select({ propertyId: devices.propertyId })
+      .from(devices)
+      .where(
+        and(
+          eq(devices.id, options.deviceId),
+          eq(devices.organizationId, organizationId),
+          isNull(devices.revokedAt),
+        ),
+      )
+    if (!device) return undefined
+    deviceProperty = device.propertyId
+  }
+  const memberAllProperties = isGroupAdmin(role) || member.allProperties
   const [propertyRows, rules, features] = await Promise.all([
-    allProperties
+    memberAllProperties
       ? Promise.resolve([])
       : db
           .select({ id: memberProperties.propertyId })
@@ -106,16 +127,36 @@ export async function loadAccess(
     loadFeatures(db, organizationId, options.allFeatures),
   ])
 
+  const memberPropertyIds = propertyRows.map((row) => row.id)
+  if (deviceProperty) {
+    const canSee = memberAllProperties || memberPropertyIds.includes(deviceProperty)
+    for (const permission of NOT_ON_SHARED_DEVICES) {
+      rules[permission] = { allowed: false, limit: null }
+    }
+    return {
+      organizationId,
+      userId: user.id,
+      userName: user.name,
+      memberId: member.id,
+      role,
+      allProperties: false,
+      propertyIds: canSee ? [deviceProperty] : [],
+      rules,
+      features,
+      deviceId: options.deviceId ?? null,
+    }
+  }
   return {
     organizationId,
     userId: user.id,
     userName: user.name,
     memberId: member.id,
     role,
-    allProperties,
-    propertyIds: propertyRows.map((row) => row.id),
+    allProperties: memberAllProperties,
+    propertyIds: memberPropertyIds,
     rules,
     features,
+    deviceId: null,
   }
 }
 
@@ -165,7 +206,7 @@ export class ApprovalRequiredError extends ORPCError<
 
 // Checks the permission and, for permissions with a limit, that `value` (a percent or naira
 // amount as a decimal string) is within this member's limit. Above the limit the action needs an
-// approver with a higher limit (PIN approval arrives in brick 10). Nobody approves their own action.
+// approver with a higher limit (PIN approval arrives in brick 11). Nobody approves their own action.
 export function requireWithinLimit(access: Access, permission: Permission, value: string): void {
   requirePermission(access, permission)
   const { limit } = access.rules[permission]

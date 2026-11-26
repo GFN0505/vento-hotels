@@ -62,7 +62,7 @@
     - *Behind the scenes:* devices bound to Kora Victoria Island and revocable. Each caches the PIN hashes of members allowed at the property.
 
 11. **15:30 · Staff and PINs.**
-    - *Does:* invites Chiamaka and Ibrahim (`front_desk`), Grace (`housekeeping_supervisor`), Blessing (`room_attendant`), Femi (`fnb_manager`), Halima (`cashier`), Emeka (`waiter`), all limited to Kora Victoria Island. Each opens the invite email, sets a name and password in one step, and lands on Kora Victoria Island; staff PINs for shared devices come with brick 10.
+    - *Does:* invites Chiamaka and Ibrahim (`front_desk`), Grace (`housekeeping_supervisor`), Blessing (`room_attendant`), Femi (`fnb_manager`), Halima (`cashier`), Emeka (`waiter`), all limited to Kora Victoria Island. Each opens the invite email, sets a name and password in one step, and lands on Kora Victoria Island, then sets a 4-digit staff PIN from the account menu. From then on they tap their name on the shared devices and enter their PIN.
     - *Sees:* in Permissions and limits (#26) he reads the defaults (front desk discount ≤ 10%, refund ≤ ₦100,000 for GM, and so on) and leaves them as they are. Only the owner can change them.
 
 12. **Mon 16 Nov · Parallel run.**
@@ -116,7 +116,7 @@
 - **Rate plans aren't an import kind** in the data-import rules, yet corporate account rows need rate plans to exist. Add a rate plan import, or keep them manual?
 - **First business date:** what is the property's business date between setup (12 Nov) and go-live (16 Nov), and what date do deposits imported on 14 Nov post on?
 - **Opening balances as-of date** when they're imported days before go-live and change during the parallel run: re-import the difference, or post adjustments?
-- **How do staff set PINs:** on first sign-in on a registered device, or set by the manager? Can Ibrahim's night limit be set at invite?
+- **Can Ibrahim's night limit be set at invite?** (Settled: staff set their own PIN from the account menu after joining; a manager can reset it. Decision 0022.)
 - Is there a **parallel-run comparison** screen, or does Tunde compare reports by hand?
 - Does the old PMS's **folio history** for in-house guests come across, or only balances?
 - Who in Vento's team does onboarding, and is it part of the subscription?

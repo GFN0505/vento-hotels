@@ -16,7 +16,8 @@ import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { organizations } from '../db/schema/auth.ts'
-import { entities, properties } from '../db/schema/tenancy.ts'
+import { devices, entities, memberPins, properties } from '../db/schema/tenancy.ts'
+import { idleSecondsFor } from '../devices/service.ts'
 import { type Access, propertyScope, requirePermission } from './access.ts'
 
 const entityColumns = {
@@ -53,6 +54,26 @@ const notFound = () => new ORPCError('NOT_FOUND', { message: "We couldn't find t
 const nameTaken = (what: string) =>
   new ORPCError('CONFLICT', { message: `A ${what} with this name already exists` })
 
+// The shared device of a PIN session (with its idle time), and whether the member has a PIN.
+async function deviceAndPin(db: Database, access: Access) {
+  const [device] = access.deviceId
+    ? await db
+        .select({ id: devices.id, name: devices.name, kind: devices.kind })
+        .from(devices)
+        .where(eq(devices.id, access.deviceId))
+    : []
+  const [pin] = await db
+    .select({ id: memberPins.id })
+    .from(memberPins)
+    .where(eq(memberPins.memberId, access.memberId))
+  return {
+    device: device
+      ? { id: device.id, name: device.name, idleSeconds: idleSecondsFor(device.kind) }
+      : null,
+    hasPin: Boolean(pin),
+  }
+}
+
 export async function currentOrganization(db: Database, access: Access) {
   const [org] = await db
     .select({ id: organizations.id, name: organizations.name, slug: organizations.slug })
@@ -64,6 +85,7 @@ export async function currentOrganization(db: Database, access: Access) {
     member: { id: access.memberId, role: access.role, allProperties: access.allProperties },
     permissions: PERMISSION_KEYS.filter((key) => access.rules[key].allowed),
     features: access.features,
+    ...(await deviceAndPin(db, access)),
   }
 }
 
