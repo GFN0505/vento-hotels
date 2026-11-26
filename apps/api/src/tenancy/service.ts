@@ -16,7 +16,13 @@ import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { invitations, members, organizations, users } from '../db/schema/auth.ts'
-import { devices, entities, memberPins, properties } from '../db/schema/tenancy.ts'
+import {
+  devices,
+  entities,
+  memberPins,
+  memberProperties,
+  properties,
+} from '../db/schema/tenancy.ts'
 import { idleSecondsFor } from '../devices/service.ts'
 import { type Access, can, propertyScope, requirePermission } from './access.ts'
 
@@ -231,11 +237,27 @@ export async function createProperty(
 // Home's figures: the hotels you can see, and for people who manage the team, how many people,
 // pending invites and live shared devices there are.
 export async function homeSummary(db: Database, access: Access) {
-  const [[hotels], team] = await Promise.all([
+  const org = access.organizationId
+  const [hotelRows, [groupWide], assigned, deviceRows, team] = await Promise.all([
     db
-      .select({ value: count() })
+      .select({ id: properties.id })
       .from(properties)
       .where(and(propertyScope(access), isNull(properties.archivedAt))),
+    db
+      .select({ value: count() })
+      .from(members)
+      .where(and(eq(members.organizationId, org), eq(members.allProperties, true))),
+    db
+      .select({ propertyId: memberProperties.propertyId, value: count() })
+      .from(memberProperties)
+      .innerJoin(members, eq(members.id, memberProperties.memberId))
+      .where(and(eq(memberProperties.organizationId, org), eq(members.allProperties, false)))
+      .groupBy(memberProperties.propertyId),
+    db
+      .select({ propertyId: devices.propertyId, value: count() })
+      .from(devices)
+      .where(and(eq(devices.organizationId, org), isNull(devices.revokedAt)))
+      .groupBy(devices.propertyId),
     can(access, 'setup.manage')
       ? Promise.all([
           db
@@ -261,8 +283,15 @@ export async function homeSummary(db: Database, access: Access) {
         ])
       : Promise.resolve(undefined),
   ])
+  const assignedBy = new Map(assigned.map((row) => [row.propertyId, row.value]))
+  const devicesBy = new Map(deviceRows.map((row) => [row.propertyId, row.value]))
   return {
-    hotels: hotels?.value ?? 0,
+    hotels: hotelRows.length,
+    byHotel: hotelRows.map(({ id }) => ({
+      propertyId: id,
+      people: (groupWide?.value ?? 0) + (assignedBy.get(id) ?? 0),
+      devices: devicesBy.get(id) ?? 0,
+    })),
     members: team?.[0][0]?.value ?? null,
     pendingInvites: team?.[1][0]?.value ?? null,
     devices: team?.[2][0]?.value ?? null,

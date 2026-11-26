@@ -1,5 +1,6 @@
 // `pnpm db:seed`: loads the demo group (docs/journeys/README.md) into the local database.
 // Never in production. Sign in as any person with DEMO_PASSWORD (default in .env.example).
+// Browser tests load their own copy with DEMO_SLUG and DEMO_EMAIL_DOMAIN, so they never collide.
 import { roleLabel } from '@vento/shared'
 import { createDatabase } from '../db/client.ts'
 import { seedDemo } from './demo.ts'
@@ -15,7 +16,11 @@ async function main() {
   if (!password) throw new Error('DEMO_PASSWORD is not set. Copy it from .env.example into .env.')
   const { db, close } = createDatabase(url, { max: 1 })
   try {
-    const result = await seedDemo(db, { password })
+    const result = await seedDemo(db, {
+      password,
+      ...(process.env.DEMO_SLUG ? { slug: process.env.DEMO_SLUG } : {}),
+      ...(process.env.DEMO_EMAIL_DOMAIN ? { emailDomain: process.env.DEMO_EMAIL_DOMAIN } : {}),
+    })
     if (result.status === 'exists') {
       console.log(
         '✓ Kora Hotels Group is already loaded. To start over: pnpm db:reset && pnpm db:migrate && pnpm db:seed',

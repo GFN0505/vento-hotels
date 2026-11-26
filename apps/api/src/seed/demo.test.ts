@@ -1,5 +1,5 @@
 // The demo seed loads a working group: people can sign in and see exactly what their role allows.
-import type { MemberView, Property } from '@vento/shared'
+import type { HomeSummary, MemberView, Property } from '@vento/shared'
 import { newId } from '@vento/shared'
 import { afterAll, describe, expect, it } from 'vitest'
 import { createTestApp } from '../test/harness.ts'
@@ -67,5 +67,31 @@ describe.skipIf(!url)('demo seed', () => {
     const cookie = await signInAs(`tunde@${options.emailDomain}`)
     const hotels = await t.rpc<{ items: Property[] }>(cookie, 'properties/list', {})
     expect(hotels.data.items.map((h) => h.name)).toEqual(['Kora Victoria Island'])
+  })
+
+  it("counts each hotel's people and devices for Home, within what the member sees", async () => {
+    const byName = async (cookie: string) => {
+      const [hotels, home] = await Promise.all([
+        t.rpc<{ items: Property[] }>(cookie, 'properties/list', {}),
+        t.rpc<HomeSummary>(cookie, 'organization/home', {}),
+      ])
+      return Object.fromEntries(
+        home.data.byHotel.map((row) => [
+          hotels.data.items.find((h) => h.id === row.propertyId)?.name,
+          { people: row.people, devices: row.devices },
+        ]),
+      )
+    }
+    // Two people see every hotel (owner and finance); eight more work at Victoria Island.
+    expect(await byName(await signInAs(`adaeze@${options.emailDomain}`))).toEqual({
+      'Kora Victoria Island': { people: 10, devices: 3 },
+      'Kora Ikeja GRA': { people: 2, devices: 0 },
+      'Kora Abuja': { people: 2, devices: 0 },
+      'Kora Port Harcourt': { people: 2, devices: 0 },
+    })
+    const frontDesk = await signInAs(`chiamaka@${options.emailDomain}`)
+    expect(await byName(frontDesk)).toEqual({ 'Kora Victoria Island': { people: 10, devices: 3 } })
+    const home = await t.rpc<HomeSummary>(frontDesk, 'organization/home', {})
+    expect(home.data.members).toBeNull()
   })
 })

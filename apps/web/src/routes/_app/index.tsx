@@ -1,43 +1,33 @@
-// Home (designs: OnbHome "Home with setup checklist", ExecHome for the look): a greeting, the
-// group's key figures, its hotels, and the setup checklist until it's done. The full executive and
-// GM homes arrive with the modules that feed them (Stage 1 onwards).
+// Home, shaped by the hotel chosen in the top bar and the person's role.
+// - All hotels (people who see the whole group; design: ExecHome): the group's key figures, every
+//   hotel as a row that opens that hotel's Home, and what needs attention across the group.
+// - One hotel (design: GMHome): that role's figures and first actions, the hotel itself, and what
+//   needs attention there.
+// Figures come from modules that ship from Stage 1, so their tiles say which module brings them.
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { calendarDateIn, type Property } from '@vento/shared'
-import {
-  BedDouble,
-  Building2,
-  CalendarDays,
-  ListChecks,
-  MonitorSmartphone,
-  Users,
-} from 'lucide-react'
+import { Building2, Layers } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { attentionItems, NeedsAttention } from '@/components/home/attention'
+import { FigureTile } from '@/components/home/figure-tile'
+import { HotelCard, HotelsBoard } from '@/components/home/hotels'
+import { QuickActions } from '@/components/home/quick-actions'
+import { type Figure, groupFigures, roleFocus } from '@/components/home/role-focus'
 import { SetupChecklist } from '@/components/home/setup-checklist'
-import { useSetupSteps } from '@/components/home/setup-steps'
 import { WelcomeBanner } from '@/components/home/welcome-banner'
 import { Workspace } from '@/components/home/workspace'
+import { useProperty } from '@/components/shell/property-context'
 import { EmptyState } from '@/components/ui/empty-state'
-import { StatTile } from '@/components/ui/stat-tile'
-import { StatusBadge } from '@/components/ui/status-badge'
 import { orpc } from '@/lib/api'
 import { authClient } from '@/lib/auth'
+import { cn } from '@/lib/cn'
 import { useMe } from '@/lib/me'
 import { visibleGroups } from '@/lib/navigation'
-import { initials } from '@/lib/team'
 import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/_app/')({
   component: Home,
 })
-
-function formatDate(date: string, style: 'long' | 'short' = 'long'): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    ...(style === 'long' ? { weekday: 'short' as const, year: 'numeric' as const } : {}),
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'UTC',
-  }).format(new Date(`${date}T00:00:00Z`))
-}
 
 // "Good morning" by the time in Lagos, where the group works.
 function greeting(): string {
@@ -53,202 +43,198 @@ function greeting(): string {
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
+// Roles that run a hotel see its setup facts; everyone else just which hotel and its business date.
+const RUNS_HOTEL = new Set(['owner', 'group_admin', 'general_manager', 'front_desk', 'finance'])
+
 function Home() {
-  usePageTitle('Home')
   const me = useMe()
   const session = authClient.useSession()
+  const hotelsQuery = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
   const summary = useQuery(orpc.organization.home.queryOptions())
-  const properties = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
-  const setup = useSetupSteps()
+  const { properties, current, allHotels, canSeeAll, select, selectAll } = useProperty()
+  const role = me.role
   const firstName = session.data?.user.name.split(' ')[0]
   const group = me.data?.organization.name ?? ''
-  const hotel = properties.data?.items[0]
-  const s = summary.data
-  const managesTeam = s ? s.members !== null : false
-  const showSetup = managesTeam && setup.ready && setup.done < setup.steps.length
-  // The business date only moves at night audit, so after midnight it can trail the calendar.
-  const behind = hotel ? hotel.businessDate !== calendarDateIn(hotel.timeZone) : false
+  // Team and device prompts are for people who run the setup (and not while previewing a role).
+  const managesTeam = me.can('setup.manage') && summary.data?.members != null
+  const groupView = allHotels
+  const viewName = groupView ? 'All hotels' : current?.name
+  usePageTitle(viewName ? `Home · ${viewName}` : 'Home')
+  const inView = groupView ? properties : current ? [current] : []
+  const attention = attentionItems({
+    hotels: inView,
+    summary: summary.data,
+    managesTeam,
+    group: groupView,
+  })
 
+  const date = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Africa/Lagos',
+  }).format(new Date())
+  const title = `${greeting()}${firstName ? `, ${firstName}` : ''}`
+  const workspace = <Workspace groups={role ? visibleGroups(role, me.has) : []} />
+
+  // Switching view replaces most of the page, so focus moves to the greeting and the live region
+  // says what's now shown; keyboard and screen-reader users never land on nothing.
+  function focusTop() {
+    requestAnimationFrame(() => document.querySelector<HTMLElement>('main h1')?.focus())
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  function openHotel(id: string) {
+    select(id)
+    focusTop()
+  }
+  function openGroup() {
+    selectAll()
+    focusTop()
+  }
+  const announce = (
+    <p className="sr-only" aria-live="polite">
+      {viewName ? `Showing ${viewName}` : ''}
+    </p>
+  )
+
+  if (hotelsQuery.isError) {
+    return (
+      <div className="flex flex-col gap-6">
+        <WelcomeBanner date={date} title={title} subtitle={group} />
+        <p role="alert" className="rounded-lg border border-border bg-surface p-5 text-ro">
+          We couldn't load your hotels. Check your connection and refresh.
+        </p>
+      </div>
+    )
+  }
+
+  if (!hotelsQuery.isPending && !current) {
+    return (
+      <div className="flex flex-col gap-6">
+        <WelcomeBanner date={date} title={title} subtitle={group} />
+        <EmptyState icon={Building2} tone="brand">
+          You're not on a hotel yet. An owner can give you access from Settings.
+        </EmptyState>
+        {workspace}
+      </div>
+    )
+  }
+
+  if (groupView) {
+    return (
+      <div className="flex flex-col gap-6">
+        <WelcomeBanner
+          date={date}
+          title={title}
+          subtitle={[group, plural(properties.length, 'hotel')].filter(Boolean).join(' · ')}
+        />
+        <Figures heading="Across the group" figures={role ? groupFigures(role) : []} />
+        {announce}
+        <Columns
+          // The hotels come first on phones: picking one is the group view's main job.
+          mainFirst
+          main={<HotelsBoard hotels={properties} summary={summary.data} onOpen={openHotel} />}
+          side={
+            <>
+              <SetupChecklist />
+              <NeedsAttention items={attention} loading={summary.isPending} />
+            </>
+          }
+        />
+        {workspace}
+      </div>
+    )
+  }
+
+  const focus = role ? roleFocus(role) : undefined
   return (
     <div className="flex flex-col gap-6">
       <WelcomeBanner
-        date={new Intl.DateTimeFormat('en-GB', {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-          timeZone: 'Africa/Lagos',
-        }).format(new Date())}
-        title={`${greeting()}${firstName ? `, ${firstName}` : ''}`}
-        subtitle={[
-          group,
-          properties.data
-            ? properties.data.items.length === 1
-              ? hotel?.name
-              : plural(properties.data.items.length, 'hotel')
-            : null,
-        ]
-          .filter(Boolean)
-          .join(' · ')}
+        date={date}
+        title={title}
+        subtitle={[focus?.job, current?.name].filter(Boolean).join(' · ')}
+        aside={
+          role && focus ? (
+            <QuickActions actions={focus.actions} role={role}>
+              {canSeeAll ? (
+                <button
+                  type="button"
+                  onClick={openGroup}
+                  className="inline-flex h-11 items-center gap-2 rounded-md border border-white/20 bg-white/10 px-4 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/20 lg:h-10"
+                >
+                  <Layers className="size-4" aria-hidden="true" strokeWidth={1.9} />
+                  All hotels
+                </button>
+              ) : null}
+            </QuickActions>
+          ) : undefined
+        }
       />
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        {showSetup ? (
-          <StatTile
-            icon={ListChecks}
-            label="Setup"
-            value={`${setup.done} of ${setup.steps.length}`}
-            context="steps done"
-          >
-            <span className="h-1 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
-              <span
-                className="block h-full rounded-full bg-linear-to-r from-pri to-logo-dot"
-                style={{ width: `${(setup.done / setup.steps.length) * 100}%` }}
-              />
-            </span>
-          </StatTile>
-        ) : (
-          <StatTile
-            icon={CalendarDays}
-            tone={behind ? 'amber' : 'slate'}
-            label="Business date"
-            value={hotel ? formatDate(hotel.businessDate, 'short') : undefined}
-            context={
-              behind ? 'Behind the calendar: run night audit' : 'Moves forward at night audit'
-            }
-          />
-        )}
-        {managesTeam ? (
-          <StatTile
-            icon={Users}
-            tone="blue"
-            label="Team"
-            value={s?.members ?? undefined}
-            context={
-              s?.pendingInvites
-                ? `${plural(s.pendingInvites, 'invite')} waiting`
-                : s?.members === 1
-                  ? 'Just you so far'
-                  : 'with their own sign-in'
-            }
-            to="/settings/members"
-          />
-        ) : null}
-        {managesTeam ? (
-          <StatTile
-            icon={MonitorSmartphone}
-            tone="emerald"
-            label="Shared devices"
-            value={s?.devices ?? undefined}
-            context={s?.devices === 0 ? 'None registered yet' : 'Staff sign in with a PIN'}
-            to="/settings/devices"
-          />
-        ) : null}
-        <StatTile
-          icon={Building2}
-          tone="amber"
-          label="Hotels"
-          value={s?.hotels}
-          context={s && s.hotels === 1 ? hotel?.name : `in ${group}`}
-        />
-      </div>
-
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
-        <Hotels properties={properties} />
-        {/* While setup is unfinished, it comes first on phones. */}
-        <SetupChecklist className="max-xl:order-first" />
-      </div>
-
-      <Workspace groups={me.role ? visibleGroups(me.role, me.has) : []} />
+      {announce}
+      {focus && current ? (
+        <Figures heading={focus.today(current.name)} figures={focus.figures} />
+      ) : null}
+      <Columns
+        main={
+          current ? (
+            <HotelCard
+              hotel={current}
+              summary={summary.data}
+              managesTeam={managesTeam}
+              compact={!role || !RUNS_HOTEL.has(role)}
+            />
+          ) : (
+            <div
+              role="status"
+              aria-label="Loading your hotel"
+              className="h-64 animate-pulse rounded-lg bg-surface-2"
+            />
+          )
+        }
+        side={
+          <>
+            <SetupChecklist />
+            <NeedsAttention items={attention} loading={summary.isPending || !current} />
+          </>
+        }
+      />
+      {workspace}
     </div>
   )
 }
 
-type HotelsQuery = {
-  isPending: boolean
-  isError: boolean
-  data?: { items: Property[] } | undefined
-}
-
-function Hotels({ properties }: { properties: HotelsQuery }) {
-  const count = properties.data?.items.length
+function Figures({ heading, figures }: { heading: string; figures: Figure[] }) {
+  if (figures.length === 0) return null
   return (
-    <section
-      aria-labelledby="hotels-heading"
-      className="overflow-hidden rounded-lg border border-border bg-surface shadow-card"
-    >
-      <header className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <h2 id="hotels-heading" className="text-base font-semibold">
-          Your hotels
-        </h2>
-        {count ? <StatusBadge>{plural(count, 'hotel')}</StatusBadge> : null}
-      </header>
-      {properties.isPending ? (
-        <div role="status" aria-label="Loading hotels" className="flex flex-col gap-3 p-5">
-          {[0, 1].map((i) => (
-            <span key={i} className="h-14 animate-pulse rounded-md bg-surface-2" />
-          ))}
-        </div>
-      ) : properties.isError || !properties.data ? (
-        <p role="alert" className="p-5 text-ro">
-          We couldn't load your hotels. Check your connection and refresh.
-        </p>
-      ) : properties.data.items.length === 0 ? (
-        <EmptyState icon={Building2} tone="brand" className="rounded-none border-0 shadow-none">
-          You're not on a hotel yet. An owner can give you access from Settings.
-        </EmptyState>
-      ) : (
-        <ul className="divide-y divide-border">
-          {properties.data.items.map((property) => (
-            <li
-              key={property.id}
-              className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 px-5 py-4 transition-colors hover:bg-surface-2/60 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]"
-            >
-              <span
-                aria-hidden="true"
-                className="grid size-11 place-items-center rounded-lg bg-pri-soft text-sm font-semibold text-pri-ink"
-              >
-                {initials(property.name)}
-              </span>
-              <div className="flex min-w-0 flex-col">
-                <span className="text-md font-semibold break-words">{property.name}</span>
-                <span className="text-sm text-text-2">
-                  {[property.area, property.state].filter(Boolean).join(', ') ||
-                    'Address not set yet'}
-                </span>
-              </div>
-              {/* One row under the name on phones; their own columns from sm up. */}
-              <div className="col-start-2 flex flex-wrap items-center gap-x-6 gap-y-2 sm:contents">
-                <Pair label="Check-in" value={property.checkInTime} />
-                <Pair label="Check-out" value={property.checkOutTime} />
-                <span>
-                  <StatusBadge tone="emerald">Open</StatusBadge>
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-      <div className="m-4 flex items-center gap-3 rounded-md border border-dashed border-border-strong px-4 py-3.5 text-sm text-text-2">
-        <span
-          className="grid size-8 flex-none place-items-center rounded-lg bg-surface-2"
-          aria-hidden="true"
-        >
-          <BedDouble className="size-4" strokeWidth={1.8} />
-        </span>
-        <span>
-          Rooms, tonight's occupancy and arrivals will show here once front office is running.
-        </span>
+    <section aria-labelledby="figures-heading" className="flex flex-col gap-4">
+      <h2 id="figures-heading" className="text-lg font-semibold tracking-[-0.01em]">
+        {heading}
+      </h2>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        {figures.map((figure, index) => (
+          <FigureTile key={figure.label} figure={figure} index={index} />
+        ))}
       </div>
     </section>
   )
 }
 
-function Pair({ label, value }: { label: string; value: string }) {
+// The main card beside what needs doing; on phones, what needs doing comes first unless the main
+// card is the page's main job.
+function Columns({
+  main,
+  side,
+  mainFirst,
+}: {
+  main: ReactNode
+  side: ReactNode
+  mainFirst?: boolean
+}) {
   return (
-    <span className="flex flex-col">
-      <span className="text-xs text-text-3">{label}</span>
-      <span className="num text-sm font-medium">{value}</span>
-    </span>
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+      {main}
+      <div className={cn('flex flex-col gap-6', !mainFirst && 'max-xl:order-first')}>{side}</div>
+    </div>
   )
 }

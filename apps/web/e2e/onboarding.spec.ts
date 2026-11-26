@@ -42,8 +42,9 @@ test('an owner sets up their hotel group and lands on home', async ({ page }, te
   await expect(
     page.getByRole('heading', { name: /^Good (morning|afternoon|evening)/ }),
   ).toBeVisible()
+  // One hotel: Home is that hotel's day, with its check-in time.
   await expect(
-    page.getByRole('listitem').filter({ hasText: 'Kora Victoria Island' }),
+    page.getByRole('region', { name: 'Kora Victoria Island', exact: true }),
   ).toContainText('Check-in')
 
   // Sign out and back in: straight to home, the group already set up.
