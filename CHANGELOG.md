@@ -8,6 +8,7 @@ User-visible changes, newest first, written for customers. Format: [Keep a Chang
 - Emails now name the product: "Confirm your email for Vento Hotels" and "Reset your Vento Hotels password".
 
 ### Added
+- Light, dark or follow your device: a three-way Appearance switch in the account menu, remembered on each browser. On phones the account menu opens as a sheet from the bottom.
 - A new Home: a navy welcome banner with the brand's drifting light, a greeting, your group's key figures (setup progress, team, shared devices, business date) as tiles you can click into, your hotels with check-in and check-out times, and a "Finish setting up" checklist that highlights the next step and ticks itself off as you go, and "Your workspace": a card for every module you use, with what it's for.
 - Two-step sign-in: turn it on from the account menu with an authenticator app, save 10 backup codes, and sign in with a 6-digit code after your password. "Don't ask again on this computer for 30 days" for your own computer. Owners and group admins see a prompt on Home until they turn it on, and Members and roles shows who has it.
 - A calmer, more polished look: page titles with status badges, full-width cards for anything not built yet, more generous margins, and the hotel shown as a quiet pill at the top left.

@@ -8,15 +8,16 @@
     <title>Vento Hotels</title>
     <script>
       // Vento opens in light mode. Dark mode is opt-in: a person's choice is stored as
-      // vento.theme = 'dark' (or 'system' to follow the device), set from their profile.
+      // vento.theme = 'dark' (or 'system' to follow the device), set from the account menu.
       // Applied before first paint, so the page never flashes.
       ;(() => {
-        let choice = 'light'
-        try {
-          choice = localStorage.getItem('vento.theme') || 'light'
-        } catch {}
         const system = window.matchMedia('(prefers-color-scheme: dark)')
+        // Reads the choice each time, so a change from the account menu is followed here too.
         const apply = () => {
+          let choice = 'light'
+          try {
+            choice = localStorage.getItem('vento.theme') || 'light'
+          } catch {}
           const dark = choice === 'dark' || (choice === 'system' && system.matches)
           document.documentElement.classList.toggle('dark', dark)
           document.documentElement.style.colorScheme = dark ? 'dark' : 'light'

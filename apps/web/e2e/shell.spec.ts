@@ -64,3 +64,29 @@ test('an unknown section is a plain not-found page', async ({ page }, testInfo) 
   await page.goto('/nonsense-section')
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()
 })
+
+test('anyone can switch between light, dark and the device setting', async ({ page }, testInfo) => {
+  await signUpOwnerWithGroup(page, `theme-${testInfo.project.name}`)
+  const html = page.locator('html')
+  await expect(html).not.toHaveClass(/dark/)
+
+  await page.getByRole('button', { name: /^Account:/ }).click()
+  await page
+    .locator('label')
+    .filter({ hasText: /^Dark$/ })
+    .click()
+  await expect(page.getByRole('radio', { name: 'Dark' })).toBeChecked()
+  await expect(html).toHaveClass(/dark/)
+  await expectAccessible(page)
+
+  // The choice stays for this browser.
+  await page.reload()
+  await expect(html).toHaveClass(/dark/)
+
+  await page.getByRole('button', { name: /^Account:/ }).click()
+  await page
+    .locator('label')
+    .filter({ hasText: /^Light$/ })
+    .click()
+  await expect(html).not.toHaveClass(/dark/)
+})
