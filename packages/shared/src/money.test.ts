@@ -91,7 +91,7 @@ describe('rounding', () => {
 })
 
 describe('foreign currency', () => {
-  const fx = fxRateSchema.parse({ rate: '1950', source: 'manual', date: '2026-11-25' })
+  const fx = fxRateSchema.parse({ rate: '1950', source: 'cbn', date: '2026-11-25' })
 
   it('converts to naira with the recorded rate', () => {
     expect(toNaira(money('323.53', 'GBP'), fx)).toEqual({ amount: '630883.50', currency: 'NGN' })
@@ -102,17 +102,17 @@ describe('foreign currency', () => {
   })
 
   it('rejects zero, negative and badly formed rates and dates', () => {
-    expect(fxRateSchema.safeParse({ rate: '0', source: 'bank', date: '2026-11-25' }).success).toBe(
-      false,
-    )
-    expect(fxRateSchema.safeParse({ rate: '-1', source: 'bank', date: '2026-11-25' }).success).toBe(
-      false,
-    )
+    expect(
+      fxRateSchema.safeParse({ rate: '0', source: 'market', date: '2026-11-25' }).success,
+    ).toBe(false)
+    expect(
+      fxRateSchema.safeParse({ rate: '-1', source: 'market', date: '2026-11-25' }).success,
+    ).toBe(false)
     expect(
       fxRateSchema.safeParse({ rate: '1950', source: 'street', date: '2026-11-25' }).success,
     ).toBe(false)
     expect(
-      fxRateSchema.safeParse({ rate: '1950', source: 'bank', date: '25/11/2026' }).success,
+      fxRateSchema.safeParse({ rate: '1950', source: 'market', date: '25/11/2026' }).success,
     ).toBe(false)
   })
 })
