@@ -28,7 +28,7 @@ apps/
       features/              feature switches per group, `pnpm features` command       (brick 9)
       devices/               shared devices, staff PINs, PIN sign-in checks            (brick 10)
       seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14)
-      jobs/                  pg-boss workers and schedules                            (brick 16 / Stage 1)
+      jobs/                  pg-boss workers and schedules                            (brick 17 / Stage 1)
       providers/             email, SMS, WhatsApp, payments, channel manager, storage (as needed)
       pdf/                   @react-pdf/renderer documents                            (Stage 1)
       modules/<module>/      <module>.service.ts, <module>.router.ts, tests next to them
@@ -44,7 +44,8 @@ apps/
       lib/auth.ts, session.ts  Better Auth client; picks the member's group on sign-in (brick 7)
       lib/navigation.ts      the menu: modules, their feature switch, which roles use them (brick 11)
       lib/me.ts, view-as.tsx the member's role, permissions and features; role preview  (bricks 9–11)
-      offline/               service worker, IndexedDB outbox, sync queue             (brick 15)
+      offline/               connection state, saved data in IndexedDB, update prompt (brick 16); outbox, sync queue (with the first offline command)
+    sw/                      the service worker and the build step that emits /sw.js   (brick 16)
     e2e/                     Playwright, desktop + phone; onboarding.spec.ts now, one spec per walkthrough later (brick 7)
 packages/
   shared/                    the single source of API types
@@ -73,7 +74,8 @@ packages/
 6. The **response** is validated against the output schema and returned. One JSON log line per request with request id, organization id and property id, never guest personal data. Unexpected errors go to Sentry with the request id; the client sees a generic message.
 
 ## Offline path
-*Planned (brick 15).*
+*In review (brick 16): the shell. Planned: the outbox, with the first offline command (decision 0024).*
+- **Built:** the service worker keeps the built app on the device (pages network-first, built files cache-first, never API calls). Before the first render, `offline/saved-data.ts` restores the reference data last seen from IndexedDB (an allow-list of queries), and `lib/session.ts` falls back to the remembered person when Vento can't be reached. `offline/connection.ts` treats a request that never reached Vento as offline; the shell shows `OfflineBanner`. Sign-out and device lock clear it all.
 - Front desk, POS and housekeeping run from a cached app shell and local data in IndexedDB.
 - Each change offline becomes a **command** in an outbox with a client UUID v7 and an idempotency key, the device id and the time it happened.
 - When the connection returns, commands are sent in order through the same middleware chain as any request. The server stores the idempotency key, so a resent command is applied once.
@@ -99,7 +101,7 @@ packages/
 - Statutory rates (VAT, consumption tax, service charge, payroll deductions) are versioned configuration with effective dates.
 
 ## Background jobs
-*Planned (brick 16, used from Stage 1).*
+*Planned (brick 17, used from Stage 1).*
 pg-boss on the same Postgres, no Redis. Used for night audit steps, ARI pushes to the channel manager, payment and channel webhooks, guest messages, the owner's daily report, scheduled checks (room discrepancy, deposits due) and large imports. Every job is idempotent and retried with backoff; failures are visible to devops.
 
 ## Files and PDFs
@@ -112,7 +114,7 @@ pg-boss on the same Postgres, no Redis. Used for night audit steps, ARI pushes t
 Every outside service sits behind an interface in `apps/api/src/providers/` with a fake for tests and local work: `EmailProvider`, `SmsProvider`, `WhatsAppProvider`, `PaymentProvider` (Paystack), `ChannelProvider` (one certified channel manager), `StorageProvider`. Which provider to use is an open question in `docs/DOMAIN.md` until decided in `docs/decisions/`.
 
 ## Environments
-*Planned (brick 16). Hosting is undecided.*
+*Planned (brick 17). Hosting is undecided.*
 | Environment | Purpose | Data |
 |---|---|---|
 | local | Development on a laptop: Docker Postgres (5433) and RustFS storage (9100, console 9101) | demo seed |

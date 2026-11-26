@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
+import { OfflineBanner } from '@/components/shell/offline-banner'
 import { PreviewBanner } from '@/components/shell/preview-banner'
 import { PropertyProvider } from '@/components/shell/property-context'
 import { Sidebar } from '@/components/shell/sidebar'
@@ -95,6 +96,7 @@ function Shell() {
         <div className="flex min-w-0 grow flex-col">
           <PreviewBanner />
           <TopBar user={user} onOpenMenu={() => setMenuOpen(true)} />
+          <OfflineBanner />
           <main
             id="main"
             tabIndex={-1}

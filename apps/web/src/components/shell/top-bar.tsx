@@ -3,11 +3,11 @@
 
 import { calendarDateIn } from '@vento/shared'
 import { ChevronDown, Lock, Menu } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { lockDevice } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
+import { useOnline } from '@/offline/connection'
 import { AccountMenu } from './account-menu'
 import { useProperty } from './property-context'
 
@@ -27,20 +27,6 @@ function formatShortDate(date: string): string {
     month: 'short',
     timeZone: 'UTC',
   }).format(new Date(`${date}T00:00:00Z`))
-}
-
-function useOnline(): boolean {
-  const [online, setOnline] = useState(() => navigator.onLine)
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine)
-    window.addEventListener('online', update)
-    window.addEventListener('offline', update)
-    return () => {
-      window.removeEventListener('online', update)
-      window.removeEventListener('offline', update)
-    }
-  }, [])
-  return online
 }
 
 type TopBarProps = { user: { name: string; email: string }; onOpenMenu: () => void }

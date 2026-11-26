@@ -10,6 +10,7 @@ import { authClient } from '@/lib/auth'
 import { lockDevice } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
 import { useMediaQuery } from '@/lib/media'
+import { clearSavedData } from '@/offline/saved-data'
 import { PreviewRoleDialog } from './preview-role-dialog'
 import { SetPinDialog } from './set-pin-dialog'
 import { ThemeSwitch } from './theme-switch'
@@ -63,7 +64,7 @@ export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
     // On a shared device, signing out hands the device to the next person.
     if (onSharedDevice) return lockDevice()
     await authClient.signOut()
-    queryClient.clear()
+    await clearSavedData(queryClient)
     await navigate({ to: '/sign-in' })
   }
 

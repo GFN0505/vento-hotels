@@ -52,11 +52,19 @@ export default defineConfig({
       },
     },
     {
-      command: 'pnpm exec vite',
+      // The production build, as people get it: the service worker and offline shell only exist
+      // there (decision 0009). Built into its own folder so it never clashes with dist/.
+      command:
+        'pnpm exec vite build --outDir .data/e2e-dist --emptyOutDir --logLevel warn && pnpm exec vite preview --outDir .data/e2e-dist',
       url: WEB_URL,
       reuseExistingServer: false,
-      timeout: 30_000,
-      env: { WEB_PORT: String(WEB_PORT), VITE_API_PROXY: `http://localhost:${API_PORT}` },
+      timeout: 180_000,
+      env: {
+        // .env sets NODE_ENV=development for the API; the web build must be a production one.
+        NODE_ENV: 'production',
+        WEB_PORT: String(WEB_PORT),
+        VITE_API_PROXY: `http://localhost:${API_PORT}`,
+      },
     },
   ],
 })

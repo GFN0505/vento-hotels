@@ -1,6 +1,6 @@
 # Role-shaped Home and All hotels
 
-- **Status:** built (brick 15, in review)
+- **Status:** built (brick 15)
 - **Stage:** 0 (the shape); the figures fill in as each module ships from Stage 1
 - **Module:** Platform
 - **Walkthroughs:** `owner-morning.md` (step 7: group home, then one hotel), `front-desk-morning.md`, `room-attendant-shift.md`

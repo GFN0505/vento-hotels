@@ -44,7 +44,7 @@ export async function signIn(page: Page, email: string, password: string) {
 
 // Creates an owner; ends on "Check your inbox", before the email is confirmed.
 export async function signUpOwner(page: Page, tag: string): Promise<string> {
-  const email = `owner.${tag}.${Date.now()}@example.test`
+  const email = `owner.${tag}.${Date.now()}.${Math.random().toString(36).slice(2, 6)}@example.test`
   await page.goto('/get-started')
   await page.getByLabel('Full name').fill('Adaeze Okafor')
   await page.getByLabel('Work email').fill(email)
@@ -78,15 +78,21 @@ export async function switchToDarkMode(page: Page) {
 // Fails the test on any WCAG 2.2 A/AA violation axe can detect, listing each one clearly. Waits for
 // entrance animations to finish first, so contrast is measured on the settled page.
 export async function expectAccessible(page: Page) {
-  await page.waitForFunction(() =>
-    document
-      .getAnimations()
-      .every(
-        (a) =>
-          a.playState !== 'running' ||
-          a.effect?.getTiming().iterations === Number.POSITIVE_INFINITY,
-      ),
-  )
+  // Settled means no entrance animation running, checked again a moment later: content that arrives
+  // from the API after the first check starts its own fade-in, and contrast mid-fade isn't real.
+  const settled = () =>
+    page.waitForFunction(() =>
+      document
+        .getAnimations()
+        .every(
+          (a) =>
+            a.playState !== 'running' ||
+            a.effect?.getTiming().iterations === Number.POSITIVE_INFINITY,
+        ),
+    )
+  await settled()
+  await new Promise((resolve) => setTimeout(resolve, 300))
+  await settled()
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze()

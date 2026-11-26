@@ -13,7 +13,32 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     </>
   ),
   notFoundComponent: NotFound,
+  errorComponent: Failed,
 })
+
+// Anything unexpected: say it plainly and offer the one thing that usually fixes it. Most often it's
+// the connection, so say that first.
+function Failed() {
+  usePageTitle('Something went wrong')
+  return (
+    <AuthCard
+      title="Something went wrong"
+      subtitle={
+        navigator.onLine
+          ? "Vento couldn't open this page. Try again; if it keeps happening, tell your manager."
+          : "You're offline, and this page needs a connection. Try again when you're back online."
+      }
+    >
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="inline-flex min-h-11 items-center text-pri-ink hover:underline"
+      >
+        Try again
+      </button>
+    </AuthCard>
+  )
+}
 
 function NotFound() {
   usePageTitle('Page not found')
