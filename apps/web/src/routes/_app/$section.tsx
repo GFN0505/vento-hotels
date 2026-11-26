@@ -24,7 +24,7 @@ function ModulePage() {
   const me = useMe()
   usePageTitle(entry?.label ?? 'Vento')
   if (!entry || me.isPending) return null
-  if (me.role && !roleSees(me.role, entry)) return <NoAccess what={entry.label} />
+  if (me.role && !roleSees(me.role, entry, me.can)) return <NoAccess what={entry.label} />
   return (
     <FeatureGate feature={entry.feature}>
       <div className="flex flex-col gap-6">

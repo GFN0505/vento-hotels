@@ -46,7 +46,9 @@ function Shell() {
   const [menuOpen, setMenuOpen] = useState(false)
   const organization = useMe()
   const showSettings = organization.can('setup.manage') || organization.can('permissions.manage')
-  const groups = organization.role ? visibleGroups(organization.role, organization.has) : []
+  const groups = organization.role
+    ? visibleGroups(organization.role, organization.has, organization.can)
+    : []
   const properties = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
   useIdleLock(organization.data?.device?.idleSeconds, user.name.split(' ')[0] ?? user.name)
 

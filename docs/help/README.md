@@ -33,5 +33,6 @@ docs/help/
 ## Articles
 | Article | Journey | Status |
 |---|---|---|
+| [Set up your rooms](getting-started/set-up-rooms.md) | `going-live.md` step 3 | written |
 
 Status: `todo` · `written` · `published`

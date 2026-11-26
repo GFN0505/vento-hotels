@@ -2,6 +2,7 @@
 // phone (docs/UX-STANDARD.md, section 5). New pages get a line here when they're built.
 import { test } from '@playwright/test'
 import {
+  buildRooms,
   expectAccessible,
   linkFromEmail,
   signUpOwner,
@@ -64,6 +65,30 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
       await rule.click()
       await page.getByLabel('Reason').waitFor()
+      await expectAccessible(page)
+    })
+
+    test('rooms: the builder, the page, a room, a room type and the builder sheet have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      await signUpOwnerWithGroup(page, `a11y-rooms-${theme}-${testInfo.project.name}`)
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.goto('/rates/rooms')
+      await page.getByRole('button', { name: 'Add type' }).waitFor()
+      await expectAccessible(page)
+      await buildRooms(page)
+      await page.getByRole('button', { name: 'Edit room 401' }).waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Edit room 401' }).click()
+      await page.getByRole('dialog', { name: 'Room 401' }).waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+      await page.getByRole('button', { name: 'Edit Deluxe King' }).click()
+      await page.getByRole('dialog', { name: 'Deluxe King' }).waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+      await page.getByRole('button', { name: 'Add rooms by floor' }).first().click()
+      await page.getByRole('dialog', { name: 'Add rooms by floor' }).waitFor()
       await expectAccessible(page)
     })
 

@@ -108,3 +108,27 @@ export async function expectAccessible(page: Page) {
   )
   expect(overflow, `Page scrolls sideways on ${page.url()}`).toBeLessThanOrEqual(0)
 }
+
+// On an empty Rooms page (the builder): Standard Queen 301–314 and Deluxe King 401–414, with 414
+// switched to Standard Queen in the preview; 28 rooms in all.
+export async function buildRooms(page: Page) {
+  await page.getByLabel('Name', { exact: true }).first().fill('Standard Queen')
+  await page.getByLabel('Bed').first().selectOption('queen')
+  await page.getByRole('button', { name: 'Add type' }).click()
+  await page.getByLabel('Name', { exact: true }).nth(1).fill('Deluxe King')
+  await page.getByLabel('Max guests').nth(1).fill('3')
+  await page.getByLabel('First floor, line 1').fill('3')
+  await page.getByLabel('Last floor, line 1').fill('3')
+  await page.getByLabel('Last number, line 1').fill('14')
+  await page.getByRole('button', { name: 'Add line' }).click()
+  await page.getByLabel('Line 2 · Room type').selectOption({ label: 'Deluxe King' })
+  await page.getByLabel('First floor, line 2').fill('4')
+  await page.getByLabel('Last floor, line 2').fill('4')
+  await page.getByLabel('Last number, line 2').fill('14')
+  // Room 414 becomes a Standard Queen in the preview.
+  await page.getByRole('button', { name: 'Room 414, Deluxe King' }).click()
+  await page.getByLabel('Type', { exact: true }).selectOption({ label: 'Standard Queen' })
+  await page.getByRole('button', { name: 'Done' }).click()
+  await page.getByRole('button', { name: 'Create 28 rooms' }).click()
+  await expect(page.getByText('28 rooms created at Kora Victoria Island')).toBeVisible()
+}

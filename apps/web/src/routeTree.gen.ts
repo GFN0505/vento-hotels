@@ -18,8 +18,11 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSectionRouteImport } from './routes/_app/$section'
+import { Route as AppRatesRouteImport } from './routes/_app/rates'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as AppRatesIndexRouteImport } from './routes/_app/rates/index'
+import { Route as AppRatesRoomsRouteImport } from './routes/_app/rates/rooms'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/devices'
 import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/members'
@@ -69,6 +72,11 @@ const AppSectionRoute = AppSectionRouteImport.update({
   path: '/$section',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRatesRoute = AppRatesRouteImport.update({
+  id: '/rates',
+  path: '/rates',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -78,6 +86,16 @@ const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppRatesIndexRoute = AppRatesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRatesRoute,
+} as any)
+const AppRatesRoomsRoute = AppRatesRoomsRouteImport.update({
+  id: '/rooms',
+  path: '/rooms',
+  getParentRoute: () => AppRatesRoute,
 } as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/',
@@ -109,11 +127,14 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/$section': typeof AppSectionRoute
+  '/rates': typeof AppRatesRouteWithChildren
   '/settings': typeof AppSettingsRouteWithChildren
   '/join/$token': typeof JoinTokenRoute
+  '/rates/rooms': typeof AppRatesRoomsRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
+  '/rates/': typeof AppRatesIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -126,9 +147,11 @@ export interface FileRoutesByTo {
   '/$section': typeof AppSectionRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof AppIndexRoute
+  '/rates/rooms': typeof AppRatesRoomsRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
+  '/rates': typeof AppRatesIndexRoute
   '/settings': typeof AppSettingsIndexRoute
 }
 export interface FileRoutesById {
@@ -141,12 +164,15 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/_app/$section': typeof AppSectionRoute
+  '/_app/rates': typeof AppRatesRouteWithChildren
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/join/$token': typeof JoinTokenRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/rates/rooms': typeof AppRatesRoomsRoute
   '/_app/settings/devices': typeof AppSettingsDevicesRoute
   '/_app/settings/members': typeof AppSettingsMembersRoute
   '/_app/settings/permissions': typeof AppSettingsPermissionsRoute
+  '/_app/rates/': typeof AppRatesIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -160,11 +186,14 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/$section'
+    | '/rates'
     | '/settings'
     | '/join/$token'
+    | '/rates/rooms'
     | '/settings/devices'
     | '/settings/members'
     | '/settings/permissions'
+    | '/rates/'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -177,9 +206,11 @@ export interface FileRouteTypes {
     | '/$section'
     | '/join/$token'
     | '/'
+    | '/rates/rooms'
     | '/settings/devices'
     | '/settings/members'
     | '/settings/permissions'
+    | '/rates'
     | '/settings'
   id:
     | '__root__'
@@ -191,12 +222,15 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/_app/$section'
+    | '/_app/rates'
     | '/_app/settings'
     | '/join/$token'
     | '/_app/'
+    | '/_app/rates/rooms'
     | '/_app/settings/devices'
     | '/_app/settings/members'
     | '/_app/settings/permissions'
+    | '/_app/rates/'
     | '/_app/settings/'
   fileRoutesById: FileRoutesById
 }
@@ -276,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSectionRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/rates': {
+      id: '/_app/rates'
+      path: '/rates'
+      fullPath: '/rates'
+      preLoaderRoute: typeof AppRatesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
@@ -289,6 +330,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/join/$token'
       preLoaderRoute: typeof JoinTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/rates/': {
+      id: '/_app/rates/'
+      path: '/'
+      fullPath: '/rates/'
+      preLoaderRoute: typeof AppRatesIndexRouteImport
+      parentRoute: typeof AppRatesRoute
+    }
+    '/_app/rates/rooms': {
+      id: '/_app/rates/rooms'
+      path: '/rooms'
+      fullPath: '/rates/rooms'
+      preLoaderRoute: typeof AppRatesRoomsRouteImport
+      parentRoute: typeof AppRatesRoute
     }
     '/_app/settings/': {
       id: '/_app/settings/'
@@ -321,6 +376,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppRatesRouteChildren {
+  AppRatesRoomsRoute: typeof AppRatesRoomsRoute
+  AppRatesIndexRoute: typeof AppRatesIndexRoute
+}
+
+const AppRatesRouteChildren: AppRatesRouteChildren = {
+  AppRatesRoomsRoute: AppRatesRoomsRoute,
+  AppRatesIndexRoute: AppRatesIndexRoute,
+}
+
+const AppRatesRouteWithChildren = AppRatesRoute._addFileChildren(
+  AppRatesRouteChildren,
+)
+
 interface AppSettingsRouteChildren {
   AppSettingsDevicesRoute: typeof AppSettingsDevicesRoute
   AppSettingsMembersRoute: typeof AppSettingsMembersRoute
@@ -341,12 +410,14 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppSectionRoute: typeof AppSectionRoute
+  AppRatesRoute: typeof AppRatesRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppSectionRoute: AppSectionRoute,
+  AppRatesRoute: AppRatesRouteWithChildren,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
 }

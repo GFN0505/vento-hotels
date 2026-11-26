@@ -76,7 +76,7 @@ function Home() {
     timeZone: 'Africa/Lagos',
   }).format(new Date())
   const title = `${greeting()}${firstName ? `, ${firstName}` : ''}`
-  const workspace = <Workspace groups={role ? visibleGroups(role, me.has) : []} />
+  const workspace = <Workspace groups={role ? visibleGroups(role, me.has, me.can) : []} />
 
   // Switching view replaces most of the page, so focus moves to the greeting and the live region
   // says what's now shown; keyboard and screen-reader users never land on nothing.
@@ -182,6 +182,7 @@ function Home() {
               hotel={current}
               summary={summary.data}
               managesTeam={managesTeam}
+              canSetUpRooms={me.can('rooms.setup')}
               compact={!role || !RUNS_HOTEL.has(role)}
             />
           ) : (

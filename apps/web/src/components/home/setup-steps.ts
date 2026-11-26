@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { orpc } from '@/lib/api'
 import { useMe } from '@/lib/me'
 
-export type SetupStepKey = 'group' | 'hotel' | 'team' | 'pin' | 'devices' | 'two-step'
+export type SetupStepKey = 'group' | 'hotel' | 'rooms' | 'team' | 'pin' | 'devices' | 'two-step'
 
 export type SetupStep = { key: SetupStepKey; label: string; why: string; done: boolean }
 
@@ -25,6 +25,12 @@ export function useSetupSteps(): { steps: SetupStep[]; done: number; ready: bool
       label: 'Add your first hotel',
       why: 'Where rooms, staff and money live',
       done: s.hotels > 0,
+    },
+    {
+      key: 'rooms',
+      label: 'Set up rooms',
+      why: 'Room types and rooms, so you can sell them',
+      done: s.rooms > 0,
     },
     {
       key: 'team',
