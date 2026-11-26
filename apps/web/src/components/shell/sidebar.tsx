@@ -15,6 +15,9 @@ type NavItem = {
   exact: boolean
 }
 
+// Module entries carry their feature: they show only when it's switched on for the group
+// (decision 0021). e.g. { to: '/arrivals', label: 'Arrivals', icon: …, feature: 'front_desk' }
+
 const HOME: NavItem = { to: '/', label: 'Home', icon: Home, exact: true }
 const SETTINGS: NavItem = { to: '/settings', label: 'Settings', icon: Settings, exact: false }
 

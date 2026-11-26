@@ -21,6 +21,8 @@ export type AppDeps = {
   // The address people open in the browser, for links in emails.
   webOrigin: string
   limiter: RateLimiter
+  // Every module on, released or not: development and browser tests only (decision 0021).
+  allFeatures?: boolean
 }
 export type RequestContext = AppDeps & { headers: Headers }
 
@@ -37,7 +39,9 @@ const inOrganization = authed.use(async ({ context, next }) => {
   if (!organizationId) {
     throw new ORPCError('FORBIDDEN', { message: 'Choose an organization first' })
   }
-  const access = await loadAccess(context.db, organizationId, context.user)
+  const access = await loadAccess(context.db, organizationId, context.user, {
+    allFeatures: context.allFeatures ?? false,
+  })
   if (!access) throw new ORPCError('FORBIDDEN', { message: "You don't have access to this" })
   return next({ context: { access } })
 })

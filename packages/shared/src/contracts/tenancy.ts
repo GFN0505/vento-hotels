@@ -3,6 +3,7 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { calendarDateSchema } from '../dates.ts'
+import { featureSchema } from '../features.ts'
 import { idSchema } from '../ids.ts'
 import { currencySchema } from '../money.ts'
 import { pageQuerySchema, pageSchema } from '../pagination.ts'
@@ -70,6 +71,8 @@ export const currentOrganizationSchema = z.object({
   member: z.object({ id: idSchema, role: memberRoleSchema, allProperties: z.boolean() }),
   // What this member may do, so the web app shows only what they can use. The API still checks.
   permissions: z.array(permissionSchema),
+  // Modules switched on for this group (decision 0021).
+  features: z.array(featureSchema),
 })
 
 export const setPropertyAccessSchema = z.discriminatedUnion('allProperties', [

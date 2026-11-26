@@ -46,10 +46,12 @@ export async function recordSystemAudit(
   tx: Writer,
   organizationId: string,
   event: AuditEvent,
+  // Who to show as the actor: Better Auth's hooks, or the Vento team running a command.
+  actorName = 'Sign-in service',
 ): Promise<void> {
   await tx.insert(auditEvents).values({
     organizationId,
-    actorName: 'Sign-in service',
+    actorName,
     action: event.action,
     entityType: event.entityType,
     entityId: event.entityId ?? null,

@@ -30,6 +30,7 @@ const app = createApp({
   email,
   webOrigin: env.WEB_ORIGIN,
   limiter: new RateLimiter(env.NODE_ENV !== 'test'),
+  allFeatures: env.VENTO_ALL_FEATURES,
   checkHealth: healthCheck({ databaseUrl: env.DATABASE_URL, s3Endpoint: env.S3_ENDPOINT }),
 })
 

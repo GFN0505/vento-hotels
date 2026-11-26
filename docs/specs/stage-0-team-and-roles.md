@@ -94,7 +94,7 @@ Not relevant.
 "Invite people", "Send invite" / "Send 3 invites", "Invites expire in 7 days.", "Join Kora Hotels Group", "Accept and continue", "This invite has expired. Ask Folake Nwosu for a new one.", "Already in your group", "Remove Ada Nwosu from Kora Hotels Group?", "Owners only. Every change is recorded in the audit log."
 
 ## Out of scope
-PIN-only staff and staff PINs (brick 9, with shared devices), phone number and WhatsApp invites (provider is an open question), two-factor status, limiting people to legal entities, dated rules and effective dates, who approves above a limit (brick 9), exporting the matrix, per-property overrides, and the audit log screen (#28).
+PIN-only staff and staff PINs (brick 10, with shared devices), phone number and WhatsApp invites (provider is an open question), two-factor status, limiting people to legal entities, dated rules and effective dates, who approves above a limit (brick 10), exporting the matrix, per-property overrides, and the audit log screen (#28).
 
 ## Open questions
 None.

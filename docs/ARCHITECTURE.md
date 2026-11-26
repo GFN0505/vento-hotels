@@ -25,7 +25,8 @@ apps/
       audit/record.ts        recordAudit(tx, access, event), same transaction          (brick 6)
       governance/service.ts  audit log, permissions matrix list/set                  (brick 6)
       team/                  members list/update/remove, invitations, join from link   (brick 8)
-      jobs/                  pg-boss workers and schedules                            (brick 11 / Stage 1)
+      features/              feature switches per group, `pnpm features` command       (brick 9)
+      jobs/                  pg-boss workers and schedules                            (brick 12 / Stage 1)
       providers/             email, SMS, WhatsApp, payments, channel manager, storage (as needed)
       pdf/                   @react-pdf/renderer documents                            (Stage 1)
       modules/<module>/      <module>.service.ts, <module>.router.ts, tests next to them
@@ -39,7 +40,7 @@ apps/
       styles.css             tokens ported from design/export/vento.css, light + dark (brick 7)
       lib/api.ts             typed oRPC client + TanStack Query utils                 (brick 7)
       lib/auth.ts, session.ts  Better Auth client; picks the member's group on sign-in (brick 7)
-      offline/               service worker, IndexedDB outbox, sync queue             (brick 10)
+      offline/               service worker, IndexedDB outbox, sync queue             (brick 11)
     e2e/                     Playwright, desktop + phone; onboarding.spec.ts now, one spec per walkthrough later (brick 7)
 packages/
   shared/                    the single source of API types
@@ -55,7 +56,7 @@ packages/
 ```
 
 ## A request, end to end
-*Steps 3.1–3.3 built in brick 5: `authed` and `inOrganization` in `apps/api/src/router.ts`, scoping with `scopeToProperties()`. Steps 3.4 and 5 built in brick 6: `requirePermission` / `requireWithinLimit` in each service and `recordAudit` in its transaction; approval by PIN in brick 9; device sessions in brick 9. Step 1 (the typed web client) in review (brick 7), same origin as the API (decision 0019).*
+*Steps 3.1–3.3 built in brick 5: `authed` and `inOrganization` in `apps/api/src/router.ts`, scoping with `scopeToProperties()`. Steps 3.4 and 5 built in brick 6: `requirePermission` / `requireWithinLimit` in each service and `recordAudit` in its transaction; approval by PIN in brick 10; device sessions in brick 10. Step 1 (the typed web client) in review (brick 7), same origin as the API (decision 0019).*
 1. A screen calls the typed oRPC client. Its input and output types come from the contract in `packages/shared`, so a mismatch is a compile error.
 2. The browser sends `POST /rpc/<module>/<procedure>`. Hono adds a request id and security headers.
 3. oRPC validates the input against the zod schema, then runs the middleware in this order:
@@ -68,7 +69,7 @@ packages/
 6. The **response** is validated against the output schema and returned. One JSON log line per request with request id, organization id and property id, never guest personal data. Unexpected errors go to Sentry with the request id; the client sees a generic message.
 
 ## Offline path
-*Planned (brick 10).*
+*Planned (brick 11).*
 - Front desk, POS and housekeeping run from a cached app shell and local data in IndexedDB.
 - Each change offline becomes a **command** in an outbox with a client UUID v7 and an idempotency key, the device id and the time it happened.
 - When the connection returns, commands are sent in order through the same middleware chain as any request. The server stores the idempotency key, so a resent command is applied once.
@@ -94,7 +95,7 @@ packages/
 - Statutory rates (VAT, consumption tax, service charge, payroll deductions) are versioned configuration with effective dates.
 
 ## Background jobs
-*Planned (brick 11, used from Stage 1).*
+*Planned (brick 12, used from Stage 1).*
 pg-boss on the same Postgres, no Redis. Used for night audit steps, ARI pushes to the channel manager, payment and channel webhooks, guest messages, the owner's daily report, scheduled checks (room discrepancy, deposits due) and large imports. Every job is idempotent and retried with backoff; failures are visible to devops.
 
 ## Files and PDFs
@@ -107,7 +108,7 @@ pg-boss on the same Postgres, no Redis. Used for night audit steps, ARI pushes t
 Every outside service sits behind an interface in `apps/api/src/providers/` with a fake for tests and local work: `EmailProvider`, `SmsProvider`, `WhatsAppProvider`, `PaymentProvider` (Paystack), `ChannelProvider` (one certified channel manager), `StorageProvider`. Which provider to use is an open question in `docs/DOMAIN.md` until decided in `docs/decisions/`.
 
 ## Environments
-*Planned (brick 11). Hosting is undecided.*
+*Planned (brick 12). Hosting is undecided.*
 | Environment | Purpose | Data |
 |---|---|---|
 | local | Development on a laptop: Docker Postgres (5433) and RustFS storage (9100, console 9101) | demo seed |

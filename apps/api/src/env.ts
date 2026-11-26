@@ -13,6 +13,11 @@ const envSchema = infraEnvSchema.extend({
   WEB_ORIGIN: z.url().default('http://localhost:5180'),
   // Local development and browser tests only: save emails as files here instead of printing them.
   EMAIL_OUTBOX_DIR: z.string().optional(),
+  // Development and browser tests only: every module on, released or not (decision 0021).
+  VENTO_ALL_FEATURES: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
 })
 
 export type Env = z.infer<typeof envSchema>
@@ -23,6 +28,10 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     const setting = String(result.error.issues[0]?.path[0] ?? 'A setting')
     const missing = source[setting] === undefined || source[setting]?.trim() === ''
     throw new MissingSettingError(setting, missing ? 'is not set' : 'is not valid')
+  }
+  // Unreleased modules must never reach customers by a stray setting.
+  if (result.data.NODE_ENV === 'production' && result.data.VENTO_ALL_FEATURES) {
+    throw new MissingSettingError('VENTO_ALL_FEATURES', 'must be off in production')
   }
   return result.data
 }

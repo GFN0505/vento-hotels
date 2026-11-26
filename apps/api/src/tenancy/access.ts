@@ -5,6 +5,8 @@ import { ORPCError } from '@orpc/server'
 import {
   DEFAULT_MATRIX,
   dec,
+  type Feature,
+  featuresOn,
   isGroupAdmin,
   limitKindOf,
   type MemberRole,
@@ -16,7 +18,7 @@ import { and, eq, inArray, type SQL, sql } from 'drizzle-orm'
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 import type { Database } from '../db/client.ts'
 import { members } from '../db/schema/auth.ts'
-import { permissionOverrides } from '../db/schema/governance.ts'
+import { organizationFeatures, permissionOverrides } from '../db/schema/governance.ts'
 import { memberProperties, properties } from '../db/schema/tenancy.ts'
 
 export type Access = {
@@ -31,6 +33,8 @@ export type Access = {
   propertyIds: string[]
   // This member's effective rules: the default matrix with the organization's overrides applied.
   rules: Record<Permission, PermissionRule>
+  // Modules switched on for this group (decision 0021).
+  features: Feature[]
 }
 
 export async function effectiveRules(
@@ -63,10 +67,24 @@ export async function effectiveRules(
   ) as Record<Permission, PermissionRule>
 }
 
+export async function loadFeatures(
+  db: Pick<Database, 'select'>,
+  organizationId: string,
+  allOn = false,
+): Promise<Feature[]> {
+  if (allOn) return featuresOn(new Map(), true)
+  const rows = await db
+    .select({ feature: organizationFeatures.feature, enabled: organizationFeatures.enabled })
+    .from(organizationFeatures)
+    .where(eq(organizationFeatures.organizationId, organizationId))
+  return featuresOn(new Map(rows.map((row) => [row.feature, row.enabled])))
+}
+
 export async function loadAccess(
   db: Pick<Database, 'select'>,
   organizationId: string,
   user: { id: string; name: string },
+  options: { allFeatures?: boolean } = {},
 ): Promise<Access | undefined> {
   const [member] = await db
     .select({ id: members.id, role: members.role, allProperties: members.allProperties })
@@ -77,7 +95,7 @@ export async function loadAccess(
 
   const role = member.role as MemberRole
   const allProperties = isGroupAdmin(role) || member.allProperties
-  const [propertyRows, rules] = await Promise.all([
+  const [propertyRows, rules, features] = await Promise.all([
     allProperties
       ? Promise.resolve([])
       : db
@@ -85,6 +103,7 @@ export async function loadAccess(
           .from(memberProperties)
           .where(eq(memberProperties.memberId, member.id)),
     effectiveRules(db, organizationId, role),
+    loadFeatures(db, organizationId, options.allFeatures),
   ])
 
   return {
@@ -96,6 +115,7 @@ export async function loadAccess(
     allProperties,
     propertyIds: propertyRows.map((row) => row.id),
     rules,
+    features,
   }
 }
 
@@ -116,6 +136,17 @@ export function propertyScope(access: Access): SQL {
   ) as SQL
 }
 
+// A module that's switched off is off for everyone, owners included, and says so before any
+// permission check (decision 0021). Every module's procedures call this first.
+export function requireFeature(access: Pick<Access, 'features'>, feature: Feature): void {
+  if (!access.features.includes(feature)) {
+    throw new ORPCError('FORBIDDEN', {
+      message: "This isn't switched on for your group. Ask Vento if you'd like to use it.",
+      data: { code: 'FEATURE_OFF', feature },
+    })
+  }
+}
+
 export function can(access: Access, permission: Permission): boolean {
   return access.rules[permission].allowed
 }
@@ -134,7 +165,7 @@ export class ApprovalRequiredError extends ORPCError<
 
 // Checks the permission and, for permissions with a limit, that `value` (a percent or naira
 // amount as a decimal string) is within this member's limit. Above the limit the action needs an
-// approver with a higher limit (PIN approval arrives in brick 9). Nobody approves their own action.
+// approver with a higher limit (PIN approval arrives in brick 10). Nobody approves their own action.
 export function requireWithinLimit(access: Access, permission: Permission, value: string): void {
   requirePermission(access, permission)
   const { limit } = access.rules[permission]

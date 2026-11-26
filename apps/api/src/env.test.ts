@@ -25,3 +25,16 @@ describe('loadEnv', () => {
     )
   })
 })
+
+describe('VENTO_ALL_FEATURES', () => {
+  it('is off unless set, and can be on in development', () => {
+    expect(loadEnv(base).VENTO_ALL_FEATURES).toBe(false)
+    expect(loadEnv({ ...base, VENTO_ALL_FEATURES: 'true' }).VENTO_ALL_FEATURES).toBe(true)
+  })
+
+  it('can never be on in production', () => {
+    expect(() => loadEnv({ ...base, NODE_ENV: 'production', VENTO_ALL_FEATURES: 'true' })).toThrow(
+      'VENTO_ALL_FEATURES',
+    )
+  })
+})

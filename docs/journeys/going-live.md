@@ -16,6 +16,7 @@
    - *Sees:* a setup checklist on home: room types and rooms, rates, taxes, payment methods, staff, devices, imports, go-live date.
    - *Behind the scenes:* one transaction creates organization, entity and property; she becomes `owner`. Audit events for each. Taxes (#27) come pre-filled from Vento's versioned rules for Lagos: VAT, Lagos consumption tax, and a 10% service charge she confirms. She doesn't type any rates.
 
+1a. *Behind the scenes:* the Vento team switches on the modules Kora has bought (front desk first for the pilot) with `pnpm features on`, recorded in Kora's audit log. Folake never sees a switch: modules that are off simply aren't in Vento.
 2. **10:20 · Invite Tunde and grant support access.**
    - *Does:* Settings → Members → invites Tunde Bello as `general_manager`, limited to Kora Victoria Island. Then Account and support (#46) → "Give Vento support access" for 7 days.
    - *Sees:* "Support can view and help set up this account until 19 Nov 2026, 10:21. Revoke anytime."
@@ -61,7 +62,7 @@
     - *Behind the scenes:* devices bound to Kora Victoria Island and revocable. Each caches the PIN hashes of members allowed at the property.
 
 11. **15:30 · Staff and PINs.**
-    - *Does:* invites Chiamaka and Ibrahim (`front_desk`), Grace (`housekeeping_supervisor`), Blessing (`room_attendant`), Femi (`fnb_manager`), Halima (`cashier`), Emeka (`waiter`), all limited to Kora Victoria Island. Each opens the invite email, sets a name and password in one step, and lands on Kora Victoria Island; staff PINs for shared devices come with brick 9.
+    - *Does:* invites Chiamaka and Ibrahim (`front_desk`), Grace (`housekeeping_supervisor`), Blessing (`room_attendant`), Femi (`fnb_manager`), Halima (`cashier`), Emeka (`waiter`), all limited to Kora Victoria Island. Each opens the invite email, sets a name and password in one step, and lands on Kora Victoria Island; staff PINs for shared devices come with brick 10.
     - *Sees:* in Permissions and limits (#26) he reads the defaults (front desk discount ≤ 10%, refund ≤ ₦100,000 for GM, and so on) and leaves them as they are. Only the owner can change them.
 
 12. **Mon 16 Nov · Parallel run.**

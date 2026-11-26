@@ -67,7 +67,7 @@ Not relevant.
 Errors: "Sign in to continue", "Choose an organization first", "You don't have access to this", "A property with this name already exists".
 
 ## Out of scope
-Two-factor sign-in (brick 9, with PIN sign-in), the permissions matrix and audit events (brick 6), screens (brick 7), social sign-in, SSO.
+Two-factor sign-in (brick 10, with PIN sign-in), the permissions matrix and audit events (brick 6), screens (brick 7), social sign-in, SSO.
 
 ## Open questions
 None.
