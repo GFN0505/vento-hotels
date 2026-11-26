@@ -115,7 +115,7 @@ All ten modules are in v1, built in stages. Each stage ends usable by a real pil
 
 | Stage | Scope | A pilot hotel can… |
 |---|---|---|
-| **0. Foundation** | Monorepo, auth with organizations, properties and entities, permissions matrix, audit events, app shell, offline shell, PIN sign-in, demo seed, CI | sign in, set up a group and properties |
+| **0. Foundation** | Monorepo, auth with organizations, properties and entities, permissions matrix, audit events, app shell with a role-shaped Home and an All hotels view, offline shell, PIN sign-in, demo seed, CI | sign in, set up a group and properties |
 | **1. Front office** | Room types and rooms, rate plans (manual), reservations, tape chart, check-in/out, walk-in, folios, payments, cashier shifts, corporate accounts with credit limits and settle-to-company (city ledger balances and statements), night audit, guest register, core reports, owner's daily report, data import | run the front desk without its old PMS |
 | **2. Housekeeping & maintenance** | Room status board, attendant app, inspections, discrepancy check, work orders, OOO, power and diesel log | run rooms and catch sleepers/skippers |
 | **3. Restaurant & bar** | Outlets, menus, POS offline, kitchen tickets, post to room, voids/comps controls | run F&B and charge rooms |

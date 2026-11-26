@@ -31,7 +31,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 ## 1. Reservations & front desk
 | Screen | Status | Stage | Notes |
 |---|---|---|---|
-| Property GM home | designed #2 | 1 | |
+| Property GM home | designed #2 · **shape built (brick 15)** | 1 | Built: Home for one hotel, shaped by role (GM, front desk, housekeeping, restaurant, finance and the rest): figures that say which module brings them, quick actions, the hotel, Needs attention. Arrivals list, house status, VIPs and staff on duty come with Stage 1 data |
 | Tape chart | designed #3 | 1 | |
 | New reservation | designed #4 | 1 | |
 | Reservation detail | designed #5 | 1 | |
@@ -136,7 +136,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 ## 10. Executive analytics and reports
 | Screen | Status | Stage | Notes |
 |---|---|---|---|
-| Group executive home | designed #1 | 6 | |
+| Group executive home | designed #1 · **shape built (brick 15)** | 6 | Built: the "All hotels" Home for group-wide people: figures, hotels as rows that open each hotel's Home, Needs attention across the group. Period switch, department and channel mix, pace and city ledger ageing come with their modules |
 | Owner's daily report, leakage view | designed #20 | 1 | |
 | Board pack | designed #18 | 6 | |
 | **Report viewer template** | designed #35 | 1 | One layout for all 14 catalogue reports: filters, totals, export PDF/Excel, print |

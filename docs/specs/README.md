@@ -28,3 +28,4 @@ A spec that is dropped is deleted, with the reason in the commit message.
 | [Feature switches: build ahead, release per group](stage-0-feature-switches.md) | 0 | Platform | going-live | built (in review) |
 | [Shared devices and staff PIN sign-in](stage-0-devices-and-pin.md) | 0 | Platform | going-live, restaurant-power-cut, room-attendant-shift | built (in review) |
 | [Two-step sign-in](stage-0-two-step-sign-in.md) | 0 | Platform | going-live, owner-morning | built (in review) |
+| [Role-shaped Home and All hotels](stage-0-role-homes.md) | 0 | Platform | owner-morning, front-desk-morning, room-attendant-shift | built (in review) |

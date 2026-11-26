@@ -221,6 +221,14 @@ export function roleSees(role: MemberRole, entry: ModuleEntry): boolean {
   return role === 'owner' || role === 'group_admin' || entry.roles.includes(role)
 }
 
+// Roles whose job can span the group, so their Home has an "All hotels" view (design: ExecHome).
+// Other roles work in one hotel at a time, even when an owner previews them.
+const GROUP_VIEW_ROLES: readonly MemberRole[] = ['owner', 'group_admin', 'finance', 'viewer']
+
+export function spansGroup(role: MemberRole): boolean {
+  return GROUP_VIEW_ROLES.includes(role)
+}
+
 // The menu for a role and the modules switched on for the group.
 export function visibleGroups(role: MemberRole, has: (feature: Feature) => boolean): NavGroup[] {
   return MODULES.map((group) => ({

@@ -1,13 +1,14 @@
 // Home's welcome (as in Vento Real Estate): navy with the brand's slow light, a faint dot grid and
 // the V drawing itself in the corner, the same craft as the sign-in panel. Calm by design: it all
-// stays still for people who ask for reduced motion.
+// stays still for people who ask for reduced motion. `overflow-clip`, not hidden: a focused button
+// inside must never scroll the glows sideways.
 import type { ReactNode } from 'react'
 
 type WelcomeBannerProps = { date: string; title: ReactNode; subtitle: ReactNode; aside?: ReactNode }
 
 export function WelcomeBanner({ date, title, subtitle, aside }: WelcomeBannerProps) {
   return (
-    <section className="auth-panel relative overflow-hidden rounded-2xl px-6 py-8 text-white sm:px-10 sm:py-11">
+    <section className="auth-panel relative overflow-clip rounded-2xl px-6 py-8 text-white sm:px-10 sm:py-11">
       <div className="auth-glow auth-glow-violet" aria-hidden="true" />
       <div className="auth-glow auth-glow-cyan" aria-hidden="true" />
       <div className="auth-grid" aria-hidden="true" />

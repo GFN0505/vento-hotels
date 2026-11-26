@@ -47,7 +47,9 @@ type TopBarProps = { user: { name: string; email: string }; onOpenMenu: () => vo
 
 export function TopBar({ user, onOpenMenu }: TopBarProps) {
   const me = useMe()
-  const { current } = useProperty()
+  const { current: hotel, allHotels } = useProperty()
+  // With "All hotels" chosen there's no single business date to show.
+  const current = allHotels ? undefined : hotel
   const online = useOnline()
 
   // The business date only moves at night audit, so after midnight it can differ from today.
@@ -65,7 +67,7 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
       >
         <Menu className="size-4" />
       </Button>
-      {current ? <PropertyPill /> : null}
+      {hotel ? <PropertyPill /> : null}
       <div className="grow" />
       {current ? (
         <span
@@ -109,25 +111,32 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
 
 // The hotel being worked in, as a quiet pill on the left (as in Vento Real Estate's entity picker).
 // With several hotels it's a native select laid over the pill, so phones get their own picker.
+// People who see the whole group get "All hotels" first.
 function PropertyPill() {
-  const { properties, current, select } = useProperty()
+  const { properties, current, allHotels, canSeeAll, select, selectAll } = useProperty()
   if (!current) return null
   const several = properties.length > 1
+  const label = allHotels ? 'All hotels' : current.name
   return (
-    <div className="relative flex h-11 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 lg:h-9">
-      <span className="text-[10px] font-bold tracking-[0.04em] text-text-3 uppercase">Hotel</span>
-      <span className="min-w-0 truncate font-semibold" title={current.name}>
-        {current.name}
+    <div className="relative flex h-11 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 focus-within:ring-2 focus-within:ring-ring lg:h-9">
+      <span className="text-[10px] font-bold tracking-[0.04em] text-text-3 uppercase">
+        {allHotels ? 'Group' : 'Hotel'}
+      </span>
+      <span className="min-w-0 truncate font-semibold" title={label}>
+        {label}
       </span>
       {several ? (
         <>
           <ChevronDown className="size-3.5 shrink-0 text-text-3" aria-hidden="true" />
           <select
             aria-label="Hotel"
-            value={current.id}
-            onChange={(event) => select(event.target.value)}
+            value={allHotels ? ALL_HOTELS : current.id}
+            onChange={(event) =>
+              event.target.value === ALL_HOTELS ? selectAll() : select(event.target.value)
+            }
             className="absolute inset-0 cursor-pointer opacity-0"
           >
+            {canSeeAll ? <option value={ALL_HOTELS}>All hotels</option> : null}
             {properties.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -139,3 +148,5 @@ function PropertyPill() {
     </div>
   )
 }
+
+const ALL_HOTELS = 'all'

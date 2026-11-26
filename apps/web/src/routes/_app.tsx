@@ -10,7 +10,7 @@ import { TopBar } from '@/components/shell/top-bar'
 import { orpc } from '@/lib/api'
 import { useIdleLock } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
-import { visibleGroups } from '@/lib/navigation'
+import { spansGroup, visibleGroups } from '@/lib/navigation'
 import { loadSignedIn } from '@/lib/session'
 import { ViewAsProvider } from '@/lib/view-as'
 
@@ -50,7 +50,17 @@ function Shell() {
   useIdleLock(organization.data?.device?.idleSeconds, user.name.split(' ')[0] ?? user.name)
 
   return (
-    <PropertyProvider properties={properties.data?.items ?? []}>
+    <PropertyProvider
+      properties={properties.data?.items ?? []}
+      // A shared device works in its own hotel, so it never offers the whole group; nor does a
+      // preview of a role that works in one hotel.
+      groupWide={Boolean(
+        organization.data?.member.allProperties &&
+          !organization.data.device &&
+          organization.role &&
+          spansGroup(organization.role),
+      )}
+    >
       {/* First tab stop: keyboard users skip the menu in one key press. */}
       <a
         href="#main"

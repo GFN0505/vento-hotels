@@ -55,6 +55,7 @@
 7. **07:04 Group home.**
    - *Does:* taps Home.
    - *Sees:* group executive home (#1): all four properties side by side. Occupancy 71% at Kora Victoria Island and 73% at Kora Abuja, ADR, RevPAR, revenue by department, cash by entity (Kora Hospitality Ltd), city ledger total, and "Needs attention": "Acme Energy Ltd · ₦3,720,000.00 over 30 days", "Room 503 out of order until 27 Nov · AC compressor".
+   - *Then:* taps the Kora Abuja row to see that hotel's day (its Home as its GM sees it), and **All hotels** in the banner to come back. The top-bar hotel switch offers the same: **All hotels** first, then each hotel.
    - *Behind the scenes:* group figures read from the closed business dates of each property, so a property still before its audit shows its last closed date with a label.
 
 8. **Done.**

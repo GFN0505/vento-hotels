@@ -96,6 +96,15 @@ export const homeSummarySchema = z.object({
   members: z.number().int().nullable(),
   pendingInvites: z.number().int().nullable(),
   devices: z.number().int().nullable(),
+  // Per hotel the member can see: who can work there (including group-wide people) and its shared
+  // devices. Counts only, so every role can see how its own hotel is staffed.
+  byHotel: z.array(
+    z.object({
+      propertyId: idSchema,
+      people: z.number().int(),
+      devices: z.number().int(),
+    }),
+  ),
 })
 export type HomeSummary = z.infer<typeof homeSummarySchema>
 
