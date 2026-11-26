@@ -7,6 +7,10 @@ import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { rooms, roomTypes } from '../db/schema/rooms.ts'
+import { type BaseRate, baseRates } from '../rates/base-rate.ts'
+import { lockHotelRates } from '../rates/context.ts'
+import { tonightAfter, tonightBefore } from '../rates/guards.ts'
+import { roomTypeRestored } from '../rates/room-type-restored.ts'
 import { type Access, scopeToProperties } from '../tenancy/access.ts'
 import {
   auditAt,
@@ -54,14 +58,23 @@ const typeColumns = {
   roomCount: activeRooms.mapWith(Number),
 }
 
-type TypeRow = Omit<RoomTypeView, 'maxGuests' | 'archivedAt'> & { archivedAt: Date | null }
+type TypeRow = Omit<RoomTypeView, 'maxGuests' | 'archivedAt' | 'baseRate'> & {
+  archivedAt: Date | null
+}
 
-function toView(row: TypeRow): RoomTypeView {
+function toView(row: TypeRow, baseRate: BaseRate | null): RoomTypeView {
   return {
     ...row,
+    baseRate,
     maxGuests: row.maxAdults + row.maxChildren,
     archivedAt: row.archivedAt?.toISOString() ?? null,
   }
+}
+
+// A type's view with its Base rate column, read from the hotel's base rate plan.
+async function view(db: Reader, access: Access, row: TypeRow): Promise<RoomTypeView> {
+  const base = await baseRates(db, access.organizationId, row.propertyId)
+  return toView(row, base.forType(row.id))
 }
 
 function inScope(access: Access): SQL {
@@ -156,7 +169,7 @@ export async function listRoomTypes(
     eq(roomTypes.propertyId, property.id),
     query.includeArchived ? undefined : isNull(roomTypes.archivedAt),
   )
-  const [rows, [total]] = await Promise.all([
+  const [rows, [total], base] = await Promise.all([
     db
       .select(typeColumns)
       .from(roomTypes)
@@ -169,13 +182,18 @@ export async function listRoomTypes(
       .limit(query.pageSize)
       .offset(pageOffset(query)),
     db.select({ value: count() }).from(roomTypes).where(where),
+    baseRates(db, access.organizationId, property.id),
   ])
-  return toPage(rows.map(toView), total?.value ?? 0, query)
+  return toPage(
+    rows.map((row) => toView(row, base.forType(row.id))),
+    total?.value ?? 0,
+    query,
+  )
 }
 
 export async function getRoomType(db: Database, access: Access, id: string): Promise<RoomTypeView> {
   requireRoomsSetup(access)
-  return toView(await findType(db, access, id))
+  return view(db, access, await findType(db, access, id))
 }
 
 // Adds a type at the end of the hotel's order, with its audit event. Used by "Add room type" and
@@ -220,7 +238,7 @@ export async function createRoomType(
     return await db.transaction(async (tx) => {
       await holdProperty(tx, access, property.id)
       const id = await insertRoomType(tx, access, property, fields)
-      return toView(await findType(tx, access, id))
+      return view(tx, access, await findType(tx, access, id))
     })
   } catch (error) {
     return explainUniqueViolation(db, error, property.id, fields)
@@ -266,7 +284,7 @@ export async function updateRoomType(
         })
       }
       const diff = changes(current as unknown as TypeFields, next)
-      if (!diff.changed) return toView(current)
+      if (!diff.changed) return view(tx, access, current)
       await requireNoClash(
         tx,
         current.propertyId,
@@ -285,7 +303,7 @@ export async function updateRoomType(
         before: diff.before,
         after: { ...diff.after, liveProperty: isLive(property) },
       })
-      return toView(await findType(tx, access, id))
+      return view(tx, access, await findType(tx, access, id))
     })
   } catch (error) {
     if (!propertyId) throw error
@@ -319,7 +337,7 @@ export async function archiveRoomType(
   requireRoomsSetup(access)
   return db.transaction(async (tx) => {
     const type = await lockType(tx, access, input.id)
-    if (type.archivedAt) return toView(type)
+    if (type.archivedAt) return view(tx, access, type)
     const property = await holdProperty(tx, access, type.propertyId)
     // Counted after the lock, so rooms added by a transaction that held it are seen.
     const [active] = await tx
@@ -327,7 +345,10 @@ export async function archiveRoomType(
       .from(rooms)
       .where(and(eq(rooms.roomTypeId, type.id), isNull(rooms.archivedAt)))
     if (active && active.value > 0) throw typeHasRooms(type.name, active.value)
+    const tonight = await tonightBefore(tx, access, property)
     await tx.update(roomTypes).set({ archivedAt: new Date() }).where(eq(roomTypes.id, type.id))
+    // Records tonight's prices for the type, so a restore later today is compared with them.
+    const rates = await tonightAfter(tx, access, property, tonight, undefined)
     await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [type.id] })
     await recordAudit(tx, access, {
       action: 'room_type.archived',
@@ -335,10 +356,10 @@ export async function archiveRoomType(
       entityId: type.id,
       ...auditAt(property),
       before: { archived: false },
-      after: { archived: true, ...typeEvent(property, type) },
+      after: { archived: true, ...typeEvent(property, type), ...rates },
       reason: input.reason ?? null,
     })
-    return toView(await findType(tx, access, type.id))
+    return view(tx, access, await findType(tx, access, type.id))
   })
 }
 
@@ -353,27 +374,34 @@ export async function restoreRoomType(
   let name: string | undefined
   try {
     return await db.transaction(async (tx) => {
+      // Restoring adds the type back to rate plans, so it takes the hotel's rates lock before the
+      // type row, in the same order as rate plan writes (rates lock → plans → room types).
+      await lockHotelRates(tx, (await findType(tx, access, input.id)).propertyId)
       const type = await lockType(tx, access, input.id)
-      if (!type.archivedAt) return toView(type)
+      if (!type.archivedAt) return view(tx, access, type)
       propertyId = type.propertyId
       name = type.name
       const property = await holdProperty(tx, access, type.propertyId)
       await requireNoClash(tx, property.id, { name: type.name }, type.id)
+      const tonight = await tonightBefore(tx, access, property)
       await tx
         .update(roomTypes)
         .set({ archivedAt: null, sortOrder: nextSortOrder(property.id) })
         .where(eq(roomTypes.id, type.id))
       await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [type.id] })
+      await roomTypeRestored(tx, access, property, { id: type.id, name: type.name })
+      // Back on its plans: cheaper tonight than before it was archived needs a reason.
+      const rates = await tonightAfter(tx, access, property, tonight, input.reason)
       await recordAudit(tx, access, {
         action: 'room_type.restored',
         entityType: 'room_type',
         entityId: type.id,
         ...auditAt(property),
         before: { archived: true },
-        after: { archived: false, ...typeEvent(property, type) },
+        after: { archived: false, ...typeEvent(property, type), ...rates },
         reason: input.reason ?? null,
       })
-      return toView(await findType(tx, access, type.id))
+      return view(tx, access, await findType(tx, access, type.id))
     })
   } catch (error) {
     if (!propertyId) throw error

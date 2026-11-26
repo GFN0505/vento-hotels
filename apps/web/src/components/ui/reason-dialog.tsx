@@ -17,6 +17,8 @@ type Props = {
   title: string
   description?: ReactNode
   label: string
+  // Under the reason; "Recorded with your name." unless the action says more.
+  hint?: string
   confirmLabel: string
   pending: boolean
   error?: string | undefined
@@ -34,6 +36,7 @@ export function ReasonDialog({
   title,
   description,
   label,
+  hint = REASON_HINT,
   confirmLabel,
   pending,
   error,
@@ -95,7 +98,7 @@ export function ReasonDialog({
             label={label}
             value={reason}
             maxLength={500}
-            hint={REASON_HINT}
+            hint={hint}
             error={problem}
             validate={reasonProblem}
             onChange={(event) => setReason(event.target.value)}

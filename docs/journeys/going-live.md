@@ -13,7 +13,7 @@
 
 1. **Thu 12 Nov, 10:00 · Create the group.**
    - *Does:* Mrs Okafor signs up, sets up 2FA, and follows onboarding (#19), which asks only for names and the state: organization "Kora Hotels Group" → company "Kora Hospitality Ltd" → hotel "Kora Victoria Island", Lagos.
-   - *Sees:* a setup checklist on Home: **Complete hotel and company details** ("Address, RC number, TIN and VAT, for invoices and the guest register"), **Set up rooms** ("Room types and rooms, so you can sell them"), rates, taxes, payment methods, staff, devices, imports, go-live date.
+   - *Sees:* a setup checklist on Home: **Complete hotel and company details** ("Address, RC number, TIN and VAT, for invoices and the guest register"), **Set up rooms** ("Room types and rooms, so you can sell them"), **Set rates** ("Prices for each room type, so you can take bookings"), taxes, payment methods, staff, devices, imports, go-live date.
    - *Behind the scenes:* one transaction creates organization, company and hotel (time zone Africa/Lagos, owned by Kora Hospitality Ltd); she becomes `owner`. Audit events for each. Taxes (#27) come pre-filled from Vento's versioned rules for Lagos: VAT, Lagos consumption tax, and a 10% service charge she confirms. She doesn't type any rates.
 
 1b. **10:10 · Complete the hotel and company.**
@@ -51,8 +51,9 @@
    - *Behind the scenes:* one `room.status_changed` per room, `dirty` → `inspected`, reason "Set up". The banner shows only while every room is dirty and none has had a stay; from then on room status belongs to the front desk and housekeeping. Before go-live, nothing in rooms setup raises an exception. After go-live (17 Nov), removing a room, restoring one or changing its type asks for a reason ("Recorded with your name.") and appears in the owner's daily report as "Room count changed".
 
 4. **10:15 · Rate plans (by hand).**
-   - *Does:* there is no rate plan import, so the specialist creates them in #33 with Tunde: BAR (Standard Queen ₦120,000.00, Deluxe King ₦150,000.00, Executive King ₦210,000.00, Junior Suite ₦320,000.00 per night, room only), BAR Bed & Breakfast, Non-refundable (BAR − 10%, derived), Corporate.
-   - *Sees:* derived plans shown linked to BAR; changing BAR updates Non-refundable.
+   - *Does:* **Set rates** on the checklist opens the first-rate table: Tunde types the four weekday prices (₦120,000 / ₦150,000 / ₦210,000 / ₦320,000), leaves Fri and Sat as 'same', keeps 'Also create a Bed & breakfast plan at +₦18,000' and clicks **Create Best available**. He adds Non-refundable (Best available − 10%, non-refundable, full stay at booking), fills Best available's cancellation and deposit, and enters the Festive season in the Rate calendar. Acme's two contract plans are created as Corporate accounts only.
+   - *Sees:* derived plans marked with a link icon; changing Best available moves Bed & breakfast and Non-refundable.
+   - *Behind the scenes:* audit events `rate_plan.created` and `rates.dates_changed`; nothing reaches the owner's report before go-live.
 
 5. **11:00 · Guests, with duplicates.**
    - *Does:* uploads 3,412 guest rows from the old PMS.
@@ -158,7 +159,7 @@ If a hotel later closes, **Archive hotel** at the foot of its settings shows wha
 - First night audit rolls the business date from 16 to 17 Nov; ledger opening balances balance.
 
 ## Open questions
-- **Rate plans aren't an import kind** in the data-import rules, yet corporate account rows need rate plans to exist. Add a rate plan import, or keep them manual?
+- *Settled (rate plans spec, Open question 17):* rate plans come in with the brick 17 import (code, name, room types, meal plan, standard price per room type, cancellation policy, deposit rule); seasons and date prices are set in the Rate calendar afterwards. Until then plans are created by hand, which takes under 10 minutes.
 - **First business date:** what is the property's business date between setup (12 Nov) and go-live (16 Nov), and what date do deposits imported on 14 Nov post on? (The rooms spec walks step 3 on business date 13 Nov, while step 12 calls 16 Nov Vento's first business date.)
 - **Room status at the start of the parallel run:** step 3b marks all 120 rooms inspected on 13 Nov, but on 16 Nov about 75 rooms are occupied in the old PMS and some are dirty. How do in-house stays and real room statuses reach Vento before the first check-out? Linked to the folio history question below.
 - **Opening balances as-of date** when they're imported days before go-live and change during the parallel run: re-import the difference, or post adjustments?

@@ -54,6 +54,12 @@ export function SetupChecklist({ className }: { className?: string }) {
             Set up
           </Link>
         )
+      case 'rates':
+        return (
+          <Link to="/rates/plans" search={step.hotel ? { hotel: step.hotel } : {}} className={cls}>
+            Set rates
+          </Link>
+        )
       case 'team':
         return (
           <Link to="/settings/members" className={cls}>

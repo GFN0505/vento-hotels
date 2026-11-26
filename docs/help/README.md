@@ -43,6 +43,7 @@ docs/help/
 | [Switch between your hotels and the whole group](getting-started/switch-between-hotels.md) | owner-morning | written |
 | [When the internet or power drops](getting-started/when-the-internet-drops.md) | waiter-dinner-service | written |
 | [Set up your rooms](getting-started/set-up-rooms.md) | `going-live.md` step 3 | written |
+| [Set up your rates](getting-started/set-up-rates.md) | `going-live.md` step 4 | written |
 | [Add a hotel](getting-started/add-a-hotel.md) | `going-live.md` step 1b, "Later: opening Kora Lekki" | written |
 | [Manage your companies](getting-started/manage-companies.md) | `going-live.md` step 1b | written |
 

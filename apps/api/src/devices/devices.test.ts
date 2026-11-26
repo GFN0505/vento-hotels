@@ -162,11 +162,15 @@ describe.skipIf(!url)('shared devices and PIN sign-in', () => {
     expect((await rpcRaw(pinCookie, 'pins/set', { pin: '3816', password: PASSWORD })).status).toBe(
       403,
     )
-    const current = await rpcRaw<{ device: { name: string; idleSeconds: number } | null }>(
-      pinCookie,
-      'organization/current',
-    )
+    const current = await rpcRaw<{
+      device: { name: string; idleSeconds: number } | null
+      permissions: string[]
+    }>(pinCookie, 'organization/current')
     expect(current.data.device).toMatchObject({ name: 'POS-VI-03', idleSeconds: 90 })
+    // Rooms and rates are set up on a manager's own sign-in, never from a shared device.
+    expect(current.data.permissions).not.toContain('rooms.setup')
+    expect(current.data.permissions).not.toContain('rates.edit')
+    expect(current.data.permissions).toContain('reservation.manage')
   })
 
   it("doesn't let someone from another hotel sign in on this device", async () => {

@@ -9,6 +9,7 @@ import { invitations, members, organizations, users } from '../db/schema/auth.ts
 import { rooms } from '../db/schema/rooms.ts'
 import { devices, memberPins, properties } from '../db/schema/tenancy.ts'
 import { idleSecondsFor } from '../devices/service.ts'
+import { hotelsWithRates } from '../rates/base-rate.ts'
 import { invitedTo, openInvite, worksAt } from '../team/rules.ts'
 import { type Access, can, propertyScope, scopeToProperties } from './access.ts'
 
@@ -122,11 +123,17 @@ export async function homeSummary(db: Database, access: Access) {
   const invitesBy = inviteRows && new Map(inviteRows.map((row) => [row.propertyId, row.value]))
   const devicesBy = new Map(deviceRows.map((row) => [row.propertyId, row.value]))
   const roomsBy = new Map(roomRows.map((row) => [row.propertyId, row.value]))
+  const rated = await hotelsWithRates(
+    db,
+    org,
+    hotelRows.map((hotel) => hotel.id),
+  )
   const byHotel = hotelRows.map(({ id }) => ({
     propertyId: id,
     people: peopleBy.get(id) ?? 0,
     devices: devicesBy.get(id) ?? 0,
     rooms: roomsBy.get(id) ?? 0,
+    ratesSet: rated.has(id),
     invites: invitesBy ? (invitesBy.get(id) ?? 0) : null,
   }))
   return {

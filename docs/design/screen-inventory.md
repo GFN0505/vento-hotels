@@ -14,7 +14,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 |---|---|---|---|
 | Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7); accept invite built (brick 8); two-step code at sign-in built (brick 12)** | 0 | Includes "no property assigned" and "device not registered" states. Both built: "device not registered" on the lock screen (brick 10), "no property assigned" on Home (brick 7) |
 | Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** | 0 | Approval prompt in Stage 1 (with the first action that needs it); offline PIN sign-in ships with the outbox (decision 0024) |
-| Onboarding and setup checklist | designed #19 · **first steps and Home checklist built (bricks 7, 13)** | 0 | Built: create account, confirm email, group + company + first hotel; Home's "Finish setting up" with the Stage 0 steps and **Set up rooms** (Stage 1 brick 1). Rates and first booking steps come with their bricks |
+| Onboarding and setup checklist | designed #19 · **first steps and Home checklist built (bricks 7, 13)** | 0 | Built: create account, confirm email, group + company + first hotel; Home's "Finish setting up" with the Stage 0 steps and **Set up rooms** (Stage 1 brick 1). **Set rates** (Stage 1 brick 2) opens the hotel's Rate plans; #19's first-rate step is the empty Rate plans page. The first booking step comes with its brick |
 | Properties list and property settings | designed #25 · **built (hotels and companies)** | 0 | Settings › Hotels: list (All hotels), hotel settings, add, archive and restore; logo, address, time zone, check-in/out times, business date, owning company. Night audit time still to build (brick 13) |
 | Entities and departments | designed #25 · **built (hotels and companies)** as Companies | 0 | RC number, TIN, VAT status, hotels owned, archive and restore. Departments and the Ledger column wait for Stage 5 |
 | Members and roles | designed #25 · **built (brick 8)** | 0 | Invite, assign roles, limit to properties. Follows the hotel switch (one hotel: its people, whole-group people marked; All hotels: everyone). PIN-only staff, 2FA and entity limits still to build |
@@ -46,14 +46,14 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Deposits held | designed #34 | 1 | List of deposits not yet applied, with ageing |
 | Cashier shift open and close (blind count) | designed #34 | 1 | Open shift and blind count need their own design |
 | Night audit wizard | designed #15 | 1 | |
-| Room types and rooms (ongoing management) | designed #33 · **built (Stage 1 brick 1)** | 1 | Rates & channels › Rooms: room types (reorder, edit, remove, restore), rooms table with search, quick views, type and floor filters and bulk change type / remove, room and room type sheets, "Add rooms by floor" builder (OnbRooms) as the empty page and a sheet, reason dialog after go-live. Base rate, Sold on and out-of-order dates come with their bricks. Audit trail on a room (`AuditOnRoom`) built as a sheet from the room; ⌘K entries come with the search brick |
-| **Rate plans list and editor** | designed #33 | 1 | Meal plan, cancellation policy, deposit rule, derived plans; #8 is only the grid |
+| Room types and rooms (ongoing management) | designed #33 · **built (Stage 1 brick 1)** | 1 | Rates & channels › Rooms: room types (reorder, edit, remove, restore), rooms table with search, quick views, type and floor filters and bulk change type / remove, room and room type sheets, "Add rooms by floor" builder (OnbRooms) as the empty page and a sheet, reason dialog after go-live. Base rate column built with rate plans (brick 2); Sold on and out-of-order dates come with their bricks. Audit trail on a room (`AuditOnRoom`) built as a sheet from the room; ⌘K entries come with the search brick |
+| **Rate plans list and editor** | designed #33 · **built (Stage 1 brick 2)** | 1 | Rates & channels › Rate plans: the list (reorder, Active / Archived, corporate-only and incl. taxes badges, who follows each plan, "isn't priced on any plan" with Add to Best available), "Your first rate" (#19, OnbRate) as the empty page, and the editor as a page (own or derived prices with live preview, room types with weekday and Fri–Sat prices, meal plan and allocation, cancellation, deposit, min stay, extra adult, who can book it, prices-include-taxes under More options, Duplicate, archive / restore / delete for good, Change history). Read-only for the front desk and offline |
 | Guest register export | designed #35 | 1 | For authorities; foreign nationals section |
 
 ## 2. Booking engine & channel manager
 | Screen | Status | Stage | Notes |
 |---|---|---|---|
-| Rates and restrictions grid, channel status | designed #8 | 4 | |
+| Rates and restrictions grid, channel status | designed #8 · **Rates tab built (Stage 1 brick 2) as the Rate calendar** | 4 | Rates tab built in Stage 1 brick 2 without Rooms left (brick 4), Channels and Parity (Stage 4): 14 or 30 nights, inline cell edit, Change dates sheet, season bands, MIN / CTA / Closed tags, one room type at a time on phones |
 | Booking engine (public) | designed #9 | 4 | |
 | Booking engine settings | pattern | 4 | Photos, descriptions, policies, payment options, colours |
 | Promo codes | pattern | 4 | |

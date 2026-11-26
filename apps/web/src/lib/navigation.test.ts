@@ -41,8 +41,10 @@ describe('navigation', () => {
       labels('front_desk', allOn, can).includes('Rates & channels')
     expect(rates(() => false)).toBe(false)
     expect(rates((p) => p === 'rooms.setup')).toBe(true)
-    // Rates join with rate plans (brick 2); until then Edit rates alone would land on nothing.
-    expect(rates((p) => p === 'rates.edit')).toBe(false)
+    // Rate plans (brick 2): a revenue manager edits rates without setting up rooms.
+    expect(rates((p) => p === 'rates.edit')).toBe(true)
+    // The front desk reads rates to quote by phone.
+    expect(rates((p) => p === 'reservation.manage')).toBe(true)
     // A GM whose rooms and rates permissions were taken away no longer sees it.
     expect(labels('general_manager', allOn, () => false)).not.toContain('Rates & channels')
   })

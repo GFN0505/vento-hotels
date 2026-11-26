@@ -1,14 +1,15 @@
 // Removed room types, folded away under the table, each with Restore. Their rooms stay where they
 // were moved; restoring a type doesn't bring them back.
 import { useMutation } from '@tanstack/react-query'
-import type { RoomTypeView } from '@vento/shared'
+import type { LoweredTonight, RoomTypeView } from '@vento/shared'
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { LoweredDialog, loweredFrom } from '@/components/rates/lowered-dialog'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/cn'
-import { problemMessage } from '@/lib/errors'
+import { errorCode, problemMessage } from '@/lib/errors'
 import { plural } from './format'
 import { useRoomsRefresh } from './queries'
 
@@ -47,13 +48,25 @@ export function ArchivedTypes({
 
 function ArchivedType({ type, canWrite }: { type: RoomTypeView; canWrite: boolean }) {
   const refresh = useRoomsRefresh()
+  // After go-live, a type whose prices come back cheaper than earlier today asks why.
+  const [lowered, setLowered] = useState<LoweredTonight[]>()
+  const [askError, setAskError] = useState<string>()
   const restore = useMutation({
-    mutationFn: () => api.roomTypes.restore({ id: type.id }),
+    mutationFn: (reason?: string) =>
+      api.roomTypes.restore({ id: type.id, ...(reason ? { reason } : {}) }),
     onSuccess: async () => {
+      setLowered(undefined)
       await refresh()
       toast.success(`${type.name} restored`)
     },
-    onError: (error) => toast.error(problemMessage(error)),
+    onError: (error) => {
+      if (errorCode(error) === 'REASON_REQUIRED') {
+        if (lowered) setAskError(problemMessage(error))
+        else setLowered(loweredFrom(error))
+        return
+      }
+      toast.error(problemMessage(error))
+    },
   })
   return (
     <li className="flex items-center gap-3 px-4 py-2 sm:px-5">
@@ -66,10 +79,23 @@ function ArchivedType({ type, canWrite }: { type: RoomTypeView; canWrite: boolea
         disabled={!canWrite}
         loading={restore.isPending}
         aria-label={`Restore ${type.name}`}
-        onClick={() => restore.mutate()}
+        onClick={() => restore.mutate(undefined)}
       >
         Restore
       </Button>
+      {lowered ? (
+        <LoweredDialog
+          lowered={lowered}
+          confirmLabel={`Restore ${type.name}`}
+          pending={restore.isPending}
+          error={askError}
+          onConfirm={(reason) => restore.mutate(reason)}
+          onClose={() => {
+            setLowered(undefined)
+            setAskError(undefined)
+          }}
+        />
+      ) : null}
     </li>
   )
 }

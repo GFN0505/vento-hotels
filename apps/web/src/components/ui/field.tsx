@@ -60,6 +60,11 @@ type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   success?: string | undefined
   // Adds a show/hide button and a Caps Lock warning. Use for every password input.
   revealable?: boolean
+  // Text inside the field before or after the value, e.g. "₦" or "per night".
+  prefix?: string
+  suffix?: string
+  // The label is read by screen readers only (e.g. a price in a table row that names it).
+  hideLabel?: boolean
 }
 
 export function Field({
@@ -70,6 +75,10 @@ export function Field({
   success,
   id,
   revealable,
+  prefix,
+  suffix,
+  hideLabel,
+  className,
   type,
   onBlur,
   onChange,
@@ -128,7 +137,7 @@ export function Field({
           .filter(Boolean)
           .join(' ') || undefined
       }
-      className={revealable ? 'pr-12 lg:pr-10' : undefined}
+      className={cn(revealable && 'pr-12 lg:pr-10', prefix && 'pl-7', suffix && 'pr-20', className)}
       onBlur={handleBlur}
       onChange={handleChange}
       onKeyDown={(event) => {
@@ -145,10 +154,33 @@ export function Field({
 
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <label htmlFor={inputId} className="text-sm font-medium text-text-2">
+      <label
+        htmlFor={inputId}
+        className={cn('text-sm font-medium text-text-2', hideLabel && 'sr-only')}
+      >
         {label}
       </label>
-      {revealable ? (
+      {prefix || suffix ? (
+        <div className="relative">
+          {prefix ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-text-3"
+            >
+              {prefix}
+            </span>
+          ) : null}
+          {input}
+          {suffix ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-sm text-text-3"
+            >
+              {suffix}
+            </span>
+          ) : null}
+        </div>
+      ) : revealable ? (
         <div className="relative">
           {input}
           <button

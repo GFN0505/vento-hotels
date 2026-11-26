@@ -93,6 +93,14 @@ export const PERMISSION_GROUPS: readonly { label: string; permissions: readonly 
   { label: 'Back office', permissions: ['payroll.approve', 'leakage.view'] },
 ]
 export const PERMISSION_KEYS = Object.keys(PERMISSIONS) as Permission[]
+
+// Reading rate plans and the rate calendar comes with any of these (rates spec): read-only for the
+// last two, so the front desk can quote by phone. Only rates.edit changes them.
+export const RATES_READERS: readonly Permission[] = [
+  'rates.edit',
+  'rooms.setup',
+  'reservation.manage',
+]
 export const permissionSchema = z.enum(PERMISSION_KEYS as [Permission, ...Permission[]])
 
 export function limitKindOf(permission: Permission): LimitKind | undefined {

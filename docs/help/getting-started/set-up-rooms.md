@@ -35,5 +35,6 @@ Once your hotel is live (after its first night audit), removing, restoring or ch
 Setting up rooms needs a connection. Offline, the page shows the rooms saved on your device, and the buttons say **Needs a connection**.
 
 ## Related
+- [Set up your rates](set-up-rates.md)
 - [Invite your team](invite-your-team.md)
 - [Switch between hotels](switch-between-hotels.md)
