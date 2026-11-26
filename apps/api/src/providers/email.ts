@@ -31,14 +31,14 @@ export class FileEmailProvider implements EmailProvider {
   }
 
   async send(message: EmailMessage): Promise<void> {
-    const { mkdir, writeFile } = await import('node:fs/promises')
+    const { mkdir, rename, writeFile } = await import('node:fs/promises')
     const { join } = await import('node:path')
     await mkdir(this.folder, { recursive: true })
     const safe = message.to.replace(/[^a-z0-9@.-]/gi, '_')
-    await writeFile(
-      join(this.folder, `${Date.now()}-${safe}.json`),
-      JSON.stringify(message, null, 2),
-    )
+    const file = join(this.folder, `${Date.now()}-${safe}.json`)
+    // Written under a temporary name, then renamed: a reader never sees a half-written email.
+    await writeFile(`${file}.tmp`, JSON.stringify(message, null, 2))
+    await rename(`${file}.tmp`, file)
   }
 }
 
