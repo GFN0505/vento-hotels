@@ -273,6 +273,9 @@ export const homeSummarySchema = z.object({
       people: z.number().int(),
       devices: z.number().int(),
       rooms: z.number().int(),
+      // The "Set rates" checklist step: the hotel has an active plan with own prices covering every
+      // active room type.
+      ratesSet: z.boolean(),
       // Invites not accepted yet for this hotel (pending, expired links included), whole-group
       // invites included: the same set as invitations.list's total with that hotel. Null for people
       // who don't manage the team.

@@ -63,6 +63,13 @@ export const roomTypeViewSchema = z.object({
   sortOrder: z.number().int(),
   // Active rooms of this type; never typed.
   roomCount: z.number().int(),
+  // The Base rate column (rate plans spec): the weekday standard price on the hotel's base plan
+  // (the first plan in sort order with own prices, open to anyone). `amount` is null when the base
+  // plan doesn't cover this type ("Not priced", linking to the plan); `baseRate` is null when the
+  // hotel has no such plan yet.
+  baseRate: z
+    .object({ ratePlanId: idSchema, ratePlanName: z.string(), amount: z.string().nullable() })
+    .nullable(),
   archivedAt: z.iso.datetime().nullable(),
 })
 export type RoomTypeView = z.infer<typeof roomTypeViewSchema>

@@ -92,6 +92,13 @@
       "when": 1795702785459,
       "tag": "0012_devices_by_hotel",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795709448294,
+      "tag": "0013_rate_plans",
+      "breakpoints": true
     }
   ]
 }

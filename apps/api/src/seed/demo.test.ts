@@ -5,6 +5,8 @@ import type {
   HomeSummary,
   MemberView,
   Property,
+  RateCalendar,
+  RatePlanView,
   RoomTypeView,
   RoomView,
 } from '@vento/shared'
@@ -127,14 +129,14 @@ describe.skipIf(!url)('demo seed', () => {
     // Two people see every hotel (owner and finance); nine more work at Victoria Island, Sade also
     // at Ikeja GRA. Ngozi's invite is for Abuja.
     expect(await byName(await signInAs(`adaeze@${options.emailDomain}`))).toEqual({
-      'Kora Victoria Island': { people: 11, devices: 3, rooms: 120, invites: 0 },
-      'Kora Ikeja GRA': { people: 3, devices: 1, rooms: 86, invites: 0 },
-      'Kora Abuja': { people: 2, devices: 0, rooms: 104, invites: 1 },
-      'Kora Port Harcourt': { people: 2, devices: 0, rooms: 72, invites: 0 },
+      'Kora Victoria Island': { people: 11, devices: 3, rooms: 120, ratesSet: true, invites: 0 },
+      'Kora Ikeja GRA': { people: 3, devices: 1, rooms: 86, ratesSet: true, invites: 0 },
+      'Kora Abuja': { people: 2, devices: 0, rooms: 104, ratesSet: true, invites: 1 },
+      'Kora Port Harcourt': { people: 2, devices: 0, rooms: 72, ratesSet: true, invites: 0 },
     })
     const frontDesk = await signInAs(`chiamaka@${options.emailDomain}`)
     expect(await byName(frontDesk)).toEqual({
-      'Kora Victoria Island': { people: 11, devices: 3, rooms: 120, invites: null },
+      'Kora Victoria Island': { people: 11, devices: 3, rooms: 120, ratesSet: true, invites: null },
     })
     const home = await t.rpc<HomeSummary>(frontDesk, 'organization/home', {})
     expect(home.data.members).toBeNull()
@@ -214,5 +216,64 @@ describe.skipIf(!url)('demo seed', () => {
       action: 'room.created',
       after: { liveProperty: false },
     })
+  })
+  it('prices Kora Victoria Island as the rate plans spec shows, and the other hotels too', async () => {
+    const seeded = await seedDemo(t.db, options)
+    await switchFeature(t.db, seeded.organizationId, {
+      feature: 'front_desk',
+      to: 'on',
+      reason: 'Seed test',
+    })
+    const owner = await signInAs(`adaeze@${options.emailDomain}`)
+    const hotels = (await t.rpc<{ items: Property[] }>(owner, 'properties/list', {})).data.items
+    const vi = hotels.find((hotel) => hotel.name === 'Kora Victoria Island')
+    const plans = await t.rpc<{ items: RatePlanView[] }>(owner, 'ratePlans/list', {
+      propertyId: vi?.id,
+    })
+    expect(plans.data.items.map((plan) => [plan.code, plan.pricing, plan.bookableBy])).toEqual([
+      ['BAR', 'own', 'anyone'],
+      ['BB', 'derived', 'anyone'],
+      ['NRF', 'derived', 'anyone'],
+      ['ACME', 'own', 'corporate_only'],
+      ['ACME-BB', 'own', 'corporate_only'],
+    ])
+    expect(plans.data.items[1]).toMatchObject({
+      adjustment: { kind: 'amount', value: '18000.00' },
+      mealAllocation: '18000.00',
+    })
+    expect(plans.data.items[4]).toMatchObject({
+      roomTypes: [{ weekday: '130000.00' }],
+      mealPlan: 'bed_breakfast',
+      cancellation: { kind: 'free_until', hours: 24 },
+      deposit: { kind: 'none' },
+    })
+    // Chiamaka reads Deluxe King B&B on Saturday 5 Dec: ₦183,000, min stay 2.
+    const desk = await signInAs(`chiamaka@${options.emailDomain}`)
+    const cal = await t.rpc<RateCalendar>(desk, 'rates/calendar', {
+      propertyId: vi?.id,
+      from: '2026-12-02',
+      nights: 4,
+    })
+    const row = (type: string, plan: string) =>
+      cal.data.roomTypes.find((t) => t.code === type)?.rows.find((r) => r.code === plan)
+    expect(row('DLK', 'BB')?.cells[3]).toMatchObject({ price: '183000.00', minStay: 2 })
+    expect(row('EXK', 'NRF')?.cells[0]?.closedToArrival).toBe(true)
+    const festive = await t.rpc<RateCalendar>(desk, 'rates/calendar', {
+      propertyId: vi?.id,
+      from: '2026-12-18',
+      nights: 16,
+    })
+    expect(festive.data.seasons).toEqual([
+      { name: 'Festive season', from: '2026-12-18', to: '2027-01-02' },
+    ])
+    for (const name of ['Kora Ikeja GRA', 'Kora Abuja', 'Kora Port Harcourt']) {
+      const hotel = hotels.find((h) => h.name === name)
+      const list = await t.rpc<{ items: RatePlanView[] }>(owner, 'ratePlans/list', {
+        propertyId: hotel?.id,
+      })
+      expect(list.data.items.map((plan) => plan.code)).toEqual(['BAR', 'BB', 'NRF'])
+    }
+    const home = await t.rpc<HomeSummary>(owner, 'organization/home', {})
+    expect(home.data.byHotel.every((hotel) => hotel.ratesSet)).toBe(true)
   })
 })

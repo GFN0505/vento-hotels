@@ -2,6 +2,7 @@
 // the typed oRPC client, so request and response types are defined once, here (non-negotiable 7).
 import { devicesContract } from './devices.ts'
 import { governanceContract } from './governance.ts'
+import { ratesContract } from './rates.ts'
 import { roomsContract } from './rooms.ts'
 import { systemContract } from './system.ts'
 import { teamContract } from './team.ts'
@@ -15,11 +16,13 @@ export const contract = {
   invitations: teamContract.invitations,
   ...devicesContract,
   ...roomsContract,
+  ...ratesContract,
 }
 export type Contract = typeof contract
 
 export * from './devices.ts'
 export * from './governance.ts'
+export * from './rates.ts'
 export * from './rooms.ts'
 export * from './system.ts'
 export * from './team.ts'

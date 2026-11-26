@@ -39,7 +39,12 @@ apps/
       rooms/                 room types and rooms per property: reads, writes, bulk, locks,
                              connecting rooms, "Add rooms by floor" with new types (room-batch.ts),
                              Mark inspected, the roomCountChanged hook (Stage 1)
-      seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14); rooms.ts: 382 rooms (Stage 1)
+      rates/                 rate plans and rates per property (Stage 1 brick 2): plan reads and writes,
+                             the first-rate table, the rate calendar, Change dates with Undo, the
+                             "₦0 or less" and "lowered tonight" guards (guards.ts), quoteStay and
+                             listBookablePlans for bookings (quote.ts), the Rooms base rate and Home's
+                             "Set rates" step (base-rate.ts)
+      seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14); rooms.ts: 382 rooms; rates.ts: 14 rate plans and Victoria Island's dates (Stage 1)
       jobs/                  pg-boss queue, email retries, heartbeat                   (brick 17); daily purge of unconfirmed uploads (Stage 1)
       observability/         pino logs with request ids, Sentry error reports          (brick 17)
       providers/email.ts     EmailProvider and its console, file and memory versions   (brick 5); SMS, WhatsApp, payments, channel manager as each stage needs them
@@ -47,7 +52,7 @@ apps/
       storage/               what an uploaded image really is (PNG/JPEG from its bytes); PNGs for the seed and tests (Stage 1)
       test/harness.ts        signs real people in for tests through Better Auth        (brick 5)
       pdf/                   @react-pdf/renderer documents                            (Stage 1)
-    drizzle/                 generated SQL migrations, committed (0000–0011)          (bricks 4–12, Stage 1)
+    drizzle/                 generated SQL migrations, committed (0000–0013)          (bricks 4–12, Stage 1)
   web/                       Vite + React 19 SPA
     src/
       routes/                sign-in, get-started, setup, forgot/reset password, join, lock, _app (shell): Home, module pages, settings (bricks 7–12)
@@ -79,9 +84,11 @@ packages/
       roles.ts, password.ts  the 16 hotel roles; the password rule                     (bricks 5, 7)
       permissions.ts         permission keys, limit kinds, default matrix            (brick 6)
       rooms.ts               room fields, numbering, "Add rooms by floor" expansion   (Stage 1)
+      rates.ts               rate plan fields and the pricing maths: derived prices rounded half-up to
+                             the naira, weekend nights, date prices, restrictions, quotes (Stage 1)
       features.ts            the feature catalog (decision 0021)                       (brick 9)
       devices.ts, pin.ts     device kinds and idle times; the PIN rule                 (brick 10)
-      contracts/             the oRPC contract: system, tenancy, governance, team, devices (bricks 4–10), rooms (Stage 1)
+      contracts/             the oRPC contract: system, tenancy, governance, team, devices (bricks 4–10), rooms, rates (Stage 1)
 deploy/                      images, compose.yml, Caddyfile, backups, server bootstrap (brick 18)
 ```
 New modules from Stage 1 add their own folder in `apps/api/src/` (service, router, tests next to them) and their schemas and contract in `packages/shared/src/`, following the `add-module` skill.
@@ -144,6 +151,7 @@ New modules from Stage 1 add their own folder in `apps/api/src/` (service, route
 - **Availability locking:** booking, modifying, cancelling and channel ingest lock the room-type inventory rows for the dates (`SELECT … FOR UPDATE`) in one transaction. Overbooking only up to a configured limit.
 - **Rooms** (migration 0008, Stage 1 brick 1): `room_types`, `rooms` and `room_connections` per property, and `properties.live_since` (go-live). All three reference their hotel by a composite foreign key `(organization_id, property_id) → properties(organization_id, id)` (migration 0009), so a row can't name another group's hotel. A room's type is a composite foreign key `(property_id, room_type_id)`, so a room can't use another hotel's type even by a hand-written query; connecting rooms are one row per pair. Room numbers are unique per hotel including archived rooms (a database constraint), so concurrent bulk adds can't create the same room twice. **The number of rooms in a type is never stored**: it is counted from active rooms. Every change to it (create, bulk create, archive, restore, delete, change type, archive a type) calls `roomCountChanged(tx, …)` in `apps/api/src/rooms/room-count.ts` inside its transaction; it does nothing yet, and brick 4 makes it lock and adjust the room-type inventory rows from the business date on. Room writes hold their types `FOR SHARE` and archiving a type takes it `FOR UPDATE`, so a type can't be archived while rooms are being added to it.
 - **Hotels and companies** (migration 0010, Stage 1): `properties` and `entities` gain a `version` (each save sends the version it started from, so nobody overwrites someone else's change) and case-insensitive unique names per group, archived included; a company's RC number and TIN (compared by digits) are unique per group. A live hotel's change of owning company is stored as `pending_entity_id` + `pending_entity_from` (the next business date) and applied by night audit, so a business date is never split between two companies' books; a composite key `(organization_id, pending_entity_id) → entities(organization_id, id)` keeps it in the group. `file_uploads` records every file sent to storage (`pending → confirmed | rejected | expired`), with a composite key to its hotel; `properties.logo_upload_id` points at the current logo. Migration 0011 makes a hotel's company (`entity_id`) and logo composite keys with `organization_id` too, adds the uploader's member key, and stores a live company's scheduled VAT registration change (`pending_vat_registered` + `pending_vat_from`, applied by night audit like the company change). Writes that attach something to a hotel (devices, invitations and access grants, rooms and room types) hold the hotel row `FOR SHARE` in their transaction, and archiving takes it `FOR UPDATE`, so nothing new lands on a hotel while it is archived.
+- **Rate plans** (migration 0013, Stage 1 brick 2): `rate_plans` (terms, own or derived, a self-referencing composite key `(property_id, parent_id) → rate_plans(property_id, id)` so a parent is always in the same hotel, `version` for "someone else saved first"), `rate_plan_room_types` (the room types a plan sells, with the standard weekday and Fri–Sat prices on own-price plans) and `rate_dates` (one row per own-price plan × room type × night with a date price, restrictions or a season name; a row with nothing set is deleted). All carry `organization_id` and `property_id` with composite keys to their hotel; money is `numeric(14,2)` with `currency` (NGN only, a check), percentages `numeric(7,4)`, and check constraints mirror the form rules (whole naira, one adjustment, meal allocation with meal plans). **A derived plan's prices are never stored**: every reader prices through `@vento/shared`'s maths (`rates/pricing-data.ts` loads the inputs), and every rates write re-checks inside its transaction that no derived plan drops to ₦0 or less and, after go-live, that tonight's prices didn't go down without a reason. Prices don't move inventory, so no availability lock is taken; bookings (brick 4) call `quoteStay` inside their own transaction.
 - Statutory rates (VAT, consumption tax, service charge, payroll deductions) are versioned configuration with effective dates.
 
 ## Background jobs
