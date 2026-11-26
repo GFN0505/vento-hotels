@@ -30,7 +30,21 @@ const router = createRouter({
   context: { queryClient },
   defaultPreload: 'intent',
   scrollRestoration: true,
+  // A page still downloading shows a skeleton after a moment, not the previous page's content.
+  defaultPendingMs: 150,
+  defaultPendingMinMs: 0,
+  defaultPendingComponent: PagePending,
 })
+
+function PagePending() {
+  return (
+    <div role="status" aria-label="Loading" className="flex flex-col gap-4">
+      <span className="h-5 w-32 animate-pulse rounded-sm bg-surface-2" />
+      <span className="h-7 w-56 animate-pulse rounded-sm bg-surface-2" />
+      <span className="h-48 animate-pulse rounded-lg bg-surface-2" />
+    </div>
+  )
+}
 
 declare module '@tanstack/react-router' {
   interface Register {

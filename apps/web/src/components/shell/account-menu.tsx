@@ -24,14 +24,21 @@ function initials(name: string): string {
     .join('')
 }
 
-type AccountMenuProps = { name: string; email: string; onSharedDevice: boolean }
+type AccountMenuProps = {
+  name: string
+  email: string
+  onSharedDevice: boolean
+  // "26 Nov 2026": on phones the top bar has no room for it, so it's here.
+  businessDate?: string | undefined
+}
 
-export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
+export function AccountMenu({ name, email, onSharedDevice, businessDate }: AccountMenuProps) {
   const me = useMe()
   const [settingPin, setSettingPin] = useState(false)
   const [previewing, setPreviewing] = useState(false)
   const [twoStep, setTwoStep] = useState(false)
   const wide = useMediaQuery('(min-width: 1024px)')
+  const phone = useMediaQuery('(max-width: 639px)')
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -70,6 +77,12 @@ export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
 
   const items = (
     <>
+      {businessDate && phone ? (
+        <p className="flex flex-col px-3 py-2">
+          <span className="text-sm text-text-3">Business date</span>
+          <span className="num font-medium">{businessDate}</span>
+        </p>
+      ) : null}
       <div className="my-1 h-px bg-border" />
       <ThemeSwitch />
       <div className="my-1 h-px bg-border" />

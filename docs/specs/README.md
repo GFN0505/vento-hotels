@@ -33,3 +33,4 @@ A spec that is dropped is deleted, with the reason in the commit message.
 | [Stage 1 plan: front office bricks](stage-1-plan.md) | 1 | Reservations & Front Desk, Finance | all Stage 1 journeys | approved |
 | [Room types and rooms](stage-1-room-types-and-rooms.md) | 1 | Reservations & Front Desk | going-live | approved |
 | [Hotels and companies](stage-1-hotels-and-companies.md) | 1 | Platform | going-live | approved |
+| [The hotel switch scopes every page](stage-1-hotel-switch-scope.md) | 1 | Platform | owner-morning, going-live | approved (owner, 2026-11-26, for the agreed rule) |

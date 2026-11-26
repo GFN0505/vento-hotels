@@ -4,8 +4,13 @@ import { ORPCError } from '@orpc/server'
 
 export const SETUP_ONLY = 'Only the owner or a group admin can change hotel details. Ask the owner.'
 
+// Unknown, in another group, or outside the caller's access: all look the same, so it never reveals
+// that a hotel exists. The web app matches on the code, not the message.
 export const hotelNotFound = () =>
-  new ORPCError('NOT_FOUND', { message: "We couldn't find that hotel" })
+  new ORPCError('NOT_FOUND', {
+    message: "We couldn't find that hotel",
+    data: { code: 'PROPERTY_NOT_FOUND' },
+  })
 
 export const companyNotFound = () =>
   new ORPCError('NOT_FOUND', { message: "We couldn't find that company" })

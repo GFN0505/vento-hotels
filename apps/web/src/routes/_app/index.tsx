@@ -25,6 +25,8 @@ import { visibleGroups } from '@/lib/navigation'
 import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/_app/')({
+  // The tab title as soon as navigation starts (components/shell/route-title.ts).
+  staticData: { title: 'Home' },
   component: Home,
 })
 
@@ -78,25 +80,10 @@ function Home() {
   const title = `${greeting()}${firstName ? `, ${firstName}` : ''}`
   const workspace = <Workspace groups={role ? visibleGroups(role, me.has, me.can) : []} />
 
-  // Switching view replaces most of the page, so focus moves to the greeting and the live region
-  // says what's now shown; keyboard and screen-reader users never land on nothing.
-  function focusTop() {
-    requestAnimationFrame(() => document.querySelector<HTMLElement>('main h1')?.focus())
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-  function openHotel(id: string) {
-    select(id)
-    focusTop()
-  }
-  function openGroup() {
-    selectAll()
-    focusTop()
-  }
-  const announce = (
-    <p className="sr-only" aria-live="polite">
-      {viewName ? `Showing ${viewName}` : ''}
-    </p>
-  )
+  // The shell moves focus to the greeting and says what's shown when the view changes
+  // (components/shell/hotel-change.tsx).
+  const openHotel = (id: string) => select(id, { moveFocus: true })
+  const openGroup = () => selectAll({ moveFocus: true })
 
   if (hotelsQuery.isError) {
     return (
@@ -130,7 +117,6 @@ function Home() {
           subtitle={[group, plural(properties.length, 'hotel')].filter(Boolean).join(' · ')}
         />
         <Figures heading="Across the group" figures={role ? groupFigures(role) : []} />
-        {announce}
         <Columns
           // The hotels come first on phones: picking one is the group view's main job.
           mainFirst
@@ -178,7 +164,6 @@ function Home() {
           ) : undefined
         }
       />
-      {announce}
       {focus && current ? (
         <Figures heading={focus.today(current.name)} figures={focus.figures} />
       ) : null}

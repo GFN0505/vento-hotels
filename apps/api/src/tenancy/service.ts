@@ -3,12 +3,13 @@
 // from input.
 import { ORPCError } from '@orpc/server'
 import { PERMISSION_KEYS } from '@vento/shared'
-import { and, count, eq, gt, isNull } from 'drizzle-orm'
+import { and, count, eq, isNull } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { invitations, members, organizations, users } from '../db/schema/auth.ts'
 import { rooms } from '../db/schema/rooms.ts'
-import { devices, memberPins, memberProperties, properties } from '../db/schema/tenancy.ts'
+import { devices, memberPins, properties } from '../db/schema/tenancy.ts'
 import { idleSecondsFor } from '../devices/service.ts'
+import { invitedTo, openInvite, worksAt } from '../team/rules.ts'
 import { type Access, can, propertyScope, scopeToProperties } from './access.ts'
 
 const notFound = () => new ORPCError('NOT_FOUND', { message: "We couldn't find that" })
@@ -54,24 +55,39 @@ export async function currentOrganization(db: Database, access: Access) {
 }
 
 // Home's figures: the hotels you can see with their active rooms, and for people who manage the
-// team, how many people, pending invites and live shared devices there are.
+// team, how many people, invites not accepted yet (expired links included, as the Invited list
+// shows them) and live shared devices there are. Each hotel's people and invites use the same rules
+// as members.list and invitations.list with that hotel.
 export async function homeSummary(db: Database, access: Access) {
   const org = access.organizationId
-  const [hotelRows, [groupWide], assigned, deviceRows, roomRows, team] = await Promise.all([
+  const managesTeam = can(access, 'setup.manage')
+  const activeHotels = and(propertyScope(access), isNull(properties.archivedAt))
+  const [hotelRows, peopleRows, inviteRows, deviceRows, roomRows, team] = await Promise.all([
+    db.select({ id: properties.id }).from(properties).where(activeHotels),
     db
-      .select({ id: properties.id })
+      .select({ propertyId: properties.id, value: count(members.id) })
       .from(properties)
-      .where(and(propertyScope(access), isNull(properties.archivedAt))),
-    db
-      .select({ value: count() })
-      .from(members)
-      .where(and(eq(members.organizationId, org), eq(members.allProperties, true))),
-    db
-      .select({ propertyId: memberProperties.propertyId, value: count() })
-      .from(memberProperties)
-      .innerJoin(members, eq(members.id, memberProperties.memberId))
-      .where(and(eq(memberProperties.organizationId, org), eq(members.allProperties, false)))
-      .groupBy(memberProperties.propertyId),
+      .innerJoin(
+        members,
+        and(eq(members.organizationId, properties.organizationId), worksAt(properties.id)),
+      )
+      .where(activeHotels)
+      .groupBy(properties.id),
+    managesTeam
+      ? db
+          .select({ propertyId: properties.id, value: count(invitations.id) })
+          .from(properties)
+          .innerJoin(
+            invitations,
+            and(
+              eq(invitations.organizationId, properties.organizationId),
+              openInvite(),
+              invitedTo(properties.id),
+            ),
+          )
+          .where(activeHotels)
+          .groupBy(properties.id)
+      : Promise.resolve(undefined),
     db
       .select({ propertyId: devices.propertyId, value: count() })
       .from(devices)
@@ -88,39 +104,30 @@ export async function homeSummary(db: Database, access: Access) {
         ),
       )
       .groupBy(rooms.propertyId),
-    can(access, 'setup.manage')
+    managesTeam
       ? Promise.all([
-          db
-            .select({ value: count() })
-            .from(members)
-            .where(eq(members.organizationId, access.organizationId)),
+          db.select({ value: count() }).from(members).where(eq(members.organizationId, org)),
           db
             .select({ value: count() })
             .from(invitations)
-            .where(
-              and(
-                eq(invitations.organizationId, access.organizationId),
-                eq(invitations.status, 'pending'),
-                gt(invitations.expiresAt, new Date()),
-              ),
-            ),
+            .where(and(eq(invitations.organizationId, org), openInvite())),
           db
             .select({ value: count() })
             .from(devices)
-            .where(
-              and(eq(devices.organizationId, access.organizationId), isNull(devices.revokedAt)),
-            ),
+            .where(and(eq(devices.organizationId, org), isNull(devices.revokedAt))),
         ])
       : Promise.resolve(undefined),
   ])
-  const assignedBy = new Map(assigned.map((row) => [row.propertyId, row.value]))
+  const peopleBy = new Map(peopleRows.map((row) => [row.propertyId, row.value]))
+  const invitesBy = inviteRows && new Map(inviteRows.map((row) => [row.propertyId, row.value]))
   const devicesBy = new Map(deviceRows.map((row) => [row.propertyId, row.value]))
   const roomsBy = new Map(roomRows.map((row) => [row.propertyId, row.value]))
   const byHotel = hotelRows.map(({ id }) => ({
     propertyId: id,
-    people: (groupWide?.value ?? 0) + (assignedBy.get(id) ?? 0),
+    people: peopleBy.get(id) ?? 0,
     devices: devicesBy.get(id) ?? 0,
     rooms: roomsBy.get(id) ?? 0,
+    invites: invitesBy ? (invitesBy.get(id) ?? 0) : null,
   }))
   return {
     hotels: hotelRows.length,

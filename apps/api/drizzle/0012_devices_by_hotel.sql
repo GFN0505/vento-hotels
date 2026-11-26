@@ -1,0 +1,1 @@
+CREATE INDEX "devices_organization_id_property_id_index" ON "devices" USING btree ("organization_id","property_id");

@@ -232,9 +232,7 @@ test.describe('on the demo group', () => {
     // One hotel chosen in the top bar: only the company that owns it.
     await page.getByLabel('Hotel', { exact: true }).selectOption({ label: 'Kora Victoria Island' })
     await expect(
-      page.getByText(
-        'Kora Victoria Island is owned by Kora Hospitality Ltd. Choose All hotels in the top bar to see every company.',
-      ),
+      page.getByText('Owned by Kora Hospitality Ltd. All hotels shows every company.'),
     ).toBeVisible()
   })
 

@@ -97,7 +97,15 @@ export function CompaniesTable({ companies, dimmed, onOpen, onRestore, canWrite 
                 </Small>
               </td>
               <td className={cn(TD, 'text-text-2 max-md:basis-full')}>
-                <span className="block min-w-0 break-words">{hotels}</span>
+                {/* Lines break between hotels, never inside a name. */}
+                <span className="block min-w-0">
+                  {hotels.split(', ').map((name, index, all) => (
+                    <span key={name} className="whitespace-nowrap">
+                      {name}
+                      {index < all.length - 1 ? ', ' : ''}
+                    </span>
+                  ))}
+                </span>
               </td>
               <td className={TD}>
                 {archived ? (

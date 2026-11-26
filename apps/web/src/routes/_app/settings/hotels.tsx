@@ -15,11 +15,12 @@ function readSearch(search: Record<string, unknown>): HotelsSearch {
     q: text(search.q, 120),
     page: Number.isInteger(page) && page > 1 ? page : undefined,
     sheet: search.sheet === 'add' ? 'add' : undefined,
-    hotel: text(search.hotel, 40),
   }
 }
 
 export const Route = createFileRoute('/_app/settings/hotels')({
+  // The tab title as soon as navigation starts (components/shell/route-title.ts).
+  staticData: { title: 'Hotels' },
   validateSearch: readSearch,
   component: HotelsRoute,
 })

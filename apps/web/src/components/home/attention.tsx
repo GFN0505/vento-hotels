@@ -20,7 +20,14 @@ export type AttentionItem = {
   tone: 'amber' | 'blue' | 'violet'
   title: string
   detail: string
-  action?: { label: string; to: '/settings/devices' | '/settings/members' }
+  // Several hotels need the same fix: each is its own link, opening on that hotel.
+  hotels?: { id: string; name: string; to: '/settings/devices' | '/settings/members' }[]
+  // Links about one hotel's data carry ?hotel=, so they open on that hotel (spec: hotel switch).
+  action?: {
+    label: string
+    to: '/settings/devices' | '/settings/members'
+    hotel?: string | undefined
+  }
 }
 
 const TONES = {
@@ -83,18 +90,31 @@ export function attentionItems({
       detail:
         withoutDevices.length === 1
           ? 'Front desk, restaurant and housekeeping staff sign in with a PIN on one.'
-          : `${withoutDevices.map((hotel) => hotel.name).join(', ')}. Staff sign in with a PIN on one.`,
-      action: { label: 'Register', to: '/settings/devices' },
+          : 'Staff sign in with a PIN on one. Register one at:',
+      ...(withoutDevices.length === 1
+        ? { action: { label: 'Register', to: '/settings/devices', hotel: onlyHotel.id } }
+        : {
+            hotels: withoutDevices.map((hotel) => ({
+              id: hotel.id,
+              name: hotel.name,
+              to: '/settings/devices' as const,
+            })),
+          }),
     })
   }
-  if (managesTeam && summary?.pendingInvites) {
+  // With one hotel in view, that hotel's invites (whole-group invites included), not the group's.
+  const [oneHotel] = group ? [] : hotels
+  const invites = oneHotel
+    ? summary?.byHotel.find((row) => row.propertyId === oneHotel.id)?.invites
+    : summary?.pendingInvites
+  if (managesTeam && invites) {
     items.push({
       key: 'invites',
       icon: MailPlus,
       tone: 'violet',
-      title: `${plural(summary.pendingInvites, 'invite')} not accepted yet`,
+      title: `${plural(invites, 'invite')} not accepted yet`,
       detail: 'You can resend or cancel from the team list.',
-      action: { label: 'Review', to: '/settings/members' },
+      action: { label: 'Review', to: '/settings/members', hotel: oneHotel?.id },
     })
   }
   if (managesTeam && summary?.members === 1) {
@@ -177,10 +197,25 @@ export function NeedsAttention({
                 <span className="flex min-w-0 grow flex-col gap-0.5">
                   <span className="font-medium">{item.title}</span>
                   <span className="text-sm text-text-2">{item.detail}</span>
+                  {item.hotels ? (
+                    <span className="mt-1 flex flex-wrap gap-2">
+                      {item.hotels.map((hotel) => (
+                        <Link
+                          key={hotel.id}
+                          to={hotel.to}
+                          search={{ hotel: hotel.id }}
+                          className="inline-flex h-11 items-center rounded-sm border border-border-strong bg-surface px-3 text-sm font-medium transition-colors hover:bg-surface-2 lg:h-8"
+                        >
+                          {hotel.name}
+                        </Link>
+                      ))}
+                    </span>
+                  ) : null}
                 </span>
                 {item.action ? (
                   <Link
                     to={item.action.to}
+                    search={item.action.hotel ? { hotel: item.action.hotel } : {}}
                     className="inline-flex h-11 flex-none items-center rounded-sm border border-border-strong bg-surface px-3 text-sm font-medium transition-colors hover:bg-surface-2 lg:h-8"
                   >
                     {item.action.label}

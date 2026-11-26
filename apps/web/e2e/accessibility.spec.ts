@@ -6,6 +6,8 @@ import {
   choose,
   expectAccessible,
   linkFromEmail,
+  seedDemoGroup,
+  signIn,
   signUpOwner,
   signUpOwnerWithGroup,
   switchToDarkMode,
@@ -143,7 +145,7 @@ for (const theme of ['light', 'dark'] as const) {
         .waitFor()
       await expectAccessible(page)
       await page.keyboard.press('Escape')
-      await page.getByRole('button', { name: 'All hotels' }).click()
+      await page.getByRole('button', { name: 'Hotels list' }).click()
       await page.getByText('Kora Hotels Group · 2 hotels').waitFor()
       await expectAccessible(page)
       await page.goto('/settings/companies')
@@ -151,6 +153,31 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
       await page.getByRole('button', { name: 'Kora Hospitality Ltd' }).click()
       await page.getByRole('dialog', { name: 'Kora Hospitality Ltd' }).waitFor()
+      await expectAccessible(page)
+    })
+
+    test('members and devices, with All hotels and with one hotel, have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      const domain = seedDemoGroup(`a11y-switch-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
+      await signIn(page, `adaeze@${domain}`, 'Demo-pass-42!')
+      await page.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      for (const hotel of ['All hotels', 'Kora Abuja']) {
+        await page.getByLabel('Hotel', { exact: true }).selectOption({ label: hotel })
+        await page.goto('/settings/members')
+        await page
+          .getByRole('heading', { name: hotel === 'All hotels' ? 'People 11' : 'People 2' })
+          .waitFor()
+        await expectAccessible(page)
+        await page.goto('/settings/devices')
+        await page
+          .getByText(hotel === 'All hotels' ? 'FD-IKJ-01' : 'No shared devices at Kora Abuja yet')
+          .waitFor()
+        await expectAccessible(page)
+      }
+      await page.goto('/rates/rooms')
+      await page.getByRole('heading', { name: 'Rooms', level: 1 }).waitFor()
       await expectAccessible(page)
     })
 

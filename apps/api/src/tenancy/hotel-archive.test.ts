@@ -3,7 +3,7 @@ import type { ArchivePreview, AuditEventView, DeviceView, Property } from '@vent
 import { and, eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { invitations } from '../db/schema/auth.ts'
-import { memberProperties } from '../db/schema/tenancy.ts'
+import { devices, memberProperties } from '../db/schema/tenancy.ts'
 import { LAGOS_ADDRESS } from '../test/addresses.ts'
 import { createTestApp } from '../test/harness.ts'
 import {
@@ -94,12 +94,16 @@ describe.skipIf(!url)('archiving and restoring hotels', () => {
 
     const archived = await archive(ph.id)
     expect(archived.data).toMatchObject({ status: 'archived', archivedAt: expect.any(String) })
-    const devices = await t.rpc<Page<DeviceView>>(kora.owner.cookie, 'devices/list', {
+    const [revoked] = await t.db
+      .select({ revokedReason: devices.revokedReason })
+      .from(devices)
+      .where(eq(devices.id, device.data.id))
+    expect(revoked).toMatchObject({ revokedReason: 'Hotel archived: Lease ended 30 Nov 2026' })
+    // An archived hotel's devices leave Settings › Devices; their history stays in the audit log.
+    const listed = await t.rpc<Page<DeviceView>>(kora.owner.cookie, 'devices/list', {
       pageSize: 100,
     })
-    expect(devices.data.items.find((d) => d.id === device.data.id)).toMatchObject({
-      revokedReason: 'Hotel archived: Lease ended 30 Nov 2026',
-    })
+    expect(listed.data.items.map((d) => d.id)).not.toContain(device.data.id)
     expect(await inviteStatus(`alone.${counter}@example.test`)).toBe('canceled')
     expect(await inviteStatus(`shared.${counter}@example.test`)).toBe('pending')
     const access = await t.db

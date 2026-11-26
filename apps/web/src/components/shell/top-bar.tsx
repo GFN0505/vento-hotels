@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { lockDevice } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
+import { ALL_HOTELS } from '@/lib/scope'
 import { useOnline } from '@/offline/connection'
 import { AccountMenu } from './account-menu'
+import { useGroupWidePage } from './page-kind'
 import { useProperty } from './property-context'
 
 function formatDate(date: string): string {
@@ -16,15 +18,6 @@ function formatDate(date: string): string {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${date}T00:00:00Z`))
-}
-
-// "25 Nov" on phones, where the bar is narrow; the year rarely matters at a glance.
-function formatShortDate(date: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
     timeZone: 'UTC',
   }).format(new Date(`${date}T00:00:00Z`))
 }
@@ -54,11 +47,12 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
         <Menu className="size-4" />
       </Button>
       {hotel ? <PropertyPill /> : null}
-      <div className="grow" />
+      <div className="grow max-sm:hidden" />
+      {/* Phones: the switch gets the room; the business date is in the account menu. */}
       {current ? (
         <span
           className={cn(
-            'num inline-flex h-[22px] shrink-0 items-center whitespace-nowrap rounded-full px-2 text-sm font-medium',
+            'num inline-flex h-[22px] shrink-0 items-center whitespace-nowrap rounded-full px-2 text-sm font-medium max-sm:hidden',
             behind ? 'bg-am-bg text-am' : 'bg-sl-bg text-sl',
           )}
           title={
@@ -67,10 +61,11 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
               : undefined
           }
         >
-          <span className="sr-only sm:not-sr-only">Business date&nbsp;</span>
-          <span className="sm:hidden">{formatShortDate(current.businessDate)}</span>
-          <span className="hidden sm:inline">{formatDate(current.businessDate)}</span>
+          Business date&nbsp;{formatDate(current.businessDate)}
         </span>
+      ) : !hotel ? (
+        // Holds the chip's place while the hotels load, so the bar doesn't shift when it arrives.
+        <span aria-hidden="true" className="h-[22px] w-40 shrink-0 max-sm:hidden" />
       ) : null}
       <span className="inline-flex shrink-0 items-center gap-1.5 text-sm text-text-3">
         <span
@@ -90,7 +85,16 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
           Lock
         </Button>
       ) : null}
-      <AccountMenu name={user.name} email={user.email} onSharedDevice={Boolean(me.data?.device)} />
+      <AccountMenu
+        name={user.name}
+        email={user.email}
+        onSharedDevice={Boolean(me.data?.device)}
+        businessDate={
+          current
+            ? `${formatDate(current.businessDate)}${behind ? ". Night audit hasn't run." : ''}`
+            : undefined
+        }
+      />
     </header>
   )
 }
@@ -100,20 +104,29 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
 // People who see the whole group get "All hotels" first.
 function PropertyPill() {
   const { properties, current, allHotels, canSeeAll, select, selectAll } = useProperty()
+  const groupWidePage = useGroupWidePage()
   if (!current) return null
   const several = properties.length > 1
   const label = allHotels ? 'All hotels' : current.name
   return (
-    <div className="relative flex h-11 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 focus-within:ring-2 focus-within:ring-ring lg:h-9">
-      <span className="text-[10px] font-bold tracking-[0.04em] text-text-3 uppercase">
+    <div
+      className="relative flex h-11 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 focus-within:ring-2 focus-within:ring-ring max-sm:flex-1 lg:h-9"
+      title={groupWidePage ? 'This page is the same at every hotel' : label}
+    >
+      <span className="text-[10px] font-bold tracking-[0.04em] text-text-3 uppercase max-sm:hidden">
         {allHotels ? 'Group' : 'Hotel'}
       </span>
-      <span className="min-w-0 max-w-[24ch] truncate font-semibold" title={label}>
+      <span
+        className={cn(
+          'min-w-0 truncate font-semibold sm:max-w-[24ch]',
+          groupWidePage && 'text-text-2',
+        )}
+      >
         {label}
       </span>
       {several ? (
         <>
-          <ChevronDown className="size-3.5 shrink-0 text-text-3" aria-hidden="true" />
+          <ChevronDown className="ml-auto size-3.5 shrink-0 text-text-3" aria-hidden="true" />
           <select
             aria-label="Hotel"
             value={allHotels ? ALL_HOTELS : current.id}
@@ -134,5 +147,3 @@ function PropertyPill() {
     </div>
   )
 }
-
-const ALL_HOTELS = 'all'

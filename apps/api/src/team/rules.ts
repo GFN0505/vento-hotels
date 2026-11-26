@@ -4,14 +4,16 @@ import { ORPCError } from '@orpc/server'
 import {
   type AccessChoice,
   dec,
+  GROUP_ADMIN_ROLES,
   isGroupAdmin,
   type MemberRole,
   PERMISSION_KEYS,
 } from '@vento/shared'
-import { and, asc, eq, inArray, isNull, notInArray, type SQL, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, notInArray, or, type SQL, sql } from 'drizzle-orm'
+import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 import type { Database } from '../db/client.ts'
-import { members } from '../db/schema/auth.ts'
-import { memberProperties, properties } from '../db/schema/tenancy.ts'
+import { invitations, members } from '../db/schema/auth.ts'
+import { invitationProperties, memberProperties, properties } from '../db/schema/tenancy.ts'
 import { type Access, effectiveRules, requirePermission } from '../tenancy/access.ts'
 
 type Reader = Pick<Database, 'select'>
@@ -98,6 +100,38 @@ export function visibleMembers(access: Access): SQL {
     notInArray(members.role, ['owner', 'group_admin']),
     sql`exists (select 1 from ${memberProperties} where ${memberProperties.memberId} = ${members.id})`,
     sql`not exists (select 1 from ${memberProperties} where ${memberProperties.memberId} = ${members.id} and ${notInArray(memberProperties.propertyId, access.propertyIds)})`,
+  ) as SQL
+}
+
+// A member with whole-group access: owners and group admins always, whatever all_properties says,
+// and anyone given "Whole group".
+export function wholeGroupMember(): SQL {
+  return or(inArray(members.role, [...GROUP_ADMIN_ROLES]), eq(members.allProperties, true)) as SQL
+}
+
+// Whether a member works at a hotel: given that hotel, or with whole-group access. The one rule
+// behind Home's people count per hotel and members.list with a hotel, so the two can't drift.
+// `hotel` is a hotel id, or a column (e.g. properties.id) to count per hotel in one query.
+export function worksAt(hotel: string | AnyPgColumn): SQL {
+  return or(
+    wholeGroupMember(),
+    sql`exists (select 1 from ${memberProperties} where ${memberProperties.memberId} = ${members.id} and ${memberProperties.propertyId} = ${hotel})`,
+  ) as SQL
+}
+
+// An invite not accepted yet: pending, whether or not its link has expired (an expired one can be
+// resent). The one rule behind invitations.list and Home's invite counts, so they always agree.
+export function openInvite(): SQL {
+  return eq(invitations.status, 'pending')
+}
+
+// The same rule as worksAt for invites: an invite includes a hotel when it names it or is for the
+// whole group.
+export function invitedTo(hotel: string | AnyPgColumn): SQL {
+  return or(
+    inArray(invitations.role, [...GROUP_ADMIN_ROLES]),
+    eq(invitations.allProperties, true),
+    sql`exists (select 1 from ${invitationProperties} where ${invitationProperties.invitationId} = ${invitations.id} and ${invitationProperties.propertyId} = ${hotel})`,
   ) as SQL
 }
 

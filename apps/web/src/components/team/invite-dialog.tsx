@@ -20,8 +20,10 @@ type InviteDialogProps = {
   onClose: () => void
   myRole: MemberRole | undefined
   canGrantWholeGroup: boolean
-  // Limits the invite to one hotel, e.g. from a new hotel's "Invite the team".
+  // Starts the invite on one hotel: the one chosen in the top bar, or a new hotel's "Invite the team".
   hotelId?: string | undefined
+  // The hotel in view, named in the title ("Invite people to Kora Abuja").
+  hotelName?: string | undefined
 }
 
 const MAX_INVITES = 20
@@ -32,6 +34,7 @@ export function InviteDialog({
   myRole,
   canGrantWholeGroup,
   hotelId,
+  hotelName,
 }: InviteDialogProps) {
   const queryClient = useQueryClient()
   const formId = useId()
@@ -119,7 +122,7 @@ export function InviteDialog({
       onClose={() => {
         if (!invite.isPending) onClose()
       }}
-      title="Invite people"
+      title={hotelName ? `Invite people to ${hotelName}` : 'Invite people'}
       description="They'll get an email with a link to join. Invites expire in 7 days."
       footer={
         <>

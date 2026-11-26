@@ -21,6 +21,11 @@ export const deviceViewSchema = z.object({
 })
 export type DeviceView = z.infer<typeof deviceViewSchema>
 
+export const deviceListSchema = pageQuerySchema.extend({
+  // Only this hotel's devices. Without it, every device at an active hotel the caller may see.
+  propertyId: idSchema.optional(),
+})
+
 const deviceName = z.string().trim().min(2, 'Enter at least 2 characters').max(40)
 
 export const registerDeviceSchema = z.object({
@@ -48,7 +53,7 @@ const ok = z.object({ ok: z.literal(true) })
 
 export const devicesContract = {
   devices: {
-    list: oc.input(pageQuerySchema).output(pageSchema(deviceViewSchema)),
+    list: oc.input(deviceListSchema).output(pageSchema(deviceViewSchema)),
     // Registers the browser it's called from, and gives it the device cookie.
     register: oc.input(registerDeviceSchema).output(deviceViewSchema),
     rename: oc.input(z.object({ id: idSchema, name: deviceName })).output(deviceViewSchema),

@@ -68,9 +68,8 @@ export function AddHotelSheet({ onClose }: { onClose: () => void }) {
       // The switch must know the hotel before it can move to it.
       await refresh()
       onClose()
-      select(hotel.id)
+      select(hotel.id, { moveFocus: true })
       toast.success(`${hotel.name} added`)
-      requestAnimationFrame(() => document.querySelector<HTMLElement>('main h1')?.focus())
     },
     onError: (error) => {
       const field = FIELD_FOR_CODE[errorCode(error) ?? ''] ?? 'form'

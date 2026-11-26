@@ -50,7 +50,7 @@ describe.skipIf(!url)('demo seed', () => {
     const first = await seedDemo(t.db, options)
     expect(first.status).toBe('seeded')
     if (first.status !== 'seeded') return
-    expect(first.people).toHaveLength(10)
+    expect(first.people).toHaveLength(11)
     expect(first.people[0]).toMatchObject({ name: 'Adaeze Okafor', role: 'owner' })
 
     const again = await seedDemo(t.db, options)
@@ -69,7 +69,7 @@ describe.skipIf(!url)('demo seed', () => {
     const team = await t.rpc<{ items: MemberView[]; total: number }>(cookie, 'members/list', {
       pageSize: 100,
     })
-    expect(team.data.total).toBe(10)
+    expect(team.data.total).toBe(11)
     expect(team.data.items.every((m) => m.hasPin)).toBe(true)
   })
 
@@ -111,32 +111,62 @@ describe.skipIf(!url)('demo seed', () => {
     expect(hotels.data.items.map((h) => h.name)).toEqual(['Kora Victoria Island'])
   })
 
-  it("counts each hotel's people and devices for Home, within what the member sees", async () => {
+  it("counts each hotel's people, devices and invites for Home, within what the member sees", async () => {
     const byName = async (cookie: string) => {
       const [hotels, home] = await Promise.all([
         t.rpc<{ items: Property[] }>(cookie, 'properties/list', {}),
         t.rpc<HomeSummary>(cookie, 'organization/home', {}),
       ])
       return Object.fromEntries(
-        home.data.byHotel.map((row) => [
-          hotels.data.items.find((h) => h.id === row.propertyId)?.name,
-          { people: row.people, devices: row.devices, rooms: row.rooms },
+        home.data.byHotel.map(({ propertyId, ...counts }) => [
+          hotels.data.items.find((h) => h.id === propertyId)?.name,
+          counts,
         ]),
       )
     }
-    // Two people see every hotel (owner and finance); eight more work at Victoria Island.
+    // Two people see every hotel (owner and finance); nine more work at Victoria Island, Sade also
+    // at Ikeja GRA. Ngozi's invite is for Abuja.
     expect(await byName(await signInAs(`adaeze@${options.emailDomain}`))).toEqual({
-      'Kora Victoria Island': { people: 10, devices: 3, rooms: 120 },
-      'Kora Ikeja GRA': { people: 2, devices: 0, rooms: 86 },
-      'Kora Abuja': { people: 2, devices: 0, rooms: 104 },
-      'Kora Port Harcourt': { people: 2, devices: 0, rooms: 72 },
+      'Kora Victoria Island': { people: 11, devices: 3, rooms: 120, invites: 0 },
+      'Kora Ikeja GRA': { people: 3, devices: 1, rooms: 86, invites: 0 },
+      'Kora Abuja': { people: 2, devices: 0, rooms: 104, invites: 1 },
+      'Kora Port Harcourt': { people: 2, devices: 0, rooms: 72, invites: 0 },
     })
     const frontDesk = await signInAs(`chiamaka@${options.emailDomain}`)
     expect(await byName(frontDesk)).toEqual({
-      'Kora Victoria Island': { people: 10, devices: 3, rooms: 120 },
+      'Kora Victoria Island': { people: 11, devices: 3, rooms: 120, invites: null },
     })
     const home = await t.rpc<HomeSummary>(frontDesk, 'organization/home', {})
     expect(home.data.members).toBeNull()
+  })
+
+  it("matches Home's counts with Members, Devices and Invited for every hotel", async () => {
+    const owner = await signInAs(`adaeze@${options.emailDomain}`)
+    const home = await t.rpc<HomeSummary>(owner, 'organization/home', {})
+    expect(home.data.byHotel).toHaveLength(4)
+    for (const hotel of home.data.byHotel) {
+      const scoped = { propertyId: hotel.propertyId, pageSize: 100 }
+      const [people, devices, invites] = await Promise.all([
+        t.rpc<{ total: number }>(owner, 'members/list', scoped),
+        t.rpc<{ total: number }>(owner, 'devices/list', scoped),
+        t.rpc<{ total: number }>(owner, 'invitations/list', scoped),
+      ])
+      expect([people.data.total, devices.data.total, invites.data.total]).toEqual([
+        hotel.people,
+        hotel.devices,
+        hotel.invites,
+      ])
+    }
+    const all = await t.rpc<{ total: number }>(owner, 'devices/list', {})
+    expect(all.data.total).toBe(home.data.devices)
+  })
+
+  it('gives Sade Bakare two of the four hotels, and no way into the others', async () => {
+    const cookie = await signInAs(`sade@${options.emailDomain}`)
+    const hotels = await t.rpc<{ items: Property[] }>(cookie, 'properties/list', {})
+    expect(hotels.data.items.map((h) => h.name)).toEqual(['Kora Ikeja GRA', 'Kora Victoria Island'])
+    const home = await t.rpc<HomeSummary>(cookie, 'organization/home', {})
+    expect(home.data.byHotel.map((row) => row.people).sort((a, b) => a - b)).toEqual([3, 11])
   })
 
   it('sets up Kora Victoria Island’s rooms exactly as the designs show', async () => {

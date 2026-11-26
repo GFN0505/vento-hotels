@@ -37,7 +37,7 @@ export function HotelSettings({
   hotel: Property
   onAdd?: (() => void) | undefined
 }) {
-  usePageTitle(`${hotel.name} · Hotel settings`)
+  usePageTitle(`Hotel settings · ${hotel.name}`)
   const me = useMe()
   const online = useOnline()
   const { user } = useRouteContext({ from: '/_app' })
@@ -81,11 +81,11 @@ export function HotelSettings({
           {canSeeAll ? (
             <button
               type="button"
-              onClick={selectAll}
+              onClick={() => selectAll({ moveFocus: true })}
               className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-text-2 hover:text-pri-ink lg:min-h-0"
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
-              All hotels
+              Hotels list
             </button>
           ) : (
             <span />

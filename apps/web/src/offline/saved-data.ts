@@ -43,6 +43,9 @@ export async function restore(client: QueryClient) {
   if (!saved) return
   savedAt = saved.savedAt
   hydrate(client, saved.state)
+  // Shown at once, but fetched again as soon as a page uses it: a copy saved seconds before a
+  // reload can already be out of date (a hotel just archived, access just removed).
+  void client.invalidateQueries({ refetchType: 'none' })
 }
 
 // Saves a little after the data changes, so a burst of requests writes once.

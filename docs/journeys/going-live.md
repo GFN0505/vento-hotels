@@ -128,7 +128,8 @@
 The group now has four hotels and "All hotels" is selected in the top bar.
 1. *Does:* Mrs Okafor opens **Settings › Hotels**, which lists the 4 hotels, and clicks **Add a hotel**. In the side sheet: Name `Kora Lekki`; Owning company (Kora Hospitality Ltd, already chosen as the company that owns the most hotels); Street `Plot 7 Admiralty Way`; Area `Lekki Phase 1`; State `Lagos`; LGA `Eti-Osa`; check-in 14:00 and check-out 12:00 already filled. She clicks **Add hotel**.
 2. *Sees:* the sheet closes, the top bar switches to Kora Lekki, and its settings open with "Kora Lekki added" and **Next steps for Kora Lekki**: **Set up rooms**, **Invite the team**, **Register devices**. **Invite the team** opens Members with the invite already limited to Kora Lekki.
-3. *Behind the scenes:* one transaction creates the hotel and its audit event; its business date is the calendar date in Lagos. Everyone with whole-group access sees it in their hotel switch; people limited to other hotels don't until someone gives them access.
+3. *Sees, with Kora Lekki selected:* **Members and roles** shows only Adaeze and Kunle (each marked **Whole group**) and "Nobody works only at Kora Lekki yet. Invite its managers and staff." until its GM joins; **Devices** says "No shared devices at Kora Lekki yet". Choosing **All hotels** shows everyone and every device again, each with its hotel.
+4. *Behind the scenes:* one transaction creates the hotel and its audit event; its business date is the calendar date in Lagos. Everyone with whole-group access sees it in their hotel switch; people limited to other hotels don't until someone gives them access.
 
 If a hotel later closes, **Archive hotel** at the foot of its settings shows what happens ("Its 72 rooms, history and reports are kept. 3 devices are signed out and revoked.") and asks for a reason; the hotel leaves the switch and waits under **Archived** with **Restore**.
 
@@ -144,6 +145,7 @@ If a hotel later closes, **Archive hotel** at the foot of its settings shows wha
 `apps/web/e2e/journeys/going-live.spec.ts`
 - Onboarding creates organization, entity and property in one go; the creator is `owner`; audit events exist.
 - Completing the hotel's address and the company's RC number and TIN ticks the checklist step; an added hotel appears in the hotel switch and the switch moves to it; archiving a hotel revokes its devices; a GM edits only the check-in and check-out times (`apps/web/e2e/hotels.spec.ts`).
+- Members and Devices follow the hotel switch, and Home's per-hotel people and device counts match them (`apps/web/e2e/hotel-switch.spec.ts`, `apps/api/src/tenancy/hotel-switch.test.ts`).
 - Tunde (GM, `rooms.setup`) creates the 4 room types (`STQ`, `DLK`, `EXK`, `JRS`) and 120 rooms with the builder in one transaction; the per-type counts are 36 / 48 / 28 / 8; a room in two lines keeps **Create** disabled; a front desk member is refused by the server.
 - **Mark 120 inspected** writes one `room.status_changed` per room with reason "Set up" and can be undone; before go-live no reason is asked and no exception is raised.
 - Room import (later Stage 1 brick) reports duplicate room numbers and unknown room type codes by row; corrected file applies 120 rooms.

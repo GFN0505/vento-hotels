@@ -1,17 +1,21 @@
-// With "All hotels" chosen in the top bar: rooms belong to one hotel, so pick which. Each hotel
-// shows where it is and how many rooms it has, from Home's summary.
-import { useQuery } from '@tanstack/react-query'
+// Hotel pages with "All hotels" chosen (spec: stage-1-hotel-switch-scope): the page only makes sense
+// for one hotel, so it asks which. One shared panel; each page gives its own first line ("Rooms are
+// set up per hotel. Pick a hotel.") and, optionally, a fact per hotel on the right. Picking one
+// selects it in the top bar.
 import type { Property } from '@vento/shared'
 import { Building2, ChevronRight } from 'lucide-react'
-import { orpc } from '@/lib/api'
+import type { ReactNode } from 'react'
 import { initials } from '@/lib/team'
-import { plural } from './format'
+import { useProperty } from './property-context'
 
-type Props = { hotels: readonly Property[]; onPick: (id: string) => void }
+type Props = {
+  title: string
+  // What this page shows for each hotel, e.g. its room count.
+  aside?: (hotel: Property) => ReactNode
+}
 
-export function PickHotel({ hotels, onPick }: Props) {
-  const summary = useQuery(orpc.organization.home.queryOptions())
-  const rooms = (id: string) => summary.data?.byHotel.find((row) => row.propertyId === id)?.rooms
+export function PickHotel({ title, aside }: Props) {
+  const { properties, select } = useProperty()
   return (
     <section
       aria-labelledby="pick-heading"
@@ -22,19 +26,18 @@ export function PickHotel({ hotels, onPick }: Props) {
       </span>
       <div className="flex flex-col gap-1">
         <h2 id="pick-heading" className="text-lg font-semibold">
-          Rooms are set up per hotel. Pick a hotel.
+          {title}
         </h2>
         <p className="text-text-2">You can switch hotels any time from the top bar.</p>
       </div>
       <ul className="flex w-full max-w-lg flex-col divide-y divide-border overflow-hidden rounded-md border border-border text-left">
-        {hotels.map((hotel) => {
-          const count = rooms(hotel.id)
+        {properties.map((hotel) => {
           const where = [hotel.area, hotel.state].filter(Boolean).join(', ')
           return (
             <li key={hotel.id}>
               <button
                 type="button"
-                onClick={() => onPick(hotel.id)}
+                onClick={() => select(hotel.id, { moveFocus: true })}
                 className="group flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2/60"
               >
                 <span
@@ -44,22 +47,12 @@ export function PickHotel({ hotels, onPick }: Props) {
                   {initials(hotel.name)}
                 </span>
                 <span className="flex min-w-0 grow flex-col">
-                  <span className="truncate font-semibold">{hotel.name}</span>
+                  <span className="truncate font-semibold" title={hotel.name}>
+                    {hotel.name}
+                  </span>
                   {where ? <span className="truncate text-sm text-text-2">{where}</span> : null}
                 </span>
-                {count ? (
-                  <span className="num flex-none text-right text-sm text-text-2">
-                    {plural(count, 'room')}
-                    {hotel.liveSince ? <span className="text-em"> · Live</span> : null}
-                  </span>
-                ) : count === 0 ? (
-                  <span className="inline-flex h-9 flex-none items-center rounded-sm bg-pri px-3 text-sm font-medium text-white group-hover:bg-pri-hover max-sm:hidden">
-                    Set up rooms
-                  </span>
-                ) : null}
-                {count === 0 ? (
-                  <span className="text-sm text-text-2 sm:hidden">No rooms yet</span>
-                ) : null}
+                {aside?.(hotel)}
                 <ChevronRight
                   className="size-4 flex-none text-text-3 transition-transform group-hover:translate-x-0.5 group-hover:text-pri-ink"
                   aria-hidden="true"

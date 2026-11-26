@@ -85,6 +85,13 @@
       "when": 1795696039547,
       "tag": "0011_tenancy_keys_and_pending_vat",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795702785459,
+      "tag": "0012_devices_by_hotel",
+      "breakpoints": true
     }
   ]
 }

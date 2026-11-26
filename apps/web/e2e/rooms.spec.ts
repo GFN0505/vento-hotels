@@ -13,7 +13,7 @@ test('a new hotel builds its rooms by floor, then edits, filters and removes the
   await page.getByRole('link', { name: 'Set up', exact: true }).click()
   await expect(page.getByText('Describe the pattern once; Vento numbers every room.')).toBeVisible()
   await buildRooms(page)
-  await expect(page.getByText('Kora Victoria Island · 28 rooms · 2 types')).toBeVisible()
+  await expect(page.getByText('28 rooms · 2 types', { exact: true })).toBeVisible()
 
   await page.getByRole('button', { name: 'Mark 28 inspected' }).click()
   await expect(page.getByText('28 rooms marked inspected')).toBeVisible()
@@ -168,7 +168,7 @@ test.describe('on the demo group', () => {
     await page.goto('/rates/rooms')
     await expect(page.getByText('Rooms are set up per hotel. Pick a hotel.')).toBeVisible()
     await page.getByRole('button', { name: /Kora Victoria Island/ }).click()
-    await expect(page.getByText('Kora Victoria Island · 120 rooms · 4 types')).toBeVisible()
+    await expect(page.getByText('120 rooms · 4 types', { exact: true })).toBeVisible()
     await page.getByLabel('Room number').fill('412')
     await page.getByRole('button', { name: 'Edit room 412' }).click()
     await page

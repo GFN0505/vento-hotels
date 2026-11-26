@@ -99,6 +99,24 @@ New modules from Stage 1 add their own folder in `apps/api/src/` (service, route
 5. In the same transaction an **audit event** is written: who, device, property, business date, action, before/after, reason, approver.
 6. The **response** is validated against the output schema and returned. One JSON log line per request with request id, organization id and property id, never guest personal data. Unexpected errors go to Sentry with the request id; the client sees a generic message.
 
+## Hotel switch
+*Built: the switch and All hotels (`components/shell/property-context.tsx`, Stage 0 role homes), the leave guard (`useLeaveGuard`), and pages that follow it: Home, Hotels, Companies, Rooms. Stage 1 brick 1b ([spec](specs/stage-1-hotel-switch-scope.md)): `members.list`, `invitations.list`, `devices.list` and `entities.list` take `propertyId`, Home counts invites per hotel, and the client below is built: `useScope`/`scope` in `property-context.tsx`, the eyebrow in `PageHeader`, `useScopedTitle` (`components/shell/use-scoped-title.ts`), `?hotel=` in `components/shell/hotel-link.tsx`, the hotel-change reset in `components/shell/hotel-change.tsx`, the shared `PickHotel` in `components/shell/`, and the pure rules (link resolution, `keepWithinHotel` for `placeholderData`) in `lib/scope.ts`.*
+- **The rule:** with one hotel selected, every page shows that hotel only. With All hotels, group pages show every hotel, named on each row; hotel pages ask to pick one; group-wide pages (Permissions and limits) are the same either way. UX checklist: `docs/UX-STANDARD.md` §8.
+- **Client only:**
+  - The selection lives in `PropertyProvider`, remembered per browser in `localStorage` (`vento.propertyId`, `all`; `vento.lastPropertyId`). The server has no "current hotel".
+  - Pages read their scope from one hook (`{ kind: 'hotel', hotel } | { kind: 'all' }`), never from `current` when All hotels is selected.
+  - `PageHeader` shows the scope eyebrow, and `useScopedTitle` sets the tab title. Hotel pages with All hotels use the shared `PickHotel` panel.
+  - The shell handles `?hotel=<id|all>` on any route: it selects the hotel and tidies the URL. On a hotel change it resets paging and record sheets and moves focus.
+- **Requests name their hotel:**
+  - Every list of hotel-bound data takes an optional `propertyId`, and every write a required one.
+  - Query keys include it, so one hotel's cached data is never shown under another's name.
+  - Offline commands keep the `propertyId` they were made with, whatever the switch says when they sync.
+- **The server decides:**
+  - A list given a `propertyId` calls `requireListableHotel(db, access, propertyId)` (`tenancy/access.ts`): in the organization and the member's access (`propertyScope`), else NOT_FOUND "We couldn't find that hotel" (`data.code` `PROPERTY_NOT_FOUND`, from the shared `hotelNotFound` in `tenancy/errors.ts`, also used by the rooms pages); not archived, else NOT_FOUND "This hotel was archived." (`PROPERTY_ARCHIVED`) Then it filters within the existing scope.
+  - Without a `propertyId`, a list returns everything within the member's access, as before. The switch only narrows.
+  - "Works at" a hotel (assigned to it, or whole-group access: owner and group admin by role, or "Whole group") is one server predicate, `worksAt` in `team/rules.ts`, shared by `members.list` and Home's per-hotel people. Its twin `invitedTo`, with `openInvite` (pending, expired links included), does the same for `invitations.list` and Home's invite counts. `members.list` with a hotel also returns `wholeGroup`, the count of whole-group people there.
+  - `devices.list` without a `propertyId` lists only devices at active hotels (an archived hotel's devices were revoked with it; their history stays in the audit log).
+
 ## Offline path
 *Built in brick 16: the shell. Planned: the outbox, with the first offline command in Stage 1 (decision 0024).*
 - **Built:** the service worker keeps the built app on the device (pages network-first, built files cache-first, never API calls). Before the first render, `offline/saved-data.ts` restores the reference data last seen from IndexedDB (an allow-list of queries), and `lib/session.ts` falls back to the remembered person when Vento can't be reached. `offline/connection.ts` treats a request that never reached Vento as offline; the shell shows `OfflineBanner`. Sign-out and device lock clear it all.

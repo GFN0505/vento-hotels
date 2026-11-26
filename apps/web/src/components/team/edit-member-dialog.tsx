@@ -2,7 +2,14 @@
 // confirmation that says what happens.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { type AccessChoice, type MemberRole, type MemberView, ROLE_INFO } from '@vento/shared'
+import {
+  type AccessChoice,
+  isGroupAdmin,
+  type MemberRole,
+  type MemberView,
+  type Property,
+  ROLE_INFO,
+} from '@vento/shared'
 import { type FormEvent, useId, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -16,6 +23,8 @@ import { AccessPicker } from './access-picker'
 type EditMemberDialogProps = {
   member: MemberView
   groupName: string
+  // The hotel in view, if one is chosen: saving someone out of it says so.
+  hotel?: Pick<Property, 'id' | 'name'> | undefined
   myRole: MemberRole | undefined
   canGrantWholeGroup: boolean
   onClose: () => void
@@ -24,6 +33,7 @@ type EditMemberDialogProps = {
 export function EditMemberDialog({
   member,
   groupName,
+  hotel,
   myRole,
   canGrantWholeGroup,
   onClose,
@@ -47,7 +57,15 @@ export function EditMemberDialog({
   }
   const save = useMutation({
     mutationFn: () => api.members.update({ memberId: member.id, role, access }),
-    onSuccess: () => done(`${member.name} updated`),
+    onSuccess: () => {
+      // No longer works at the hotel in view: the row leaves this list; their other hotels stay.
+      const stays =
+        !hotel ||
+        isGroupAdmin(role) ||
+        access.allProperties ||
+        access.propertyIds.includes(hotel.id)
+      return done(stays ? `${member.name} updated` : `${member.name} removed from ${hotel.name}`)
+    },
     onError: (error) => setProblem({ form: problemMessage(error) }),
   })
   const remove = useMutation({
