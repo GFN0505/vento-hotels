@@ -96,7 +96,7 @@
 12. **Mon 16 Nov · Parallel run.**
     - *Does:* Chiamaka and the evening agent do every check-in, payment and check-out in both systems. Before the day starts, Tunde runs a top-up import of bookings taken since Saturday; existing source references are skipped.
     - *Sees:* at 22:00 Tunde opens the comparison: in-house 74 vs 75, room revenue and deposits held. The difference is a 15:10 walk-in entered only in the old PMS. Chiamaka enters it in Vento; the numbers match.
-    - *Behind the scenes:* business date 16 Nov is Vento's first business date. Tunde enters the day's CBN rates each morning (⌘K "Enter today's FX rates", or Settings › FX rates).
+    - *Behind the scenes:* business date 16 Nov is Vento's first business date. Tunde enters the day's CBN rates each morning on Settings › FX rates (a ⌘K entry comes with the command palette brick).
 
 13. **Tue 17 Nov, 01:00 · Go-live at night audit.**
     - *Does:* Ibrahim runs the old PMS's last night audit, then Vento's first (#15) for 16 Nov.

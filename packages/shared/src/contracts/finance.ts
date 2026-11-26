@@ -56,6 +56,7 @@ export const FINANCE_ERROR_CODES = [
   'FX_FUTURE_DATE',
   'FX_RATE_CHECK', // data.checks: { currency, message }[]
   'FX_RATE_EXISTS', // data.existing: { currency, rate, enteredByName, at }[]
+  'SOURCE_REQUIRED',
 ] as const
 
 const reason = z.string().trim().min(3, 'Give a reason of at least 3 characters').max(500)
@@ -129,6 +130,8 @@ export const taxSetupSchema = z.object({
     // "Lagos", "FCT"; null when the hotel has no state yet.
     stateName: z.string().nullable(),
     businessDate: calendarDateSchema,
+    // For showing moments (when a change was set) in the hotel's own time.
+    timeZone: z.string(),
     live: z.boolean(),
     archived: z.boolean(),
     entityName: z.string(),
@@ -230,7 +233,10 @@ export const paymentMethodViewSchema = z.object({
   currencies: z.array(z.string()),
   foreignCurrencies: z.array(fxCurrencySchema),
   // Amber notes: "No account for guest transfers", "No USD rate yet. Enter today's FX rates."
-  warnings: z.array(z.string()),
+  // `fix` says where it's put right, so the page can link there.
+  warnings: z.array(
+    z.object({ text: z.string(), fix: z.enum(['fx_rates', 'bank_accounts']).nullable() }),
+  ),
 })
 export type PaymentMethodView = z.infer<typeof paymentMethodViewSchema>
 
@@ -361,8 +367,12 @@ export const enterFxRatesSchema = z.object({
       (list) => new Set(list.map((entry) => entry.currency)).size === list.length,
       'One rate per currency',
     ),
-  // "Save anyway" after the typo check.
-  confirmed: z.boolean().default(false),
+  // "Save anyway" after the typo check: the exact rates the person confirmed. A confirmation only
+  // covers a rate sent with the same value; anything else is checked again.
+  confirmed: z
+    .array(z.object({ currency: fxCurrencySchema, rate: fxRateValueSchema }))
+    .max(FX_CURRENCIES.length)
+    .default([]),
   // Replacing a rate already entered for the date.
   replaceReason: reason.optional(),
 })

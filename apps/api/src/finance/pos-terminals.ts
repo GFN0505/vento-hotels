@@ -280,7 +280,7 @@ async function setArchived(
     const hotel = await loadHotel(tx, access, input.propertyId, { hold: true })
     const terminal = await lockTerminal(tx, access, hotel, input.id)
     if ((terminal.archivedAt !== null) === archive) return view(tx, terminal.id)
-    if (archive && hotel.live && !input.reason) throw reasonRequired()
+    if (hotel.live && !input.reason) throw reasonRequired()
     if (!archive) {
       await requireSettlement(tx, access, hotel, terminal.bankAccountId)
       await explainTerminalId(tx, access, terminal.terminalId, terminal.id)
@@ -298,7 +298,7 @@ async function setArchived(
       reason: input.reason ?? null,
       after: {
         terminal: described(terminal),
-        ...(archive ? liveFlags(hotel) : { liveProperty: hotel.live }),
+        ...liveFlags(hotel),
       },
     })
     return view(tx, terminal.id)

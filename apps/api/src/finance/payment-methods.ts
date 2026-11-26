@@ -122,12 +122,12 @@ export async function paymentSetupFor(
   )
   const methods = PAYMENT_METHODS.map((method) => {
     const setting = settings[method]
-    const warnings: string[] = []
+    const warnings: PaymentSetup['methods'][number]['warnings'] = []
     if (method === 'cash' && setting.enabled) {
-      warnings.push(...cashWarnings.filter((w): w is string => w !== null))
+      for (const text of cashWarnings) if (text) warnings.push({ text, fix: 'fx_rates' })
     }
     if (method === 'bank_transfer' && setting.enabled && !transfer) {
-      warnings.push('No account for guest transfers')
+      warnings.push({ text: 'No account for guest transfers', fix: 'bank_accounts' })
     }
     const currencies =
       method === 'cash'
@@ -193,8 +193,13 @@ export async function setPaymentMethod(
     const after: MethodSetting = {
       ...before,
       enabled: input.enabled,
+      // Always in the fixed order, so the same choice in another order isn't a change.
       foreignCurrencies:
-        input.method === 'cash' ? (input.foreignCurrencies ?? before.foreignCurrencies) : [],
+        input.method === 'cash'
+          ? FX_CURRENCIES.filter((c) =>
+              (input.foreignCurrencies ?? before.foreignCurrencies).includes(c),
+            )
+          : [],
     }
     const othersOn = PAYMENT_METHODS.some((m) => m !== input.method && settings[m].enabled)
     if (!after.enabled && !othersOn) {

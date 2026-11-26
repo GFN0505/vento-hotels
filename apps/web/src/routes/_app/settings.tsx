@@ -22,16 +22,19 @@ const SECTIONS = [
     to: '/settings/taxes',
     label: 'Taxes and charges',
     needs: ['finance.setup', 'rates.edit', 'rooms.setup'],
+    feature: 'front_desk',
   },
   {
     to: '/settings/payments',
     label: 'Payments',
     needs: ['finance.setup', 'rooms.setup', 'fx.enter'],
+    feature: 'front_desk',
   },
   {
     to: '/settings/fx-rates',
     label: 'FX rates',
     needs: ['finance.setup', 'rooms.setup', 'fx.enter'],
+    feature: 'front_desk',
   },
   {
     to: '/settings/permissions',
@@ -42,7 +45,11 @@ const SECTIONS = [
 
 function SettingsLayout() {
   const me = useMe()
-  const sections = SECTIONS.filter((section) => section.needs.some((p) => me.can(p)))
+  // Sections of a module ship behind its switch (decision 0021), like the menu's modules.
+  const sections = SECTIONS.filter(
+    (section) =>
+      section.needs.some((p) => me.can(p)) && (!('feature' in section) || me.has(section.feature)),
+  )
   const list = useRef<HTMLUListElement>(null)
   const { pathname } = useLocation()
   // On phones the sections scroll sideways: keep the open one in view.

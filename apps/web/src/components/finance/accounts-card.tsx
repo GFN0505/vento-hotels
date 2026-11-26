@@ -88,7 +88,6 @@ export function AccountsCard({ setup, canWrite, onOpen, onAdd }: Props) {
                   kind="account"
                   id={account.id}
                   propertyId={setup.property.id}
-                  live={setup.property.live}
                   label={`${account.bankName} ••••${account.last4}`}
                 />
               ) : null}

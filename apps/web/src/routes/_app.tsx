@@ -56,9 +56,11 @@ function Shell() {
     organization.can('setup.manage') ||
     organization.can('permissions.manage') ||
     organization.can('property.operating_times') ||
-    organization.can('finance.setup') ||
-    organization.can('fx.enter') ||
-    organization.can('rates.edit')
+    // Taxes, payments and FX rates ship behind front desk (decision 0021).
+    (organization.has('front_desk') &&
+      (organization.can('finance.setup') ||
+        organization.can('fx.enter') ||
+        organization.can('rates.edit')))
   const groups = organization.role
     ? visibleGroups(organization.role, organization.has, organization.can)
     : []

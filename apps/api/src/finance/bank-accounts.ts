@@ -564,6 +564,7 @@ export async function restoreBankAccount(
     const hotel = await loadHotel(tx, access, input.propertyId, { hold: true })
     const rule = await requireCompanyAccess(tx, access, hotel)
     const account = await lockAccount(tx, access, hotel, input.id)
+    if (account.archivedAt && rule.live.length > 0 && !input.reason) throw reasonRequired()
     if (account.archivedAt) {
       await tx
         .update(bankAccounts)
@@ -576,7 +577,7 @@ export async function restoreBankAccount(
         propertyId: hotel.id,
         businessDate: hotel.businessDate,
         reason: input.reason ?? null,
-        after: { account: masked(account), liveProperty: rule.live.length > 0 },
+        after: { account: masked(account), ...liveFlags(rule.live) },
       })
     }
     const [view] = await bankAccountViews(tx, access, hotel, [account.id])

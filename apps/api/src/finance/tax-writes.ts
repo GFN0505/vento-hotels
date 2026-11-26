@@ -544,6 +544,13 @@ export async function verifyTaxRate(
     const tax = await lockTax(tx, access, found.taxId)
     await requireChangeable(tx, access, tax, hotel)
     if (found.cancelledAt || found.stop) throw rateNotFound()
+    // Vento's placeholder isn't a legal source: verifying means naming the real one.
+    if (/^vento default/i.test(input.source.trim())) {
+      throw new ORPCError('BAD_REQUEST', {
+        message: 'Name the act, law or decision and its section, not the Vento default.',
+        data: { code: 'SOURCE_REQUIRED', field: 'source' },
+      })
+    }
     const verifiedOn = today()
     await tx
       .update(taxRates)

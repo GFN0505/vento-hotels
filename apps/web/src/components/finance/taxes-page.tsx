@@ -37,7 +37,7 @@ export function TaxesPage() {
     return (
       <NoAccess
         what="taxes and charges"
-        ask="Only finance or the owner can change taxes and payment setup. Ask your finance team."
+        ask="Finance, the owner, GMs and revenue managers can view a hotel's taxes. Ask your finance team if you need to."
       />
     )
   }

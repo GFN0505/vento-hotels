@@ -159,7 +159,7 @@ export async function listFxRates(
 }
 
 // Saves the day's rates. A rate more than 10% from the previous one asks to check it first
-// (FX_RATE_CHECK, unless `confirmed`); a rate already entered for the date is only replaced with a
+// (FX_RATE_CHECK, unless that exact rate is in `confirmed`); a rate already entered for the date is only replaced with a
 // reason (FX_RATE_EXISTS), and the old one is kept, superseded.
 export async function enterFxRates(
   db: Database,
@@ -167,7 +167,7 @@ export async function enterFxRates(
   input: {
     rateDate: string
     rates: { currency: FxCurrency; rate: string }[]
-    confirmed: boolean
+    confirmed: { currency: FxCurrency; rate: string }[]
     replaceReason?: string | undefined
   },
 ): Promise<{ saved: number }> {
@@ -198,7 +198,10 @@ export async function enterFxRates(
         )
         .orderBy(desc(fxRates.rateDate))
         .limit(1)
-      if (previous && fxRateJump(previous.rate, entry.rate).needsCheck) {
+      const confirmed = input.confirmed.some(
+        (c) => c.currency === entry.currency && dec(c.rate).equals(entry.rate),
+      )
+      if (previous && !confirmed && fxRateJump(previous.rate, entry.rate).needsCheck) {
         checks.push({
           currency: entry.currency,
           message: fxCheckMessage(entry.currency, entry.rate, {
@@ -223,7 +226,7 @@ export async function enterFxRates(
         })
       }
     }
-    if (checks.length > 0 && !input.confirmed) {
+    if (checks.length > 0) {
       throw new ORPCError('CONFLICT', {
         message: checks.map((check) => check.message).join(' '),
         data: { code: 'FX_RATE_CHECK', checks },

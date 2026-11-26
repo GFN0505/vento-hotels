@@ -290,6 +290,12 @@ describe.skipIf(!url)('taxes and charges', () => {
 
   it('records who verified a rate, with the source and the date', async () => {
     const vat = taxNamed(await get(k.finance.cookie, k.vi.id), 'VAT')
+    const placeholder = await t.rpc<Problem>(k.finance.cookie, 'taxes/verify', {
+      propertyId: k.vi.id,
+      rateId: vat.rates[0]?.id,
+      source: 'Vento default · illustrative',
+    })
+    expect(placeholder.data.data?.code).toBe('SOURCE_REQUIRED')
     const verified = await t.rpc<TaxSetup>(k.finance.cookie, 'taxes/verify', {
       propertyId: k.vi.id,
       rateId: vat.rates[0]?.id,

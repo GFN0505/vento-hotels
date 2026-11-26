@@ -88,11 +88,11 @@ export function MethodsCard({ setup, canWrite, onSaved }: Props) {
                 <td className={cn(TD, 'pl-5 font-medium max-md:grow')}>
                   {info.label}
                   {row.warnings.map((warning) => (
-                    <span key={warning} className="mt-1 block font-normal">
+                    <span key={warning.text} className="mt-1 block font-normal">
                       <StatusBadge tone="amber" className="whitespace-normal">
-                        {warning}
+                        {warning.text}
                       </StatusBadge>
-                      {warning.includes('FX rates') ? (
+                      {warning.fix === 'fx_rates' ? (
                         <Link
                           to="/settings/fx-rates"
                           className="ml-2 text-sm text-pri-ink hover:underline"
@@ -174,7 +174,7 @@ function Switch({
       >
         <span
           className={cn(
-            'absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform',
+            'absolute top-0.5 left-0.5 size-4 rounded-full bg-surface shadow transition-transform',
             checked && 'translate-x-4',
           )}
         />

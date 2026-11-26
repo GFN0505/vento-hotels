@@ -33,7 +33,7 @@ export function PaymentsPage() {
     return (
       <NoAccess
         what="payment setup"
-        ask="Only finance or the owner can change taxes and payment setup. Ask your finance team."
+        ask="Finance, the owner and GMs can view a hotel's payment setup. Ask your finance team if you need to."
       />
     )
   }

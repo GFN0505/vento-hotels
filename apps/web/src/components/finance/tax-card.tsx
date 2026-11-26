@@ -2,7 +2,7 @@
 // its dated rates with their status. Scheduled changes can be cancelled; rates in force with no
 // recorded source show To verify until someone marks them verified.
 import { useMutation } from '@tanstack/react-query'
-import type { TaxRateView, TaxSetup, TaxView } from '@vento/shared'
+import { calendarDateIn, type TaxRateView, type TaxSetup, type TaxView } from '@vento/shared'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { dateLabel } from '@/components/hotels/format'
@@ -120,7 +120,9 @@ export function TaxCard({ tax, setup, canWrite, onSaved, onSchedule }: Props) {
                 <td className={cn(TD, faint ? 'text-text-3' : 'text-text-2', 'max-md:basis-full')}>
                   <span className="block truncate" title={rate.reason ?? undefined}>
                     {rate.setByName}
-                    {rate.status === 'scheduled' ? ` · ${dateLabel(rate.setAt.slice(0, 10))}` : ''}
+                    {rate.status === 'scheduled'
+                      ? ` · ${dateLabel(calendarDateIn(setup.property.timeZone, new Date(rate.setAt)))}`
+                      : ''}
                   </span>
                 </td>
                 <td className={TD}>

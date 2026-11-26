@@ -47,7 +47,9 @@ describe.skipIf(!url)('payment setup', () => {
       ['city_ledger', true],
       ['card_online', false],
     ])
-    expect(method(ikeja, 'bank_transfer')?.warnings).toEqual(['No account for guest transfers'])
+    expect(method(ikeja, 'bank_transfer')?.warnings).toEqual([
+      { text: 'No account for guest transfers', fix: 'bank_accounts' },
+    ])
   })
 
   it('makes the new account Victoria Island’s guest transfer account, shared with Ikeja', async () => {
@@ -107,10 +109,17 @@ describe.skipIf(!url)('payment setup', () => {
     expect(method(saved.data, 'cash')).toMatchObject({
       currencies: ['NGN', 'USD', 'GBP'],
       warnings: [
-        "No USD rate yet. Enter today's FX rates.",
-        "No GBP rate yet. Enter today's FX rates.",
+        { text: "No USD rate yet. Enter today's FX rates.", fix: 'fx_rates' },
+        { text: "No GBP rate yet. Enter today's FX rates.", fix: 'fx_rates' },
       ],
     })
+    const reordered = await t.rpc<PaymentSetup>(k.finance.cookie, 'paymentMethods/set', {
+      propertyId: k.vi.id,
+      method: 'cash',
+      enabled: true,
+      foreignCurrencies: ['USD', 'GBP'],
+    })
+    expect(reordered.status).toBe(200)
     const [event] = await events(t, k.owner, { entityType: 'property', entityId: k.vi.id })
     expect(event).toMatchObject({
       action: 'payment_method.changed',
@@ -306,8 +315,23 @@ describe.skipIf(!url)('payment setup', () => {
     expect(reuse.data.message).toBe(
       'Terminal 3OPY7709 belongs to an archived terminal. Restore it.',
     )
-    await t.rpc(k.finance.cookie, 'posTerminals/restore', { propertyId: k.vi.id, id: pool?.id })
+    await setHotel(t, k.vi.id, { liveSince: '2026-11-16' })
+    const noReason = await t.rpc<Problem>(k.finance.cookie, 'posTerminals/restore', {
+      propertyId: k.vi.id,
+      id: pool?.id,
+    })
+    expect(noReason.data.data?.code).toBe('REASON_REQUIRED')
+    await t.rpc(k.finance.cookie, 'posTerminals/restore', {
+      propertyId: k.vi.id,
+      id: pool?.id,
+      reason: 'Back from repair',
+    })
+    await setHotel(t, k.vi.id, { liveSince: null })
     const history = await events(t, k.owner, { entityType: 'pos_terminal', entityId: pool?.id })
+    expect(history[0]).toMatchObject({
+      reason: 'Back from repair',
+      after: { exception: 'setup_changed', liveProperty: true },
+    })
     expect(history.map((e) => e.action)).toEqual([
       'pos_terminal.restored',
       'pos_terminal.archived',

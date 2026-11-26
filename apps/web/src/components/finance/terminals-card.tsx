@@ -82,7 +82,6 @@ export function TerminalsCard({ setup, canWrite, onOpen, onAdd }: Props) {
                   kind="terminal"
                   id={terminal.id}
                   propertyId={setup.property.id}
-                  live={setup.property.live}
                   label={`${terminal.provider} · ${terminal.name}`}
                 />
               ) : null}

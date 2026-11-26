@@ -67,10 +67,17 @@ describe.skipIf(!url)('FX rates', () => {
       message: `₦19,500.00 is 10 times the last GBP rate (₦1,950.00 on ${new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${yesterday}T00:00:00Z`))}). Check the figure.`,
       data: { code: 'FX_RATE_CHECK' },
     })
+    // A confirmation covers only the value confirmed: changing the figure checks again.
+    const swapped = await enter(k.finance.cookie, {
+      rateDate: today,
+      rates: [{ currency: 'GBP', rate: '99999' }],
+      confirmed: [{ currency: 'GBP', rate: '19500' }],
+    })
+    expect(swapped.data.data?.code).toBe('FX_RATE_CHECK')
     const anyway = await enter(k.finance.cookie, {
       rateDate: today,
       rates: [{ currency: 'GBP', rate: '1990' }],
-      confirmed: true,
+      confirmed: [{ currency: 'GBP', rate: '1,990.00' }],
     })
     expect(anyway.status).toBe(200)
   })

@@ -13,8 +13,10 @@ function SettingsIndex() {
     return <Navigate to="/settings/hotels" replace />
   }
   if (me.can('permissions.manage')) return <Navigate to="/settings/permissions" replace />
-  if (me.can('finance.setup')) return <Navigate to="/settings/taxes" replace />
-  if (me.can('fx.enter')) return <Navigate to="/settings/fx-rates" replace />
-  if (me.can('rates.edit')) return <Navigate to="/settings/taxes" replace />
+  if (me.has('front_desk')) {
+    if (me.can('finance.setup')) return <Navigate to="/settings/taxes" replace />
+    if (me.can('fx.enter')) return <Navigate to="/settings/fx-rates" replace />
+    if (me.can('rates.edit')) return <Navigate to="/settings/taxes" replace />
+  }
   return <Navigate to="/settings/members" replace />
 }

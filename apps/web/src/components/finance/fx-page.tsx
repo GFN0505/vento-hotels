@@ -116,6 +116,14 @@ function EntryCard({ summary }: { summary: FxSummary }) {
   >({})
   const [check, setCheck] = useState<string>()
   const [replace, setReplace] = useState<string>()
+  // The rates the person said were right with "Save anyway"; only those exact values skip the check.
+  const [confirmed, setConfirmed] = useState<{ currency: FxCurrency; rate: string }[]>([])
+  // Any edit means the figures on screen are no longer the ones checked or confirmed.
+  const edited = () => {
+    setCheck(undefined)
+    setReplace(undefined)
+    setConfirmed([])
+  }
 
   const entries = () =>
     FX_CURRENCIES.filter((c) => values[c].trim()).map((currency) => ({
@@ -123,8 +131,10 @@ function EntryCard({ summary }: { summary: FxSummary }) {
       rate: values[currency],
     }))
   const save = useMutation({
-    mutationFn: (options: { confirmed: boolean; replaceReason?: string }) =>
-      api.fxRates.enter({ rateDate, rates: entries(), ...options }),
+    mutationFn: (options: {
+      confirmed: { currency: FxCurrency; rate: string }[]
+      replaceReason?: string
+    }) => api.fxRates.enter({ rateDate, rates: entries(), ...options }),
     onSuccess: async () => {
       await Promise.all([
         client.invalidateQueries({ queryKey: orpc.fxRates.key() }),
@@ -132,8 +142,7 @@ function EntryCard({ summary }: { summary: FxSummary }) {
       ])
       toast.success(`FX rates for ${dateLabel(rateDate)} saved`)
       setValues({ USD: '', GBP: '', EUR: '' })
-      setCheck(undefined)
-      setReplace(undefined)
+      edited()
     },
     onError: (error) => {
       const code = errorCode(error)
@@ -158,7 +167,7 @@ function EntryCard({ summary }: { summary: FxSummary }) {
     if (rateDate > summary.today) found.rateDate = "Rates can't be entered for future dates."
     setProblems(found)
     setCheck(undefined)
-    if (Object.keys(found).length === 0) save.mutate({ confirmed: false })
+    if (Object.keys(found).length === 0) save.mutate({ confirmed })
   }
 
   return (
@@ -190,7 +199,10 @@ function EntryCard({ summary }: { summary: FxSummary }) {
             max={summary.today}
             hint="Today, or an earlier day you missed"
             error={problems.rateDate}
-            onChange={(event) => setRateDate(event.target.value || summary.today)}
+            onChange={(event) => {
+              edited()
+              setRateDate(event.target.value || summary.today)
+            }}
             className="num max-lg:h-11"
           />
           {FX_CURRENCIES.map((currency, index) => (
@@ -203,7 +215,10 @@ function EntryCard({ summary }: { summary: FxSummary }) {
               maxLength={16}
               hint={`₦ per ${FX_SYMBOLS[currency]}1`}
               error={problems[currency]}
-              onChange={(event) => setValues((v) => ({ ...v, [currency]: event.target.value }))}
+              onChange={(event) => {
+                edited()
+                setValues((v) => ({ ...v, [currency]: event.target.value }))
+              }}
               className="num max-lg:h-11"
               data-autofocus={index === 0 ? true : undefined}
             />
@@ -219,7 +234,11 @@ function EntryCard({ summary }: { summary: FxSummary }) {
               size="sm"
               className="max-lg:h-11"
               loading={save.isPending}
-              onClick={() => save.mutate({ confirmed: true })}
+              onClick={() => {
+                const now = entries()
+                setConfirmed(now)
+                save.mutate({ confirmed: now })
+              }}
             >
               Save anyway
             </Button>
@@ -246,7 +265,7 @@ function EntryCard({ summary }: { summary: FxSummary }) {
         label="Reason"
         confirmLabel="Replace rate"
         pending={save.isPending}
-        onConfirm={(reason) => save.mutate({ confirmed: true, replaceReason: reason })}
+        onConfirm={(reason) => save.mutate({ confirmed, replaceReason: reason })}
         onClose={() => setReplace(undefined)}
       />
     </Card>

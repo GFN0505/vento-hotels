@@ -334,6 +334,7 @@ export async function taxSetupFor(db: Reader, access: Access, hotel: Hotel): Pro
       stateCode: hotel.stateCode,
       stateName: stateName(hotel.stateCode),
       businessDate: hotel.businessDate,
+      timeZone: hotel.timeZone,
       live: hotel.live,
       archived: hotel.archived,
       entityName: hotel.entityName,

@@ -38,7 +38,7 @@ Kunle Ade, finance, with whole-group access. Kora Victoria Island is in its setu
 6. **POS terminals › Add**: Moniepoint, "Desk 1", terminal ID 2MPT4471, settles into Zenith Bank ••••4471, **Add terminal** (2 clicks after typing). He adds "Calabash" and "Pool bar" the same way. The checklist step is done.
 
 **C. FX rates (1 click after typing)**
-7. Each morning Tunde presses ⌘K, "Enter today's FX rates". **Settings › FX rates** opens with "Rates for 13 Nov 2026" focused on US dollar. He opens the CBN rates page from the link, types 1,620.00 and 1,950.00 for the pound, and clicks **Save rates** (1 click). Toast "FX rates for 13 Nov 2026 saved". The USD card's 30-day line moves.
+7. Each morning Tunde opens **Settings › FX rates** (a ⌘K entry, "Enter today's FX rates", comes with the command palette brick). It opens with "Rates for 13 Nov 2026" focused on US dollar. He opens the CBN rates page from the link, types 1,620.00 and 1,950.00 for the pound, and clicks **Save rates** (1 click). Toast "FX rates for 13 Nov 2026 saved". The USD card's 30-day line moves.
 
 Front desk sees none of this until brick 4: "Deluxe King · ₦150,000.00 + taxes = ₦183,750.00 per night · ≈ $113.43 at ₦1,620/$, CBN, 13 Nov 2026".
 
@@ -50,7 +50,7 @@ Front desk sees none of this until brick 4: "Deluxe King · ₦150,000.00 + taxe
 2. The shared calculation `taxLines` in `@vento/shared` and the server lookup of the rules in force.
 3. The **Payments** page: payment methods per hotel, bank accounts per company, POS terminals per hotel. Configuration only; no money is taken.
 4. The **FX rates** page and the shared FX display helper.
-5. The Home checklist step, ⌘K entries and the demo seed.
+5. The Home checklist step and the demo seed. (⌘K entries come with the command palette brick.)
 
 **Taxes and charges: the model**
 - A **tax or charge** has a kind, a name, a scope, who it is paid to, and dated **rates**:
@@ -103,10 +103,10 @@ Front desk sees none of this until brick 4: "Deluxe King · ₦150,000.00 + taxe
 - **Which rate a hotel uses:** the latest CBN rate dated on or before the hotel's business date, returned with its date and age (`fxRateFor(currency, businessDate)`). Brick 10 shows the age when it is more than 1 day old and asks for today's rate when there is none.
 - **Display helper** in `@vento/shared`: `fxEquivalent(amountNgn, fxRate)` → the foreign amount, rounded half-up to the cent, and the text `≈ $113.43 at ₦1,620/$, CBN, 25 Nov 2026`. Never stored on rates or charges. Brick 4 uses it in quotes for foreign guests.
 
-**Home, ⌘K and navigation**
+**Home and navigation** (⌘K later)
 - Settings gains **Taxes and charges**, **Payments** and **FX rates**, shown per permission (below).
 - Home's setup checklist gains **Set up taxes and payments**, done when the hotel's taxes are set up and every rate in force is verified, and, if bank transfer is on, the hotel has a guest transfer account.
-- ⌘K: "Taxes and charges", "Payments", "FX rates", "Enter today's FX rates", "Add POS terminal", "Add bank account".
+- ⌘K: there is no command palette yet. These entries come with the command palette brick: "Taxes and charges", "Payments", "FX rates", "Enter today's FX rates", "Add POS terminal", "Add bank account".
 
 ### Organization isolation
 - Taxes, rates, payment method settings, bank accounts, POS terminals and FX rates carry `organizationId`; every read and write filters by the organization from the auth context. An id from another group answers "not found". Vento's templates have no customer data and are only copied in by **Set up for …**.
@@ -204,6 +204,7 @@ Not relevant: nothing here changes sellable rooms.
 
 ## Behind the scenes
 - **Folio postings:** none in this brick.
+- **Who calls the rules in force:** `taxes.inForce` and `taxes.quote` are read with the taxes page permissions (finance, `rates.edit`, `rooms.setup`), so front desk, cashiers and waiters can't call them. Bricks 4, 10 and 13 don't widen that: they call `rulesInForceFor` / `quoteTaxLines` server-side inside their own procedures (quotes, postings, night audit), under those procedures' own permissions.
 - **Night audit (brick 13):** posts room charges with `quoteTaxLines` for that business date; its pre-checks block when the hotel's taxes aren't set up, and the first audit (go-live) blocks while any rate in force is **To verify** (Decision 1).
 - **Ledger (Stage 5):** maps each tax to a payable account by "paid to", each method and terminal to a clearing account, each bank account to a bank ledger account (the design's "Posts to" and "Ledger" columns return then). Tax lines and payment rows from brick 10 on carry everything needed.
 - **Jobs:** one pg-boss job, `notify.transfer_account_changed`, keyed by the audit event id (idempotent, retried), sends the owners' email through `EmailProvider`. No other jobs; FX rates are typed (Decision 4).
@@ -249,7 +250,7 @@ Sign in as `kunle@kora.example`, Kora Victoria Island selected:
 ### Changes needed in walkthroughs (product-manager, same change as the build)
 - `going-live.md` step 1, behind the scenes: replace "Taxes (#27) come pre-filled from Vento's versioned rules for Lagos: VAT, Lagos consumption tax, and a 10% service charge she confirms. She doesn't type any rates." with "Taxes and payments are set up in step 4a."
 - `going-live.md` new step 4a, **Fri 13 Nov, 11:30 · Taxes and payments:** "*Does:* Kunle Ade (finance) clicks **Set up taxes and payments** on the checklist, then **Set up for Lagos**. He checks VAT, Lagos consumption tax and the 10% service charge against the current law and marks each verified with its source. On Payments he ticks USD and GBP for cash, adds Zenith Bank ••••4471 as the guest transfer account and the three Moniepoint and OPay terminals. *Sees:* 'How a bill adds up': ₦150,000.00 + ₦15,000.00 + ₦11,250.00 + ₦7,500.00 = ₦183,750.00. *Behind the scenes:* `taxes.set_up`, `tax_rate.verified`, `bank_account.created`, `pos_terminal.created`; nothing reaches the owner's report before go-live."
-- `going-live.md` step 12 (parallel run): "Tunde enters the day's CBN rates each morning (⌘K 'Enter today's FX rates')."
+- `going-live.md` step 12 (parallel run): "Tunde enters the day's CBN rates each morning on Settings › FX rates" (a ⌘K entry follows with the command palette brick).
 - `going-live.md` Becomes tests: "Set up for Lagos adds VAT, Lagos consumption tax and service charge marked To verify; the checklist step is done only once each is verified and a guest transfer account exists."
 - `journeys/README.md` demo world: the Taxes line adds "set up with one click and verified by Kunle Ade at Kora Victoria Island; a service charge change to 12.5% is scheduled for 1 Jan 2027"; Other illustrative values: "FX ₦1,620 = $1 (CBN, 25 Nov 2026) and ₦1,950 = £1"; add bank accounts and POS terminals (Moniepoint · Desk 1, Moniepoint · Calabash, OPay · Pool bar).
 - `front-desk-morning.md` step 5 and 9: the terminal is "Moniepoint · Desk 1" and transfers go to Zenith ••••4471 (wording only, when brick 10 lands).
