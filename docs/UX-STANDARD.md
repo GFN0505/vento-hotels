@@ -50,6 +50,22 @@ A screen is done when every line below is true, or the exception is written in t
 - [ ] Matches the approved design in `docs/design/export/`, or the difference is in `docs/design/CHANGES.md`.
 - [ ] Brand surfaces follow the `brand` skill: "Vento Hotels" lockup, Fraunces only for brand headlines.
 
+## 8. Hotel switch
+The top-bar switch means the same thing on every page (owner, 26 Nov 2026; spec `docs/specs/stage-1-hotel-switch-scope.md`).
+- [ ] The page is one of three kinds:
+  - **hotel page:** one hotel only. With All hotels it shows the shared "Pick a hotel" panel, e.g. "Rooms are set up per hotel. Pick a hotel."
+  - **group page:** one hotel selected shows that hotel only. All hotels shows everything, with the hotel named on each row.
+  - **group-wide page:** the same with any selection, and it says so.
+- [ ] With one hotel selected, nothing from another hotel appears, not even for a moment while loading. Team pages include whole-group people, marked **Whole group**.
+- [ ] The eyebrow above the `h1` names the scope ("Kora Abuja", "All hotels" or "Whole group"), and so does the tab title ("Members and roles · Kora Abuja").
+- [ ] When the hotel changes:
+  - the page goes back to page 1, record sheets close, and filters stay;
+  - focus moves to the `h1` and "Showing Kora Abuja" is announced;
+  - unsaved input asks first, through the leave guard.
+- [ ] Defaults follow the switch: a new record, invite or device starts on the selected hotel. With All hotels, a hotel field starts empty and is required.
+- [ ] Empty, filtered-empty and error states name the hotel ("No shared devices at Kora Abuja yet").
+- [ ] Links to one hotel's data carry `?hotel=`. There are no in-page hotel filters: the switch is the only one.
+
 ## How it's enforced
 1. **Automatic, on every pull request (CI):** accessibility scans, bundle budgets, browser tests on desktop and phone.
 2. **ui-designer review, before the owner:** the agent checks the brick's screens against this page in light, dark, desktop and phone, and its findings are fixed or listed in the pull request.
