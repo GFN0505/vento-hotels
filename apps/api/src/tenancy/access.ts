@@ -46,6 +46,8 @@ const NOT_ON_SHARED_DEVICES: Permission[] = [
   'permissions.manage',
   'rooms.setup',
   'property.operating_times',
+  'finance.setup',
+  'fx.enter',
 ]
 
 export async function effectiveRules(

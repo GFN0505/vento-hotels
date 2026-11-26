@@ -92,6 +92,13 @@
       "when": 1795702785459,
       "tag": "0012_devices_by_hotel",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795726849245,
+      "tag": "0013_taxes_payments_fx",
+      "breakpoints": true
     }
   ]
 }
