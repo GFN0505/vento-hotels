@@ -68,7 +68,7 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
-    test('rooms: the builder, the page, a room, a room type and the builder sheet have no accessibility problems', async ({
+    test('rooms: the builder, the page, a room, its audit trail, a room type and the builder sheet have no accessibility problems', async ({
       page,
     }, testInfo) => {
       await signUpOwnerWithGroup(page, `a11y-rooms-${theme}-${testInfo.project.name}`)
@@ -82,6 +82,10 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('button', { name: 'Edit room 401' }).click()
       await page.getByRole('dialog', { name: 'Room 401' }).waitFor()
       await expectAccessible(page)
+      await page.getByRole('button', { name: 'Audit trail' }).click()
+      await page.getByRole('dialog', { name: 'Audit trail' }).getByText('Room added').waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
       await page.keyboard.press('Escape')
       // Phones fold the room types away until asked.
       const showTypes = page.getByRole('button', { name: 'Show 2 types' })

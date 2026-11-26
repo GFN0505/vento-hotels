@@ -12,6 +12,7 @@ import { api } from '@/lib/api'
 import { problemMessage } from '@/lib/errors'
 import { useOnline } from '@/offline/connection'
 import { featureLine, floorName, NEEDS_CONNECTION } from './format'
+import { HistoryButton } from './history-button'
 import { useRoomsRefresh } from './queries'
 import type { useRoomActions } from './use-room-actions'
 
@@ -41,7 +42,12 @@ export function ArchivedRoom({ room, actions, onClose }: Props) {
       open
       onClose={onClose}
       title={`Room ${room.number}`}
-      description={<StatusBadge>Archived</StatusBadge>}
+      description={
+        <span className="flex flex-wrap items-center gap-x-3">
+          <StatusBadge>Archived</StatusBadge>
+          <HistoryButton roomId={room.id} title={`Room ${room.number} · ${room.roomTypeName}`} />
+        </span>
+      }
       footer={
         <>
           {room.canDelete ? (

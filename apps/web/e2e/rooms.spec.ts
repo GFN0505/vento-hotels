@@ -61,6 +61,66 @@ test('a new hotel builds its rooms by floor, then edits, filters and removes the
   await expect(page.getByRole('link', { name: 'Set up', exact: true })).toHaveCount(0)
 })
 
+test('select every room in a view, move with the keyboard, and read a room’s audit trail', async ({
+  page,
+}, testInfo) => {
+  // Two builds and 112 rooms: longer than the default on a phone.
+  test.setTimeout(90_000)
+  await signUpOwnerWithGroup(page, `rooms-select-${testInfo.project.name}`)
+  await page.goto('/rates/rooms')
+  await buildRooms(page)
+
+  // A second block, from the sheet: it starts on the next free floor with the type added last.
+  const more = page.getByRole('button', { name: 'More actions' })
+  if (await more.isVisible()) {
+    await more.click()
+    await page.getByRole('menuitem', { name: 'Add rooms by floor' }).click()
+  } else {
+    await page.getByRole('button', { name: 'Add rooms by floor' }).click()
+  }
+  const builder = page.getByRole('dialog', { name: 'Add rooms by floor' })
+  await expect(builder.getByLabel('First floor, line 1')).toHaveValue('5')
+  await expect(builder.getByLabel('Line 1 · Room type')).toHaveValue(/.+/)
+  await builder.getByLabel('Last floor, line 1').fill('10')
+  await builder.getByLabel('Last number, line 1').fill('14')
+  await builder.getByRole('button', { name: 'Create 84 rooms' }).click()
+  await expect(page.getByText('84 rooms created at Kora Victoria Island')).toBeVisible()
+
+  // Tick the page, then every room in the view, and move them all in one go.
+  await page
+    .getByLabel(/^Select all (rooms )?on this page$/)
+    .filter({ visible: true })
+    .check()
+  await page.getByRole('button', { name: 'Select all 112 rooms in this view' }).click()
+  await expect(page.getByText('All 112 rooms in this view are selected.')).toBeVisible()
+  await page.getByRole('button', { name: 'Change type' }).filter({ visible: true }).click()
+  const change = page.getByRole('dialog', { name: 'Change type of 112 rooms' })
+  await change.getByLabel('New room type').selectOption({ label: 'Standard Queen' })
+  await change.getByRole('button', { name: 'Change type' }).click()
+  await expect(page.getByText('112 rooms moved to Standard Queen')).toBeVisible()
+
+  // One tab stop for the list: arrows move, Space ticks, Enter opens.
+  await page.getByRole('row', { name: /Edit room 301/ }).focus()
+  await page.keyboard.press('ArrowDown')
+  await expect(page.getByRole('row', { name: /Edit room 302/ })).toBeFocused()
+  await page.keyboard.press('Space')
+  await expect(page.getByLabel('Select room 302')).toBeChecked()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('dialog', { name: 'Room 302' })).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  // The audit trail says what changed, in words.
+  await page.getByRole('button', { name: 'Edit room 401' }).click()
+  await page
+    .getByRole('dialog', { name: 'Room 401' })
+    .getByRole('button', { name: 'Audit trail' })
+    .click()
+  const trail = page.getByRole('dialog', { name: 'Audit trail' })
+  await expect(trail.getByText('Type: Deluxe King → Standard Queen')).toBeVisible()
+  await expect(trail.getByText('Room added')).toBeVisible()
+  await expect(trail.getByText('Added by floor with other rooms, in one go')).toBeVisible()
+})
+
 test('offline, the rooms page is read-only', async ({ page, context }, testInfo) => {
   await signUpOwnerWithGroup(page, `rooms-offline-${testInfo.project.name}`)
   await page.goto('/rates/rooms')

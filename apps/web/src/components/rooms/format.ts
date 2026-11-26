@@ -42,14 +42,16 @@ export function toneIndexes(types: readonly { id: string }[]): Map<string, numbe
   return new Map([...types].sort((a, b) => (a.id < b.id ? -1 : 1)).map((t, i) => [t.id, i]))
 }
 
-// "Room 412", "Rooms 301, 302 and 303", "Rooms 301, 302, 303 and 5 more".
+// "Room 412", "Rooms 301, 302 and 303", "Rooms 301, 302, 303 and 5 more". Numbers not loaded yet
+// (rooms picked with "Select all in this view") are empty strings and count towards "more".
 export function roomNames(numbers: readonly string[]): string {
-  if (numbers.length === 1) return `Room ${numbers[0]}`
-  const shown = numbers.slice(0, 3)
+  const known = numbers.filter(Boolean)
+  if (numbers.length === 1 && known[0]) return `Room ${known[0]}`
+  const shown = known.slice(0, 3)
   const more = numbers.length - shown.length
-  return more > 0
-    ? `Rooms ${shown.join(', ')} and ${more} more`
-    : `Rooms ${shown.slice(0, -1).join(', ')} and ${shown.at(-1)}`
+  if (shown.length === 0) return `${numbers.length} rooms`
+  if (more > 0) return `Rooms ${shown.join(', ')} and ${more} more`
+  return `Rooms ${shown.slice(0, -1).join(', ')} and ${shown.at(-1)}`
 }
 
 // The `data.code` of a rooms API error (ROOM_ERROR_CODES), when there is one.
@@ -59,6 +61,18 @@ export function errorCode(error: unknown): string | undefined {
     if (data && typeof data === 'object' && 'code' in data) {
       const code = (data as { code: unknown }).code
       return typeof code === 'string' ? code : undefined
+    }
+  }
+  return undefined
+}
+
+// The `data.key` of a rooms API error: which new room type in the builder it's about.
+export function errorKey(error: unknown): string | undefined {
+  if (error && typeof error === 'object' && 'data' in error) {
+    const data = (error as { data: unknown }).data
+    if (data && typeof data === 'object' && 'key' in data) {
+      const key = (data as { key: unknown }).key
+      return typeof key === 'string' ? key : undefined
     }
   }
   return undefined

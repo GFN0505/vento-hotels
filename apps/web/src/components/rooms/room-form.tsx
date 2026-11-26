@@ -22,6 +22,7 @@ import { useOnline } from '@/offline/connection'
 import { ChipInput } from './chip-input'
 import { ConnectingPicker } from './connecting-picker'
 import { errorCode, NEEDS_CONNECTION } from './format'
+import { HistoryButton } from './history-button'
 import { useRoomsRefresh } from './queries'
 import { REASON_HINT, reasonProblem } from './reason-dialog'
 import * as M from './room-form-model'
@@ -107,7 +108,18 @@ export function RoomForm({
         if (!save.isPending) guard.close()
       }}
       title={title}
-      description={room ? `${room.roomTypeName} · ${hotel.name}` : `At ${hotel.name}`}
+      description={
+        room ? (
+          <span className="flex flex-wrap items-center gap-x-3">
+            <span>
+              {room.roomTypeName} · {hotel.name}
+            </span>
+            <HistoryButton roomId={room.id} title={`Room ${room.number} · ${room.roomTypeName}`} />
+          </span>
+        ) : (
+          `At ${hotel.name}`
+        )
+      }
       footer={
         guard.bar ?? (
           <>

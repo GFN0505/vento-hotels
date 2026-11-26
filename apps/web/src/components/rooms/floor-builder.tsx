@@ -1,6 +1,6 @@
 // "Add rooms by floor" (design: OnbRooms): new room types, then lines of "type · floors · numbers",
 // a live preview, and one button that creates every room in one go (all or nothing on the API).
-// New room types are saved first, outside the rooms' transaction, so a retry reuses them.
+// New room types travel with the rooms in one request, so it's all created or nothing is.
 // On the page (a new hotel) the action bar sticks to the window; in a sheet it's the sheet's footer.
 import { useMutation } from '@tanstack/react-query'
 import { MAX_ROOMS_PER_BATCH, newId, type Property, type RoomTypeView } from '@vento/shared'
@@ -13,7 +13,7 @@ import { useOnline } from '@/offline/connection'
 import { BuilderLines } from './builder-lines'
 import { BuilderPreview } from './builder-preview'
 import { BuilderTypes } from './builder-types'
-import { NEEDS_CONNECTION, plural } from './format'
+import { errorCode, errorKey, NEEDS_CONNECTION, plural } from './format'
 import { useRoomsRefresh } from './queries'
 import { type FloorBuilderState, useFloorBuilder } from './use-floor-builder'
 
@@ -48,46 +48,61 @@ export function useBuilderView(props: BuilderProps): { content: ReactNode; actio
   const refresh = useRoomsRefresh()
   const b = useFloorBuilder({ propertyId: hotel.id, types, hotelHasRooms, startFloor })
   const [problem, setProblem] = useState<string>()
+  // One id per go: a retry after a timeout replays the same batch instead of creating it twice.
+  const [batchId, setBatchId] = useState(newId)
   const count = b.preview.toCreate.length
   useEffect(() => onDirtyChange?.(b.touched), [b.touched, onDirtyChange])
 
   const create = useMutation({
-    mutationFn: async () => {
-      const saved = new Map<string, string>()
-      try {
-        for (const draft of b.drafts) {
-          if (!draft.name.trim()) continue
-          const guests = Number(draft.guests)
-          const type = await api.roomTypes.create({
-            propertyId: hotel.id,
-            name: draft.name.trim(),
-            code: draft.code,
-            bed: draft.bed,
-            sofaBed: draft.sofaBed,
-            baseOccupancy: Math.min(2, guests),
-            maxAdults: guests,
-            maxChildren: 0,
-          })
-          saved.set(draft.key, type.id)
-        }
-      } finally {
-        if (saved.size > 0) b.typesSaved(saved)
-      }
-      const rooms = b.preview.toCreate.map((chip) => ({
-        number: chip.number,
-        floor: chip.floor,
-        roomTypeId: saved.get(chip.typeKey ?? '') ?? chip.typeKey ?? '',
-      }))
-      return api.rooms.createMany({ propertyId: hotel.id, batchId: newId(), rooms })
-    },
+    // New types and rooms in one request: all of it is created, or none of it.
+    mutationFn: () =>
+      api.rooms.createMany({
+        propertyId: hotel.id,
+        batchId,
+        newTypes: b.drafts
+          .filter((draft) => draft.name.trim())
+          .map((draft) => {
+            const guests = Number(draft.guests)
+            return {
+              key: draft.key,
+              name: draft.name.trim(),
+              code: draft.code.trim().toUpperCase(),
+              bed: draft.bed,
+              sofaBed: draft.sofaBed,
+              baseOccupancy: Math.min(2, guests),
+              maxAdults: guests,
+              maxChildren: 0,
+            }
+          }),
+        rooms: b.preview.toCreate.map((chip) => {
+          const key = chip.typeKey ?? ''
+          const isNew = b.drafts.some((draft) => draft.key === key)
+          return {
+            number: chip.number,
+            floor: chip.floor,
+            ...(isNew ? { roomTypeKey: key } : { roomTypeId: key }),
+          }
+        }),
+      }),
     onSuccess: async (result) => {
+      setBatchId(newId())
       await refresh()
       toast.success(`${plural(result.created, 'room')} created at ${hotel.name}`)
       onCreated?.()
     },
     onError: async (error) => {
       await refresh()
-      setProblem(problemMessage(error))
+      const code = errorCode(error)
+      const key = errorKey(error)
+      if (key && (code === 'TYPE_NAME_TAKEN' || code === 'TYPE_CODE_TAKEN')) {
+        b.setServerProblem(
+          key,
+          code === 'TYPE_NAME_TAKEN'
+            ? { name: problemMessage(error) }
+            : { code: problemMessage(error) },
+        )
+        setProblem('Fix the room types above.')
+      } else setProblem(problemMessage(error))
     },
   })
 

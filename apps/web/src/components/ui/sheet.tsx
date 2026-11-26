@@ -54,9 +54,9 @@ export function Sheet({
                 {title}
               </h2>
               {description ? (
-                <p id={descriptionId} className="text-text-2">
+                <div id={descriptionId} className="text-text-2">
                   {description}
-                </p>
+                </div>
               ) : null}
             </div>
             <button

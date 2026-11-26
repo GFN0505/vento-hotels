@@ -20,7 +20,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Members and roles | designed #25 · **built (brick 8)** | 0 | Invite, assign roles, limit to properties. PIN-only staff, 2FA and entity limits still to build |
 | **Permissions matrix and limits editor** | designed #26 · **built (brick 8)** | 0 | Roles × actions grid with limits; owner only; every change audited. Effective dates, approvers and export still to build |
 | Devices | designed #25 · **built (brick 10)** | 0 | Register, name, bind to property, revoke |
-| **Audit log viewer** | designed #28 | 0 | Filter by staff, action, property, date; before/after diff; also a drawer on every record |
+| **Audit log viewer** | designed #28 | 0 | Filter by staff, action, property, date; before/after diff; also a drawer on every record. **Drawer on a room built (Stage 1 brick 1)** |
 | Notifications centre | designed #29 | 0 | Bell menu + full list; what each role is alerted about |
 | My profile and preferences | pattern | 0 | Password, 2FA, PIN reset, theme |
 | Global search results (beyond ⌘K) | pattern | 0 | |
@@ -46,7 +46,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Deposits held | designed #34 | 1 | List of deposits not yet applied, with ageing |
 | Cashier shift open and close (blind count) | designed #34 | 1 | Open shift and blind count need their own design |
 | Night audit wizard | designed #15 | 1 | |
-| Room types and rooms (ongoing management) | designed #33 · **built (Stage 1 brick 1)** | 1 | Rates & channels › Rooms: room types (reorder, edit, remove, restore), rooms table with search, quick views, type and floor filters and bulk change type / remove, room and room type sheets, "Add rooms by floor" builder (OnbRooms) as the empty page and a sheet, reason dialog after go-live. Base rate, Sold on and out-of-order dates come with their bricks; the room audit drawer (`AuditOnRoom`) with the audit log viewer brick; ⌘K entries with the search brick |
+| Room types and rooms (ongoing management) | designed #33 · **built (Stage 1 brick 1)** | 1 | Rates & channels › Rooms: room types (reorder, edit, remove, restore), rooms table with search, quick views, type and floor filters and bulk change type / remove, room and room type sheets, "Add rooms by floor" builder (OnbRooms) as the empty page and a sheet, reason dialog after go-live. Base rate, Sold on and out-of-order dates come with their bricks. Audit trail on a room (`AuditOnRoom`) built as a sheet from the room; ⌘K entries come with the search brick |
 | **Rate plans list and editor** | designed #33 | 1 | Meal plan, cancellation policy, deposit rule, derived plans; #8 is only the grid |
 | Guest register export | designed #35 | 1 | For authorities; foreign nationals section |
 

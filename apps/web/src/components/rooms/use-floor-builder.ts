@@ -7,6 +7,7 @@ import { orpc } from '@/lib/api'
 import {
   checkDraft,
   checkLine,
+  type DraftCheck,
   type DraftType,
   type Line,
   lineNotes,
@@ -68,6 +69,7 @@ export function useFloorBuilder({
   ])
   const [overrides, setOverrides] = useState<Map<string, string | null>>(() => new Map())
   const [touched, setTouched] = useState(false)
+  const [serverProblems, setServerProblems] = useState<Map<string, DraftCheck>>(() => new Map())
 
   const tones = toneIndexes(types)
   const options: TypeOption[] = [
@@ -89,11 +91,14 @@ export function useFloorBuilder({
   const draftChecks = new Map(
     drafts.map((draft) => [
       draft.key,
-      checkDraft(
-        draft,
-        types,
-        drafts.filter((other) => other.key !== draft.key),
-      ),
+      {
+        ...checkDraft(
+          draft,
+          types,
+          drafts.filter((other) => other.key !== draft.key),
+        ),
+        ...serverProblems.get(draft.key),
+      },
     ]),
   )
   const lineChecks = new Map(lines.map((line) => [line.key, checkLine(line)]))
@@ -167,6 +172,12 @@ export function useFloorBuilder({
     },
     updateDraft: (draftKey: string, change: Partial<DraftType>) => {
       setTouched(true)
+      setServerProblems((map) => {
+        if (!map.has(draftKey)) return map
+        const next = new Map(map)
+        next.delete(draftKey)
+        return next
+      })
       setDrafts((list) =>
         list.map((draft) => {
           if (draft.key !== draftKey) return draft
@@ -203,16 +214,10 @@ export function useFloorBuilder({
         return next
       })
     },
-    // After new types are saved, lines and chips point at their real ids.
-    typesSaved: (saved: ReadonlyMap<string, string>) => {
-      setDrafts((list) => list.filter((draft) => !saved.has(draft.key)))
-      setLines((list) => list.map((l) => ({ ...l, typeKey: saved.get(l.typeKey) ?? l.typeKey })))
-      setOverrides((map) => {
-        const next = new Map<string, string | null>()
-        for (const [n, t] of map) next.set(n, t === null ? null : (saved.get(t) ?? t))
-        return next
-      })
-    },
+    // A problem the API found with one new type (its name or code is taken), shown on its line
+    // until that line is edited.
+    setServerProblem: (draftKey: string, problem: DraftCheck) =>
+      setServerProblems((map) => new Map(map).set(draftKey, problem)),
   }
 }
 
