@@ -3,6 +3,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
+import { HotelChange } from '@/components/shell/hotel-change'
+import { useHotelGoneRefresh, useHotelLink } from '@/components/shell/hotel-link'
 import { OfflineBanner } from '@/components/shell/offline-banner'
 import { PreviewBanner } from '@/components/shell/preview-banner'
 import { PropertyProvider } from '@/components/shell/property-context'
@@ -30,6 +32,10 @@ export const Route = createFileRoute('/_app')({
     if (!signedIn.organizationId) throw redirect({ to: '/setup' })
     return { user: signedIn.user }
   },
+  // ?hotel=<id|all> on any page selects that hotel (components/shell/hotel-link.tsx), then leaves
+  // the address bar. Declared here so every page's links may carry it.
+  validateSearch: (search: Record<string, unknown>): { hotel?: string | undefined } =>
+    typeof search.hotel === 'string' && search.hotel ? { hotel: search.hotel.slice(0, 40) } : {},
   component: AppLayout,
 })
 
@@ -53,11 +59,15 @@ function Shell() {
     ? visibleGroups(organization.role, organization.has, organization.can)
     : []
   const properties = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
+  const loaded = (query: { data?: unknown; isError: boolean }) =>
+    query.data !== undefined || query.isError
   useIdleLock(organization.data?.device?.idleSeconds, user.name.split(' ')[0] ?? user.name)
 
   return (
     <PropertyProvider
       properties={properties.data?.items ?? []}
+      ready={loaded(properties) && loaded(organization)}
+      previewing={organization.previewing !== undefined}
       // A shared device works in its own hotel, so it never offers the whole group; nor does a
       // preview of a role that works in one hotel.
       groupWide={Boolean(
@@ -107,10 +117,30 @@ function Shell() {
             tabIndex={-1}
             className="flex-1 px-4 pt-5 pb-14 outline-none sm:px-6 lg:px-8 lg:pt-7"
           >
-            <Outlet />
+            <Page />
           </main>
         </div>
       </div>
     </PropertyProvider>
+  )
+}
+
+// The page, once any ?hotel= link has chosen its hotel, so its first request is for that hotel.
+function Page() {
+  const linking = useHotelLink()
+  useHotelGoneRefresh()
+  return (
+    <>
+      <HotelChange />
+      {linking ? (
+        <div role="status" aria-label="Opening the hotel" className="flex flex-col gap-4">
+          <span className="h-5 w-32 animate-pulse rounded-sm bg-surface-2" />
+          <span className="h-7 w-56 animate-pulse rounded-sm bg-surface-2" />
+          <span className="h-48 animate-pulse rounded-lg bg-surface-2" />
+        </div>
+      ) : (
+        <Outlet />
+      )}
+    </>
   )
 }

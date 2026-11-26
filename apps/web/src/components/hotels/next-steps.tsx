@@ -44,7 +44,7 @@ export function NextSteps({ hotel }: { hotel: Property }) {
             label: 'Set up rooms',
             done: counts.rooms > 0,
             link: (className: string) => (
-              <Link to="/rates/rooms" className={className}>
+              <Link to="/rates/rooms" search={{ hotel: hotel.id }} className={className}>
                 Set up rooms
               </Link>
             ),
@@ -56,7 +56,11 @@ export function NextSteps({ hotel }: { hotel: Property }) {
       label: 'Invite the team',
       done: added.people !== null && counts.people > added.people,
       link: (className) => (
-        <Link to="/settings/members" search={{ invite: hotel.id }} className={className}>
+        <Link
+          to="/settings/members"
+          search={{ invite: hotel.id, hotel: hotel.id }}
+          className={className}
+        >
           Invite the team
         </Link>
       ),
@@ -66,7 +70,11 @@ export function NextSteps({ hotel }: { hotel: Property }) {
       label: 'Register devices',
       done: counts.devices > 0,
       link: (className) => (
-        <Link to="/settings/devices" search={{ register: hotel.id }} className={className}>
+        <Link
+          to="/settings/devices"
+          search={{ register: hotel.id, hotel: hotel.id }}
+          className={className}
+        >
           Register devices
         </Link>
       ),

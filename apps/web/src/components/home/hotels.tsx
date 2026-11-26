@@ -238,13 +238,17 @@ export function HotelCard({
         </Fact>
         <Fact label="Check-in">{hotel.checkInTime}</Fact>
         <Fact label="Check-out">{hotel.checkOutTime}</Fact>
-        <Fact label="Rooms" to={canSetUpRooms ? '/rates/rooms' : undefined}>
+        <Fact label="Rooms" hotel={hotel.id} to={canSetUpRooms ? '/rates/rooms' : undefined}>
           {counts?.rooms}
         </Fact>
-        <Fact label="People" to={managesTeam ? '/settings/members' : undefined}>
+        <Fact label="People" hotel={hotel.id} to={managesTeam ? '/settings/members' : undefined}>
           {counts?.people}
         </Fact>
-        <Fact label="Shared devices" to={managesTeam ? '/settings/devices' : undefined}>
+        <Fact
+          label="Shared devices"
+          hotel={hotel.id}
+          to={managesTeam ? '/settings/devices' : undefined}
+        >
           {counts?.devices}
         </Fact>
       </dl>
@@ -257,10 +261,13 @@ function Fact({
   label,
   children,
   to,
+  hotel,
   className,
 }: {
   label: string
   children: ReactNode
+  // The hotel the figure is about: its link opens on that hotel (?hotel=).
+  hotel?: string
   to?: '/settings/members' | '/settings/devices' | '/rates/rooms' | undefined
   className?: string
 }) {
@@ -275,7 +282,11 @@ function Fact({
       <dt className="text-xs text-text-3">{label}</dt>
       <dd>
         {to ? (
-          <Link to={to} className="underline-offset-4 hover:text-pri-ink hover:underline">
+          <Link
+            to={to}
+            search={hotel ? { hotel } : {}}
+            className="underline-offset-4 hover:text-pri-ink hover:underline"
+          >
             {value}
           </Link>
         ) : (

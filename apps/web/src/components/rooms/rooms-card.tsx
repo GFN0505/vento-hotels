@@ -1,6 +1,6 @@
 // The "All rooms" card: toolbar (sticky on wider screens, turning into the bulk bar when rooms are
 // ticked), the table with its states, "select all in this view", and pages (100, or 50 on phones).
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { Property, RoomFilters, RoomsSummary, RoomTypeView } from '@vento/shared'
 import { AlertTriangle, Plus } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Pagination } from '@/components/ui/pagination'
 import { orpc } from '@/lib/api'
+import { keepWithinHotel } from '@/lib/scope'
 import { BulkBar } from './bulk-bar'
 import { ChangeTypeDialog } from './change-type-dialog'
 import { Message } from './message'
@@ -51,7 +52,7 @@ export function RoomsCard(props: Props) {
   }
   const rooms = useQuery({
     ...orpc.rooms.list.queryOptions({ input: { ...filters, page, pageSize } }),
-    placeholderData: keepPreviousData,
+    placeholderData: keepWithinHotel(hotel.id),
   })
   const selection = useRoomSelection(
     filters,

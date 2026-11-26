@@ -56,12 +56,13 @@ function ArchiveDialog({ hotel, onClose }: { hotel: Property; onClose: () => voi
     mutationFn: (reason: string) => api.properties.archive({ id: hotel.id, reason }),
     onSuccess: async (archived) => {
       const remaining = properties.filter((p) => p.id !== hotel.id)
-      await refresh()
-      toast.success(`${archived.name} archived`)
       onClose()
-      // The switch leaves the archived hotel: the whole group, or the one hotel left.
+      // The switch leaves the archived hotel first (the whole group, or the one hotel left), so the
+      // refreshed hotel list doesn't read as access lost.
       if (canSeeAll && remaining.length > 1) selectAll()
       else if (remaining[0]) select(remaining[0].id)
+      await refresh()
+      toast.success(`${archived.name} archived`)
     },
   })
   const group = me.data?.organization.name ?? 'The group'

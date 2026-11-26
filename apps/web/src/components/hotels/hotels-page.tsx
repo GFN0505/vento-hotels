@@ -5,7 +5,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Property } from '@vento/shared'
 import { Building2, Plus } from 'lucide-react'
-import { useEffect } from 'react'
 import { FormSkeleton } from '@/components/settings/load-states'
 import { SettingsOffline } from '@/components/settings/offline-note'
 import { useProperty } from '@/components/shell/property-context'
@@ -26,20 +25,13 @@ type Props = { search: HotelsSearch; onSearch: OnHotelsSearch }
 export function HotelsPage({ search, onSearch }: Props) {
   const me = useMe()
   const online = useOnline()
-  const { properties, current, allHotels, canSeeAll, select } = useProperty()
+  const { current, allHotels, canSeeAll, select } = useProperty()
   // The hotel switch's own list (same query as the shell), to tell loading from no hotels.
   const hotels = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
   const list = canSeeAll && allHotels
   usePageTitle(
-    list ? 'All hotels · Hotels' : current ? `${current.name} · Hotel settings` : 'Hotels',
+    list ? 'Hotels · All hotels' : current ? `Hotel settings · ${current.name}` : 'Hotels',
   )
-
-  // ?hotel= from Home or a link: choose that hotel in the top bar, then tidy the address.
-  useEffect(() => {
-    if (!search.hotel || properties.length === 0) return
-    if (properties.some((p) => p.id === search.hotel)) select(search.hotel)
-    onSearch({ hotel: undefined })
-  }, [search.hotel, properties, select, onSearch])
 
   if (me.isPending) return <FormSkeleton />
   const canManage = me.can('setup.manage')
@@ -53,13 +45,8 @@ export function HotelsPage({ search, onSearch }: Props) {
     </Button>
   ) : null
 
-  function open(hotel: Property) {
-    select(hotel.id)
-    requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>('main h1')?.focus()
-      window.scrollTo({ top: 0 })
-    })
-  }
+  // The shell moves focus to the hotel's name once it shows (components/shell/hotel-change.tsx).
+  const open = (hotel: Property) => select(hotel.id)
 
   return (
     <>

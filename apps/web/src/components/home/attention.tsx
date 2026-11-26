@@ -20,7 +20,12 @@ export type AttentionItem = {
   tone: 'amber' | 'blue' | 'violet'
   title: string
   detail: string
-  action?: { label: string; to: '/settings/devices' | '/settings/members' }
+  // Links about one hotel's data carry ?hotel=, so they open on that hotel (spec: hotel switch).
+  action?: {
+    label: string
+    to: '/settings/devices' | '/settings/members'
+    hotel?: string | undefined
+  }
 }
 
 const TONES = {
@@ -84,17 +89,26 @@ export function attentionItems({
         withoutDevices.length === 1
           ? 'Front desk, restaurant and housekeeping staff sign in with a PIN on one.'
           : `${withoutDevices.map((hotel) => hotel.name).join(', ')}. Staff sign in with a PIN on one.`,
-      action: { label: 'Register', to: '/settings/devices' },
+      action: {
+        label: 'Register',
+        to: '/settings/devices',
+        hotel: withoutDevices.length === 1 ? onlyHotel.id : undefined,
+      },
     })
   }
-  if (managesTeam && summary?.pendingInvites) {
+  // With one hotel in view, that hotel's invites (whole-group invites included), not the group's.
+  const [oneHotel] = group ? [] : hotels
+  const invites = oneHotel
+    ? summary?.byHotel.find((row) => row.propertyId === oneHotel.id)?.invites
+    : summary?.pendingInvites
+  if (managesTeam && invites) {
     items.push({
       key: 'invites',
       icon: MailPlus,
       tone: 'violet',
-      title: `${plural(summary.pendingInvites, 'invite')} not accepted yet`,
+      title: `${plural(invites, 'invite')} not accepted yet`,
       detail: 'You can resend or cancel from the team list.',
-      action: { label: 'Review', to: '/settings/members' },
+      action: { label: 'Review', to: '/settings/members', hotel: oneHotel?.id },
     })
   }
   if (managesTeam && summary?.members === 1) {
@@ -181,6 +195,7 @@ export function NeedsAttention({
                 {item.action ? (
                   <Link
                     to={item.action.to}
+                    search={item.action.hotel ? { hotel: item.action.hotel } : {}}
                     className="inline-flex h-11 flex-none items-center rounded-sm border border-border-strong bg-surface px-3 text-sm font-medium transition-colors hover:bg-surface-2 lg:h-8"
                   >
                     {item.action.label}

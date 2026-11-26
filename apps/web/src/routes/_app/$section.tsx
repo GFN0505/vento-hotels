@@ -3,13 +3,13 @@
 // over its path; static routes always win over this one.
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { FeatureGate } from '@/components/feature-gate'
+import { useScopedTitle } from '@/components/shell/use-scoped-title'
 import { NoAccess } from '@/components/team/no-access'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/ui/page-header'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { useMe } from '@/lib/me'
 import { findModule, roleSees } from '@/lib/navigation'
-import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/_app/$section')({
   beforeLoad: ({ params }) => {
@@ -22,7 +22,7 @@ function ModulePage() {
   const { section } = Route.useParams()
   const entry = findModule(`/${section}`)
   const me = useMe()
-  usePageTitle(entry?.label ?? 'Vento')
+  useScopedTitle(entry?.label ?? 'Vento')
   if (!entry || me.isPending) return null
   if (me.role && !roleSees(me.role, entry, me.can)) return <NoAccess what={entry.label} />
   return (

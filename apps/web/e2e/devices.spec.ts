@@ -32,7 +32,7 @@ test('staff sign in on a registered device with a PIN, and lock it for the next 
   await setPin(page, '8391')
 
   await openSettings(page, 'Devices')
-  await expect(page.getByText('No shared devices yet')).toBeVisible()
+  await expect(page.getByText('No shared devices at Kora Victoria Island yet')).toBeVisible()
   await page.getByRole('button', { name: 'Register this device' }).click()
   const register = page.getByRole('dialog', { name: 'Register this device' })
   await register.getByLabel('Name', { exact: true }).fill('POS-VI-03')

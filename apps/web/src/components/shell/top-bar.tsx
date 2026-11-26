@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { lockDevice } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
+import { ALL_HOTELS } from '@/lib/scope'
 import { useOnline } from '@/offline/connection'
 import { AccountMenu } from './account-menu'
 import { useProperty } from './property-context'
@@ -134,5 +135,3 @@ function PropertyPill() {
     </div>
   )
 }
-
-const ALL_HOTELS = 'all'

@@ -20,7 +20,7 @@ type InviteDialogProps = {
   onClose: () => void
   myRole: MemberRole | undefined
   canGrantWholeGroup: boolean
-  // Limits the invite to one hotel, e.g. from a new hotel's "Invite the team".
+  // Starts the invite on one hotel: the one chosen in the top bar, or a new hotel's "Invite the team".
   hotelId?: string | undefined
 }
 

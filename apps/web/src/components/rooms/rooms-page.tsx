@@ -2,14 +2,15 @@
 // who may see it, which hotel, and the hotel's rooms. A new hotel opens straight into the builder.
 
 import { Building2, Lock } from 'lucide-react'
+import { PickHotel } from '@/components/shell/pick-hotel'
 import { useProperty } from '@/components/shell/property-context'
+import { useScopedTitle } from '@/components/shell/use-scoped-title'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/ui/page-header'
 import { useMe } from '@/lib/me'
-import { usePageTitle } from '@/lib/title'
 import { HotelRooms } from './hotel-rooms'
-import { PickHotel } from './pick-hotel'
+import { RoomsAside } from './pick-aside'
 import type { OnSearch, RoomsSearch } from './rooms-search'
 import { PageSkeleton } from './skeletons'
 
@@ -19,9 +20,9 @@ type Props = {
 }
 
 export function RoomsPage({ search, onSearch }: Props) {
-  usePageTitle('Rooms')
+  useScopedTitle('Rooms')
   const me = useMe()
-  const { properties, current, allHotels, select } = useProperty()
+  const { current, allHotels } = useProperty()
   if (me.isPending) return <PageSkeleton />
   if (!me.can('rooms.setup')) {
     return (
@@ -36,7 +37,10 @@ export function RoomsPage({ search, onSearch }: Props) {
     return (
       <div className="flex flex-col gap-6">
         <PageHeader title="Rooms" description="Room types and rooms for each hotel." />
-        <PickHotel hotels={properties} onPick={select} />
+        <PickHotel
+          title="Rooms are set up per hotel. Pick a hotel."
+          aside={(hotel) => <RoomsAside hotel={hotel} />}
+        />
       </div>
     )
   }

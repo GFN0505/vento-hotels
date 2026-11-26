@@ -3,7 +3,7 @@
 // at a time (PermRoleM).
 
 import { useQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   MEMBER_ROLES,
   type MemberRole,
@@ -13,10 +13,12 @@ import {
   ROLE_INFO,
 } from '@vento/shared'
 import { useState } from 'react'
+import { useScopedTitle } from '@/components/shell/use-scoped-title'
 import { EditRuleDialog } from '@/components/team/edit-rule-dialog'
 import { NoAccess } from '@/components/team/no-access'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
 import { SelectField } from '@/components/ui/select-field'
 import { orpc } from '@/lib/api'
 import { cn } from '@/lib/cn'
@@ -24,7 +26,6 @@ import { problemMessage } from '@/lib/errors'
 import { useMe } from '@/lib/me'
 import { useMediaQuery } from '@/lib/media'
 import { formatLimit } from '@/lib/team'
-import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/_app/settings/permissions')({
   component: PermissionsPage,
@@ -44,7 +45,8 @@ function describeRule(rule: PermissionRuleView): { short: string; spoken: string
 }
 
 function PermissionsPage() {
-  usePageTitle('Permissions and limits')
+  // Group-wide: permissions are per role, the same at every hotel (spec: hotel switch).
+  useScopedTitle('Permissions and limits', { groupWide: true })
   const me = useMe()
   const canView = me.can('setup.manage') || me.can('permissions.manage')
   const canEdit = me.can('permissions.manage')
@@ -63,37 +65,46 @@ function PermissionsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex flex-wrap items-end gap-3">
-        <div className="flex min-w-0 grow flex-col gap-1">
-          <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.02em] sm:text-2xl">
-            Permissions and limits
-          </h1>
-          <p className="text-text-2">
+      <PageHeader
+        scope="group-wide"
+        title="Permissions and limits"
+        description={
+          <>
             What each role may do, and how far. {MEMBER_ROLES.length} roles,{' '}
             {PERMISSION_GROUPS.flatMap((g) => g.permissions).length} actions
             {changed > 0 ? `, ${changed} changed from Vento's default` : ''}.
-          </p>
-        </div>
-        <fieldset className="hidden gap-1 lg:flex">
-          <legend className="sr-only">View</legend>
-          {(
-            [
-              ['grid', 'Grid'],
-              ['role', 'By role'],
-            ] as const
-          ).map(([value, label]) => (
-            <Button
-              key={value}
-              size="sm"
-              aria-pressed={view === value}
-              className={cn(view === value && 'border-pri bg-pri-soft text-pri-ink')}
-              onClick={() => setView(value)}
-            >
-              {label}
-            </Button>
-          ))}
-        </fieldset>
-      </header>
+            <span className="mt-1 block">
+              Permissions are set per role and apply at every hotel. Which hotels each person sees
+              is set in{' '}
+              <Link to="/settings/members" className="text-pri-ink underline underline-offset-2">
+                Members and roles
+              </Link>
+              .
+            </span>
+          </>
+        }
+        actions={
+          <fieldset className="hidden gap-1 lg:flex">
+            <legend className="sr-only">View</legend>
+            {(
+              [
+                ['grid', 'Grid'],
+                ['role', 'By role'],
+              ] as const
+            ).map(([value, label]) => (
+              <Button
+                key={value}
+                size="sm"
+                aria-pressed={view === value}
+                className={cn(view === value && 'border-pri bg-pri-soft text-pri-ink')}
+                onClick={() => setView(value)}
+              >
+                {label}
+              </Button>
+            ))}
+          </fieldset>
+        }
+      />
       <p className="rounded-sm bg-bl-bg px-3 py-2 text-bl">
         {canEdit
           ? 'Only owners can change these. Every change needs a reason and is recorded in the audit log.'

@@ -37,7 +37,7 @@ export function HotelSettings({
   hotel: Property
   onAdd?: (() => void) | undefined
 }) {
-  usePageTitle(`${hotel.name} · Hotel settings`)
+  usePageTitle(`Hotel settings · ${hotel.name}`)
   const me = useMe()
   const online = useOnline()
   const { user } = useRouteContext({ from: '/_app' })
@@ -105,6 +105,8 @@ export function HotelSettings({
         </div>
       ) : null}
       <PageHeader
+        // The title is the hotel's name, so no scope line above it.
+        scope="none"
         title={<span className="break-words">{base.name}</span>}
         badge={<StatusBadge tone={status.tone}>{status.label}</StatusBadge>}
         description={`Hotel settings · Owned by ${base.entityName}`}

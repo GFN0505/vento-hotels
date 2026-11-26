@@ -1,6 +1,6 @@
 // Settings › Companies (design #25 SetEntities; spec: "Settings › Companies"): the group's legal
 // entities, shown as companies. With one hotel chosen in the top bar, only the company that owns it.
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import type { Entity } from '@vento/shared'
 import { Building, Plus } from 'lucide-react'
 import { useState } from 'react'
@@ -9,6 +9,7 @@ import { LoadError, RowsSkeleton } from '@/components/settings/load-states'
 import { NEEDS_CONNECTION, SettingsOffline } from '@/components/settings/offline-note'
 import { type Show, StatusChips } from '@/components/settings/status-chips'
 import { useProperty } from '@/components/shell/property-context'
+import { useScopedTitle } from '@/components/shell/use-scoped-title'
 import { NoAccess } from '@/components/team/no-access'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -17,7 +18,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import { Pagination } from '@/components/ui/pagination'
 import { orpc } from '@/lib/api'
 import { useMe } from '@/lib/me'
-import { usePageTitle } from '@/lib/title'
+import { keepWithinHotel, scopePropertyId } from '@/lib/scope'
 import { useOnline } from '@/offline/connection'
 import { CompaniesTable } from './companies-table'
 import { RestoreCompany } from './company-archive'
@@ -38,10 +39,10 @@ type Props = {
 export function CompaniesPage({ search, onSearch }: Props) {
   const me = useMe()
   const online = useOnline()
-  const { current, allHotels, canSeeAll } = useProperty()
-  // One hotel chosen by someone who could choose the whole group: just the company that owns it.
-  const scoped = canSeeAll && !allHotels && current ? current : undefined
-  usePageTitle(`${scoped ? scoped.name : 'All hotels'} · Companies`)
+  const { scope, canSeeAll } = useProperty()
+  // One hotel chosen: just the company that owns it, for everyone (spec: open question 4).
+  const scoped = scope?.kind === 'hotel' ? scope.hotel : undefined
+  useScopedTitle('Companies')
   const [restoring, setRestoring] = useState<Entity>()
   const page = search.page ?? 1
   const list = useQuery({
@@ -50,11 +51,11 @@ export function CompaniesPage({ search, onSearch }: Props) {
         status: scoped ? 'active' : (search.show ?? 'active'),
         page,
         pageSize: PAGE_SIZE,
-        propertyId: scoped?.id,
+        propertyId: scopePropertyId(scope),
       },
     }),
-    enabled: me.can('setup.manage'),
-    placeholderData: keepPreviousData,
+    enabled: me.can('setup.manage') && scope !== undefined,
+    placeholderData: keepWithinHotel(scopePropertyId(scope)),
     refetchOnMount: 'always',
   })
 
@@ -67,7 +68,7 @@ export function CompaniesPage({ search, onSearch }: Props) {
   const owner = scoped ? list.data?.items[0] : undefined
   const description = scoped
     ? owner
-      ? `${scoped.name} is owned by ${owner.name}. Choose All hotels in the top bar to see every company.`
+      ? `${scoped.name} is owned by ${owner.name}.${canSeeAll ? ' Choose All hotels in the top bar to see every company.' : ''}`
       : `The company that owns ${scoped.name}.`
     : list.data && !archived
       ? `${group} · ${list.data.total === 1 ? '1 company' : `${list.data.total} companies`}`
@@ -102,7 +103,7 @@ export function CompaniesPage({ search, onSearch }: Props) {
             <StatusChips show={search.show} onShow={(show: Show) => onSearch({ show })} />
           )}
         </div>
-        {list.isPending ? (
+        {list.isPending || !scope ? (
           <RowsSkeleton rows={3} label="Loading companies" />
         ) : list.isError && !list.data ? (
           <div className="p-4">
