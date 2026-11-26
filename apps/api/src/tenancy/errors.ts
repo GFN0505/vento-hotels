@@ -103,7 +103,5 @@ export const storageOff = () =>
     data: { code: 'STORAGE_OFF' },
   })
 
-export const logoProblem = (
-  code: 'LOGO_INVALID' | 'LOGO_TOO_SMALL' | 'LOGO_NOT_UPLOADED',
-  message: string,
-) => new ORPCError('BAD_REQUEST', { message, data: { code } })
+export const logoProblem = (code: 'LOGO_INVALID' | 'LOGO_NOT_UPLOADED', message: string) =>
+  new ORPCError('BAD_REQUEST', { message, data: { code } })

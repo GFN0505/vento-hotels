@@ -1,5 +1,5 @@
 // Simple PNGs made with Node's own zlib: the demo seed's placeholder logo and test fixtures. Not
-// for anything a guest sees.
+// for anything a guest sees. Also a tiny WebP for tests.
 import { crc32, deflateSync } from 'node:zlib'
 
 function chunk(type: string, data: Uint8Array): Uint8Array {
@@ -47,4 +47,9 @@ export function pngFromPixels(
 
 export function solidPng(width: number, height: number, rgb: Rgb): Uint8Array {
   return pngFromPixels(width, height, () => rgb)
+}
+
+// A real 1 × 1 lossless WebP (VP8L), 34 bytes.
+export function tinyWebp(): Uint8Array {
+  return Uint8Array.from(Buffer.from('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==', 'base64'))
 }

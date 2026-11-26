@@ -2,47 +2,32 @@
 // signed URL, send the file straight to storage with exactly the headers given, then confirm it so
 // the API checks the real file. Remove has an Undo, which confirms the old upload again.
 import { useMutation } from '@tanstack/react-query'
-import { LOGO_CONTENT_TYPES, LOGO_MAX_BYTES, LOGO_MIN_PIXELS, type Property } from '@vento/shared'
+import {
+  LOGO_CONTENT_TYPES,
+  LOGO_MAX_BYTES,
+  LOGO_WRONG_FILE,
+  type LogoContentType,
+  type Property,
+} from '@vento/shared'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { apiMessage } from '@/lib/errors'
 
-export const WRONG_FILE = 'Use a PNG or JPEG up to 2 MB.'
 export const NOT_UPLOADED = "The logo didn't upload. Try again."
 
 // A problem found on this device, before or while sending the file; its message is for people.
+// Only type and size are checked here; the API checks the file's real type from its bytes.
 class LogoProblem extends Error {}
 
-const isLogoType = (type: string): type is (typeof LOGO_CONTENT_TYPES)[number] =>
+const isLogoType = (type: string): type is LogoContentType =>
   (LOGO_CONTENT_TYPES as readonly string[]).includes(type)
-
-// The image's size, when the browser can read it (the API checks again either way).
-async function pixels(file: File): Promise<{ width: number; height: number } | undefined> {
-  try {
-    const bitmap = await createImageBitmap(file)
-    const size = { width: bitmap.width, height: bitmap.height }
-    bitmap.close()
-    return size
-  } catch {
-    return undefined
-  }
-}
-
-export function tooSmallMessage(size: { width: number; height: number }): string | undefined {
-  if (Math.min(size.width, size.height) >= LOGO_MIN_PIXELS) return undefined
-  const side = size.width <= size.height ? `${size.width} px wide` : `${size.height} px tall`
-  return `This logo is ${side}. Use one at least ${LOGO_MIN_PIXELS} px on each side.`
-}
 
 async function send(propertyId: string, file: File): Promise<Property> {
   const contentType = file.type
   if (!isLogoType(contentType) || file.size === 0 || file.size > LOGO_MAX_BYTES) {
-    throw new LogoProblem(WRONG_FILE)
+    throw new LogoProblem(LOGO_WRONG_FILE)
   }
-  const size = await pixels(file)
-  const small = size && tooSmallMessage(size)
-  if (small) throw new LogoProblem(small)
   const ticket = await api.properties.logoUploadUrl({ propertyId, contentType, size: file.size })
   const sent = await fetch(ticket.url, {
     method: ticket.method,
