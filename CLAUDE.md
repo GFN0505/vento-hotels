@@ -37,7 +37,7 @@ Requires Node 24 (`.nvmrc`) and pnpm (version pinned in `package.json`, enabled 
 - `pnpm db:generate` / `pnpm db:migrate` — create a migration from schema changes / apply migrations to the dev and test databases
 - `pnpm db:studio` — browse the local database in Drizzle Studio at https://local.drizzle.studio?port=4984 (port 4984, so it runs beside Vento Real Estate's 4983)
 - `pnpm features list <group>` / `pnpm features on|off|reset <group> <feature> --reason "…"` — the Vento team switches modules per hotel group (decision 0021); locally `VENTO_ALL_FEATURES=true` turns everything on
-- `pnpm db:seed` — load the demo group (Kora Hotels Group, as in the designs and walkthroughs) for development, tests and sales demos
+- `pnpm db:seed` — load the demo group (Kora Hotels Group, as in the designs and walkthroughs) for development, tests and sales demos; sign in as `adaeze@kora.example` (owner) or any person it prints, with `DEMO_PASSWORD` from `.env`. Runs once per database (`pnpm db:reset && pnpm db:migrate && pnpm db:seed` to start over); never in production
 - `pnpm check` — Biome lint + format check (`pnpm check:fix` to apply fixes)
 - `pnpm --filter @vento/web build && pnpm --filter @vento/web size` — build the web app and check its speed budgets
 - `pnpm typecheck`, `pnpm test`, `pnpm e2e` (Playwright, desktop and phone; starts its own API and web app on ports 3100/5174 against the test database)

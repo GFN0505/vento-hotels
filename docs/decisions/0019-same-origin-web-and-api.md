@@ -7,7 +7,7 @@
 The web app (Vite + React) and the API (Hono) are separate processes. Sign-in uses cookies, and hotel staff will use Vento on phones and shared tablets with patchy connections.
 
 ## Decision
-The browser only ever talks to one origin. In development, Vite forwards `/api` (sign-in) and `/rpc` (the typed API) to the API on port 3000. In production, the same path routing happens at the host or reverse proxy (to be set when hosting is chosen in brick 14). `BETTER_AUTH_URL` and `WEB_ORIGIN` are the address people open in the browser.
+The browser only ever talks to one origin. In development, Vite forwards `/api` (sign-in) and `/rpc` (the typed API) to the API on port 3000. In production, the same path routing happens at the host or reverse proxy (to be set when hosting is chosen in brick 16). `BETTER_AUTH_URL` and `WEB_ORIGIN` are the address people open in the browser.
 
 ## Consequences
 - Session cookies are first-party: no CORS, no third-party cookie problems on mobile browsers.
