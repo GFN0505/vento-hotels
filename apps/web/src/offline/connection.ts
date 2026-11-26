@@ -12,7 +12,12 @@ function set(value: boolean) {
   for (const listener of listeners) listener()
 }
 
-export const markReachable = () => set(true)
+// A reply can land just after the connection drops (it was already on its way); while the browser
+// itself says it's offline, that reply doesn't prove Vento can be reached.
+export const markReachable = () => {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return
+  set(true)
+}
 export const markUnreachable = () => set(false)
 
 if (typeof window !== 'undefined') {
