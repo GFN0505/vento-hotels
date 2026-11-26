@@ -11,6 +11,7 @@ import { noteOrganization } from './observability/request-context.ts'
 import type { EmailProvider } from './providers/email.ts'
 import { clientAddress, type RateLimiter } from './rate-limit.ts'
 import * as inspected from './rooms/inspected.ts'
+import * as roomBatch from './rooms/room-batch.ts'
 import * as roomBulk from './rooms/room-bulk.ts'
 import * as roomReads from './rooms/room-reads.ts'
 import * as roomTypes from './rooms/room-types.ts'
@@ -213,6 +214,9 @@ export const router = base.router({
     list: inOrganization.rooms.list.handler(({ context, input }) =>
       roomReads.listRooms(context.db, context.access, input),
     ),
+    listIds: inOrganization.rooms.listIds.handler(({ context, input }) =>
+      roomReads.listRoomIds(context.db, context.access, input),
+    ),
     summary: inOrganization.rooms.summary.handler(({ context, input }) =>
       roomReads.roomsSummary(context.db, context.access, input),
     ),
@@ -226,7 +230,7 @@ export const router = base.router({
       roomWrites.createRoom(context.db, context.access, input),
     ),
     createMany: inOrganization.rooms.createMany.handler(({ context, input }) =>
-      roomWrites.createManyRooms(context.db, context.access, input),
+      roomBatch.createManyRooms(context.db, context.access, input),
     ),
     update: inOrganization.rooms.update.handler(({ context, input }) =>
       roomWrites.updateRoom(context.db, context.access, input),

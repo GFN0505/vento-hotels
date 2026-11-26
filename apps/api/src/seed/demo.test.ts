@@ -1,10 +1,17 @@
 // The demo seed loads a working group: people can sign in and see exactly what their role allows.
-import type { HomeSummary, MemberView, Property, RoomTypeView, RoomView } from '@vento/shared'
-import { newId } from '@vento/shared'
+import type {
+  AuditEventView,
+  HomeSummary,
+  MemberView,
+  Property,
+  RoomTypeView,
+  RoomView,
+} from '@vento/shared'
+import { addDays, calendarDateIn, newId } from '@vento/shared'
 import { afterAll, describe, expect, it } from 'vitest'
 import { switchFeature } from '../features/switches.ts'
 import { createTestApp } from '../test/harness.ts'
-import { seedDemo } from './demo.ts'
+import { LIVE_DAYS_AGO, seedDemo } from './demo.ts'
 
 const url = process.env.TEST_DATABASE_URL
 const PASSWORD = 'Demo-pass-42!'
@@ -111,7 +118,8 @@ describe.skipIf(!url)('demo seed', () => {
     })
     const gm = await signInAs(`tunde@${options.emailDomain}`)
     const [vi] = (await t.rpc<{ items: Property[] }>(gm, 'properties/list', {})).data.items
-    expect(vi?.liveSince).toBe('2024-03-01')
+    // Go-live 10 days before the seed date, in Lagos (going-live.md: 16 Nov for a 26 Nov seed).
+    expect(vi?.liveSince).toBe(addDays(calendarDateIn('Africa/Lagos'), -LIVE_DAYS_AGO))
     const types = await t.rpc<{ items: RoomTypeView[] }>(gm, 'roomTypes/list', {
       propertyId: vi?.id,
     })
@@ -133,5 +141,14 @@ describe.skipIf(!url)('demo seed', () => {
     expect(await find('407')).toMatchObject({ accessible: true, features: ['Roll-in shower'] })
     expect((await find('808'))?.roomTypeCode).toBe('STQ')
     expect((await find('809'))?.roomTypeCode).toBe('DLK')
+    // Set up before go-live, so the setup raises no "room count changed" exception.
+    const history = await t.rpc<{ items: AuditEventView[] }>(owner, 'audit/list', {
+      entityType: 'room',
+      entityId: (await find('401'))?.id,
+    })
+    expect(history.data.items[0]).toMatchObject({
+      action: 'room.created',
+      after: { liveProperty: false },
+    })
   })
 })

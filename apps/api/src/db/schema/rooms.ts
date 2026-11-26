@@ -3,6 +3,7 @@
 // (brick 4) can't drift from the physical hotel.
 import { sql } from 'drizzle-orm'
 import {
+  type AnyPgColumn,
   boolean,
   check,
   foreignKey,
@@ -36,10 +37,15 @@ const organizationId = () =>
   uuid()
     .notNull()
     .references(() => organizations.id, { onDelete: 'restrict' })
-const propertyId = () =>
-  uuid()
-    .notNull()
-    .references(() => properties.id, { onDelete: 'restrict' })
+// The property is referenced together with the organization (composite foreign key below), so a
+// row can never name another group's hotel, even through a hand-written query.
+const propertyId = () => uuid().notNull()
+const inProperty = (name: string, t: { organizationId: AnyPgColumn; propertyId: AnyPgColumn }) =>
+  foreignKey({
+    name,
+    columns: [t.organizationId, t.propertyId],
+    foreignColumns: [properties.organizationId, properties.id],
+  }).onDelete('restrict')
 
 export const roomTypes = pgTable(
   'room_types',
@@ -62,6 +68,7 @@ export const roomTypes = pgTable(
     ...timestamps,
   },
   (t) => [
+    inProperty('room_types_property_fk', t),
     index().on(t.organizationId),
     index().on(t.organizationId, t.propertyId, t.sortOrder),
     // Codes stay reserved after archiving; names only among active types.
@@ -99,6 +106,7 @@ export const rooms = pgTable(
     ...timestamps,
   },
   (t) => [
+    inProperty('rooms_property_fk', t),
     index().on(t.organizationId),
     index().on(t.organizationId, t.propertyId, t.floor, t.number),
     index('rooms_active_room_type_id_index').on(t.roomTypeId).where(sql`${t.archivedAt} is null`),
@@ -128,6 +136,7 @@ export const roomConnections = pgTable(
     ...timestamps,
   },
   (t) => [
+    inProperty('room_connections_property_fk', t),
     index().on(t.organizationId),
     unique('room_connections_pair_unique').on(t.roomAId, t.roomBId),
     index().on(t.roomBId),

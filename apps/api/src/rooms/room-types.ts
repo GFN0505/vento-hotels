@@ -20,7 +20,7 @@ import { roomTypeNotFound, typeCodeTaken, typeHasRooms, typeNameTaken } from './
 import { isLive } from './live.ts'
 import { roomCountChanged } from './room-count.ts'
 
-type TypeFields = {
+export type TypeFields = {
   name: string
   code: string
   bed: RoomBed
@@ -91,7 +91,7 @@ async function lockType(tx: Tx, access: Access, id: string): Promise<TypeRow> {
 }
 
 // Name clashes among active types, and code clashes among all types (codes stay reserved).
-async function requireNoClash(
+export async function requireNoClash(
   db: Reader,
   propertyId: string,
   fields: { name?: string | undefined; code?: string | undefined },
@@ -177,6 +177,36 @@ export async function getRoomType(db: Database, access: Access, id: string): Pro
   return toView(await findType(db, access, id))
 }
 
+// Adds a type at the end of the hotel's order, with its audit event. Used by "Add room type" and
+// by "Add rooms by floor" (types typed in the builder, `extra` carries the batch id and key).
+export async function insertRoomType(
+  tx: Tx,
+  access: Access,
+  property: RoomsProperty,
+  fields: TypeFields,
+  extra: Record<string, unknown> = {},
+): Promise<string> {
+  await requireNoClash(tx, property.id, fields)
+  const [row] = await tx
+    .insert(roomTypes)
+    .values({
+      ...fields,
+      organizationId: access.organizationId,
+      propertyId: property.id,
+      sortOrder: nextSortOrder(property.id),
+    })
+    .returning({ id: roomTypes.id })
+  if (!row) throw new Error('room type insert returned nothing')
+  await recordAudit(tx, access, {
+    action: 'room_type.created',
+    entityType: 'room_type',
+    entityId: row.id,
+    ...auditAt(property),
+    after: { ...fields, ...extra, liveProperty: isLive(property) },
+  })
+  return row.id
+}
+
 export async function createRoomType(
   db: Database,
   access: Access,
@@ -187,25 +217,8 @@ export async function createRoomType(
   const { propertyId: _, ...fields } = input
   try {
     return await db.transaction(async (tx) => {
-      await requireNoClash(tx, property.id, fields)
-      const [row] = await tx
-        .insert(roomTypes)
-        .values({
-          ...fields,
-          organizationId: access.organizationId,
-          propertyId: property.id,
-          sortOrder: nextSortOrder(property.id),
-        })
-        .returning({ id: roomTypes.id })
-      if (!row) throw new Error('room type insert returned nothing')
-      await recordAudit(tx, access, {
-        action: 'room_type.created',
-        entityType: 'room_type',
-        entityId: row.id,
-        ...auditAt(property),
-        after: { ...fields, liveProperty: isLive(property) },
-      })
-      return toView(await findType(tx, access, row.id))
+      const id = await insertRoomType(tx, access, property, fields)
+      return toView(await findType(tx, access, id))
     })
   } catch (error) {
     return explainUniqueViolation(db, error, property.id, fields)

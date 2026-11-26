@@ -64,6 +64,13 @@
       "when": 1795685820905,
       "tag": "0008_rooms",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795689721694,
+      "tag": "0009_rooms_tenancy_keys",
+      "breakpoints": true
     }
   ]
 }

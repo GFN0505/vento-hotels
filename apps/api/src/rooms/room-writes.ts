@@ -3,30 +3,22 @@
 // transaction rolls back whole and is told which numbers exist.
 import { ORPCError } from '@orpc/server'
 import type { RoomDetail } from '@vento/shared'
-import { and, count, eq, inArray, sql } from 'drizzle-orm'
-import { type AuditEvent, recordAudit, recordAuditMany } from '../audit/record.ts'
+import { eq } from 'drizzle-orm'
+import { type AuditEvent, recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isForeignKeyViolation, isUniqueViolation } from '../db/errors.ts'
-import { auditEvents } from '../db/schema/governance.ts'
 import { rooms } from '../db/schema/rooms.ts'
 import type { Access } from '../tenancy/access.ts'
 import { setConnections } from './connections.ts'
-import {
-  auditAt,
-  loadProperty,
-  type Reader,
-  type RoomsProperty,
-  requireRoomsSetup,
-  type Tx,
-} from './context.ts'
-import { duplicateNumbers, numbersTaken, roomArchived, roomNotFound } from './errors.ts'
+import { auditAt, loadProperty, type RoomsProperty, requireRoomsSetup, type Tx } from './context.ts'
+import { numbersTaken, roomArchived, roomNotFound } from './errors.ts'
 import { hasHistory } from './history.ts'
 import { isLive, requireReasonIfLive } from './live.ts'
 import { lockActiveTypes, lockRoom, lockRooms, typeNames } from './locks.ts'
 import { roomCountChanged } from './room-count.ts'
 import { roomDetail, takenNumbers } from './room-reads.ts'
 
-type NewRoom = { number: string; floor: number; roomTypeId: string }
+export type NewRoom = { number: string; floor: number; roomTypeId: string }
 
 async function requireFreeNumbers(db: Tx | Database, propertyId: string, numbers: string[]) {
   const taken = await takenNumbers(db, propertyId, numbers)
@@ -34,7 +26,7 @@ async function requireFreeNumbers(db: Tx | Database, propertyId: string, numbers
 }
 
 // A lost race on the number constraint: say which numbers now exist.
-async function explainNumberClash(
+export async function explainNumberClash(
   db: Database,
   error: unknown,
   propertyId: string,
@@ -47,7 +39,7 @@ async function explainNumberClash(
   throw error
 }
 
-function createdEvent(
+export function createdEvent(
   property: RoomsProperty,
   room: NewRoom & { id: string; roomTypeName: string },
   extra: Record<string, unknown>,
@@ -116,100 +108,6 @@ export async function createRoom(
     })
   } catch (error) {
     return explainNumberClash(db, error, property.id, [input.number])
-  }
-}
-
-// How many rooms an earlier request with this batchId created, found through its room.created
-// events on the rooms that now hold these numbers. Only asked when numbers clash, so the normal
-// path costs nothing.
-async function appliedBatch(
-  db: Reader,
-  access: Access,
-  propertyId: string,
-  numbers: string[],
-  batchId: string,
-): Promise<number> {
-  const existing = await db
-    .select({ id: rooms.id })
-    .from(rooms)
-    .where(and(eq(rooms.propertyId, propertyId), inArray(rooms.number, numbers)))
-  if (existing.length === 0) return 0
-  const [row] = await db
-    .select({ value: count() })
-    .from(auditEvents)
-    .where(
-      and(
-        eq(auditEvents.organizationId, access.organizationId),
-        eq(auditEvents.entityType, 'room'),
-        inArray(
-          auditEvents.entityId,
-          existing.map((room) => room.id),
-        ),
-        eq(auditEvents.action, 'room.created'),
-        sql`${auditEvents.after}->>'batchId' = ${batchId}`,
-      ),
-    )
-  return row?.value ?? 0
-}
-
-// "Add rooms by floor": up to 500 rooms, all or nothing. The browser's batchId makes it safe to
-// resend after a timeout: a batch already applied answers with its original result.
-export async function createManyRooms(
-  db: Database,
-  access: Access,
-  input: { propertyId: string; batchId: string; rooms: NewRoom[] },
-): Promise<{ created: number; batchId: string }> {
-  requireRoomsSetup(access)
-  const numbers = input.rooms.map((room) => room.number)
-  const repeated = numbers.filter((n, i) => numbers.indexOf(n) !== i)
-  if (repeated.length > 0) throw duplicateNumbers([...new Set(repeated)])
-  const property = await loadProperty(db, access, input.propertyId)
-  try {
-    return await db.transaction(async (tx) => {
-      const typeIds = input.rooms.map((room) => room.roomTypeId)
-      const names = await lockActiveTypes(tx, access, property.id, typeIds)
-      const taken = await takenNumbers(tx, property.id, numbers)
-      if (taken.length > 0) {
-        const prior = await appliedBatch(tx, access, property.id, numbers, input.batchId)
-        if (prior > 0) return { created: prior, batchId: input.batchId }
-        throw numbersTaken(taken)
-      }
-      const created = await tx
-        .insert(rooms)
-        .values(
-          input.rooms.map((room) => ({
-            organizationId: access.organizationId,
-            propertyId: property.id,
-            ...room,
-          })),
-        )
-        .returning({
-          id: rooms.id,
-          number: rooms.number,
-          floor: rooms.floor,
-          roomTypeId: rooms.roomTypeId,
-        })
-      await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [...names.keys()] })
-      await recordAuditMany(
-        tx,
-        access,
-        created.map((room) =>
-          createdEvent(
-            property,
-            { ...room, roomTypeName: names.get(room.roomTypeId) ?? '' },
-            { batchId: input.batchId },
-          ),
-        ),
-      )
-      return { created: created.length, batchId: input.batchId }
-    })
-  } catch (error) {
-    // Two copies of the same request racing: the loser answers like a replay.
-    if (isUniqueViolation(error)) {
-      const prior = await appliedBatch(db, access, property.id, numbers, input.batchId)
-      if (prior > 0) return { created: prior, batchId: input.batchId }
-    }
-    return explainNumberClash(db, error, property.id, numbers)
   }
 }
 

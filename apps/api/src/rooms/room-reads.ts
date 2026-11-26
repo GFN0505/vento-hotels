@@ -3,9 +3,11 @@
 import {
   type FrontOfficeStatus,
   type HousekeepingStatus,
+  MAX_ROOMS_PER_BATCH,
   type PageQuery,
   pageOffset,
   type RoomDetail,
+  type RoomIds,
   type RoomsSummary,
   type RoomView,
   toPage,
@@ -67,22 +69,20 @@ async function withConnections(db: Reader, access: Access, rows: RoomRow[]): Pro
 
 const likePattern = (q: string) => `%${q.toUpperCase().replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`
 
-export async function listRooms(
-  db: Database,
-  access: Access,
-  query: PageQuery & {
-    propertyId: string
-    q?: string | undefined
-    roomTypeId?: string | undefined
-    floor?: number | undefined
-    accessible?: boolean | undefined
-    archived?: boolean | undefined
-    outOfOrder?: boolean | undefined
-  },
-) {
-  requireRoomsSetup(access)
+type Filters = {
+  propertyId: string
+  q?: string | undefined
+  roomTypeId?: string | undefined
+  floor?: number | undefined
+  accessible?: boolean | undefined
+  archived?: boolean | undefined
+  outOfOrder?: boolean | undefined
+}
+
+// The rooms table's filters, for list and listIds alike, after checking the hotel is in scope.
+async function filtered(db: Reader, access: Access, query: Filters): Promise<SQL | undefined> {
   const property = await loadProperty(db, access, query.propertyId)
-  const where = and(
+  return and(
     roomsInScope(access),
     eq(rooms.propertyId, property.id),
     query.archived ? isNotNull(rooms.archivedAt) : isNull(rooms.archivedAt),
@@ -92,6 +92,11 @@ export async function listRooms(
     query.accessible !== undefined ? eq(rooms.accessible, query.accessible) : undefined,
     query.outOfOrder ? eq(rooms.housekeepingStatus, 'out_of_order') : undefined,
   )
+}
+
+export async function listRooms(db: Database, access: Access, query: PageQuery & Filters) {
+  requireRoomsSetup(access)
+  const where = await filtered(db, access, query)
   const [rows, [total]] = await Promise.all([
     db
       .select(roomColumns)
@@ -104,6 +109,22 @@ export async function listRooms(
     db.select({ value: count() }).from(rooms).where(where),
   ])
   return toPage(await withConnections(db, access, rows), total?.value ?? 0, query)
+}
+
+// "Select all N rooms in this view": every matching id in list order, up to the bulk-action limit.
+export async function listRoomIds(db: Database, access: Access, query: Filters): Promise<RoomIds> {
+  requireRoomsSetup(access)
+  const where = await filtered(db, access, query)
+  const [rows, [total]] = await Promise.all([
+    db
+      .select({ id: rooms.id })
+      .from(rooms)
+      .where(where)
+      .orderBy(...roomOrder)
+      .limit(MAX_ROOMS_PER_BATCH),
+    db.select({ value: count() }).from(rooms).where(where),
+  ])
+  return { ids: rows.map((row) => row.id), total: total?.value ?? 0 }
 }
 
 export async function roomsSummary(

@@ -124,7 +124,7 @@ describe.skipIf(!url)('rooms', () => {
         batchId,
         rooms: batch,
       })
-      expect(response.data).toEqual({ created: 36, batchId })
+      expect(response.data).toEqual({ created: 36, batchId, roomTypes: [] })
       const [row] = await t.db
         .select({ value: sql<number>`count(*)::int` })
         .from(auditEvents)
@@ -149,7 +149,7 @@ describe.skipIf(!url)('rooms', () => {
         batchId,
         rooms: batch,
       })
-      expect(again.data).toEqual({ created: 36, batchId })
+      expect(again.data).toEqual({ created: 36, batchId, roomTypes: [] })
       expect((await rooms({})).total).toBe(36)
       const other = await t.rpc<Problem>(kora.gm.cookie, 'rooms/createMany', {
         propertyId: kora.vi.id,

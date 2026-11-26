@@ -143,10 +143,9 @@ export const roomDetailSchema = roomViewSchema.extend({
 })
 export type RoomDetail = z.infer<typeof roomDetailSchema>
 
-// Sorted by floor, then number (naturally: 1014 before 1101). 100 per page by default.
-export const listRoomsSchema = pageQuerySchema.extend({
+// The filters of the rooms table, shared by list and listIds.
+export const roomFiltersSchema = z.object({
   propertyId: idSchema,
-  pageSize: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(MAX_PAGE_SIZE),
   q: z.string().trim().max(20).optional(),
   roomTypeId: idSchema.optional(),
   floor: z.coerce.number().int().optional(),
@@ -155,6 +154,18 @@ export const listRoomsSchema = pageQuerySchema.extend({
   archived: z.boolean().optional(),
   outOfOrder: z.boolean().optional(),
 })
+export type RoomFilters = z.infer<typeof roomFiltersSchema>
+
+// Sorted by floor, then number (naturally: 1014 before 1101). 100 per page by default.
+export const listRoomsSchema = pageQuerySchema.extend({
+  ...roomFiltersSchema.shape,
+  pageSize: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(MAX_PAGE_SIZE),
+})
+
+// "Select all N rooms in this view": the ids in list order, at most MAX_ROOMS_PER_BATCH (the
+// bulk-action limit). `total` is every matching room, so the UI can say when it was capped.
+export const roomIdsSchema = z.object({ ids: z.array(idSchema), total: z.number().int() })
+export type RoomIds = z.infer<typeof roomIdsSchema>
 
 export const roomsSummarySchema = z.object({
   active: z.number().int(),
@@ -192,15 +203,68 @@ export const checkNumbersResultSchema = z.object({
   taken: z.array(z.object({ number: z.string(), archived: z.boolean() })),
 })
 
-export const createManyRoomsSchema = z.object({
-  propertyId: idSchema,
-  // A UUID v7 from the browser, recorded on every room.created event of this go.
+// A room type typed in the builder, created in the same transaction as its rooms. `key` is the
+// browser's own handle for it (any short string, unique in the request); rooms point at it.
+export const newRoomTypeSchema = roomTypeFields
+  .extend({ key: z.string().trim().min(1).max(40) })
+  .refine(occupancyFits, {
+    path: ['baseOccupancy'],
+    message: "Base occupancy can't be more than max guests",
+  })
+export type NewRoomType = z.infer<typeof newRoomTypeSchema>
+
+// Each room names an existing type (roomTypeId) or a new one from newTypes (roomTypeKey).
+export const plannedRoomSchema = z
+  .object({
+    number: roomNumberSchema,
+    floor: floorSchema,
+    roomTypeId: idSchema.optional(),
+    roomTypeKey: z.string().trim().min(1).max(40).optional(),
+  })
+  .refine((room) => (room.roomTypeId === undefined) !== (room.roomTypeKey === undefined), {
+    path: ['roomTypeId'],
+    message: 'Choose a room type',
+  })
+
+export const createManyRoomsSchema = z
+  .object({
+    propertyId: idSchema,
+    // A UUID v7 from the browser, recorded on every room_type.created and room.created event of
+    // this go. Sending the same batch again answers with the original result.
+    batchId: idSchema,
+    newTypes: z.array(newRoomTypeSchema).max(20, 'Up to 20 new room types at a time').default([]),
+    rooms: z
+      .array(plannedRoomSchema)
+      .min(1, 'Add at least one room')
+      .max(MAX_ROOMS_PER_BATCH, `Up to ${MAX_ROOMS_PER_BATCH} rooms in one go`),
+  })
+  .superRefine((input, ctx) => {
+    const keys = input.newTypes.map((type) => type.key)
+    if (new Set(keys).size !== keys.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['newTypes'],
+        message: 'Each new room type needs its own key',
+      })
+    }
+    for (const [index, room] of input.rooms.entries()) {
+      if (room.roomTypeKey !== undefined && !keys.includes(room.roomTypeKey)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['rooms', index, 'roomTypeKey'],
+          message: 'Choose a room type',
+        })
+      }
+    }
+  })
+
+export const createManyRoomsResultSchema = z.object({
+  created: z.number().int(),
   batchId: idSchema,
-  rooms: z
-    .array(z.object({ number: roomNumberSchema, floor: floorSchema, roomTypeId: idSchema }))
-    .min(1, 'Add at least one room')
-    .max(MAX_ROOMS_PER_BATCH, `Up to ${MAX_ROOMS_PER_BATCH} rooms in one go`),
+  // The ids given to newTypes, by key (empty when none were sent).
+  roomTypes: z.array(z.object({ key: z.string(), id: idSchema })),
 })
+export type CreateManyRoomsResult = z.infer<typeof createManyRoomsResultSchema>
 
 export const updateRoomSchema = z.object({
   id: idSchema,
@@ -233,15 +297,14 @@ export const roomsContract = {
   },
   rooms: {
     list: oc.input(listRoomsSchema).output(pageSchema(roomViewSchema)),
+    listIds: oc.input(roomFiltersSchema).output(roomIdsSchema),
     summary: oc.input(z.object({ propertyId: idSchema })).output(roomsSummarySchema),
     get: oc.input(z.object({ id: idSchema })).output(roomDetailSchema),
     create: oc.input(createRoomSchema).output(roomDetailSchema),
     // Which of these numbers the hotel already has, archived included (the builder's preview).
     checkNumbers: oc.input(checkNumbersSchema).output(checkNumbersResultSchema),
-    // All or nothing, in one transaction.
-    createMany: oc
-      .input(createManyRoomsSchema)
-      .output(z.object({ created: z.number().int(), batchId: idSchema })),
+    // New types and all rooms, all or nothing, in one transaction.
+    createMany: oc.input(createManyRoomsSchema).output(createManyRoomsResultSchema),
     update: oc.input(updateRoomSchema).output(roomDetailSchema),
     changeType: oc
       .input(z.object({ propertyId: idSchema, ids, roomTypeId: idSchema, reason }))

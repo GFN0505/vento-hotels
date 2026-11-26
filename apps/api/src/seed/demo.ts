@@ -4,7 +4,7 @@
 // with its reason. Used for local development, browser tests and sales demos. Everything here is
 // made up.
 import { createHash, randomBytes } from 'node:crypto'
-import { calendarDateIn, type DeviceKind, type MemberRole, newId } from '@vento/shared'
+import { addDays, calendarDateIn, type DeviceKind, type MemberRole, newId } from '@vento/shared'
 import { hashPassword } from 'better-auth/crypto'
 import { eq } from 'drizzle-orm'
 import { type Actor, recordAudit } from '../audit/record.ts'
@@ -20,6 +20,9 @@ import {
   properties,
 } from '../db/schema/tenancy.ts'
 import { seedRooms } from './rooms.ts'
+
+// The demo hotels went live on Vento this many business days before the seed was loaded.
+export const LIVE_DAYS_AGO = 10
 
 type HotelKey = 'vi' | 'ikeja' | 'abuja' | 'ph'
 
@@ -139,8 +142,9 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
         lga: hotel.lga,
         state: hotel.state,
         businessDate,
-        // The group has traded since 2024, so room changes ask for a reason in the demo.
-        liveSince: '2024-03-01',
+        // Live on Vento since the night audit 10 days ago (going-live.md: the first audit closes
+        // 16 Nov 2026), so room changes ask for a reason in the demo.
+        liveSince: addDays(businessDate, -LIVE_DAYS_AGO),
       })
     }
 
