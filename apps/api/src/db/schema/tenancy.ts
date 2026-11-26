@@ -1,6 +1,17 @@
 // Vento's own tenancy tables (decision 0003): legal entities, properties (hotels), and which
 // properties each member may access.
-import { boolean, char, index, pgTable, text, time, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  char,
+  index,
+  integer,
+  pgTable,
+  text,
+  time,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core'
 import { archivedAt, calendarDate, id, timestamps } from '../columns.ts'
 import { invitations, members, organizations } from './auth.ts'
 
@@ -97,4 +108,45 @@ export const invitationProperties = pgTable(
     index().on(t.organizationId),
     index().on(t.propertyId),
   ],
+)
+
+// A shared tablet, PC or phone registered to one hotel (decision 0022). The browser holds a random
+// secret in an httpOnly cookie; only its hash is here. Revoked devices are kept for history.
+export const devices = pgTable(
+  'devices',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    propertyId: uuid()
+      .notNull()
+      .references(() => properties.id, { onDelete: 'restrict' }),
+    name: text().notNull(),
+    kind: text().notNull(),
+    tokenHash: text().notNull().unique(),
+    lastSeenAt: timestamp({ withTimezone: true }),
+    revokedAt: timestamp({ withTimezone: true }),
+    revokedReason: text(),
+    ...timestamps,
+  },
+  (t) => [index().on(t.organizationId), uniqueIndex().on(t.organizationId, t.name)],
+)
+
+// A member's staff PIN, hashed like a password, with the wrong-try counter behind the lockout.
+export const memberPins = pgTable(
+  'member_pins',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    memberId: uuid()
+      .notNull()
+      .unique()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    pinHash: text().notNull(),
+    failedAttempts: integer().notNull().default(0),
+    lockedUntil: timestamp({ withTimezone: true }),
+    // Lockouts since the last successful sign-in; at 3 the PIN needs a manager's reset.
+    lockCount: integer().notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [index().on(t.organizationId)],
 )

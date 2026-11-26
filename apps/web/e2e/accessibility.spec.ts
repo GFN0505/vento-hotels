@@ -17,6 +17,7 @@ const PUBLIC_PAGES = [
   '/reset-password',
   '/a-page-that-does-not-exist',
   '/join/an-invite-link-that-does-not-work',
+  '/lock',
 ]
 
 for (const theme of ['light', 'dark'] as const) {

@@ -2,9 +2,12 @@
 // click outside, and when focus leaves it, and hands focus back to the avatar on Escape.
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { LogOut } from 'lucide-react'
+import { KeyRound, LogOut } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { authClient } from '@/lib/auth'
+import { lockDevice } from '@/lib/device-session'
+import { useMe } from '@/lib/me'
+import { SetPinDialog } from './set-pin-dialog'
 
 function initials(name: string): string {
   return name
@@ -15,7 +18,11 @@ function initials(name: string): string {
     .join('')
 }
 
-export function AccountMenu({ name, email }: { name: string; email: string }) {
+type AccountMenuProps = { name: string; email: string; onSharedDevice: boolean }
+
+export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
+  const me = useMe()
+  const [settingPin, setSettingPin] = useState(false)
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -45,6 +52,8 @@ export function AccountMenu({ name, email }: { name: string; email: string }) {
   }, [open])
 
   async function signOut() {
+    // On a shared device, signing out hands the device to the next person.
+    if (onSharedDevice) return lockDevice()
     await authClient.signOut()
     queryClient.clear()
     await navigate({ to: '/sign-in' })
@@ -78,6 +87,19 @@ export function AccountMenu({ name, email }: { name: string; email: string }) {
             <span className="truncate text-sm text-text-2">{email}</span>
           </div>
           <div className="my-1 h-px bg-border" />
+          {onSharedDevice ? null : (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                setSettingPin(true)
+              }}
+              className="flex h-11 w-full items-center gap-2 rounded-sm px-3 text-left hover:bg-surface-2 lg:h-9"
+            >
+              <KeyRound className="size-4 text-text-2" aria-hidden="true" />
+              {me.data?.hasPin ? 'Change staff PIN' : 'Set staff PIN'}
+            </button>
+          )}
           <button
             type="button"
             onClick={signOut}
@@ -88,6 +110,11 @@ export function AccountMenu({ name, email }: { name: string; email: string }) {
           </button>
         </div>
       ) : null}
+      <SetPinDialog
+        open={settingPin}
+        onClose={() => setSettingPin(false)}
+        hasPin={me.data?.hasPin ?? false}
+      />
     </div>
   )
 }

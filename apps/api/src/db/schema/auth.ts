@@ -34,10 +34,15 @@ export const sessions = pgTable(
     ipAddress: text(),
     userAgent: text(),
     activeOrganizationId: uuid(),
+    // Set for PIN sessions on a shared device (decision 0022); null for password sign-ins.
+    deviceId: uuid(),
+    // Last request in a PIN session: the server signs it out after the device's idle time, even
+    // if the browser never got the chance (power or internet cut, reload).
+    deviceActiveAt: timestamptz(),
     createdAt: created(),
     updatedAt: updated(),
   },
-  (t) => [index().on(t.userId)],
+  (t) => [index().on(t.userId), index().on(t.deviceId)],
 )
 
 export const accounts = pgTable(

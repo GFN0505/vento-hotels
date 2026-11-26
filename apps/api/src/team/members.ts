@@ -15,7 +15,7 @@ import { and, asc, count, eq, ilike, inArray, isNull, or, type SQL, sql } from '
 import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { members, sessions, users } from '../db/schema/auth.ts'
-import { memberProperties, properties } from '../db/schema/tenancy.ts'
+import { memberPins, memberProperties, properties } from '../db/schema/tenancy.ts'
 import { type Access, requirePermission } from '../tenancy/access.ts'
 import { containsPattern, grantableAccess, requireCanManage, visibleMembers } from './rules.ts'
 
@@ -36,6 +36,7 @@ const memberColumns = {
   role: members.role,
   allProperties: members.allProperties,
   createdAt: members.createdAt,
+  hasPin: sql<boolean>`${memberPins.id} is not null`,
 }
 
 type MemberRow = {
@@ -46,6 +47,7 @@ type MemberRow = {
   role: string
   allProperties: boolean
   createdAt: Date
+  hasPin: boolean
 }
 
 // Hotel names for each member, in one query.
@@ -86,6 +88,7 @@ function toView(
     properties: wholeGroup ? [] : (hotels.get(row.id) ?? []),
     joinedAt: row.createdAt.toISOString(),
     isYou: row.id === access.memberId,
+    hasPin: row.hasPin,
   }
 }
 
@@ -108,6 +111,7 @@ export async function listMembers(
       .select(memberColumns)
       .from(members)
       .innerJoin(users, eq(users.id, members.userId))
+      .leftJoin(memberPins, eq(memberPins.memberId, members.id))
       .where(where)
       // You first, then everyone by name.
       .orderBy(sql`${members.id} = ${access.memberId} desc`, asc(users.name), asc(members.id))
@@ -117,6 +121,7 @@ export async function listMembers(
       .select({ value: count() })
       .from(members)
       .innerJoin(users, eq(users.id, members.userId))
+      .leftJoin(memberPins, eq(memberPins.memberId, members.id))
       .where(where),
   ])
   const hotels = await hotelsFor(
@@ -135,6 +140,7 @@ async function findMember(db: Reader, access: Access, memberId: string): Promise
     .select(memberColumns)
     .from(members)
     .innerJoin(users, eq(users.id, members.userId))
+    .leftJoin(memberPins, eq(memberPins.memberId, members.id))
     .where(and(eq(members.id, memberId), visibleMembers(access)))
   if (!row) throw notFound()
   return row

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as GetStartedRouteImport } from './routes/get-started'
+import { Route as LockRouteImport } from './routes/lock'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignInRouteImport } from './routes/sign-in'
@@ -19,6 +20,7 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
+import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/devices'
 import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/members'
 import { Route as AppSettingsPermissionsRouteImport } from './routes/_app/settings/permissions'
 
@@ -34,6 +36,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const GetStartedRoute = GetStartedRouteImport.update({
   id: '/get-started',
   path: '/get-started',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LockRoute = LockRouteImport.update({
+  id: '/lock',
+  path: '/lock',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -71,6 +78,11 @@ const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsDevicesRoute = AppSettingsDevicesRouteImport.update({
+  id: '/devices',
+  path: '/devices',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsMembersRoute = AppSettingsMembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -86,11 +98,13 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-started': typeof GetStartedRoute
+  '/lock': typeof LockRoute
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/join/$token': typeof JoinTokenRoute
+  '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
   '/settings/': typeof AppSettingsIndexRoute
@@ -98,11 +112,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-started': typeof GetStartedRoute
+  '/lock': typeof LockRoute
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof AppIndexRoute
+  '/settings/devices': typeof AppSettingsDevicesRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
   '/settings': typeof AppSettingsIndexRoute
@@ -112,12 +128,14 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-started': typeof GetStartedRoute
+  '/lock': typeof LockRoute
   '/reset-password': typeof ResetPasswordRoute
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/join/$token': typeof JoinTokenRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/settings/devices': typeof AppSettingsDevicesRoute
   '/_app/settings/members': typeof AppSettingsMembersRoute
   '/_app/settings/permissions': typeof AppSettingsPermissionsRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
@@ -128,11 +146,13 @@ export interface FileRouteTypes {
     | '/'
     | '/forgot-password'
     | '/get-started'
+    | '/lock'
     | '/reset-password'
     | '/setup'
     | '/sign-in'
     | '/settings'
     | '/join/$token'
+    | '/settings/devices'
     | '/settings/members'
     | '/settings/permissions'
     | '/settings/'
@@ -140,11 +160,13 @@ export interface FileRouteTypes {
   to:
     | '/forgot-password'
     | '/get-started'
+    | '/lock'
     | '/reset-password'
     | '/setup'
     | '/sign-in'
     | '/join/$token'
     | '/'
+    | '/settings/devices'
     | '/settings/members'
     | '/settings/permissions'
     | '/settings'
@@ -153,12 +175,14 @@ export interface FileRouteTypes {
     | '/_app'
     | '/forgot-password'
     | '/get-started'
+    | '/lock'
     | '/reset-password'
     | '/setup'
     | '/sign-in'
     | '/_app/settings'
     | '/join/$token'
     | '/_app/'
+    | '/_app/settings/devices'
     | '/_app/settings/members'
     | '/_app/settings/permissions'
     | '/_app/settings/'
@@ -168,6 +192,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   GetStartedRoute: typeof GetStartedRoute
+  LockRoute: typeof LockRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SetupRoute: typeof SetupRoute
   SignInRoute: typeof SignInRoute
@@ -195,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/get-started'
       fullPath: '/get-started'
       preLoaderRoute: typeof GetStartedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lock': {
+      id: '/lock'
+      path: '/lock'
+      fullPath: '/lock'
+      preLoaderRoute: typeof LockRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -246,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsIndexRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/devices': {
+      id: '/_app/settings/devices'
+      path: '/devices'
+      fullPath: '/settings/devices'
+      preLoaderRoute: typeof AppSettingsDevicesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/members': {
       id: '/_app/settings/members'
       path: '/members'
@@ -264,12 +303,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppSettingsRouteChildren {
+  AppSettingsDevicesRoute: typeof AppSettingsDevicesRoute
   AppSettingsMembersRoute: typeof AppSettingsMembersRoute
   AppSettingsPermissionsRoute: typeof AppSettingsPermissionsRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsDevicesRoute: AppSettingsDevicesRoute,
   AppSettingsMembersRoute: AppSettingsMembersRoute,
   AppSettingsPermissionsRoute: AppSettingsPermissionsRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
@@ -295,6 +336,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   GetStartedRoute: GetStartedRoute,
+  LockRoute: LockRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SetupRoute: SetupRoute,
   SignInRoute: SignInRoute,

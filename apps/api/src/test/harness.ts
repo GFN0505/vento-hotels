@@ -20,6 +20,7 @@ const healthy: HealthCheck = async () => ({
 export function createTestApp(databaseUrl: string, options: { rateLimit?: boolean } = {}) {
   const database = createDatabase(databaseUrl, { max: 4 })
   const email = new MemoryEmailProvider()
+  const limiter = new RateLimiter(options.rateLimit ?? false)
   const auth = createAuth({
     db: database.db,
     settings: {
@@ -29,6 +30,7 @@ export function createTestApp(databaseUrl: string, options: { rateLimit?: boolea
       rateLimit: options.rateLimit ?? false,
     },
     email,
+    limiter,
   })
   const app = createApp({
     db: database.db,
@@ -36,7 +38,7 @@ export function createTestApp(databaseUrl: string, options: { rateLimit?: boolea
     checkHealth: healthy,
     email,
     webOrigin: WEB_ORIGIN,
-    limiter: new RateLimiter(options.rateLimit ?? false),
+    limiter,
   })
 
   async function call(

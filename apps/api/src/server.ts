@@ -14,6 +14,7 @@ const email =
   env.EMAIL_OUTBOX_DIR && env.NODE_ENV !== 'production'
     ? new FileEmailProvider(env.EMAIL_OUTBOX_DIR)
     : new ConsoleEmailProvider()
+const limiter = new RateLimiter(env.NODE_ENV !== 'test')
 const auth = createAuth({
   db: database.db,
   settings: {
@@ -23,13 +24,14 @@ const auth = createAuth({
     rateLimit: env.NODE_ENV !== 'test',
   },
   email,
+  limiter,
 })
 const app = createApp({
   db: database.db,
   auth,
   email,
   webOrigin: env.WEB_ORIGIN,
-  limiter: new RateLimiter(env.NODE_ENV !== 'test'),
+  limiter,
   allFeatures: env.VENTO_ALL_FEATURES,
   checkHealth: healthCheck({ databaseUrl: env.DATABASE_URL, s3Endpoint: env.S3_ENDPOINT }),
 })

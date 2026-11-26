@@ -10,7 +10,7 @@ Decision 0008 set the principle (permission limits, approvals, audit events). St
 - **The default matrix is data** in `packages/shared/src/permissions.ts`, mirroring the DOMAIN.md table. Permissions are `module.action` keys. Some have a limit kind (`percent` or `amount_ngn`), with limits stored as decimal strings.
 - **Organizations override per role and permission** in `permission_overrides`. No row means the default applies. The owner role can't be changed, and `permissions.manage` is owner-only by default.
 - **One check per request:** `inOrganization` loads `access.rules`. Services call `requirePermission` or `requireWithinLimit`, and never compare against a role name or a constant.
-- **Over the limit** answers 403 with `APPROVAL_REQUIRED`. Approval by a manager's PIN on the same device plugs into `requireWithinLimit` in brick 10.
+- **Over the limit** answers 403 with `APPROVAL_REQUIRED`. Approval by a manager's PIN on the same device plugs into `requireWithinLimit` in brick 11.
 - **Audit events** are written by `recordAudit(tx, access, …)` in the same transaction as the change, and are append-only by database trigger. Actor and subject ids carry no foreign keys and names are stored as snapshots, so history never depends on rows that may change later.
 - **Better Auth's own member changes** (add, remove, change role) are audited through its organization hooks. Those hooks don't expose the actor, so these events show "Sign-in service".
 

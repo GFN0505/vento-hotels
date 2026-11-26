@@ -10,6 +10,7 @@ export const Route = createFileRoute('/_app/settings')({
 
 const SECTIONS = [
   { to: '/settings/members', label: 'Members and roles', needs: ['setup.manage'] },
+  { to: '/settings/devices', label: 'Devices', needs: ['setup.manage'] },
   {
     to: '/settings/permissions',
     label: 'Permissions and limits',

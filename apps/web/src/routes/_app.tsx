@@ -1,5 +1,5 @@
-// Signed-in layout: sidebar + top bar. Sends people without a session to sign in, and owners who
-// haven't set up their group yet to setup.
+// Signed-in layout: sidebar + top bar. Sends people without a session to sign in (or, on a
+// registered shared device, to its lock screen), and owners who haven't set up their group to setup.
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -7,13 +7,19 @@ import { PropertyProvider } from '@/components/shell/property-context'
 import { Sidebar } from '@/components/shell/sidebar'
 import { TopBar } from '@/components/shell/top-bar'
 import { orpc } from '@/lib/api'
+import { useIdleLock } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
 import { loadSignedIn } from '@/lib/session'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async () => {
     const signedIn = await loadSignedIn()
-    if (!signedIn) throw redirect({ to: '/sign-in' })
+    if (!signedIn) {
+      // Loaded only here, so the API client isn't part of the first download for signed-out visitors.
+      const { api } = await import('@/lib/api')
+      const lock = await api.devices.lockScreen().catch(() => undefined)
+      throw redirect({ to: lock && lock.status !== 'unregistered' ? '/lock' : '/sign-in' })
+    }
     if (!signedIn.organizationId) throw redirect({ to: '/setup' })
     return { user: signedIn.user }
   },
@@ -26,6 +32,7 @@ function AppLayout() {
   const organization = useMe()
   const showSettings = organization.can('setup.manage') || organization.can('permissions.manage')
   const properties = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
+  useIdleLock(organization.data?.device?.idleSeconds, user.name.split(' ')[0] ?? user.name)
 
   return (
     <PropertyProvider properties={properties.data?.items ?? []}>

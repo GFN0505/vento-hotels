@@ -9,9 +9,16 @@ import {
 } from '@vento/shared'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { APIError, createAuthMiddleware } from 'better-auth/api'
+import {
+  APIError,
+  createAuthEndpoint,
+  createAuthMiddleware,
+  getSessionFromCtx,
+} from 'better-auth/api'
+import { setSessionCookie } from 'better-auth/cookies'
 import { organization } from 'better-auth/plugins/organization'
 import { adminAc, memberAc, ownerAc } from 'better-auth/plugins/organization/access'
+import { z } from 'zod'
 import { recordSystemAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import {
@@ -23,7 +30,11 @@ import {
   users,
   verifications,
 } from '../db/schema/auth.ts'
+import { checkPinSignIn, PinSignInError } from '../devices/pin-sign-in.ts'
+import { deviceSecretFrom, hashSecret } from '../devices/service.ts'
+import { PIN_SESSION_HOURS } from '../devices/session-guard.ts'
 import type { EmailProvider } from '../providers/email.ts'
+import type { RateLimiter } from '../rate-limit.ts'
 
 export type AuthSettings = {
   secret: string
@@ -53,14 +64,37 @@ const PASSWORD_PATHS: Record<string, 'password' | 'newPassword' | undefined> = {
 // The only Better Auth organization endpoints open over HTTP: what the web app uses to create its
 // group, list the groups it belongs to and pick one. Everything else about members and invites
 // goes through Vento's API, under the permissions matrix and the audit log (decision 0020).
+// Account changes that need a password sign-in, never a PIN session on a shared device.
+const ACCOUNT_PATHS = new Set([
+  '/update-user',
+  '/change-password',
+  '/change-email',
+  '/set-password',
+  '/delete-user',
+  '/list-sessions',
+  '/revoke-session',
+  '/revoke-sessions',
+  '/revoke-other-sessions',
+  '/link-social',
+  '/unlink-account',
+  '/organization/create',
+  '/organization/set-active',
+])
+
 const OPEN_ORGANIZATION_PATHS = new Set([
   '/organization/create',
   '/organization/list',
   '/organization/set-active',
 ])
 
-export function createAuth(deps: { db: Database; settings: AuthSettings; email: EmailProvider }) {
-  const { db, settings, email } = deps
+export function createAuth(deps: {
+  db: Database
+  settings: AuthSettings
+  email: EmailProvider
+  // Limits PIN attempts per device (decision 0022).
+  limiter: RateLimiter
+}) {
+  const { db, settings, email, limiter } = deps
   return betterAuth({
     secret: settings.secret,
     baseURL: settings.baseURL,
@@ -103,6 +137,15 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
         if (ctx.request && organizationPath && !OPEN_ORGANIZATION_PATHS.has(ctx.path)) {
           throw new APIError('NOT_FOUND', { message: 'Not found' })
         }
+        // A PIN session on a shared device can't change the account behind it (decision 0022).
+        if (ctx.request && ACCOUNT_PATHS.has(ctx.path)) {
+          const current = await getSessionFromCtx(ctx)
+          if ((current?.session as { deviceId?: string | null } | undefined)?.deviceId) {
+            throw new APIError('FORBIDDEN', {
+              message: 'Sign in with your email and password on your own device to do this',
+            })
+          }
+        }
         const body = (ctx.body ?? {}) as { password?: unknown; newPassword?: unknown }
         const password = PASSWORD_PATHS[ctx.path]
         if (!password) return
@@ -117,7 +160,15 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
     },
     // "Keep me signed in" keeps a session for 30 days (refreshed daily while in use). Unticked, the
     // session cookie ends when the browser closes.
-    session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
+    session: {
+      expiresIn: 60 * 60 * 24 * 30,
+      updateAge: 60 * 60 * 24,
+      // PIN sessions on shared devices (decision 0022). Set only by Vento's PIN sign-in endpoint.
+      additionalFields: {
+        deviceId: { type: 'string', required: false, input: false },
+        deviceActiveAt: { type: 'date', required: false, input: false },
+      },
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
@@ -145,6 +196,7 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
       },
     },
     plugins: [
+      pinSignIn(db, limiter),
       organization({
         roles,
         creatorRole: 'owner',
@@ -195,3 +247,66 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
 }
 
 export type Auth = ReturnType<typeof createAuth>
+
+const PIN_MESSAGES: Record<PinSignInError['failure']['code'], string> = {
+  DEVICE_NOT_REGISTERED: "This device isn't registered",
+  DEVICE_REVOKED: 'This device was removed. Ask a manager.',
+  CANT_SIGN_IN_HERE: "You can't sign in on this device",
+  WRONG_PIN: 'Wrong PIN',
+  PIN_LOCKED: 'Too many wrong PINs',
+  PIN_NEEDS_RESET: 'Your PIN was locked too many times. Ask a manager to reset it.',
+}
+
+// POST /api/auth/device/pin-sign-in: staff sign in on a registered shared device with their PIN
+// (decision 0022). A plugin endpoint, so the session and its cookie work like any other sign-in.
+function pinSignIn(db: Database, limiter: RateLimiter) {
+  return {
+    id: 'vento-pin-sign-in',
+    endpoints: {
+      pinSignIn: createAuthEndpoint(
+        '/device/pin-sign-in',
+        {
+          method: 'POST',
+          body: z.object({ memberId: z.string().uuid(), pin: z.string().max(8) }),
+        },
+        async (ctx) => {
+          const secret = ctx.headers ? deviceSecretFrom(ctx.headers) : undefined
+          try {
+            limiter.take(`pin:${secret ? hashSecret(secret) : 'none'}`, 30, 600)
+          } catch {
+            throw new APIError('TOO_MANY_REQUESTS', {
+              code: 'TOO_MANY_PIN_TRIES',
+              message: 'Too many tries on this device. Wait a few minutes.',
+            })
+          }
+          let signedIn: Awaited<ReturnType<typeof checkPinSignIn>>
+          try {
+            signedIn = await checkPinSignIn(db, { secret, ...ctx.body })
+          } catch (error) {
+            if (!(error instanceof PinSignInError)) throw error
+            throw new APIError(error.failure.code === 'WRONG_PIN' ? 'UNAUTHORIZED' : 'FORBIDDEN', {
+              ...error.failure,
+              message: PIN_MESSAGES[error.failure.code],
+            })
+          }
+          // overrideAll: otherwise Better Auth replaces our expiry with its own default.
+          const session = await ctx.context.internalAdapter.createSession(
+            signedIn.userId,
+            true,
+            {
+              activeOrganizationId: signedIn.organizationId,
+              deviceId: signedIn.deviceId,
+              deviceActiveAt: new Date(),
+              expiresAt: new Date(Date.now() + PIN_SESSION_HOURS * 60 * 60 * 1000),
+            },
+            true,
+          )
+          const user = await ctx.context.internalAdapter.findUserById(signedIn.userId)
+          if (!session || !user) throw new APIError('INTERNAL_SERVER_ERROR')
+          await setSessionCookie(ctx, { session, user }, true)
+          return ctx.json({ ok: true })
+        },
+      ),
+    },
+  }
+}

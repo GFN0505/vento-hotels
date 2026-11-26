@@ -309,3 +309,27 @@
     stroke-dashoffset: 0;
   }
 }
+
+/* Wrong PIN on the lock screen: a short shake of the dots, none for reduced motion. */
+@keyframes pin-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}
+.pin-shake {
+  animation: pin-shake 320ms ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pin-shake {
+    animation: none;
+  }
+}

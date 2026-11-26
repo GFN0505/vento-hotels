@@ -1,12 +1,14 @@
 // The HTTP app: /health for monitors, /api/auth/* for sign-in (Better Auth), /rpc for the typed API.
 import { RPCHandler } from '@orpc/server/fetch'
+import { ResponseHeadersPlugin } from '@orpc/server/plugins'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { type AppDeps, router } from './router.ts'
 
 export function createApp(deps: AppDeps) {
   const app = new Hono()
-  const rpc = new RPCHandler(router)
+  // ResponseHeadersPlugin lets a procedure set a cookie (the device cookie, decision 0022).
+  const rpc = new RPCHandler(router, { plugins: [new ResponseHeadersPlugin()] })
 
   // 200 when the database and storage are reachable, 503 otherwise. Never includes credentials.
   app.get('/health', async (c) => {

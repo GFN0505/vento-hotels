@@ -17,10 +17,14 @@ export type AuditEvent = {
   reason?: string | null
   approverMemberId?: string | null
   businessDate?: string | null
+  // For events not tied to a signed-in actor, e.g. a PIN lockout on a shared device.
+  deviceId?: string | null
 }
 
 // Who acted. Usually the request's `Access`; someone joining from an invite acts as their new member.
-export type Actor = Pick<Access, 'organizationId' | 'userId' | 'memberId' | 'userName'>
+export type Actor = Pick<Access, 'organizationId' | 'userId' | 'memberId' | 'userName'> & {
+  deviceId?: string | null
+}
 
 export async function recordAudit(tx: Writer, access: Actor, event: AuditEvent): Promise<void> {
   await tx.insert(auditEvents).values({
@@ -32,6 +36,7 @@ export async function recordAudit(tx: Writer, access: Actor, event: AuditEvent):
     entityType: event.entityType,
     entityId: event.entityId ?? null,
     propertyId: event.propertyId ?? null,
+    deviceId: event.deviceId ?? access.deviceId ?? null,
     before: event.before ?? null,
     after: event.after ?? null,
     reason: event.reason ?? null,
@@ -55,6 +60,8 @@ export async function recordSystemAudit(
     action: event.action,
     entityType: event.entityType,
     entityId: event.entityId ?? null,
+    propertyId: event.propertyId ?? null,
+    deviceId: event.deviceId ?? null,
     before: event.before ?? null,
     after: event.after ?? null,
     reason: event.reason ?? null,

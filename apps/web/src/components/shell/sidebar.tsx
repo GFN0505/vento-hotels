@@ -36,11 +36,11 @@ export function Sidebar({ groupName, showSettings, onNavigate }: SidebarProps) {
   return (
     <nav
       aria-label="Main"
-      className="flex h-full w-[232px] flex-none flex-col gap-0.5 bg-side px-2.5 py-3.5 text-side-text"
+      className="flex h-full w-[264px] flex-none flex-col gap-1 bg-side px-3 py-4 text-side-text"
     >
       <div className="flex flex-col gap-1 px-2 pt-1 pb-3.5">
-        <Logo size={26} wordmark product className="text-[15px] text-white" />
-        <span className="truncate pl-[36px] text-xs font-medium text-side-mute">{groupName}</span>
+        <Logo size={28} wordmark product className="text-[16px] text-white" />
+        <span className="truncate pl-[38px] text-sm font-medium text-side-mute">{groupName}</span>
       </div>
       {nav.map((section) => (
         <div key={section.group ?? 'main'} className="flex flex-col gap-0.5">
@@ -56,12 +56,12 @@ export function Sidebar({ groupName, showSettings, onNavigate }: SidebarProps) {
               onClick={onNavigate}
               activeOptions={{ exact }}
               className={cn(
-                'flex h-11 items-center lg:h-8 gap-2.5 rounded-sm px-2.5 text-base font-medium text-side-text',
+                'flex h-11 items-center gap-3 rounded-sm px-3 text-[14px] font-medium text-side-text lg:h-10',
                 'hover:bg-side-2 hover:text-white',
                 'data-[status=active]:bg-brand/22 data-[status=active]:text-white',
               )}
             >
-              <Icon className="size-4" aria-hidden="true" />
+              <Icon className="size-[18px]" aria-hidden="true" />
               {label}
             </Link>
           ))}
