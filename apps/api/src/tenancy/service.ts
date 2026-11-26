@@ -15,7 +15,7 @@ import { and, asc, count, eq, isNull } from 'drizzle-orm'
 import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
-import { organizations } from '../db/schema/auth.ts'
+import { organizations, users } from '../db/schema/auth.ts'
 import { devices, entities, memberPins, properties } from '../db/schema/tenancy.ts'
 import { idleSecondsFor } from '../devices/service.ts'
 import { type Access, propertyScope, requirePermission } from './access.ts'
@@ -66,7 +66,12 @@ async function deviceAndPin(db: Database, access: Access) {
     .select({ id: memberPins.id })
     .from(memberPins)
     .where(eq(memberPins.memberId, access.memberId))
+  const [person] = await db
+    .select({ twoStep: users.twoFactorEnabled })
+    .from(users)
+    .where(eq(users.id, access.userId))
   return {
+    twoStep: person?.twoStep ?? false,
     device: device
       ? { id: device.id, name: device.name, idleSeconds: idleSecondsFor(device.kind) }
       : null,

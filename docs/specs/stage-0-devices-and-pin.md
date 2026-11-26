@@ -51,7 +51,7 @@ A restaurant tablet, a front desk PC or a housekeeping phone is used by many peo
 - Five wrong PINs in a row lock that person's PIN for 15 minutes; after three lockouts without a successful sign-in, only a manager's reset unlocks it. Each device allows at most 30 PIN attempts per 10 minutes.
 - The server enforces PIN sessions too: they end after the device's idle time without a request (plus 30 seconds), after 12 hours, if the device is revoked or its hotel archived, and they only work alongside their device's cookie. They can't change the account (name, password, sessions).
 - Setting your PIN allows 5 password tries per 10 minutes. Resetting someone's PIN follows the same reach as managing them, and ends their PIN sessions.
-- Manager approval by PIN (above a limit) and two-step codes for managers come in brick 12.
+- Manager approval by PIN (above a limit) comes in Stage 1 with the first action that needs it; two-step codes for managers in brick 12.
 
 ### Audit events
 - `device.registered`, `device.renamed`, `device.revoked` (with reason), `pin.set`, `pin.reset`, `member.signed_in_with_pin` (device), `pin.locked` (after five wrong tries, with the device and whether a reset is now needed). Events made in a PIN session carry the device id.
@@ -79,7 +79,7 @@ Not relevant.
 "Tap your name", "Enter your PIN", "Musa was signed out", "Register this device", "Lock this device", "Set staff PIN", "Reset PIN".
 
 ## Out of scope
-Manager approval by PIN and the approvals inbox, two-step codes (brick 12), offline PIN sign-in (brick 13), PIN-only staff without an email (HR, Stage 5), kitchen display screens, and showing open checks on the lock screen (Stage 3).
+Manager approval by PIN and the approvals inbox (Stage 1), two-step codes (brick 12), offline PIN sign-in (brick 13), PIN-only staff without an email (HR, Stage 5), kitchen display screens, and showing open checks on the lock screen (Stage 3).
 
 ## Open questions
 None.

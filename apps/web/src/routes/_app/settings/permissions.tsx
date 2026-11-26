@@ -65,7 +65,9 @@ function PermissionsPage() {
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-end gap-3">
         <div className="flex min-w-0 grow flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-[-0.015em]">Permissions and limits</h1>
+          <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.02em] sm:text-2xl">
+            Permissions and limits
+          </h1>
           <p className="text-text-2">
             What each role may do, and how far. {MEMBER_ROLES.length} roles,{' '}
             {PERMISSION_GROUPS.flatMap((g) => g.permissions).length} actions

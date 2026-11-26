@@ -23,7 +23,7 @@ function SettingsLayout() {
   const sections = SECTIONS.filter((section) => section.needs.some((p) => me.can(p)))
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-5 lg:flex-row lg:gap-8">
+    <div className="flex flex-col gap-5 lg:flex-row lg:gap-10">
       <nav aria-label="Settings" className="lg:w-52 lg:flex-none">
         <p className="mb-2 hidden px-2.5 text-xs font-semibold tracking-[0.05em] text-text-3 uppercase lg:block">
           Settings

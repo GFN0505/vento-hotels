@@ -2,7 +2,16 @@
 // it requires for email + password sign-in and the organization plugin. Better Auth generates the
 // ids with newId() (UUID v7), so they follow the same rule as every other table.
 // Keep in step with `getAuthTables()` from better-auth/db when upgrading Better Auth.
-import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core'
 
 const timestamptz = () => timestamp({ withTimezone: true, mode: 'date' })
 const created = () => timestamptz().notNull().defaultNow()
@@ -18,6 +27,8 @@ export const users = pgTable('users', {
   email: text().notNull().unique(),
   emailVerified: boolean().notNull().default(false),
   image: text(),
+  // Two-step sign-in (decision 0023), managed by Better Auth's two-factor plugin.
+  twoFactorEnabled: boolean().notNull().default(false),
   createdAt: created(),
   updatedAt: updated(),
 })
@@ -129,4 +140,24 @@ export const invitations = pgTable(
     createdAt: created(),
   },
   (t) => [index().on(t.organizationId), index().on(t.email)],
+)
+
+// Authenticator secrets and backup codes for two-step sign-in (decision 0023). Better Auth encrypts
+// the secret and the backup codes with the auth secret before storing them.
+export const twoFactors = pgTable(
+  'two_factors',
+  {
+    id: uuid().primaryKey(),
+    secret: text().notNull(),
+    backupCodes: text().notNull(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    verified: boolean().notNull().default(true),
+    failedVerificationCount: integer().notNull().default(0),
+    lockedUntil: timestamptz(),
+    createdAt: created(),
+    updatedAt: updated(),
+  },
+  (t) => [index().on(t.userId), index().on(t.secret)],
 )

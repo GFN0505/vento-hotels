@@ -181,7 +181,15 @@ function SignInToAccept({ invite, token }: { invite: Pending; token: string }) {
     setPasswordError(undefined)
     setError(undefined)
     setPending(true)
-    const { error: failure } = await authClient.signIn.email({ email: invite.email, password })
+    const { data: signedIn, error: failure } = await authClient.signIn.email({
+      email: invite.email,
+      password,
+    })
+    // Two-step sign-in is on: finish signing in on the sign-in page, which brings them back here.
+    if (signedIn && 'twoFactorRedirect' in signedIn && signedIn.twoFactorRedirect) {
+      window.location.assign(`/sign-in?redirect=${encodeURIComponent(window.location.pathname)}`)
+      return
+    }
     if (failure) {
       setPending(false)
       setError(

@@ -13,7 +13,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Screen | Status | Stage | Notes |
 |---|---|---|---|
 | Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7); accept invite built (brick 8)** | 0 | Includes "no property assigned" and "device not registered" states. 2FA and device states still to build |
-| Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** | 0 | Approval prompt in brick 12; offline PIN sign-in in brick 13 |
+| Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** | 0 | Approval prompt in Stage 1 (with the first action that needs it); offline PIN sign-in in brick 13 |
 | Onboarding and setup checklist | designed #19 · **first steps built (brick 7)** | 0 | Built: create account, confirm email, group + company + first hotel. Rooms, rates, first booking and the checklist come with Stage 1 |
 | Properties list and property settings | designed #25 | 0 | Logo, address, time zone, check-in/out times, business date, owning entity |
 | Entities and departments | designed #25 | 0 | RC number, TIN, VAT status |

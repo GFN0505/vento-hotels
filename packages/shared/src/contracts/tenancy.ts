@@ -77,6 +77,8 @@ export const currentOrganizationSchema = z.object({
   device: z.object({ id: idSchema, name: z.string(), idleSeconds: z.number().int() }).nullable(),
   // Whether this member has set a staff PIN.
   hasPin: z.boolean(),
+  // Whether this person has two-step sign-in on (decision 0023).
+  twoStep: z.boolean(),
 })
 
 export const setPropertyAccessSchema = z.discriminatedUnion('allProperties', [

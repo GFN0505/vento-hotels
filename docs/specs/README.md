@@ -27,3 +27,4 @@ A spec that is dropped is deleted, with the reason in the commit message.
 | [Team: invites, members and roles, permissions and limits](stage-0-team-and-roles.md) | 0 | Platform | going-live, front-desk-morning | built (in review) |
 | [Feature switches: build ahead, release per group](stage-0-feature-switches.md) | 0 | Platform | going-live | built (in review) |
 | [Shared devices and staff PIN sign-in](stage-0-devices-and-pin.md) | 0 | Platform | going-live, restaurant-power-cut, room-attendant-shift | built (in review) |
+| [Two-step sign-in](stage-0-two-step-sign-in.md) | 0 | Platform | going-live, owner-morning | built (in review) |

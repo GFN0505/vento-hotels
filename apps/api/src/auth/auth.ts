@@ -1,5 +1,7 @@
 // Sign-in with Better Auth (decision 0017): email + password with verified emails, and the
 // organization plugin for hotel groups. Served at /api/auth/*.
+
+import { randomBytes } from 'node:crypto'
 import {
   isStrongPassword,
   MEMBER_ROLES,
@@ -18,8 +20,10 @@ import {
 import { setSessionCookie } from 'better-auth/cookies'
 import { organization } from 'better-auth/plugins/organization'
 import { adminAc, memberAc, ownerAc } from 'better-auth/plugins/organization/access'
+import { twoFactor } from 'better-auth/plugins/two-factor'
+import { and, eq, like, ne } from 'drizzle-orm'
 import { z } from 'zod'
-import { recordSystemAudit } from '../audit/record.ts'
+import { recordAudit, recordSystemAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import {
   accounts,
@@ -27,6 +31,7 @@ import {
   members,
   organizations,
   sessions,
+  twoFactors,
   users,
   verifications,
 } from '../db/schema/auth.ts'
@@ -77,6 +82,14 @@ const ACCOUNT_PATHS = new Set([
   '/revoke-other-sessions',
   '/link-social',
   '/unlink-account',
+  '/two-factor/enable',
+  '/two-factor/disable',
+  '/two-factor/generate-backup-codes',
+  '/two-factor/get-totp-uri',
+  // During sign-in there's no session yet, so these stay open for that; a PIN session can't
+  // use them to finish someone's abandoned set-up.
+  '/two-factor/verify-totp',
+  '/two-factor/verify-backup-code',
   '/organization/create',
   '/organization/set-active',
 ])
@@ -110,6 +123,7 @@ export function createAuth(deps: {
         organization: organizations,
         member: members,
         invitation: invitations,
+        twoFactor: twoFactors,
       },
     }),
     advanced: { database: { generateId: () => newId() } },
@@ -137,6 +151,15 @@ export function createAuth(deps: {
         if (ctx.request && organizationPath && !OPEN_ORGANIZATION_PATHS.has(ctx.path)) {
           throw new APIError('NOT_FOUND', { message: 'Not found' })
         }
+        // Remember who was signed in, and whether two-step was on, before a change runs: only a
+        // real off → on or on → off counts (re-entering a code while it's on isn't a change).
+        if (ctx.request && twoStepChange(ctx.path)) {
+          const current = await getSessionFromCtx(ctx)
+          if (current) {
+            const user = current.user as { id: string; name: string; twoFactorEnabled?: boolean }
+            signedInBefore.set(ctx.request, { ...user, wasOn: Boolean(user.twoFactorEnabled) })
+          }
+        }
         // A PIN session on a shared device can't change the account behind it (decision 0022).
         if (ctx.request && ACCOUNT_PATHS.has(ctx.path)) {
           const current = await getSessionFromCtx(ctx)
@@ -155,6 +178,26 @@ export function createAuth(deps: {
             code: 'PASSWORD_TOO_WEAK',
             message: PASSWORD_RULE_SUMMARY,
           })
+        }
+      }),
+      // Two-step sign-in turned on or off goes into the audit log of every group the person is in.
+      after: createAuthMiddleware(async (ctx) => {
+        const change = twoStepChange(ctx.path)
+        if (!change || isFailure(ctx.context.returned)) return
+        // Only a signed-in person changing their own setting counts; the code check during
+        // sign-in uses the same endpoint and isn't a change.
+        const person = ctx.request ? signedInBefore.get(ctx.request) : undefined
+        if (!person || person.wasOn === (change === 'on')) return
+        const keepSession = ctx.context.newSession?.session.id
+        try {
+          await afterTwoStepChange(db, person, change, keepSession)
+        } catch (error) {
+          // Better Auth has already committed the change, so it can't share a transaction with
+          // these follow-ups; a failure is logged loudly rather than signing the person out.
+          console.error(
+            'Two-step follow-up failed:',
+            error instanceof Error ? error.message : error,
+          )
         }
       }),
     },
@@ -197,6 +240,14 @@ export function createAuth(deps: {
     },
     plugins: [
       pinSignIn(db, limiter),
+      // Two-step sign-in with an authenticator app (decision 0023): backup codes, "trust this
+      // computer for 30 days", and five wrong codes lock code entry for 15 minutes.
+      twoFactor({
+        issuer: 'Vento Hotels',
+        trustDeviceMaxAge: 30 * 24 * 60 * 60,
+        accountLockout: { enabled: true, maxFailedAttempts: 5, durationSeconds: 15 * 60 },
+        backupCodeOptions: { customBackupCodesGenerate: readableBackupCodes },
+      }),
       organization({
         roles,
         creatorRole: 'owner',
@@ -309,4 +360,89 @@ function pinSignIn(db: Database, limiter: RateLimiter) {
       ),
     },
   }
+}
+
+// Turning two-step sign-in on ends with a verified code; off is its own endpoint.
+function twoStepChange(path: string): 'on' | 'off' | undefined {
+  if (path === '/two-factor/disable') return 'off'
+  if (path === '/two-factor/verify-totp') return 'on'
+  return undefined
+}
+
+// Who was signed in when a two-step request arrived (released with the request).
+const signedInBefore = new WeakMap<Request, { id: string; name: string; wasOn: boolean }>()
+
+function isFailure(returned: unknown): boolean {
+  if (returned instanceof Error) return true
+  if (returned instanceof Response) return !returned.ok
+  return (
+    typeof returned === 'object' && returned !== null && 'status' in returned && 'body' in returned
+  )
+}
+
+// After two-step changes: an audit event in every group, and the sessions and trusted computers
+// that the change should end. Turning it on signs out every other session (a stolen password may
+// already be in use somewhere); turning it off forgets every trusted computer.
+async function afterTwoStepChange(
+  db: Database,
+  user: { id: string; name: string },
+  change: 'on' | 'off',
+  keepSessionId: string | undefined,
+) {
+  if (change === 'on') {
+    await db
+      .delete(sessions)
+      .where(
+        keepSessionId
+          ? and(eq(sessions.userId, user.id), ne(sessions.id, keepSessionId))
+          : eq(sessions.userId, user.id),
+      )
+  } else {
+    await db
+      .delete(verifications)
+      .where(
+        and(eq(verifications.value, user.id), like(verifications.identifier, 'trust-device-%')),
+      )
+  }
+  await recordTwoStepChange(db, user, change)
+}
+
+async function recordTwoStepChange(
+  db: Database,
+  user: { id: string; name: string },
+  change: 'on' | 'off',
+) {
+  const groups = await db
+    .select({ organizationId: members.organizationId, memberId: members.id })
+    .from(members)
+    .where(eq(members.userId, user.id))
+  await db.transaction(async (tx) => {
+    for (const group of groups) {
+      await recordAudit(
+        tx,
+        {
+          organizationId: group.organizationId,
+          userId: user.id,
+          memberId: group.memberId,
+          userName: user.name,
+        },
+        {
+          action: change === 'on' ? 'two_step.turned_on' : 'two_step.turned_off',
+          entityType: 'member',
+          entityId: group.memberId,
+        },
+      )
+    }
+  })
+}
+
+// Backup codes people may have to type from paper: lowercase, without look-alikes (no i, l, o,
+// 0 or 1), as xxxxx-xxxxx. 31 symbols × 10 is about 50 bits each, from a secure random source.
+const READABLE = 'abcdefghjkmnpqrstuvwxyz23456789'
+export function readableBackupCodes(): string[] {
+  return Array.from({ length: 10 }, () => {
+    const bytes = randomBytes(10)
+    const chars = [...bytes].map((byte) => READABLE[byte % READABLE.length])
+    return `${chars.slice(0, 5).join('')}-${chars.slice(5).join('')}`
+  })
 }

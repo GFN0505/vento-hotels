@@ -12,6 +12,7 @@ import { NoAccess } from '@/components/team/no-access'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Field } from '@/components/ui/field'
 import { SelectField } from '@/components/ui/select-field'
 import { api, orpc } from '@/lib/api'
@@ -65,7 +66,9 @@ function DevicesPage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-end gap-3">
         <div className="flex min-w-0 grow flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-[-0.015em]">Devices</h1>
+          <h1 className="text-[22px] leading-tight font-semibold tracking-[-0.02em] sm:text-2xl">
+            Devices
+          </h1>
           <p className="text-text-2">
             Shared tablets, PCs and phones where staff sign in with a 4-digit PIN.
           </p>
@@ -106,14 +109,13 @@ function DevicesPage() {
           <Button onClick={() => list.refetch()}>Try again</Button>
         </Card>
       ) : list.data.items.length === 0 ? (
-        <Card className="flex flex-col items-start gap-3 p-6">
-          <MonitorSmartphone className="size-6 text-text-3" aria-hidden="true" />
-          <p className="font-medium">No shared devices yet</p>
-          <p className="text-text-2">
+        <EmptyState icon={MonitorSmartphone}>
+          <p className="font-medium text-text">No shared devices yet</p>
+          <p>
             Open Vento on the restaurant tablet, front desk PC or housekeeping phone, sign in, and
             register it here. Staff then tap their name and enter their PIN.
           </p>
-        </Card>
+        </EmptyState>
       ) : (
         <Card>
           <ul className="divide-y divide-border">

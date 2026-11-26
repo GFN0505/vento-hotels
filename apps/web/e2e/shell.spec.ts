@@ -27,7 +27,7 @@ test('owners see every module, and a module page says what it will do', async ({
   }
   await nav.getByRole('link', { name: 'Restaurant & bar' }).click()
   await expect(page.getByRole('heading', { name: 'Restaurant & bar' })).toBeVisible()
-  await expect(page.getByText('Not available yet. Planned for stage 3.')).toBeVisible()
+  await expect(page.getByText('Coming soon')).toBeVisible()
   await expectAccessible(page)
 })
 

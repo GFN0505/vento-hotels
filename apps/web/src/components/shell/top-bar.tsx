@@ -2,7 +2,7 @@
 // status and the account menu. Search (⌘K), offline sync and approvals arrive with their bricks.
 
 import { calendarDateIn } from '@vento/shared'
-import { Lock, Menu } from 'lucide-react'
+import { ChevronDown, Lock, Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
@@ -47,7 +47,7 @@ type TopBarProps = { user: { name: string; email: string }; onOpenMenu: () => vo
 
 export function TopBar({ user, onOpenMenu }: TopBarProps) {
   const me = useMe()
-  const { properties, current, select } = useProperty()
+  const { current } = useProperty()
   const online = useOnline()
 
   // The business date only moves at night audit, so after midnight it can differ from today.
@@ -55,7 +55,7 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
   const behind = current && today && current.businessDate !== today
 
   return (
-    <header className="flex h-14 items-center gap-2 border-b border-border bg-surface px-3 lg:px-5">
+    <header className="flex h-14 items-center gap-2.5 border-b border-border bg-surface px-3 lg:h-[60px] lg:px-6">
       <Button
         variant="ghost"
         size="icon"
@@ -65,23 +65,8 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
       >
         <Menu className="size-4" />
       </Button>
+      {current ? <PropertyPill /> : null}
       <div className="grow" />
-      {properties.length > 1 ? (
-        <select
-          aria-label="Property"
-          value={current?.id}
-          onChange={(event) => select(event.target.value)}
-          className="h-11 max-w-[160px] min-w-0 rounded-sm sm:max-w-[220px] lg:h-8 border border-border-strong bg-surface px-2 font-medium"
-        >
-          {properties.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      ) : current ? (
-        <span className="min-w-0 truncate font-medium">{current.name}</span>
-      ) : null}
       {current ? (
         <span
           className={cn(
@@ -119,5 +104,38 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
       ) : null}
       <AccountMenu name={user.name} email={user.email} onSharedDevice={Boolean(me.data?.device)} />
     </header>
+  )
+}
+
+// The hotel being worked in, as a quiet pill on the left (as in Vento Real Estate's entity picker).
+// With several hotels it's a native select laid over the pill, so phones get their own picker.
+function PropertyPill() {
+  const { properties, current, select } = useProperty()
+  if (!current) return null
+  const several = properties.length > 1
+  return (
+    <div className="relative flex h-11 min-w-0 items-center gap-2 rounded-md border border-border bg-surface px-3 lg:h-9">
+      <span className="text-[10px] font-bold tracking-[0.04em] text-text-3 uppercase">Hotel</span>
+      <span className="min-w-0 truncate font-semibold" title={current.name}>
+        {current.name}
+      </span>
+      {several ? (
+        <>
+          <ChevronDown className="size-3.5 shrink-0 text-text-3" aria-hidden="true" />
+          <select
+            aria-label="Hotel"
+            value={current.id}
+            onChange={(event) => select(event.target.value)}
+            className="absolute inset-0 cursor-pointer opacity-0"
+          >
+            {properties.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </>
+      ) : null}
+    </div>
   )
 }

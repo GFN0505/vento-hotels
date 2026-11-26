@@ -30,6 +30,8 @@ export const memberViewSchema = z.object({
   joinedAt: z.iso.datetime(),
   isYou: z.boolean(),
   hasPin: z.boolean(),
+  // Two-step sign-in turned on (decision 0023).
+  twoStep: z.boolean(),
 })
 export type MemberView = z.infer<typeof memberViewSchema>
 

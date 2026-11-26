@@ -4,7 +4,7 @@
 - **Stage:** 0
 - **Module:** Platform
 - **Walkthroughs:** `front-desk-morning.md` (discount over front desk's limit), `owner-morning.md` (who did what), `going-live.md` (permission defaults left as they are)
-- **Screens:** Permissions and limits (#26, API only in this brick), Audit log (#28, API only), approval prompt (#22, brick 12)
+- **Screens:** Permissions and limits (#26, API only in this brick), Audit log (#28, API only), approval prompt (#22, Stage 1)
 - **Decisions:** `docs/decisions/0008-permission-limits-approvals-audit.md`, `docs/decisions/0018-permissions-and-audit-in-practice.md`
 
 ## Problem
@@ -47,7 +47,7 @@ Not relevant yet. The audit event has `businessDate`, `deviceId` and `approverMe
 - `recordAudit(tx, access, event)` writes in the caller's transaction.
 
 ## Out of scope
-Approval by PIN and the approvals inbox (brick 12 and Stage 1), screens (brick 7), sign-in events (brick 10, with device sessions), and the exceptions feed for the owner's daily report (Stage 1).
+Approval by PIN and the approvals inbox (Stage 1), screens (brick 7), sign-in events (brick 10, with device sessions), and the exceptions feed for the owner's daily report (Stage 1).
 
 ## Open questions
 None.

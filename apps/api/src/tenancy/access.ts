@@ -206,7 +206,7 @@ export class ApprovalRequiredError extends ORPCError<
 
 // Checks the permission and, for permissions with a limit, that `value` (a percent or naira
 // amount as a decimal string) is within this member's limit. Above the limit the action needs an
-// approver with a higher limit (PIN approval arrives in brick 12). Nobody approves their own action.
+// approver with a higher limit (PIN approval arrives in Stage 1, decision 0023). Nobody approves their own action.
 export function requireWithinLimit(access: Access, permission: Permission, value: string): void {
   requirePermission(access, permission)
   const { limit } = access.rules[permission]

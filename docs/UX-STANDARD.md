@@ -11,7 +11,7 @@ A screen is done when every line below is true, or the exception is written in t
 - [ ] Lists are server-paginated; nothing loads thousands of rows into the browser.
 
 ## 2. Clear
-- [ ] Simple first: a new member of staff can use the screen without training. The machinery behind it (permissions, switches, audit, offline sync) stays invisible until it matters, and then speaks plainly. Power never shows up as clutter, and simplicity never costs quality.
+- [ ] Simple flows: a new member of staff can use the screen without training, in as few steps as possible. The machinery behind it (permissions, switches, audit, offline sync) stays invisible until it matters, and then speaks plainly. "Simple" is about the flow, never about plainer visuals.
 - [ ] One job per screen, one primary action, and the most important number or status is the first thing seen.
 - [ ] Common tasks take 3 clicks or fewer, or one ⌘K command. A new person finishes their first real task in under 5 minutes without training.
 - [ ] Every screen sets its tab title (`usePageTitle`), and has one `h1`.
@@ -45,6 +45,7 @@ A screen is done when every line below is true, or the exception is written in t
 - [ ] Never a link to a page that doesn't exist yet.
 
 ## 7. Looks like Vento
+- [ ] Classy and creative: every visible surface gets real design craft (page headers with status badges, considered empty states, depth, purposeful motion, data shown richly). A bare screen gets more craft, not fewer details. Vento Real Estate is the house bar.
 - [ ] Design tokens only (no hex in components); light by default and correct in dark mode.
 - [ ] Matches the approved design in `docs/design/export/`, or the difference is in `docs/design/CHANGES.md`.
 - [ ] Brand surfaces follow the `brand` skill: "Vento Hotels" lockup, Fraunces only for brand headlines.

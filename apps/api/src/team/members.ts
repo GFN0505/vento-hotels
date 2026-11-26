@@ -37,6 +37,7 @@ const memberColumns = {
   allProperties: members.allProperties,
   createdAt: members.createdAt,
   hasPin: sql<boolean>`${memberPins.id} is not null`,
+  twoStep: users.twoFactorEnabled,
 }
 
 type MemberRow = {
@@ -48,6 +49,7 @@ type MemberRow = {
   allProperties: boolean
   createdAt: Date
   hasPin: boolean
+  twoStep: boolean
 }
 
 // Hotel names for each member, in one query.
@@ -89,6 +91,7 @@ function toView(
     joinedAt: row.createdAt.toISOString(),
     isYou: row.id === access.memberId,
     hasPin: row.hasPin,
+    twoStep: row.twoStep,
   }
 }
 
