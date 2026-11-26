@@ -5,6 +5,8 @@ import { infraEnvSchema, MissingSettingError } from './infra/config.ts'
 
 const envSchema = infraEnvSchema.extend({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  // Which server this is. Staging runs production builds too, but may load the demo seed.
+  DEPLOY_ENV: z.enum(['local', 'staging', 'production']).default('local'),
   API_PORT: z.coerce.number().int().min(1).max(65_535).default(3010),
   // Signs sessions and tokens. At least 32 random characters; generate with `openssl rand -base64 32`.
   BETTER_AUTH_SECRET: z.string().min(32),
@@ -39,7 +41,10 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
     throw new MissingSettingError(setting, missing ? 'is not set' : 'is not valid')
   }
   // Unreleased modules must never reach customers by a stray setting.
-  if (result.data.NODE_ENV === 'production' && result.data.VENTO_ALL_FEATURES) {
+  if (
+    (result.data.NODE_ENV === 'production' || result.data.DEPLOY_ENV === 'production') &&
+    result.data.VENTO_ALL_FEATURES
+  ) {
     throw new MissingSettingError('VENTO_ALL_FEATURES', 'must be off in production')
   }
   return result.data

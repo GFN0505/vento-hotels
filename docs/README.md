@@ -8,6 +8,7 @@ Everything about Vento Hotels that isn't code lives in `docs/`. If you're new, r
 | [DOMAIN.md](DOMAIN.md) | Vocabulary, statuses, permissions matrix and limits, business rules, open questions | product-manager, architect | A new term, status, rule or limit appears |
 | [journeys/](journeys/README.md) | Step-by-step walkthroughs on the demo hotel group, starting with [00-golden-thread](journeys/00-golden-thread.md); each becomes an e2e test and a help article | product-manager (writes), tester (tests) | A flow is added or changes |
 | [specs/](specs/README.md) | One spec per feature, per stage: problem, flow, acceptance criteria | product-manager | Before building any feature |
+| [ops/](ops/deploy.md) | How the servers are set up, how releases reach them, backups and restores | devops | Anything about servers, deploys or backups changes |
 | [research/](research/role-homes.md) | Research that feeds later work, e.g. what each role's Home should show at a glance | product-manager, ui-designer | Before a large UX build; refresh when it's used |
 | [decisions/](decisions/README.md) | Why the big choices were made | architect proposes, implementer commits | A hard-to-reverse or cross-module choice |
 | [design/export/](design/export/README.md) | The approved designs from Claude Design: source of truth for the UI | (exported, never hand-edited) | A new design round is exported |

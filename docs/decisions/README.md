@@ -38,5 +38,6 @@ Things still undecided stay under *Open questions* in `docs/DOMAIN.md` until the
 | [0023](0023-two-step-sign-in.md) | Two-step sign-in with an authenticator app, optional for now | accepted |
 | [0024](0024-offline-shell-first.md) | The offline shell ships in Stage 0; the outbox ships with the first offline command | accepted |
 | [0025](0025-jobs-logs-and-error-tracking.md) | Background jobs on pg-boss, structured logs, and error tracking without personal data | accepted |
+| [0026](0026-hosting-on-contabo.md) | Hosting on Contabo servers we run ourselves, with Docker Compose | accepted |
 
 Template: [0000-template.md](0000-template.md)

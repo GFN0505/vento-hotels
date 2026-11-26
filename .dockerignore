@@ -1,0 +1,16 @@
+# Keep images small and free of local data and secrets.
+**/node_modules
+**/dist
+**/.data
+**/test-results
+**/playwright-report
+**/coverage
+**/*.test.ts
+**/*.test.tsx
+**/e2e
+.git
+.env
+.env.*
+!.env.example
+docs
+deploy/*.env

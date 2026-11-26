@@ -7,20 +7,22 @@ import { loadEnv } from './env.ts'
 import { type Jobs, QueuedEmailProvider, startJobs } from './jobs/queue.ts'
 import { flushErrorTracking, reportError, startErrorTracking } from './observability/errors.ts'
 import { logger } from './observability/log.ts'
-import { ConsoleEmailProvider, FileEmailProvider } from './providers/email.ts'
+import { ConsoleEmailProvider, FileEmailProvider, NoEmailProvider } from './providers/email.ts'
 import { RateLimiter } from './rate-limit.ts'
 import { healthCheck } from './system/health.ts'
 
 const env = loadEnv()
 if (env.LOG_LEVEL) logger.level = env.LOG_LEVEL
-startErrorTracking({ dsn: env.SENTRY_DSN, environment: env.NODE_ENV })
+startErrorTracking({ dsn: env.SENTRY_DSN, environment: env.DEPLOY_ENV })
 process.on('unhandledRejection', (error) => reportError(error, 'unhandled'))
 
 const database = createDatabase(env.DATABASE_URL)
 const deliver =
-  env.EMAIL_OUTBOX_DIR && env.NODE_ENV !== 'production'
-    ? new FileEmailProvider(env.EMAIL_OUTBOX_DIR)
-    : new ConsoleEmailProvider()
+  env.DEPLOY_ENV !== 'local'
+    ? new NoEmailProvider()
+    : env.EMAIL_OUTBOX_DIR && env.NODE_ENV !== 'production'
+      ? new FileEmailProvider(env.EMAIL_OUTBOX_DIR)
+      : new ConsoleEmailProvider()
 // With jobs on, email goes through the queue and is retried if the provider fails.
 const jobs: Jobs | undefined = env.JOBS_ENABLED
   ? await startJobs({ databaseUrl: env.DATABASE_URL, email: deliver })

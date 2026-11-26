@@ -6,7 +6,12 @@ import { createDatabase } from '../db/client.ts'
 import { seedDemo } from './demo.ts'
 
 async function main() {
-  if (process.env.NODE_ENV === 'production') {
+  // Staging servers run production builds and may load the demo; production never does.
+  const deployEnv = process.env.DEPLOY_ENV ?? 'local'
+  if (
+    deployEnv === 'production' ||
+    (process.env.NODE_ENV === 'production' && deployEnv !== 'staging')
+  ) {
     throw new Error('The demo seed never runs in production')
   }
   const url = process.env.DATABASE_URL

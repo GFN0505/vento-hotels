@@ -6,6 +6,15 @@ export interface EmailProvider {
   send(message: EmailMessage): Promise<void>
 }
 
+// On a real server with no email provider yet (an open question in docs/DOMAIN.md): refuse, with a
+// warning naming the subject only. Printing the email would put sign-in links in the logs.
+export class NoEmailProvider implements EmailProvider {
+  async send(message: EmailMessage): Promise<void> {
+    const { logger } = await import('../observability/log.ts')
+    logger.warn({ subject: message.subject }, 'No email provider is set up; email not sent')
+  }
+}
+
 export class ConsoleEmailProvider implements EmailProvider {
   async send(message: EmailMessage): Promise<void> {
     console.log(`✉ To ${message.to}: ${message.subject}\n${message.text}\n`)

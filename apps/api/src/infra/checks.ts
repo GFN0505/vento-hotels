@@ -44,9 +44,12 @@ export async function checkStorage(endpoint: string): Promise<CheckResult> {
     const response = await fetch(`${endpoint}/health`, {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     })
-    return response.ok
-      ? { ok: true, detail: `Storage healthy at ${endpoint}` }
-      : { ok: false, error: `Storage answered ${response.status} at ${endpoint}` }
+    // Reachable is what matters here. Local storage answers /health with 200; Cloudflare R2 answers
+    // an unsigned request with 400 or 403, which still means it's up. Only 5xx means trouble.
+    // The address isn't shown: /health is public and an R2 address names the account.
+    return response.status < 500
+      ? { ok: true, detail: 'Storage reachable' }
+      : { ok: false, error: `Storage answered ${response.status}` }
   } catch (error) {
     return { ok: false, error: describe(error) }
   }
