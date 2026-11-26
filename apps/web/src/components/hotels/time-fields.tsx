@@ -1,8 +1,9 @@
 // Check-in from, check-out by and the time zone (spec: "Fields"). Times are 24-hour in 5-minute
 // steps; a check-out later than check-in (serviced apartments) is fine. The time zone is fixed once
 // a hotel is live.
+
+import { Combobox, type ComboOption } from '@/components/ui/combobox'
 import { Field } from '@/components/ui/field'
-import { SelectField } from '@/components/ui/select-field'
 import { timeZoneLabel } from './format'
 import type { HotelForm, Problems } from './hotel-form-model'
 
@@ -13,11 +14,11 @@ const timeProblem = (value: string) =>
 type TimesProps = {
   form: Pick<HotelForm, 'checkInTime' | 'checkOutTime'>
   problems: Problems
-  disabled?: boolean
+  readOnly?: boolean
   onChange: (change: Partial<HotelForm>) => void
 }
 
-export function TimeFields({ form, problems, disabled, onChange }: TimesProps) {
+export function TimeFields({ form, problems, readOnly, onChange }: TimesProps) {
   return (
     <>
       <Field
@@ -26,7 +27,7 @@ export function TimeFields({ form, problems, disabled, onChange }: TimesProps) {
         type="time"
         step={300}
         value={form.checkInTime}
-        disabled={disabled}
+        readOnly={readOnly}
         error={problems.checkInTime}
         validate={timeProblem}
         onChange={(event) => onChange({ checkInTime: event.target.value })}
@@ -38,7 +39,7 @@ export function TimeFields({ form, problems, disabled, onChange }: TimesProps) {
         type="time"
         step={300}
         value={form.checkOutTime}
-        disabled={disabled}
+        readOnly={readOnly}
         error={problems.checkOutTime}
         validate={timeProblem}
         onChange={(event) => onChange({ checkOutTime: event.target.value })}
@@ -48,14 +49,26 @@ export function TimeFields({ form, problems, disabled, onChange }: TimesProps) {
   )
 }
 
-let zones: { value: string; label: string }[] | undefined
+// Where Nigerian groups' hotels and guests usually are, first; then every IANA zone the browser
+// knows, labelled once and kept for the visit.
+export const COMMON_ZONES = [
+  'Africa/Lagos',
+  'Africa/Accra',
+  'Africa/Nairobi',
+  'Africa/Johannesburg',
+  'Europe/London',
+  'Asia/Dubai',
+]
 
-// Every IANA zone the browser knows, labelled once and kept for the visit.
-function zoneOptions(current: string) {
-  zones ??= Intl.supportedValuesOf('timeZone').map((zone) => ({
-    value: zone,
-    label: timeZoneLabel(zone),
-  }))
+let zones: ComboOption[] | undefined
+
+function zoneOptions(current: string): ComboOption[] {
+  zones ??= [
+    ...COMMON_ZONES.map((zone) => ({ value: zone, label: timeZoneLabel(zone), group: 'Common' })),
+    ...Intl.supportedValuesOf('timeZone')
+      .filter((zone) => !COMMON_ZONES.includes(zone))
+      .map((zone) => ({ value: zone, label: timeZoneLabel(zone), group: 'All time zones' })),
+  ]
   return zones.some((zone) => zone.value === current)
     ? zones
     : [{ value: current, label: timeZoneLabel(current) }, ...zones]
@@ -64,27 +77,26 @@ function zoneOptions(current: string) {
 export function TimeZoneField({
   value,
   live,
-  disabled,
+  readOnly,
   error,
   onChange,
 }: {
   value: string
   live: boolean
-  disabled?: boolean
+  readOnly?: boolean
   error?: string | undefined
   onChange: (timeZone: string) => void
 }) {
   return (
-    <SelectField
+    <Combobox
       label="Time zone"
       name="timeZone"
       value={value}
       options={zoneOptions(value)}
-      disabled={disabled || live}
+      readOnly={readOnly || live}
       hint={live ? 'The time zone is fixed once a hotel is live.' : undefined}
       error={error}
-      onChange={(event) => onChange(event.target.value)}
-      className="lg:h-9 lg:text-base"
+      onChange={onChange}
     />
   )
 }

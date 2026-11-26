@@ -96,9 +96,10 @@ export function changesCompany(hotel: Property, form: HotelForm): boolean {
   return form.entityId !== (hotel.pendingEntity?.id ?? hotel.entityId)
 }
 
-// A live hotel's move to another company waits for the next business date and needs a reason.
+// On a live hotel a move to another company waits for the next business date, and both the move
+// and cancelling a waiting one (choosing the current company again) need a reason.
 export function needsReason(hotel: Property, form: HotelForm): boolean {
-  return hotel.liveSince !== null && changesCompany(hotel, form) && form.entityId !== hotel.entityId
+  return hotel.liveSince !== null && changesCompany(hotel, form)
 }
 
 const TEXT_FIELDS = ['name', 'addressLine1', 'area', 'state', 'lga'] as const

@@ -2,8 +2,9 @@
 // company also owns hotels outside the person's access, or is archived.
 import { useMutation } from '@tanstack/react-query'
 import { type Entity, normalizeRcNumber, normalizeTin } from '@vento/shared'
-import { type FormEvent, useId, useState } from 'react'
+import { type FormEvent, useEffect, useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { dateLabel } from '@/components/hotels/format'
 import { useSetupRefresh } from '@/components/hotels/queries'
 import { NEEDS_CONNECTION } from '@/components/settings/offline-note'
 import { Button } from '@/components/ui/button'
@@ -47,6 +48,10 @@ export function CompanySheet({ company: given, onClose, onCreated }: Props) {
   const set = (change: Partial<F.CompanyForm>) => setForm((f) => ({ ...f, ...change }))
   const readOnly = Boolean(company && (!company.canEdit || company.status === 'archived'))
   const askReason = F.companyNeedsReason(company, form)
+  const banner = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (problems.form) banner.current?.focus()
+  }, [problems.form])
 
   const save = useMutation({
     mutationFn: () =>
@@ -100,7 +105,6 @@ export function CompanySheet({ company: given, onClose, onCreated }: Props) {
       footer={
         guard.bar ?? (
           <>
-            {company && !readOnly ? <ArchiveCompany company={company} onDone={onClose} /> : null}
             <span className="grow" />
             {!online && !readOnly ? (
               <span className="text-sm text-text-3">{NEEDS_CONNECTION}</span>
@@ -113,7 +117,7 @@ export function CompanySheet({ company: given, onClose, onCreated }: Props) {
                 type="submit"
                 form={formId}
                 variant="primary"
-                disabled={!online || (Boolean(company) && !dirty)}
+                disabled={!online || stale || (Boolean(company) && !dirty)}
                 loading={save.isPending}
               >
                 Save company
@@ -131,6 +135,8 @@ export function CompanySheet({ company: given, onClose, onCreated }: Props) {
         ) : null}
         {problems.form ? (
           <div
+            ref={banner}
+            tabIndex={-1}
             role="alert"
             className="flex flex-wrap items-center gap-3 rounded-sm bg-ro-bg px-3 py-2 text-ro"
           >
@@ -190,7 +196,7 @@ export function CompanySheet({ company: given, onClose, onCreated }: Props) {
         </div>
         <YesNo
           label="VAT registered"
-          hint="Turns VAT on for this company's hotels' charges once taxes are set up"
+          hint={vatHint(company, form.vatRegistered)}
           value={form.vatRegistered}
           disabled={readOnly}
           onChange={(vatRegistered) => set({ vatRegistered })}
@@ -213,6 +219,10 @@ export function CompanySheet({ company: given, onClose, onCreated }: Props) {
           <dd className="num">NGN (₦)</dd>
         </dl>
       </form>
+      {company && !readOnly ? (
+        // Its own form (the reason), so it sits outside the company's.
+        <ArchiveCompany company={company} onDone={onClose} />
+      ) : null}
     </Sheet>
   )
 }
@@ -221,4 +231,18 @@ function companyLine(company: Entity): string {
   if (company.status === 'archived') return 'Archived'
   const hotels = F.hotelsLine(company)
   return hotels === 'No hotels' ? 'Owns no hotels yet' : `Owns ${hotels}`
+}
+
+// What a VAT answer does: at once while no hotel it owns is live; from the next business date once
+// one is ("Not VAT registered from 27 Nov 2026"), where choosing the current answer cancels a
+// waiting change.
+function vatHint(company: Entity | undefined, chosen: boolean): string {
+  const usual = "Turns VAT on for this company's hotels' charges once taxes are set up"
+  if (!company?.ownsLiveHotel) return usual
+  const pending = company.pendingVat
+  if (pending && chosen === pending.vatRegistered) {
+    return `${pending.vatRegistered ? 'VAT registered' : 'Not VAT registered'} from ${dateLabel(pending.from)}. Choose ${company.vatRegistered ? 'Yes' : 'No'} to cancel.`
+  }
+  if (chosen !== company.vatRegistered) return 'Applies from the next business date.'
+  return usual
 }

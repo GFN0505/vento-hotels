@@ -9,7 +9,7 @@ import type { Database } from '../db/client.ts'
 import { auditEvents } from '../db/schema/governance.ts'
 import { rooms } from '../db/schema/rooms.ts'
 import type { Access } from '../tenancy/access.ts'
-import { auditAt, loadProperty, type RoomsProperty, requireRoomsSetup } from './context.ts'
+import { auditAt, holdProperty, type RoomsProperty, requireRoomsSetup } from './context.ts'
 import { isLive } from './live.ts'
 import { roomsInScope } from './room-reads.ts'
 
@@ -50,7 +50,7 @@ export async function markInspected(
 ): Promise<{ count: number; batchId: string }> {
   requireRoomsSetup(access)
   return db.transaction(async (tx) => {
-    const property = await loadProperty(tx, access, input.propertyId)
+    const property = await holdProperty(tx, access, input.propertyId)
     requireNotLive(property)
     // The same rule as the banner (summary.allDirtySetup): offered only while every active room
     // is still dirty. Locks them in id order, so a concurrent change waits or is seen.
@@ -97,7 +97,7 @@ export async function undoMarkInspected(
 ): Promise<{ count: number }> {
   requireRoomsSetup(access)
   return db.transaction(async (tx) => {
-    const property = await loadProperty(tx, access, input.propertyId)
+    const property = await holdProperty(tx, access, input.propertyId)
     requireNotLive(property)
     const events = await tx
       .select({ roomId: auditEvents.entityId })

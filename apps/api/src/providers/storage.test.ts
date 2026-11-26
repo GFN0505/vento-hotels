@@ -58,6 +58,28 @@ describe.skipIf(!configured)('S3 storage', () => {
     expect(await storage.read(key, 1000)).toEqual({ status: 'missing' })
   })
 
+  it('refuses a second file under the same link, and copies a file server-side', async () => {
+    const key = `tests/${newId()}.png`
+    const signed = await storage.signedUpload(key, {
+      contentType: 'image/png',
+      size: png.length,
+      expiresInSeconds: 60,
+    })
+    expect(signed.headers).toMatchObject({ 'if-none-match': '*' })
+    const first = await fetch(signed.url, { method: 'PUT', headers: signed.headers, body: png })
+    expect(first.status).toBe(200)
+    // Same type and size, so only If-None-Match stops it.
+    const other = png.slice()
+    other.set([(png.at(-20) ?? 0) ^ 0xff], png.length - 20)
+    const second = await fetch(signed.url, { method: 'PUT', headers: signed.headers, body: other })
+    expect(second.status).toBe(412)
+    expect(await storage.copy(key, `${key}.checked`)).toBe('copied')
+    expect(await storage.read(`${key}.checked`, 1_000_000)).toMatchObject({ bytes: png })
+    expect(await storage.copy(`tests/${newId()}.png`, `${key}.none`)).toBe('missing')
+    await storage.delete(key)
+    await storage.delete(`${key}.checked`)
+  })
+
   it('reports a file over the limit without reading it', async () => {
     const key = `tests/${newId()}.png`
     const signed = await storage.signedUpload(key, {

@@ -11,7 +11,8 @@ export type StoredObject =
   | { status: 'too_large'; size: number }
 
 export interface StorageProvider {
-  // A PUT URL that accepts exactly this type and size, for `expiresInSeconds`.
+  // A PUT URL that accepts exactly this type and size, once (never over an existing file), for
+  // `expiresInSeconds`.
   signedUpload(
     key: string,
     file: { contentType: string; size: number; expiresInSeconds: number },
@@ -21,6 +22,8 @@ export interface StorageProvider {
   // The whole object, refusing anything larger than `maxBytes` without reading it.
   read(key: string, maxBytes: number): Promise<StoredObject>
   delete(key: string): Promise<void>
+  // A server-side copy, so a checked file lives at a key no signed upload URL ever pointed at.
+  copy(fromKey: string, toKey: string): Promise<'copied' | 'missing'>
   // Server-side writes (the demo seed's logo; later, generated PDFs).
   put(key: string, bytes: Uint8Array, contentType: string): Promise<void>
 }
@@ -33,9 +36,14 @@ export type S3Settings = {
   bucket: string
 }
 
+// Storage calls never hang a request: a stalled connection fails after this long.
+const STORAGE_TIMEOUT_MS = 15_000
+const timeout = () => AbortSignal.timeout(STORAGE_TIMEOUT_MS)
+
 export class S3StorageProvider implements StorageProvider {
   readonly #client: AwsClient
   readonly #base: string
+  readonly #bucket: string
 
   constructor(settings: S3Settings) {
     this.#client = new AwsClient({
@@ -44,6 +52,7 @@ export class S3StorageProvider implements StorageProvider {
       service: 's3',
       region: settings.region,
     })
+    this.#bucket = encodeURIComponent(settings.bucket)
     // Path-style addressing works on R2 and RustFS alike.
     this.#base = `${settings.endpoint.replace(/\/+$/, '')}/${encodeURIComponent(settings.bucket)}`
   }
@@ -59,14 +68,16 @@ export class S3StorageProvider implements StorageProvider {
     key: string,
     file: { contentType: string; size: number; expiresInSeconds: number },
   ): Promise<SignedUpload> {
-    // Content type and length are signed, so storage refuses any other file under this URL.
+    // Content type and length are signed, so storage refuses any other file under this URL, and
+    // If-None-Match: * is signed, so a second PUT can't replace the first (R2 and RustFS answer 412).
+    const headers = { 'content-type': file.contentType, 'if-none-match': '*' }
     const signed = await this.#client.sign(this.#url(key, file.expiresInSeconds), {
       method: 'PUT',
-      headers: { 'content-type': file.contentType, 'content-length': String(file.size) },
+      headers: { ...headers, 'content-length': String(file.size) },
       aws: { signQuery: true, allHeaders: true },
     })
     // Browsers set Content-Length from the body themselves and refuse to have it set.
-    return { url: signed.url, headers: { 'content-type': file.contentType } }
+    return { url: signed.url, headers }
   }
 
   async signedDownload(key: string, expiresInSeconds: number): Promise<string> {
@@ -78,7 +89,7 @@ export class S3StorageProvider implements StorageProvider {
   }
 
   async read(key: string, maxBytes: number): Promise<StoredObject> {
-    const response = await this.#client.fetch(this.#url(key), { method: 'GET' })
+    const response = await this.#client.fetch(this.#url(key), { method: 'GET', signal: timeout() })
     if (response.status === 404) {
       await response.body?.cancel()
       return { status: 'missing' }
@@ -98,11 +109,27 @@ export class S3StorageProvider implements StorageProvider {
   }
 
   async delete(key: string): Promise<void> {
-    const response = await this.#client.fetch(this.#url(key), { method: 'DELETE' })
+    const response = await this.#client.fetch(this.#url(key), {
+      method: 'DELETE',
+      signal: timeout(),
+    })
     await response.body?.cancel()
     if (!response.ok && response.status !== 404) {
       throw new Error(`Storage answered ${response.status} deleting an object`)
     }
+  }
+
+  async copy(fromKey: string, toKey: string): Promise<'copied' | 'missing'> {
+    const source = `/${this.#bucket}/${fromKey.split('/').map(encodeURIComponent).join('/')}`
+    const response = await this.#client.fetch(this.#url(toKey), {
+      method: 'PUT',
+      headers: { 'x-amz-copy-source': source },
+      signal: timeout(),
+    })
+    await response.body?.cancel()
+    if (response.status === 404) return 'missing'
+    if (!response.ok) throw new Error(`Storage answered ${response.status} copying an object`)
+    return 'copied'
   }
 
   async put(key: string, bytes: Uint8Array, contentType: string): Promise<void> {
@@ -110,6 +137,7 @@ export class S3StorageProvider implements StorageProvider {
       method: 'PUT',
       headers: { 'content-type': contentType },
       body: bytes,
+      signal: timeout(),
     })
     await response.body?.cancel()
     if (!response.ok) throw new Error(`Storage answered ${response.status} writing an object`)
@@ -156,7 +184,7 @@ export class MemoryStorageProvider implements StorageProvider {
   ): Promise<SignedUpload> {
     return {
       url: `memory://uploads/${key}?expires=${file.expiresInSeconds}`,
-      headers: { 'content-type': file.contentType },
+      headers: { 'content-type': file.contentType, 'if-none-match': '*' },
     }
   }
 
@@ -173,6 +201,13 @@ export class MemoryStorageProvider implements StorageProvider {
 
   async delete(key: string): Promise<void> {
     this.files.delete(key)
+  }
+
+  async copy(fromKey: string, toKey: string): Promise<'copied' | 'missing'> {
+    const bytes = this.files.get(fromKey)
+    if (!bytes) return 'missing'
+    this.files.set(toKey, bytes)
+    return 'copied'
   }
 
   async put(key: string, bytes: Uint8Array, _contentType?: string): Promise<void> {

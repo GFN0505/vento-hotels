@@ -100,7 +100,7 @@ Kora Hotels Group signed up with one company name and one hotel name. Now Mrs Ok
 **Change the owning company**
 - Before go-live: the change applies at once.
 - After go-live (forward rule, reachable only once brick 13 exists): needs a reason, and takes effect from the next business date, so a business date is never split between two companies' books.
-  - Until then the field shows "Kora Hotels Abuja Ltd from 26 Nov 2026" with **Cancel change**.
+  - Until then the field shows "Kora Hotels Abuja Ltd from 26 Nov 2026" with **Cancel change**. Cancelling also needs a reason and is a `setup_changed` exception too (added after code review: a scheduled change exists only on a live hotel, so undoing it is as reportable as making it).
   - Night audit applies the change as part of rolling the date.
   - Postings carry the company they were made under (bricks 10 and 13), so history never moves.
 
@@ -153,7 +153,7 @@ Kora Hotels Group signed up with one company name and one hotel name. Now Mrs Ok
 - **Archive** needs `setup.manage` and a reason, and only works when no active hotel uses the company: "Kora Hospitality Ltd owns 3 hotels. Move them to another company first." Archived companies leave the owning-company picker; hotels already archived under them keep showing them. **Restore** is under the Archived filter.
 - Once any hotel the company owns is live:
   - Changing the TIN or VAT registration asks for a reason.
-  - A VAT registration change takes effect from the next business date of each hotel it owns (forward rule for bricks 3 and 13). Tax lines already posted never change.
+  - A VAT registration change takes effect from the next business date of each hotel it owns. It is stored as a scheduled change on the company (`pendingVat`: the new value and the date, the day after the latest business date among its live hotels), shown as "VAT registered from 26 Nov 2026", and applied by night audit like a change of owning company (brick 13; brick 3 reads it for charges on or after that date). Choosing the current value again cancels it, with a reason. Before any of its hotels is live, the change applies at once. Tax lines already posted never change.
   - Name and RC number changes apply at once and appear on documents issued from then on. Issued documents never change.
 
 **Home, navigation and ⌘K**

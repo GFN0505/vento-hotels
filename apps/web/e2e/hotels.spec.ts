@@ -4,7 +4,7 @@
 // scheduled and cancelled, a hotel is archived and restored, companies are added, edited and
 // refused archiving, and a GM changes only the times. Desktop and phone.
 import { expect, type Page, test } from '@playwright/test'
-import { seedDemoGroup, signIn, signUpOwnerWithGroup, solidPng } from './support'
+import { choose, seedDemoGroup, signIn, signUpOwnerWithGroup, solidPng } from './support'
 
 const selectedHotel = (page: Page) =>
   page.getByLabel('Hotel', { exact: true }).evaluate((select: HTMLSelectElement) => {
@@ -26,8 +26,8 @@ test('the owner completes the first hotel, uploads a logo and adds a hotel', asy
   await expect(page.getByText("Add Kora Victoria Island's address.")).toBeVisible()
   await page.getByLabel('Street').fill('Plot 1412 Ahmadu Bello Way')
   await page.getByLabel('Area').fill('Victoria Island')
-  await page.getByLabel('State').selectOption('Lagos')
-  await page.getByLabel('LGA').selectOption('Eti-Osa')
+  await choose(page, 'State', 'Lagos')
+  await choose(page, 'LGA', 'Eti-Osa')
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(page.getByText('Kora Victoria Island saved')).toBeVisible()
   await expect(page.getByText("Add Kora Victoria Island's address.")).toHaveCount(0)
@@ -63,12 +63,15 @@ test('the owner completes the first hotel, uploads a logo and adds a hotel', asy
   await add.getByRole('button', { name: 'Add hotel' }).click()
   await expect(add.getByText('Enter the street')).toBeVisible()
   await add.getByLabel('Hotel name').fill('Kora Lekki')
-  await expect(add.getByLabel('Owning company')).toHaveValue(/.+/)
+  await expect(add.getByRole('combobox', { name: 'Owning company' })).toHaveValue(
+    'Kora Hospitality Ltd',
+  )
   await add.getByLabel('Street').fill('Plot 7 Admiralty Way')
   await add.getByLabel('Area').fill('Lekki Phase 1')
-  await expect(add.getByLabel('LGA')).toBeDisabled()
-  await add.getByLabel('State').selectOption('Lagos')
-  await add.getByLabel('LGA').selectOption('Eti-Osa')
+  await expect(add.getByRole('combobox', { name: 'LGA' })).toBeDisabled()
+  await choose(add, 'State', 'Lagos')
+  await choose(add, 'LGA', 'Eti-Osa')
+  await expect(add.getByText('Time zone: Africa/Lagos (WAT)')).toBeVisible()
   await expect(add.getByLabel('Check-in from')).toHaveValue('14:00')
   await add.getByRole('button', { name: 'Add hotel' }).click()
   await expect(page.getByText('Kora Lekki added')).toBeVisible()
@@ -99,9 +102,10 @@ test("a save made after someone else's asks to reload, and offline is read-only"
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(
     page.getByText(
-      /^Adaeze changed Kora Victoria Island at \d\d:\d\d\. Reload to see the change, then save again\.$/,
+      /^You changed Kora Victoria Island in another window at \d\d:\d\d\. Reload to see the change, then save again\.$/,
     ),
   ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Save changes' })).toBeDisabled()
   await page.getByRole('button', { name: 'Reload' }).click()
   await expect(page.getByLabel('Check-out by')).toHaveValue('11:00')
   await expect(page.getByLabel('Check-in from')).toHaveValue('14:00')
@@ -110,7 +114,7 @@ test("a save made after someone else's asks to reload, and offline is read-only"
   await page.evaluate(() => window.dispatchEvent(new Event('offline')))
   await expect(page.getByText(/^Offline since \d\d:\d\d\./)).toBeVisible()
   await expect(page.getByText('Needs a connection').first()).toBeVisible()
-  await expect(page.getByLabel('Check-in from')).toBeDisabled()
+  await expect(page.getByLabel('Check-in from')).not.toBeEditable()
   await expect(page.getByRole('button', { name: 'Add a hotel' })).toBeDisabled()
   await context.setOffline(false)
 })
@@ -133,7 +137,7 @@ test.describe('on the demo group', () => {
     await page.getByLabel('Hotel', { exact: true }).selectOption({ label: 'Kora Abuja' })
     await page.goto('/settings/hotels')
     await expect(page.getByRole('heading', { name: 'Kora Abuja', level: 1 })).toBeVisible()
-    await page.getByLabel('Owning company').selectOption({ label: 'Kora Hospitality Ltd' })
+    await choose(page, 'Owning company', 'Kora Hospitality Ltd')
     await page.getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByText('Say why, in a few words')).toBeVisible()
     await page.getByLabel('Reason for changing the owning company').fill('Transfer to new company')
@@ -141,6 +145,9 @@ test.describe('on the demo group', () => {
     await expect(page.getByText('Kora Abuja saved')).toBeVisible()
     await expect(page.getByText(/^Kora Hospitality Ltd from \d+ \w+ \d{4}$/)).toBeVisible()
     await page.getByRole('button', { name: 'Cancel change' }).click()
+    const keep = page.getByRole('dialog', { name: 'Keep Kora Abuja with Kora Hotels Abuja Ltd?' })
+    await keep.getByLabel('Reason for cancelling the change').fill('Transfer called off')
+    await keep.getByRole('button', { name: 'Cancel change' }).click()
     await expect(page.getByText('Kora Abuja stays with Kora Hotels Abuja Ltd')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Cancel change' })).toHaveCount(0)
   })
@@ -238,9 +245,13 @@ test.describe('on the demo group', () => {
     await expect(
       page.getByRole('heading', { name: 'Kora Victoria Island', level: 1 }),
     ).toBeVisible()
-    await expect(page.getByLabel('Hotel name')).toBeDisabled()
-    await expect(page.getByLabel('Street')).toBeDisabled()
-    await expect(page.getByLabel('Owning company')).toBeDisabled()
+    await expect(
+      page.getByText('You can change check-in and check-out times. Ask the owner or a group admin'),
+    ).toBeVisible()
+    await expect(page.getByLabel('Hotel name')).not.toBeEditable()
+    await expect(page.getByLabel('Street')).not.toBeEditable()
+    await expect(page.getByLabel('Owning company')).not.toBeEditable()
+    await expect(page.getByLabel('Check-out by')).toBeEditable()
     await expect(page.getByRole('button', { name: 'Archive hotel' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Add a hotel' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Upload', exact: true })).toHaveCount(0)

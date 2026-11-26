@@ -2,13 +2,13 @@
 // properties each member may access.
 import { sql } from 'drizzle-orm'
 import {
-  type AnyPgColumn,
   boolean,
   char,
   check,
   foreignKey,
   index,
   integer,
+  type PgTableExtraConfigValue,
   pgEnum,
   pgTable,
   text,
@@ -37,6 +37,11 @@ export const entities = pgTable(
     rcNumber: text(),
     tin: text(),
     vatRegistered: boolean().notNull().default(false),
+    // A VAT registration change on a company that owns a live hotel waits for the next business
+    // date, like a change of owning company, so tax lines on one date never mix. Night audit
+    // applies it (brick 13); brick 3 reads it for charges on or after `pendingVatFrom`.
+    pendingVatRegistered: boolean(),
+    pendingVatFrom: calendarDate(),
     baseCurrency: char({ length: 3 }).notNull().default('NGN'),
     archivedAt: archivedAt(),
     // Bumped by every edit; a save names the version it started from (optimistic locking).
@@ -45,9 +50,12 @@ export const entities = pgTable(
   },
   (t) => [
     index().on(t.organizationId),
-    uniqueIndex().on(t.organizationId, t.name),
     // Target of composite foreign keys, so a hotel can't name another group's company.
     unique('entities_organization_id_id_unique').on(t.organizationId, t.id),
+    check(
+      'entities_pending_vat_complete',
+      sql`(${t.pendingVatRegistered} is null) = (${t.pendingVatFrom} is null)`,
+    ),
     // Names are unique in the group whatever the capitals, archived companies included.
     uniqueIndex('entities_organization_id_lower_name_unique').on(
       t.organizationId,
@@ -69,9 +77,7 @@ export const properties = pgTable(
   {
     id: id(),
     organizationId: organizationId(),
-    entityId: uuid()
-      .notNull()
-      .references(() => entities.id, { onDelete: 'restrict' }),
+    entityId: uuid().notNull(),
     name: text().notNull(),
     addressLine1: text(),
     area: text(),
@@ -91,21 +97,33 @@ export const properties = pgTable(
     pendingEntityId: uuid(),
     pendingEntityFrom: calendarDate(),
     // The current logo. Old files are kept, so documents already issued keep what they showed.
-    logoUploadId: uuid().references((): AnyPgColumn => fileUploads.id, { onDelete: 'restrict' }),
+    logoUploadId: uuid(),
     archivedAt: archivedAt(),
     // Bumped by every edit of the settings form; a save names the version it started from.
     version: integer().notNull().default(1),
     ...timestamps,
   },
-  (t) => [
+  // Typed explicitly: properties and file_uploads point at each other.
+  (t): PgTableExtraConfigValue[] => [
     index().on(t.organizationId),
     index().on(t.entityId),
     index().on(t.pendingEntityId).where(sql`${t.pendingEntityId} is not null`),
-    uniqueIndex().on(t.organizationId, t.name),
+    // Names are unique in the group whatever the capitals, archived hotels included.
     uniqueIndex('properties_organization_id_lower_name_unique').on(
       t.organizationId,
       sql`lower(${t.name})`,
     ),
+    // Composite keys, so a hotel can't name another group's company or file.
+    foreignKey({
+      name: 'properties_entity_fk',
+      columns: [t.organizationId, t.entityId],
+      foreignColumns: [entities.organizationId, entities.id],
+    }).onDelete('restrict'),
+    foreignKey({
+      name: 'properties_logo_upload_fk',
+      columns: [t.organizationId, t.logoUploadId],
+      foreignColumns: [fileUploads.organizationId, fileUploads.id],
+    }).onDelete('restrict'),
     foreignKey({
       name: 'properties_pending_entity_fk',
       columns: [t.organizationId, t.pendingEntityId],
@@ -228,14 +246,19 @@ export const fileUploads = pgTable(
     status: fileUploadStatusEnum().notNull().default('pending'),
     width: integer(),
     height: integer(),
-    createdByMemberId: uuid(),
+    createdByMemberId: uuid().references(() => members.id, { onDelete: 'set null' }),
     confirmedAt: timestamp({ withTimezone: true }),
+    // When the daily purge deleted an unconfirmed or rejected upload's files.
+    purgedAt: timestamp({ withTimezone: true }),
     ...timestamps,
   },
-  (t) => [
+  (t): PgTableExtraConfigValue[] => [
     index().on(t.organizationId),
     index().on(t.propertyId),
     index().on(t.status, t.createdAt),
+    index().on(t.createdByMemberId),
+    // Target of the composite key from properties.logo_upload_id.
+    unique('file_uploads_organization_id_id_unique').on(t.organizationId, t.id),
     // Composite, so a file can't name another group's hotel.
     foreignKey({
       name: 'file_uploads_property_fk',

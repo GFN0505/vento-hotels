@@ -4,11 +4,10 @@
 import { type UseQueryResult, useMutation, useQuery } from '@tanstack/react-query'
 import type { ArchivePreview, Property } from '@vento/shared'
 import { Archive } from 'lucide-react'
-import { useState } from 'react'
+import { type ReactNode, useId, useState } from 'react'
 import { toast } from 'sonner'
 import { useProperty } from '@/components/shell/property-context'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { ReasonDialog } from '@/components/ui/reason-dialog'
 import { api, orpc } from '@/lib/api'
 import { problemMessage } from '@/lib/errors'
@@ -18,11 +17,17 @@ import { useSetupRefresh } from './queries'
 
 export function ArchiveHotel({ hotel, online }: { hotel: Property; online: boolean }) {
   const [asking, setAsking] = useState(false)
+  const aboutId = useId()
   return (
-    <Card className="flex flex-wrap items-center gap-x-4 gap-y-3 p-4 sm:px-5">
+    <section
+      aria-labelledby={`${aboutId}-title`}
+      className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-ro-dot/40 bg-surface p-4 sm:px-5"
+    >
       <div className="flex min-w-0 grow basis-72 flex-col gap-0.5">
-        <h2 className="font-semibold">Archive hotel</h2>
-        <p className="text-text-2">
+        <h2 id={`${aboutId}-title`} className="font-semibold text-ro">
+          Archive hotel
+        </h2>
+        <p id={aboutId} className="text-text-2">
           For a hotel that has closed. It leaves the hotel switch; its rooms, history and reports
           are kept, and you can restore it.
         </p>
@@ -31,13 +36,14 @@ export function ArchiveHotel({ hotel, online }: { hotel: Property; online: boole
         variant="danger"
         className="max-lg:h-11"
         disabled={!online}
+        aria-describedby={aboutId}
         onClick={() => setAsking(true)}
       >
         <Archive className="size-4" aria-hidden="true" />
         Archive hotel
       </Button>
       {asking ? <ArchiveDialog hotel={hotel} onClose={() => setAsking(false)} /> : null}
-    </Card>
+    </section>
   )
 }
 
@@ -126,5 +132,28 @@ function ArchivePreviewBody({
       </div>
     )
   }
-  return <p className="text-text-2">{archiveSummary(data).join(' ')}</p>
+  const [lead, ...effects] = archiveSummary(data)
+  return (
+    <div className="flex flex-col gap-2 text-text-2">
+      <p>{lead}</p>
+      <ul className="flex flex-col gap-1.5 rounded-sm border border-border bg-surface-2 px-3.5 py-2.5">
+        {effects.map((line) => (
+          <li key={line}>{withCount(line)}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+// "Its 72 rooms, history…" with "72 rooms" in semibold, so the counts stand out.
+function withCount(line: string): ReactNode {
+  const match = /\d[\d,]* \w+/.exec(line)
+  if (!match) return line
+  return (
+    <>
+      {line.slice(0, match.index)}
+      <span className="font-semibold text-text">{match[0]}</span>
+      {line.slice(match.index + match[0].length)}
+    </>
+  )
 }

@@ -17,6 +17,7 @@ function company(overrides: Partial<Entity> = {}): Entity {
     rcNumber: 'RC 1184402',
     tin: '21847390-0001',
     vatRegistered: true,
+    pendingVat: null,
     baseCurrency: 'NGN',
     status: 'active',
     version: 2,
@@ -83,6 +84,29 @@ describe('the company form', () => {
   it('knows when nothing changed', () => {
     expect(companyDirty(companyForm(company()), company())).toBe(false)
     expect(companyDirty({ ...companyForm(company()), vatRegistered: false }, company())).toBe(true)
+  })
+})
+
+describe('a waiting VAT change', () => {
+  const waiting = company({
+    ownsLiveHotel: true,
+    pendingVat: { vatRegistered: false, from: '2026-11-27' },
+  })
+
+  it('shows the value it is heading for', () => {
+    expect(companyForm(waiting).vatRegistered).toBe(false)
+    expect(companyDirty(companyForm(waiting), waiting)).toBe(false)
+  })
+
+  it('is cancelled by choosing the current value again, with a reason', () => {
+    const form = { ...companyForm(waiting), vatRegistered: true }
+    expect(checkCompany(form, waiting)).toEqual({ reason: 'Say why, in a few words' })
+    expect(updateInput(waiting, { ...form, reason: 'Registered after all' })).toEqual({
+      id: waiting.id,
+      version: 2,
+      vatRegistered: true,
+      reason: 'Registered after all',
+    })
   })
 })
 

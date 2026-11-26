@@ -38,6 +38,7 @@ export function HotelsList({ search, onSearch, onOpen, addButton, online }: Prop
       input: { status: search.show ?? 'active', page, pageSize: PAGE_SIZE, q: search.q },
     }),
     placeholderData: keepPreviousData,
+    refetchOnMount: 'always',
   })
   const group = me.data?.organization.name ?? ''
   const total = list.data?.total

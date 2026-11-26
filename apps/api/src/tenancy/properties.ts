@@ -272,9 +272,15 @@ export async function lockProperty(tx: Tx, access: Access, id: string): Promise<
   }
 }
 
-export async function requireVersion(tx: Tx, property: Locked, version: number): Promise<void> {
+export async function requireVersion(
+  tx: Tx,
+  access: Access,
+  property: Locked,
+  version: number,
+): Promise<void> {
   if (property.version === version) return
   const by = await lastChangeBy(tx, {
+    organizationId: access.organizationId,
     entityType: 'property',
     entityId: property.id,
     actions: [
@@ -354,7 +360,7 @@ export async function updateProperty(
     return await deps.db.transaction(async (tx) => {
       const current = await lockProperty(tx, access, input.id)
       if (current.archivedAt) throw hotelIsArchived(current.name)
-      await requireVersion(tx, current, input.version)
+      await requireVersion(tx, access, current, input.version)
       const { before, after } = changedFields(current, input)
       // The company the hotel is heading for: a scheduled one, or the current one.
       const entityTarget = input.entityId ?? current.entityId
@@ -452,7 +458,10 @@ async function changeEntity(
     .where(eq(entities.id, current.entityId))
   if (targetId === current.entityId) {
     // Choosing the current company again cancels a scheduled change.
-    return { set: { pendingEntityId: null, pendingEntityFrom: null }, event: cancelEvent(current) }
+    return {
+      set: { pendingEntityId: null, pendingEntityFrom: null },
+      event: cancelEvent(current, requireLiveReason(current, reason)),
+    }
   }
   const target = await lockActiveEntity(tx, access, targetId)
   if (!isLive(current)) {
@@ -464,11 +473,7 @@ async function changeEntity(
       },
     }
   }
-  if (!reason) {
-    throw reasonRequired(
-      `Give a reason. ${current.name} is live, so this shows in the owner's daily report.`,
-    )
-  }
+  const why = requireLiveReason(current, reason)
   const effectiveFrom = addDays(current.businessDate, 1)
   return {
     set: { pendingEntityId: target.id, pendingEntityFrom: effectiveFrom },
@@ -486,12 +491,22 @@ async function changeEntity(
         liveProperty: true,
         exception: 'setup_changed',
       },
-      reason,
+      reason: why,
     },
   }
 }
 
-function cancelEvent(current: Locked) {
+function requireLiveReason(current: Locked, reason: string | undefined): string {
+  if (!reason) {
+    throw reasonRequired(
+      `Give a reason. ${current.name} is live, so this shows in the owner's daily report.`,
+    )
+  }
+  return reason
+}
+
+// A scheduled change exists only on a live hotel, so cancelling one is as reportable as making it.
+function cancelEvent(current: Locked, reason: string) {
   return {
     action: 'property.entity_change_cancelled',
     entityType: 'property',
@@ -499,7 +514,8 @@ function cancelEvent(current: Locked) {
     propertyId: current.id,
     businessDate: current.businessDate,
     before: { pendingEntityId: current.pendingEntityId },
-    after: { pendingEntityId: null, liveProperty: isLive(current) },
+    after: { pendingEntityId: null, liveProperty: isLive(current), exception: 'setup_changed' },
+    reason,
   }
 }
 
@@ -507,19 +523,19 @@ function cancelEvent(current: Locked) {
 export async function cancelEntityChange(
   deps: HotelDeps,
   access: Access,
-  input: { id: string; version: number },
+  input: { id: string; version: number; reason: string },
 ): Promise<Property> {
   requirePermission(access, 'setup.manage', SETUP_ONLY)
   return deps.db.transaction(async (tx) => {
     const current = await lockProperty(tx, access, input.id)
     if (current.archivedAt) throw hotelIsArchived(current.name)
-    await requireVersion(tx, current, input.version)
+    await requireVersion(tx, access, current, input.version)
     if (current.pendingEntityId) {
       await tx
         .update(properties)
         .set({ pendingEntityId: null, pendingEntityFrom: null, version: current.version + 1 })
         .where(eq(properties.id, current.id))
-      await recordAudit(tx, access, cancelEvent(current))
+      await recordAudit(tx, access, cancelEvent(current, input.reason))
     }
     return (await readProperty({ db: tx, storage: deps.storage }, access, current.id)) as Property
   })

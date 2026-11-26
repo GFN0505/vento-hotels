@@ -11,8 +11,9 @@ export function useSetupRefresh() {
   const queryClient = useQueryClient()
   return () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: orpc.properties.key() }),
-      queryClient.invalidateQueries({ queryKey: orpc.entities.key() }),
+      // Lists not on screen refetch now too, so going back to one never shows the old copy.
+      queryClient.invalidateQueries({ queryKey: orpc.properties.key(), refetchType: 'all' }),
+      queryClient.invalidateQueries({ queryKey: orpc.entities.key(), refetchType: 'all' }),
       queryClient.invalidateQueries({ queryKey: orpc.organization.home.key() }),
     ])
 }

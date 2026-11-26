@@ -6,7 +6,7 @@ import type { Property } from '@vento/shared'
 import { type FormEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { api, orpc } from '@/lib/api'
-import { errorCode, problemMessage } from '@/lib/errors'
+import { errorCode, errorData, problemMessage } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
 import * as F from './hotel-form-model'
 import { useSetupRefresh } from './queries'
@@ -21,7 +21,22 @@ const FIELD_FOR_CODE: Record<string, keyof F.HotelForm> = {
   ENTITY_NOT_FOUND: 'entityId',
 }
 
-export function useHotelForm(latest: Property, reload: () => Promise<Property | undefined>) {
+// "Adaeze changed …" reads oddly to Adaeze: her own save from another window says so instead.
+export function staleMessage(error: unknown, hotelName: string, myName: string): string {
+  const data = errorData(error)
+  const by = typeof data.changedBy === 'string' ? data.changedBy : undefined
+  const at = typeof data.changedAt === 'string' ? data.changedAt : undefined
+  if (by && at && by === myName.split(' ')[0]) {
+    return `You changed ${hotelName} in another window at ${at}. Reload to see the change, then save again.`
+  }
+  return problemMessage(error)
+}
+
+export function useHotelForm(
+  latest: Property,
+  reload: () => Promise<Property | undefined>,
+  myName: string,
+) {
   const queryClient = useQueryClient()
   const refresh = useSetupRefresh()
   const [base, setBase] = useState(latest)
@@ -65,20 +80,25 @@ export function useHotelForm(latest: Property, reload: () => Promise<Property | 
     onError: (error) => {
       const code = errorCode(error) ?? ''
       setStale(code === 'STALE_VERSION')
-      setProblems({ [FIELD_FOR_CODE[code] ?? 'form']: problemMessage(error) })
+      setProblems({
+        [FIELD_FOR_CODE[code] ?? 'form']:
+          code === 'STALE_VERSION' ? staleMessage(error, base.name, myName) : problemMessage(error),
+      })
     },
   })
 
   const cancelChange = useMutation({
-    mutationFn: () => api.properties.cancelEntityChange({ id: base.id, version: base.version }),
+    mutationFn: (reason: string) =>
+      api.properties.cancelEntityChange({ id: base.id, version: base.version, reason }),
     onSuccess: async (saved) => {
       adopt(saved, true)
       toast.success(`${saved.name} stays with ${saved.entityName}`)
       await refresh()
     },
     onError: (error) => {
-      setStale(errorCode(error) === 'STALE_VERSION')
-      setProblems({ form: problemMessage(error) })
+      const stale = errorCode(error) === 'STALE_VERSION'
+      setStale(stale)
+      setProblems({ form: stale ? staleMessage(error, base.name, myName) : problemMessage(error) })
     },
   })
 
@@ -112,7 +132,8 @@ export function useHotelForm(latest: Property, reload: () => Promise<Property | 
       void refresh()
     },
     submit,
-    cancelChange: () => cancelChange.mutate(),
+    cancelChange: (reason: string, onDone: () => void) =>
+      cancelChange.mutate(reason, { onSuccess: onDone }),
     cancelling: cancelChange.isPending,
     reload: () => reloading.mutate(),
     reloadPending: reloading.isPending,

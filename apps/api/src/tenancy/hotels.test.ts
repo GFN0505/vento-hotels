@@ -241,6 +241,24 @@ describe.skipIf(!url)('hotels', () => {
       )
     })
 
+    it("refuses a GM's change of owning company, alone or with the times", async () => {
+      const current = await hotel(t, kora.owner, kora.vi.id)
+      const company = (
+        await t.rpc<{ id: string }>(kora.owner.cookie, 'entities/create', {
+          name: `Kora GM Test ${counter} Ltd`,
+        })
+      ).data
+      const base = { id: kora.vi.id, version: current.version, entityId: company.id }
+      expect((await update(kora.gm.cookie, base)).status).toBe(403)
+      const withTimes = await update(kora.gm.cookie, { ...base, checkInTime: '13:30' })
+      expect(withTimes.status).toBe(403)
+      expect(await hotel(t, kora.owner, kora.vi.id)).toMatchObject({
+        entityId: current.entityId,
+        checkInTime: current.checkInTime,
+        version: current.version,
+      })
+    })
+
     it('answers NOT_FOUND for a hotel outside the caller’s hotels or group', async () => {
       const abuja = await update(kora.gm.cookie, {
         id: kora.abuja.id,
@@ -339,14 +357,23 @@ describe.skipIf(!url)('hotels', () => {
         entityId: company.id,
         reason: 'Sale',
       })
+      const input = { id: added.data.id, version: 2 }
+      const noReason = await t.rpc<Problem>(
+        kora.owner.cookie,
+        'properties/cancelEntityChange',
+        input,
+      )
+      expect(noReason.status).toBe(400)
       const cancelled = await t.rpc<Property>(kora.owner.cookie, 'properties/cancelEntityChange', {
-        id: added.data.id,
-        version: 2,
+        ...input,
+        reason: 'Sale fell through',
       })
       expect(cancelled.data).toMatchObject({ pendingEntity: null, entityId: kora.company.id })
-      expect((await lastEvent(t, kora.owner, 'property', added.data.id))?.action).toBe(
-        'property.entity_change_cancelled',
-      )
+      expect(await lastEvent(t, kora.owner, 'property', added.data.id)).toMatchObject({
+        action: 'property.entity_change_cancelled',
+        reason: 'Sale fell through',
+        after: expect.objectContaining({ exception: 'setup_changed' }),
+      })
     })
 
     it("refuses another group's company", async () => {

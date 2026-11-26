@@ -3,6 +3,7 @@
 // opens that hotel's settings; archived ones offer Restore. On phones each row reads as a card.
 import type { Property } from '@vento/shared'
 import { ChevronRight } from 'lucide-react'
+import { TD, TH } from '@/components/settings/table-styles'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { cn } from '@/lib/cn'
 import { dateLabel, hotelStatus, hotelWhere, plural } from './format'
@@ -16,8 +17,8 @@ type Props = {
   onRestore: (hotel: Property) => void
 }
 
-const th = 'border-b border-border bg-surface-2 px-3 py-2 text-xs font-medium text-text-3'
-const td = 'px-3 py-3 align-middle max-md:p-0'
+const th = TH
+const td = TD
 
 export function HotelsTable({ hotels, dimmed, canRestore, onOpen, onRestore }: Props) {
   return (
@@ -41,8 +42,11 @@ export function HotelsTable({ hotels, dimmed, canRestore, onOpen, onRestore }: P
           <th scope="col" className={cn(th, 'w-32')}>
             Business date
           </th>
-          <th scope="col" className={cn(th, 'w-36 pr-5')}>
+          <th scope="col" className={cn(th, 'w-36')}>
             Status
+          </th>
+          <th scope="col" className={cn(th, 'w-12 pr-5')}>
+            <span className="sr-only">Open</span>
           </th>
         </tr>
       </thead>
@@ -68,11 +72,11 @@ export function HotelsTable({ hotels, dimmed, canRestore, onOpen, onRestore }: P
               key={hotel.id}
               onClick={archived ? undefined : () => onOpen(hotel)}
               className={cn(
-                !archived && 'cursor-pointer hover:bg-surface-2/60',
+                !archived && 'group/row cursor-pointer hover:bg-surface-2/60',
                 'max-md:flex max-md:flex-wrap max-md:items-center max-md:gap-x-4 max-md:gap-y-1.5 max-md:px-4 max-md:py-3 md:[&>td]:border-b md:[&>td]:border-border md:last:[&>td]:border-0',
               )}
             >
-              <td className={cn(td, 'pl-5 max-md:basis-full')}>
+              <td className={cn(td, 'pl-5 max-md:max-w-full max-md:basis-full')}>
                 {archived ? (
                   <span className="flex min-w-0 items-center gap-3">
                     <HotelMark hotel={hotel} size="sm" />
@@ -108,7 +112,7 @@ export function HotelsTable({ hotels, dimmed, canRestore, onOpen, onRestore }: P
                 <span className="md:sr-only">Business date </span>
                 {dateLabel(hotel.businessDate)}
               </td>
-              <td className={cn(td, 'pr-5')}>
+              <td className={td}>
                 <span className="flex items-center gap-2">
                   <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
                   {archived && canRestore ? (
@@ -125,6 +129,14 @@ export function HotelsTable({ hotels, dimmed, canRestore, onOpen, onRestore }: P
                     </button>
                   ) : null}
                 </span>
+              </td>
+              <td className={cn(td, 'pr-5 max-md:hidden')}>
+                {archived ? null : (
+                  <ChevronRight
+                    className="ml-auto size-4 text-text-3 transition-transform group-hover/row:translate-x-0.5 group-hover/row:text-pri-ink"
+                    aria-hidden="true"
+                  />
+                )}
               </td>
             </tr>
           )

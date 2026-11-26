@@ -1,9 +1,10 @@
 // Companies (the group's legal entities): add, edit, archive and restore, with uniqueness of name,
 // RC number and TIN, scoping for hotel-limited admins, and audit events.
-import type { Entity, Property } from '@vento/shared'
+import { addDays, type Entity, type Property } from '@vento/shared'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { LAGOS_ADDRESS } from '../test/addresses.ts'
 import { createTestApp } from '../test/harness.ts'
+import { applyScheduledVatChange } from './scheduled-entity.ts'
 import { type Kora, koraGroup, lastEvent, type Page, type Problem, setLive } from './testing.ts'
 
 const url = process.env.TEST_DATABASE_URL
@@ -150,6 +151,91 @@ describe.skipIf(!url)('companies', () => {
         liveProperties: [{ id: added.data.id, name: added.data.name }],
       }),
     })
+  })
+
+  it('schedules a live company’s VAT change for the next business date, applied by night audit', async () => {
+    const created = (await create(next())).data
+    const added = await t.rpc<Property>(kora.owner.cookie, 'properties/create', {
+      entityId: created.id,
+      name: `Kora VAT ${counter}`,
+      ...LAGOS_ADDRESS,
+    })
+    await setLive(t, added.data.id, added.data.businessDate)
+    const from = addDays(added.data.businessDate, 1)
+    const scheduled = await update({
+      id: created.id,
+      version: 1,
+      vatRegistered: true,
+      reason: 'NRS',
+    })
+    expect(scheduled.data).toMatchObject({
+      vatRegistered: false,
+      pendingVat: { vatRegistered: true, from },
+      version: 2,
+    })
+    const actor = {
+      organizationId: kora.orgId,
+      userId: kora.owner.userId,
+      memberId: kora.owner.memberId,
+      userName: 'Adaeze Okafor',
+    }
+    const apply = (newBusinessDate: string) =>
+      t.db.transaction((tx) =>
+        applyScheduledVatChange(tx, actor, { id: added.data.id, newBusinessDate }),
+      )
+    expect(await apply(added.data.businessDate)).toBe(false)
+    expect(await apply(from)).toBe(true)
+    const applied = (await t.rpc<Entity>(kora.owner.cookie, 'entities/get', { id: created.id }))
+      .data
+    expect(applied).toMatchObject({ vatRegistered: true, pendingVat: null, version: 3 })
+    expect(await lastEvent(t, kora.owner, 'entity', created.id)).toMatchObject({
+      action: 'entity.vat_changed',
+      after: expect.objectContaining({ exception: 'setup_changed' }),
+    })
+  })
+
+  it('cancels a scheduled VAT change when the current value is chosen again', async () => {
+    const created = (await create(next())).data
+    const added = await t.rpc<Property>(kora.owner.cookie, 'properties/create', {
+      entityId: created.id,
+      name: `Kora VAT Undo ${counter}`,
+      ...LAGOS_ADDRESS,
+    })
+    await setLive(t, added.data.id, added.data.businessDate)
+    await update({ id: created.id, version: 1, vatRegistered: true, reason: 'NRS' })
+    const back = await update({ id: created.id, version: 2, vatRegistered: false, reason: 'Error' })
+    expect(back.data).toMatchObject({ vatRegistered: false, pendingVat: null })
+  })
+
+  it("keeps a hotel-limited admin from a company whose closed hotel isn't theirs", async () => {
+    const own = (await create(next(), kora.hotelAdmin.cookie)).data
+    const elsewhere = await t.rpc<Property>(kora.owner.cookie, 'properties/create', {
+      entityId: own.id,
+      name: `Kora Closed Elsewhere ${counter}`,
+      ...LAGOS_ADDRESS,
+    })
+    await t.rpc(kora.owner.cookie, 'properties/archive', {
+      id: elsewhere.data.id,
+      reason: 'Closed',
+    })
+    const listed = await t.rpc<Entity>(kora.hotelAdmin.cookie, 'entities/get', { id: own.id })
+    expect(listed.data).toMatchObject({ hotels: [], otherHotels: 0, canEdit: false })
+    const archived = await t.rpc<Problem>(kora.hotelAdmin.cookie, 'entities/archive', {
+      id: own.id,
+      reason: 'Unused',
+    })
+    expect(archived.data.data).toMatchObject({ code: 'OUTSIDE_ACCESS' })
+  })
+
+  it('bumps the version when a company is archived or restored', async () => {
+    const spare = (await create(next())).data
+    const archived = await t.rpc<Entity>(kora.owner.cookie, 'entities/archive', {
+      id: spare.id,
+      reason: 'Dormant',
+    })
+    expect(archived.data.version).toBe(2)
+    const stale = await update({ id: spare.id, version: 1, name: 'Renamed Ltd' })
+    expect(stale.status).toBe(409)
   })
 
   it('lets a hotel-limited admin change a company only if they see all its hotels', async () => {

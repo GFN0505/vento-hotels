@@ -40,6 +40,8 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
         'focus:border-ring focus-visible:outline-none focus:ring-3 focus:ring-pri-line',
         'aria-invalid:border-ro-dot aria-invalid:ring-3 aria-invalid:ring-ro-bg',
         'disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-text-2',
+        // Read-only values stay focusable and readable (e.g. a GM's view of hotel details).
+        'read-only:bg-surface-2 read-only:text-text-2',
         className,
       )}
       {...props}

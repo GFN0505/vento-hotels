@@ -1,7 +1,9 @@
 // A hotel's logo: the first upload in the product (decision 0016). The browser sends the file
-// straight to object storage through a short-lived signed URL bound to its type and size; the API
-// then reads it back and checks what it really is before the hotel uses it. Every upload has its
-// own key and old files are kept, so documents already issued keep the logo they showed.
+// straight to object storage through a short-lived signed URL bound to its type and size, which
+// can't replace a file once written. The API then copies it to a key no signed URL ever pointed
+// at, and checks that copy (its real type, size and dimensions) before the hotel uses it, so
+// nothing sent later under the upload URL can change a checked logo. Every upload has its own
+// keys and old files are kept, so documents already issued keep the logo they showed.
 import {
   LOGO_MAX_BYTES,
   LOGO_MIN_PIXELS,
@@ -9,7 +11,7 @@ import {
   newId,
   type Property,
 } from '@vento/shared'
-import { and, asc, eq, lt } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, lt } from 'drizzle-orm'
 import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { fileUploads, properties } from '../db/schema/tenancy.ts'
@@ -22,6 +24,8 @@ import { lockProperty } from './properties.ts'
 import { type HotelDeps, readProperty, type Tx } from './property-views.ts'
 
 const UPLOAD_SECONDS = 5 * 60
+// An upload not confirmed within the hour is refused; the daily purge deletes it.
+const CONFIRM_WITHIN_MS = 60 * 60 * 1000
 const PURPOSE = 'property_logo'
 const WRONG_FILE = 'Use a PNG or JPEG up to 2 MB.'
 const NOT_UPLOADED = "The logo didn't upload. Try again."
@@ -52,7 +56,10 @@ export async function logoUploadUrl(
   const id = newId()
   const extension = input.contentType === 'image/png' ? 'png' : 'jpg'
   // The key names the group and hotel, so a file can never be confused with another group's.
-  const storageKey = `logos/${access.organizationId}/${property.id}/${id}.${extension}`
+  // `storageKey` is where the browser uploads; a confirmed logo moves to its checked key.
+  const storageKey = uploadKey(access.organizationId, property.id, id, extension)
+  // Not audited: issuing a link changes nothing anyone sees. Confirming the logo is the audited
+  // change (property.logo_changed), and unused links are purged.
   await deps.db.insert(fileUploads).values({
     id,
     organizationId: access.organizationId,
@@ -79,6 +86,15 @@ export async function logoUploadUrl(
 
 type Upload = typeof fileUploads.$inferSelect
 
+function uploadKey(organizationId: string, propertyId: string, id: string, extension: string) {
+  return `logos/${organizationId}/${propertyId}/uploads/${id}.${extension}`
+}
+
+// The checked copy: the upload key without its "uploads/" folder.
+export function checkedKey(storageKey: string): string {
+  return storageKey.replace('/uploads/', '/')
+}
+
 // This group's upload for this hotel, or NOT_FOUND: a key from elsewhere is never used.
 async function findUpload(db: Pick<Database, 'select'>, access: Access, input: SetLogoInput) {
   const [upload] = await db
@@ -96,20 +112,26 @@ async function findUpload(db: Pick<Database, 'select'>, access: Access, input: S
   return upload
 }
 
-type Checked = { contentType: string; width: number; height: number }
+type Checked = { contentType: string; width: number; height: number; storageKey: string }
 
-// Reads the stored file and checks its real type, size and dimensions. A file that fails is
-// deleted and its upload marked rejected; the hotel keeps its old logo.
+// Copies the upload to its checked key, then checks that copy: its real type, size and dimensions.
+// A file that fails is deleted (both keys) and its upload marked rejected; the hotel keeps its old
+// logo. The upload key is deleted either way.
 async function checkStoredFile(
   db: Database,
   storage: StorageProvider,
   upload: Upload,
 ): Promise<Checked> {
-  const stored = await storage.read(upload.storageKey, LOGO_MAX_BYTES)
+  const finalKey = checkedKey(upload.storageKey)
+  if ((await storage.copy(upload.storageKey, finalKey)) === 'missing') {
+    throw logoProblem('LOGO_NOT_UPLOADED', NOT_UPLOADED)
+  }
+  await storage.delete(upload.storageKey)
+  const stored = await storage.read(finalKey, LOGO_MAX_BYTES)
   if (stored.status === 'missing') throw logoProblem('LOGO_NOT_UPLOADED', NOT_UPLOADED)
   const image = stored.status === 'found' ? inspectImage(stored.bytes) : null
   const reject = async (code: 'LOGO_INVALID' | 'LOGO_TOO_SMALL', message: string) => {
-    await storage.delete(upload.storageKey)
+    await storage.delete(finalKey)
     await db.update(fileUploads).set({ status: 'rejected' }).where(eq(fileUploads.id, upload.id))
     return logoProblem(code, message)
   }
@@ -121,7 +143,12 @@ async function checkStoredFile(
       `This logo is ${side}. Use one at least ${LOGO_MIN_PIXELS} px on each side.`,
     )
   }
-  return { contentType: image.type, width: image.width, height: image.height }
+  return {
+    contentType: image.type,
+    width: image.width,
+    height: image.height,
+    storageKey: finalKey,
+  }
 }
 
 type SetLogoInput = { propertyId: string; uploadId: string }
@@ -136,7 +163,9 @@ export async function setLogo(
   const storage = requireStorage(deps)
   await activeHotel(deps.db, access, input.propertyId)
   const upload = await findUpload(deps.db, access, input)
-  if (upload.status === 'rejected' || upload.status === 'expired') {
+  const stale =
+    upload.status === 'pending' && Date.now() - upload.createdAt.getTime() > CONFIRM_WITHIN_MS
+  if (upload.status === 'rejected' || upload.status === 'expired' || stale) {
     throw logoProblem('LOGO_NOT_UPLOADED', NOT_UPLOADED)
   }
   // Checked before the transaction: reading storage mustn't hold the hotel's row lock.
@@ -217,7 +246,8 @@ async function read(tx: Tx, deps: HotelDeps, access: Access, id: string): Promis
   return property
 }
 
-// Daily job: uploads given a signed URL but never confirmed are deleted after a day.
+// Daily job: uploads given a signed URL but never confirmed, and rejected ones, are deleted from
+// storage after a day (both keys: a rejected file could have been sent again under its link).
 export async function purgeUnconfirmedUploads(
   db: Database,
   storage: StorageProvider,
@@ -225,17 +255,27 @@ export async function purgeUnconfirmedUploads(
 ): Promise<number> {
   const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000)
   const stale = await db
-    .select({ id: fileUploads.id, storageKey: fileUploads.storageKey })
+    .select({ id: fileUploads.id, storageKey: fileUploads.storageKey, status: fileUploads.status })
     .from(fileUploads)
-    .where(and(eq(fileUploads.status, 'pending'), lt(fileUploads.createdAt, cutoff)))
+    .where(
+      and(
+        inArray(fileUploads.status, ['pending', 'rejected']),
+        isNull(fileUploads.purgedAt),
+        lt(fileUploads.createdAt, cutoff),
+      ),
+    )
     .orderBy(asc(fileUploads.createdAt))
     .limit(500)
   for (const upload of stale) {
     await storage.delete(upload.storageKey)
+    await storage.delete(checkedKey(upload.storageKey))
     await db
       .update(fileUploads)
-      .set({ status: 'expired' })
-      .where(and(eq(fileUploads.id, upload.id), eq(fileUploads.status, 'pending')))
+      .set({
+        purgedAt: now,
+        ...(upload.status === 'pending' ? { status: 'expired' as const } : {}),
+      })
+      .where(and(eq(fileUploads.id, upload.id), eq(fileUploads.status, upload.status)))
   }
   if (stale.length > 0) logger.info({ count: stale.length }, 'Unconfirmed uploads deleted')
   return stale.length

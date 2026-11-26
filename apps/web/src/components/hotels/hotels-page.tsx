@@ -1,6 +1,7 @@
 // Settings › Hotels (spec: stage-1-hotels-and-companies.md). The top-bar hotel switch decides what
 // shows: with "All hotels", the list; with one hotel, that hotel's settings. Someone who sees one
-// hotel always gets its settings. "Add a hotel" is in the header either way (adding is group-level).
+// hotel always gets its settings. "Add a hotel" heads the list, and sits beside "All hotels" above a
+// hotel's settings, where Save is the page's main action.
 import { useQuery } from '@tanstack/react-query'
 import type { Property } from '@vento/shared'
 import { Building2, Plus } from 'lucide-react'
@@ -44,14 +45,9 @@ export function HotelsPage({ search, onSearch }: Props) {
   const canManage = me.can('setup.manage')
   if (!canManage && !me.can('property.operating_times')) return <NoAccess what="hotel settings" />
 
+  const add = () => onSearch({ sheet: 'add' }, { push: true })
   const addButton = canManage ? (
-    <Button
-      variant={list ? 'primary' : 'default'}
-      size="lg"
-      className="max-lg:h-11"
-      disabled={!online}
-      onClick={() => onSearch({ sheet: 'add' }, { push: true })}
-    >
+    <Button variant="primary" size="lg" className="max-lg:h-11" disabled={!online} onClick={add}>
       <Plus className="size-4" aria-hidden="true" />
       Add a hotel
     </Button>
@@ -79,7 +75,7 @@ export function HotelsPage({ search, onSearch }: Props) {
           />
         </div>
       ) : current ? (
-        <HotelSettings key={current.id} hotel={current} addButton={addButton} />
+        <HotelSettings key={current.id} hotel={current} onAdd={canManage ? add : undefined} />
       ) : hotels.isPending ? (
         <FormSkeleton />
       ) : (

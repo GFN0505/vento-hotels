@@ -104,7 +104,7 @@ describe('hotel settings', () => {
     expect(needsReason(before, { ...formFrom(before), entityId: ABUJA_LTD })).toBe(false)
   })
 
-  it('cancels a scheduled change when the current company is chosen again, with no reason', () => {
+  it('cancels a scheduled change when the current company is chosen again, with a reason', () => {
     const live = hotel({
       liveSince: '2026-11-15',
       status: 'live',
@@ -112,8 +112,11 @@ describe('hotel settings', () => {
     })
     const form = { ...formFrom(live), entityId: HOSPITALITY }
     expect(formFrom(live).entityId).toBe(ABUJA_LTD)
-    expect(needsReason(live, form)).toBe(false)
-    expect(changesFrom(live, form)).toEqual({ entityId: HOSPITALITY })
+    expect(needsReason(live, form)).toBe(true)
+    expect(changesFrom(live, { ...form, reason: 'Transfer called off' })).toEqual({
+      entityId: HOSPITALITY,
+      reason: 'Transfer called off',
+    })
   })
 })
 

@@ -2,6 +2,7 @@
 // stage-1-hotels-and-companies.md). Group-level, so no property scope of their own; a member
 // limited to some hotels may change a company only when every active hotel it owns is theirs.
 import {
+  addDays,
   DEFAULT_TIME_ZONE,
   type Entity,
   type Page,
@@ -37,6 +38,8 @@ const baseColumns = {
   rcNumber: entities.rcNumber,
   tin: entities.tin,
   vatRegistered: entities.vatRegistered,
+  pendingVatRegistered: entities.pendingVatRegistered,
+  pendingVatFrom: entities.pendingVatFrom,
   baseCurrency: entities.baseCurrency,
   archivedAt: entities.archivedAt,
   version: entities.version,
@@ -47,14 +50,25 @@ type EntityRow = {
   rcNumber: string | null
   tin: string | null
   vatRegistered: boolean
+  pendingVatRegistered: boolean | null
+  pendingVatFrom: string | null
   baseCurrency: string
   archivedAt: Date | null
   version: number
 }
 
-type OwnedHotel = { id: string; name: string; entityId: string; live: boolean }
+type OwnedHotel = {
+  id: string
+  name: string
+  entityId: string
+  live: boolean
+  archived: boolean
+  businessDate: string
+}
 
-// The active hotels each company owns, in one query.
+// Every hotel each company owns, archived ones included, in one query. Archived hotels don't show
+// in the list, but they still count for who may change the company: an admin limited to some
+// hotels can't edit or archive a company that owns a hotel (even a closed one) outside them.
 async function ownedHotels(db: Reader, access: Access, ids: readonly string[]) {
   if (ids.length === 0) return new Map<string, OwnedHotel[]>()
   const rows = await db
@@ -63,20 +77,28 @@ async function ownedHotels(db: Reader, access: Access, ids: readonly string[]) {
       name: properties.name,
       entityId: properties.entityId,
       liveSince: properties.liveSince,
+      archivedAt: properties.archivedAt,
+      businessDate: properties.businessDate,
     })
     .from(properties)
     .where(
       and(
         eq(properties.organizationId, access.organizationId),
         inArray(properties.entityId, [...ids]),
-        isNull(properties.archivedAt),
       ),
     )
     .orderBy(asc(properties.name))
   const byEntity = new Map<string, OwnedHotel[]>()
   for (const row of rows) {
     const list = byEntity.get(row.entityId) ?? []
-    list.push({ id: row.id, name: row.name, entityId: row.entityId, live: row.liveSince !== null })
+    list.push({
+      id: row.id,
+      name: row.name,
+      entityId: row.entityId,
+      live: row.liveSince !== null,
+      archived: row.archivedAt !== null,
+      businessDate: row.businessDate,
+    })
     byEntity.set(row.entityId, list)
   }
   return byEntity
@@ -85,21 +107,30 @@ async function ownedHotels(db: Reader, access: Access, ids: readonly string[]) {
 const sees = (access: Access, hotelId: string) =>
   access.allProperties || access.propertyIds.includes(hotelId)
 
+const activeHotels = (owned: readonly OwnedHotel[]) => owned.filter((hotel) => !hotel.archived)
+const liveHotels = (owned: readonly OwnedHotel[]) =>
+  activeHotels(owned).filter((hotel) => hotel.live)
+
 function toView(row: EntityRow, owned: readonly OwnedHotel[], access: Access): Entity {
-  const visible = owned.filter((hotel) => sees(access, hotel.id))
+  const active = activeHotels(owned)
+  const visible = active.filter((hotel) => sees(access, hotel.id))
   return {
     id: row.id,
     name: row.name,
     rcNumber: row.rcNumber,
     tin: row.tin,
     vatRegistered: row.vatRegistered,
+    pendingVat:
+      row.pendingVatRegistered !== null && row.pendingVatFrom
+        ? { vatRegistered: row.pendingVatRegistered, from: row.pendingVatFrom }
+        : null,
     baseCurrency: row.baseCurrency as Entity['baseCurrency'],
     status: row.archivedAt ? 'archived' : 'active',
     version: row.version,
     hotels: visible.map(({ id, name }) => ({ id, name })),
-    otherHotels: owned.length - visible.length,
-    canEdit: can(access, 'setup.manage') && visible.length === owned.length,
-    ownsLiveHotel: owned.some((hotel) => hotel.live),
+    otherHotels: active.length - visible.length,
+    canEdit: can(access, 'setup.manage') && owned.every((hotel) => sees(access, hotel.id)),
+    ownsLiveHotel: liveHotels(owned).length > 0,
   }
 }
 
@@ -263,8 +294,8 @@ export async function createEntity(
   }
 }
 
-// The company, locked FOR UPDATE, which the caller may change: every active hotel it owns is
-// within their access.
+// The company, locked FOR UPDATE, which the caller may change: every hotel it owns, archived ones
+// included, is within their access.
 async function lockEditable(tx: Tx, access: Access, id: string) {
   const [row] = await tx
     .select(baseColumns)
@@ -278,8 +309,9 @@ async function lockEditable(tx: Tx, access: Access, id: string) {
 }
 
 // Companies are group-level, so the time is Lagos time (every hotel is in Nigeria).
-async function staleCompany(tx: Tx, row: EntityRow) {
+async function staleCompany(tx: Tx, access: Access, row: EntityRow) {
   const by = await lastChangeBy(tx, {
+    organizationId: access.organizationId,
     entityType: 'entity',
     entityId: row.id,
     actions: ['entity.changed'],
@@ -306,17 +338,19 @@ export async function updateEntity(
     return await db.transaction(async (tx) => {
       const { row, view } = await lockEditable(tx, access, input.id)
       if (row.archivedAt) throw companyIsArchived(row.name)
-      if (row.version !== input.version) throw await staleCompany(tx, row)
+      if (row.version !== input.version) throw await staleCompany(tx, access, row)
       const before: Record<string, unknown> = {}
       const after: Record<string, unknown> = {}
-      for (const field of ['name', 'rcNumber', 'tin', 'vatRegistered'] as const) {
+      for (const field of ['name', 'rcNumber', 'tin'] as const) {
         const value = input[field]
         if (value !== undefined && value !== row[field]) {
           before[field] = row[field]
           after[field] = value
         }
       }
-      if (Object.keys(after).length === 0) return view
+      const owned = (await ownedHotels(tx, access, [row.id])).get(row.id) ?? []
+      const vat = vatChange(row, owned, input.vatRegistered)
+      if (Object.keys(after).length === 0 && !vat) return view
       await requireUnique(
         tx,
         access,
@@ -328,7 +362,7 @@ export async function updateEntity(
         row.id,
       )
       // TIN and VAT changes on a live hotel's company reach the owner's daily report.
-      const taxChange = 'tin' in after || 'vatRegistered' in after
+      const taxChange = 'tin' in after || vat !== undefined
       const exception = taxChange && view.ownsLiveHotel
       if (exception && !input.reason) {
         throw reasonRequired(
@@ -337,25 +371,22 @@ export async function updateEntity(
       }
       await tx
         .update(entities)
-        .set({ ...after, version: row.version + 1 })
+        .set({ ...after, ...vat?.set, version: row.version + 1 })
         .where(eq(entities.id, row.id))
-      const liveHotels = ((await ownedHotels(tx, access, [row.id])).get(row.id) ?? [])
-        .filter((hotel) => hotel.live)
-        .map(({ id, name }) => ({ id, name }))
       await recordAudit(tx, access, {
         action: 'entity.changed',
         entityType: 'entity',
         entityId: row.id,
-        before,
+        before: { ...before, ...vat?.before },
         after: {
           ...after,
+          ...vat?.after,
           liveProperty: view.ownsLiveHotel,
           ...(exception
             ? {
                 exception: 'setup_changed',
-                // Brick 16 lists the change in each of these hotels' reports. A VAT change applies
-                // from each hotel's next business date (bricks 3 and 13).
-                liveProperties: liveHotels,
+                // Brick 16 lists the change in each of these hotels' reports.
+                liveProperties: liveHotels(owned).map(({ id, name }) => ({ id, name })),
               }
             : {}),
         },
@@ -365,6 +396,46 @@ export async function updateEntity(
     })
   } catch (error) {
     return explainClash(db, access, error, input, input.id)
+  }
+}
+
+// VAT registration, like the owning company, changes at once while none of the company's hotels is
+// live. Once one is, the change waits for the next business date (night audit applies it,
+// brick 13), so tax lines on one business date never mix two rules; choosing the current value
+// again cancels a waiting change.
+function vatChange(row: EntityRow, owned: readonly OwnedHotel[], requested: boolean | undefined) {
+  const heading = row.pendingVatRegistered ?? row.vatRegistered
+  if (requested === undefined || requested === heading) return undefined
+  const live = liveHotels(owned)
+  if (live.length === 0) {
+    return {
+      set: { vatRegistered: requested, pendingVatRegistered: null, pendingVatFrom: null },
+      before: { vatRegistered: row.vatRegistered },
+      after: { vatRegistered: requested },
+    }
+  }
+  if (requested === row.vatRegistered) {
+    return {
+      set: { pendingVatRegistered: null, pendingVatFrom: null },
+      before: {
+        pendingVatRegistered: row.pendingVatRegistered,
+        pendingVatFrom: row.pendingVatFrom,
+      },
+      after: { pendingVatRegistered: null, pendingVatFrom: null },
+    }
+  }
+  // The day after the latest business date among its live hotels, so no hotel's current date
+  // is split (every Nigerian hotel is on Lagos time, so these are normally the same date).
+  const latest =
+    live
+      .map((hotel) => hotel.businessDate)
+      .sort()
+      .at(-1) ?? live[0]?.businessDate
+  const from = addDays(latest ?? '', 1)
+  return {
+    set: { pendingVatRegistered: requested, pendingVatFrom: from },
+    before: { vatRegistered: row.vatRegistered },
+    after: { pendingVatRegistered: requested, pendingVatFrom: from },
   }
 }
 
@@ -390,7 +461,10 @@ export async function archiveEntity(
         ),
       )
     if (owning && owning.value > 0) throw companyOwnsHotels(row.name, owning.value)
-    await tx.update(entities).set({ archivedAt: new Date() }).where(eq(entities.id, row.id))
+    await tx
+      .update(entities)
+      .set({ archivedAt: new Date(), version: row.version + 1 })
+      .where(eq(entities.id, row.id))
     await recordAudit(tx, access, {
       action: 'entity.archived',
       entityType: 'entity',
@@ -412,7 +486,10 @@ export async function restoreEntity(
   return db.transaction(async (tx) => {
     const { row, view } = await lockEditable(tx, access, input.id)
     if (!row.archivedAt) return view
-    await tx.update(entities).set({ archivedAt: null }).where(eq(entities.id, row.id))
+    await tx
+      .update(entities)
+      .set({ archivedAt: null, version: row.version + 1 })
+      .where(eq(entities.id, row.id))
     await recordAudit(tx, access, {
       action: 'entity.restored',
       entityType: 'entity',

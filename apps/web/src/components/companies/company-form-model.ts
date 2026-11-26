@@ -19,9 +19,14 @@ export function companyForm(company?: Entity): CompanyForm {
     name: company?.name ?? '',
     rcNumber: company?.rcNumber ?? '',
     tin: company?.tin ?? '',
-    vatRegistered: company?.vatRegistered ?? false,
+    // A waiting VAT change shows as the value it's heading for (choosing the other cancels it).
+    vatRegistered: company ? vatHeading(company) : false,
     reason: '',
   }
+}
+
+export function vatHeading(company: Pick<Entity, 'vatRegistered' | 'pendingVat'>): boolean {
+  return company.pendingVat?.vatRegistered ?? company.vatRegistered
 }
 
 export function nameProblem(value: string): string | undefined {
@@ -56,7 +61,7 @@ const stored = (value: string, normalize: (input: string) => string | null) =>
 export function companyNeedsReason(company: Entity | undefined, form: CompanyForm): boolean {
   if (!company?.ownsLiveHotel) return false
   return (
-    stored(form.tin, normalizeTin) !== company.tin || form.vatRegistered !== company.vatRegistered
+    stored(form.tin, normalizeTin) !== company.tin || form.vatRegistered !== vatHeading(company)
   )
 }
 
@@ -96,7 +101,7 @@ export function updateInput(company: Entity, form: CompanyForm) {
     ...(form.name.trim() !== company.name ? { name: form.name.trim() } : {}),
     ...(rc !== company.rcNumber ? { rcNumber: form.rcNumber.trim() || null } : {}),
     ...(tin !== company.tin ? { tin: form.tin.trim() || null } : {}),
-    ...(form.vatRegistered !== company.vatRegistered ? { vatRegistered: form.vatRegistered } : {}),
+    ...(form.vatRegistered !== vatHeading(company) ? { vatRegistered: form.vatRegistered } : {}),
     ...(companyNeedsReason(company, form) ? { reason: form.reason.trim() } : {}),
   }
 }

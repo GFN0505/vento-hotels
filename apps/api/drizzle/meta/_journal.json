@@ -78,6 +78,13 @@
       "when": 1795692910510,
       "tag": "0010_hotels_and_companies",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795696039547,
+      "tag": "0011_tenancy_keys_and_pending_vat",
+      "breakpoints": true
     }
   ]
 }

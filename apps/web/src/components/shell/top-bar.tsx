@@ -108,7 +108,7 @@ function PropertyPill() {
       <span className="text-[10px] font-bold tracking-[0.04em] text-text-3 uppercase">
         {allHotels ? 'Group' : 'Hotel'}
       </span>
-      <span className="min-w-0 truncate font-semibold" title={label}>
+      <span className="min-w-0 max-w-[24ch] truncate font-semibold" title={label}>
         {label}
       </span>
       {several ? (

@@ -2,9 +2,7 @@
 // company sheet and comes back with the new company chosen (spec: "Fields · Owning company").
 import type { Entity } from '@vento/shared'
 import type { ReactNode } from 'react'
-import { SelectField } from '@/components/ui/select-field'
-
-const ADD = '__add-company'
+import { Combobox } from '@/components/ui/combobox'
 
 export const COMPANY_HINT = 'Invoices, VAT and the ledger use this company'
 
@@ -14,6 +12,7 @@ type Props = {
   // A company that isn't in the active list (archived meanwhile, or the hotel's own when loading).
   fallback?: { id: string; name: string } | undefined
   disabled?: boolean
+  readOnly?: boolean
   error?: string | undefined
   hint?: ReactNode
   onChange: (entityId: string) => void
@@ -25,6 +24,7 @@ export function CompanySelect({
   companies,
   fallback,
   disabled,
+  readOnly,
   error,
   hint = COMPANY_HINT,
   onChange,
@@ -35,19 +35,18 @@ export function CompanySelect({
     options.unshift({ value: fallback.id, label: fallback.name })
   }
   return (
-    <SelectField
+    <Combobox
       label="Owning company"
       name="entityId"
       value={value}
-      {...(value ? {} : { placeholder: 'Choose a company' })}
-      options={[...options, { value: ADD, label: 'Add a company…' }]}
+      placeholder="Choose a company"
+      options={options}
+      action={{ label: 'Add a company…', onSelect: onAddCompany }}
       disabled={disabled}
+      readOnly={readOnly}
       hint={hint}
       error={error}
-      onChange={(event) =>
-        event.target.value === ADD ? onAddCompany() : onChange(event.target.value)
-      }
-      className="lg:h-9 lg:text-base"
+      onChange={onChange}
     />
   )
 }

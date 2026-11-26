@@ -46,9 +46,12 @@ export function LogoField({ hotel, canChange, online, onChange }: Props) {
         ) : null}
       </div>
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="font-medium">Hotel logo · PNG or JPEG, up to 2 MB</span>
+        <span className="font-medium">Hotel logo</span>
         <span className="text-sm text-text-2">
           Used on invoices, receipts, the booking engine and the guest app. Not on Vento screens.
+        </span>
+        <span className="text-sm text-text-3">
+          PNG or JPEG, up to 2 MB, at least 200 px each side
         </span>
         {canChange ? (
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -70,7 +73,7 @@ export function LogoField({ hotel, canChange, online, onChange }: Props) {
               loading={logo.uploading}
               onClick={() => input.current?.click()}
             >
-              Upload
+              {hotel.logo ? 'Replace' : 'Upload'}
             </Button>
             {hotel.logo ? (
               <Button

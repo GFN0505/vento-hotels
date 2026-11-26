@@ -1,8 +1,7 @@
 // Add a hotel (spec: user flow B): name, owning company, address and times; the time zone under
-// More options. The new hotel appears in the hotel switch at once and the top bar moves to it,
+// below the times, with Change. The new hotel appears in the hotel switch at once and the top bar moves to it,
 // where its settings show the next steps.
 import { useMutation } from '@tanstack/react-query'
-import { ChevronDown } from 'lucide-react'
 import { type FormEvent, useId, useState } from 'react'
 import { toast } from 'sonner'
 import { CompanySheet } from '@/components/companies/company-sheet'
@@ -18,10 +17,17 @@ import { focusFirstProblem } from '@/lib/forms'
 import { useOnline } from '@/offline/connection'
 import { AddressFields } from './address-fields'
 import { CompanySelect, defaultCompany } from './company-select'
+import { timeZoneLabel } from './format'
 import * as F from './hotel-form-model'
 import { rememberAdded } from './next-steps-store'
 import { useActiveCompanies, useSetupRefresh } from './queries'
 import { TimeFields, TimeZoneField } from './time-fields'
+
+// "Africa/Lagos (WAT)"
+function zoneShort(timeZone: string): string {
+  const [zone, name] = timeZoneLabel(timeZone).split(' · ')
+  return name ? `${zone} (${name})` : timeZone
+}
 
 const FIELD_FOR_CODE: Record<string, keyof F.HotelForm> = {
   NAME_TAKEN: 'name',
@@ -141,28 +147,29 @@ export function AddHotelSheet({ onClose }: { onClose: () => void }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <TimeFields form={form} problems={problems} onChange={set} />
         </div>
-        <div className="flex flex-col gap-4">
-          <button
-            type="button"
-            aria-expanded={more}
-            onClick={() => setMore((open) => !open)}
-            className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-medium text-text-2 hover:text-text lg:min-h-0"
-          >
-            More options
-            <ChevronDown
-              className={`size-4 transition-transform ${more ? 'rotate-180' : ''}`}
-              aria-hidden="true"
-            />
-          </button>
-          {more ? (
-            <TimeZoneField
-              value={form.timeZone}
-              live={false}
-              error={problems.timeZone}
-              onChange={(timeZone) => set({ timeZone })}
-            />
-          ) : null}
-        </div>
+        {more ? (
+          <TimeZoneField
+            value={form.timeZone}
+            live={false}
+            error={problems.timeZone}
+            onChange={(timeZone) => set({ timeZone })}
+          />
+        ) : (
+          <p className="flex flex-wrap items-center gap-x-2 text-text-2">
+            <span>
+              Time zone: <span className="text-text">{zoneShort(form.timeZone)}</span>
+            </span>
+            <span aria-hidden="true">·</span>
+            <button
+              type="button"
+              onClick={() => setMore(true)}
+              aria-label="Change time zone"
+              className="inline-flex min-h-11 items-center font-medium text-pri-ink hover:underline lg:min-h-0"
+            >
+              Change
+            </button>
+          </p>
+        )}
       </form>
       {addingCompany ? (
         <CompanySheet

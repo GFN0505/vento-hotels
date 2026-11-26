@@ -10,7 +10,13 @@ import { isUniqueViolation, violatedConstraint } from '../db/errors.ts'
 import { auditEvents } from '../db/schema/governance.ts'
 import { rooms, roomTypes } from '../db/schema/rooms.ts'
 import type { Access } from '../tenancy/access.ts'
-import { loadProperty, type Reader, type RoomsProperty, requireRoomsSetup } from './context.ts'
+import {
+  holdProperty,
+  loadProperty,
+  type Reader,
+  type RoomsProperty,
+  requireRoomsSetup,
+} from './context.ts'
 import { duplicateNumbers, numbersTaken } from './errors.ts'
 import { lockActiveTypes } from './locks.ts'
 import { roomCountChanged } from './room-count.ts'
@@ -183,6 +189,7 @@ export async function createManyRooms(
   const property = await loadProperty(db, access, input.propertyId)
   try {
     return await db.transaction(async (tx) => {
+      await holdProperty(tx, access, property.id)
       // Before creating anything, so a resent batch never trips over its own new types.
       const taken = await takenNumbers(tx, property.id, numbers)
       if (taken.length > 0) {

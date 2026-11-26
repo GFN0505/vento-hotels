@@ -38,6 +38,9 @@ export const entitySchema = z.object({
   rcNumber: z.string().nullable(),
   tin: z.string().nullable(),
   vatRegistered: z.boolean(),
+  // A VAT registration change on a company with a live hotel waits for the next business date
+  // ("VAT registered from 26 Nov 2026"); sending the current value again cancels it.
+  pendingVat: z.object({ vatRegistered: z.boolean(), from: calendarDateSchema }).nullable(),
   baseCurrency: currencySchema,
   status: recordStatusSchema,
   // Sent back with every change, so a save never overwrites someone else's.
@@ -292,8 +295,9 @@ export const tenancyContract = {
     get: oc.input(z.object({ id: idSchema })).output(propertySchema),
     create: oc.input(createPropertySchema).output(propertySchema),
     update: oc.input(updatePropertySchema).output(propertySchema),
+    // A scheduled change exists only on a live hotel, so cancelling it needs a reason too.
     cancelEntityChange: oc
-      .input(z.object({ id: idSchema, version: z.number().int().min(1) }))
+      .input(z.object({ id: idSchema, version: z.number().int().min(1), reason: reasonSchema }))
       .output(propertySchema),
     archivePreview: oc.input(z.object({ id: idSchema })).output(archivePreviewSchema),
     archive: oc.input(recordReasonSchema).output(propertySchema),

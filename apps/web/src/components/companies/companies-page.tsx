@@ -55,6 +55,7 @@ export function CompaniesPage({ search, onSearch }: Props) {
     }),
     enabled: me.can('setup.manage'),
     placeholderData: keepPreviousData,
+    refetchOnMount: 'always',
   })
 
   if (me.isPending) return <RowsSkeleton rows={3} label="Loading companies" />
@@ -96,7 +97,7 @@ export function CompaniesPage({ search, onSearch }: Props) {
       />
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3 sm:px-5">
-          <h2 className="font-semibold">Legal entities</h2>
+          <h2 className="font-semibold">Companies</h2>
           {scoped ? null : (
             <StatusChips show={search.show} onShow={(show: Show) => onSearch({ show })} />
           )}

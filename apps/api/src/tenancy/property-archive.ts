@@ -4,7 +4,7 @@
 import { ORPCError } from '@orpc/server'
 import { type ArchivePreview, calendarDateIn, newId, type Property } from '@vento/shared'
 import { and, asc, count, eq, inArray, isNull, ne, type SQL, sql } from 'drizzle-orm'
-import { recordAudit } from '../audit/record.ts'
+import { recordAudit, recordAuditMany } from '../audit/record.ts'
 import { invitations, members, organizations, sessions } from '../db/schema/auth.ts'
 import { rooms } from '../db/schema/rooms.ts'
 import {
@@ -130,7 +130,7 @@ export async function archiveProperty(
       .where(and(eq(rooms.propertyId, property.id), isNull(rooms.archivedAt)))
     await tx
       .update(properties)
-      .set({ archivedAt: new Date() })
+      .set({ archivedAt: new Date(), version: property.version + 1 })
       .where(eq(properties.id, property.id))
     const revoked = await revokeDevices(tx, property, input.reason)
     const cancelled = await cancelInvitations(tx, access, property.id)
@@ -153,29 +153,30 @@ export async function archiveProperty(
       },
       reason: input.reason,
     })
-    const sideEffect = { propertyId: property.id, businessDate: property.businessDate }
-    for (const device of revoked) {
-      await recordAudit(tx, access, {
+    // One statement for every side effect, each linked to the archive event.
+    const sideEffect = {
+      propertyId: property.id,
+      businessDate: property.businessDate,
+      reason: `Hotel archived: ${input.reason}`,
+    }
+    await recordAuditMany(tx, access, [
+      ...revoked.map((device) => ({
         ...sideEffect,
         action: 'device.revoked',
         entityType: 'device',
         entityId: device.id,
         before: { name: device.name },
         after: { revoked: true, causedBy: eventId },
-        reason: `Hotel archived: ${input.reason}`,
-      })
-    }
-    for (const invite of cancelled) {
-      await recordAudit(tx, access, {
+      })),
+      ...cancelled.map((invite) => ({
         ...sideEffect,
         action: 'invitation.cancelled',
         entityType: 'invitation',
         entityId: invite.id,
         before: { email: invite.email, role: invite.role },
         after: { status: 'canceled', causedBy: eventId },
-        reason: `Hotel archived: ${input.reason}`,
-      })
-    }
+      })),
+    ])
     return read(tx, deps, access, property.id)
   })
 }
@@ -253,6 +254,7 @@ export async function restoreProperty(
         // A scheduled company change doesn't survive closing the hotel.
         pendingEntityId: null,
         pendingEntityFrom: null,
+        version: property.version + 1,
       })
       .where(eq(properties.id, property.id))
     await recordAudit(tx, access, {

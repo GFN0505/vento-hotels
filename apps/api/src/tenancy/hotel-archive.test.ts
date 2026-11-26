@@ -193,6 +193,43 @@ describe.skipIf(!url)('archiving and restoring hotels', () => {
     expect(await audit()).toBe(before)
   })
 
+  it('lets only one of two archives of the last two hotels succeed', async () => {
+    const boss = await t.signUp('Race Owner')
+    await t.createOrganization(boss.cookie, `Race Group ${counter}`)
+    const company = (
+      await t.rpc<{ id: string }>(boss.cookie, 'entities/create', { name: 'Race Ltd' })
+    ).data
+    const hotels = []
+    for (const name of ['Race One', 'Race Two']) {
+      const added = await t.rpc<Property>(boss.cookie, 'properties/create', {
+        entityId: company.id,
+        name,
+        ...LAGOS_ADDRESS,
+      })
+      hotels.push(added.data)
+    }
+    const results = await Promise.all(
+      hotels.map((h) => archive(h.id, 'Closing both at once', boss.cookie)),
+    )
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409])
+    const left = await t.rpc<Page<Property>>(boss.cookie, 'properties/list', {})
+    expect(left.data.total).toBe(1)
+  })
+
+  it('never leaves a live device at an archived hotel when registering races archiving', async () => {
+    for (let round = 0; round < 3; round++) {
+      const ph = await add()
+      const [registered] = await Promise.all([register(ph.id), archive(ph.id)])
+      const devices = await t.rpc<Page<DeviceView>>(kora.owner.cookie, 'devices/list', {
+        pageSize: 100,
+      })
+      const live = devices.data.items.filter((d) => d.propertyId === ph.id && !d.revokedAt)
+      expect(live).toEqual([])
+      // Either the device came first and was revoked with the hotel, or it was refused.
+      expect([200, 400, 404]).toContain(registered.status)
+    }
+  })
+
   it('restores a hotel that never went live on today’s date, with its access back', async () => {
     const ph = await add()
     await archive(ph.id)
@@ -200,7 +237,7 @@ describe.skipIf(!url)('archiving and restoring hotels', () => {
       id: ph.id,
       reason: 'Reopening',
     })
-    expect(restored.data).toMatchObject({ status: 'setting_up', archivedAt: null })
+    expect(restored.data).toMatchObject({ status: 'setting_up', archivedAt: null, version: 3 })
     expect(restored.data.businessDate).toBe(ph.businessDate)
   })
 

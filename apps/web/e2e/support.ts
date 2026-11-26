@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { crc32, deflateSync } from 'node:zlib'
 import AxeBuilder from '@axe-core/playwright'
-import { expect, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { OUTBOX } from '../playwright.config'
 
 export const PASSWORD = 'Correct-horse-42!'
@@ -176,4 +176,12 @@ export function seedDemoGroup(tag: string, password: string): string {
     stdio: 'pipe',
   })
   return domain
+}
+
+// Picks an option in a Combobox (components/ui/combobox.tsx) by typing part of it, as people do.
+export async function choose(scope: Page | Locator, label: string, option: string) {
+  const box = scope.getByRole('combobox', { name: label, exact: true })
+  await box.fill(option)
+  await scope.getByRole('option', { name: option, exact: true }).click()
+  await expect(box).toHaveValue(option)
 }

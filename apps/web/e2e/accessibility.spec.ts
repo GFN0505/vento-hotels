@@ -3,6 +3,7 @@
 import { test } from '@playwright/test'
 import {
   buildRooms,
+  choose,
   expectAccessible,
   linkFromEmail,
   signUpOwner,
@@ -117,7 +118,7 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
       await page.getByRole('button', { name: 'Add a hotel' }).click()
       const add = page.getByRole('dialog', { name: 'Add a hotel' })
-      await add.getByRole('button', { name: 'More options' }).click()
+      await add.getByRole('button', { name: 'Change time zone' }).click()
       await add.getByRole('button', { name: 'Add hotel' }).click()
       await add.getByText('Enter the street').waitFor()
       // Measured at rest, not under the pointer that just pressed Add hotel.
@@ -126,8 +127,12 @@ for (const theme of ['light', 'dark'] as const) {
       await add.getByLabel('Hotel name').fill('Kora Lekki')
       await add.getByLabel('Street').fill('Plot 7 Admiralty Way')
       await add.getByLabel('Area').fill('Lekki Phase 1')
-      await add.getByLabel('State').selectOption('Lagos')
-      await add.getByLabel('LGA').selectOption('Eti-Osa')
+      // The list open, as people see it while choosing.
+      await add.getByRole('combobox', { name: 'State', exact: true }).fill('La')
+      await add.getByRole('option', { name: 'Lagos', exact: true }).waitFor()
+      await expectAccessible(page)
+      await add.getByRole('option', { name: 'Lagos', exact: true }).click()
+      await choose(add, 'LGA', 'Eti-Osa')
       await add.getByRole('button', { name: 'Add hotel' }).click()
       await page.getByRole('heading', { name: 'Next steps for Kora Lekki' }).waitFor()
       await expectAccessible(page)

@@ -9,7 +9,7 @@ import type { Database } from '../db/client.ts'
 import { rooms } from '../db/schema/rooms.ts'
 import type { Access } from '../tenancy/access.ts'
 import { dropConnections } from './connections.ts'
-import { auditAt, loadProperty, type RoomsProperty, requireRoomsSetup } from './context.ts'
+import { auditAt, holdProperty, type RoomsProperty, requireRoomsSetup } from './context.ts'
 import { isLive, requireReasonIfLive } from './live.ts'
 import { type LockedRoom, lockActiveTypes, lockRooms, typeNames } from './locks.ts'
 import { roomCountChanged } from './room-count.ts'
@@ -46,7 +46,7 @@ export async function changeRoomType(
 ): Promise<{ count: number }> {
   requireRoomsSetup(access)
   return db.transaction(async (tx) => {
-    const property = await loadProperty(tx, access, input.propertyId)
+    const property = await holdProperty(tx, access, input.propertyId)
     requireReasonIfLive(property, input.reason)
     const locked = await lockRooms(tx, access, input.ids, property.id)
     const names = await lockActiveTypes(tx, access, property.id, [input.roomTypeId])
@@ -94,7 +94,7 @@ export async function archiveRooms(
 ): Promise<{ count: number }> {
   requireRoomsSetup(access)
   return db.transaction(async (tx) => {
-    const property = await loadProperty(tx, access, input.propertyId)
+    const property = await holdProperty(tx, access, input.propertyId)
     requireReasonIfLive(property, input.reason)
     const locked = await lockRooms(tx, access, input.ids, property.id)
     const leaving = locked.filter((room) => !room.archivedAt)
@@ -131,7 +131,7 @@ export async function restoreRooms(
 ): Promise<{ count: number }> {
   requireRoomsSetup(access)
   return db.transaction(async (tx) => {
-    const property = await loadProperty(tx, access, input.propertyId)
+    const property = await holdProperty(tx, access, input.propertyId)
     requireReasonIfLive(property, input.reason)
     const locked = await lockRooms(tx, access, input.ids, property.id)
     const returning = locked.filter((room) => room.archivedAt)

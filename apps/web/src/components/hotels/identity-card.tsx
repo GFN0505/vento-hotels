@@ -8,7 +8,7 @@ import { CompanySheet } from '@/components/companies/company-sheet'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
-import { REASON_HINT, reasonProblem } from '@/components/ui/reason-dialog'
+import { REASON_HINT, ReasonDialog, reasonProblem } from '@/components/ui/reason-dialog'
 import { COMPANY_HINT, CompanySelect } from './company-select'
 import { dateLabel } from './format'
 import { needsReason } from './hotel-form-model'
@@ -44,7 +44,7 @@ export function IdentityCard({ state, canManage, online }: Props) {
             name="name"
             value={form.name}
             maxLength={120}
-            disabled={locked}
+            readOnly={locked}
             error={problems.name}
             onChange={(event) => set({ name: event.target.value })}
             className="max-lg:h-11"
@@ -55,7 +55,7 @@ export function IdentityCard({ state, canManage, online }: Props) {
                 value={form.entityId}
                 companies={active}
                 fallback={{ id: hotel.entityId, name: hotel.entityName }}
-                disabled={locked}
+                readOnly={locked}
                 error={problems.entityId}
                 hint={COMPANY_HINT}
                 onChange={(entityId) => set({ entityId, reason: '' })}
@@ -65,7 +65,7 @@ export function IdentityCard({ state, canManage, online }: Props) {
               <Field
                 label="Owning company"
                 value={hotel.entityName}
-                disabled
+                readOnly
                 hint={COMPANY_HINT}
                 className="max-lg:h-11"
               />
@@ -85,7 +85,11 @@ export function IdentityCard({ state, canManage, online }: Props) {
             name="reason"
             value={form.reason}
             maxLength={500}
-            hint={`Applies from ${dateLabel(addDays(hotel.businessDate, 1))}, the next business date. ${REASON_HINT}`}
+            hint={
+              form.entityId === hotel.entityId
+                ? `${hotel.name} stays with ${hotel.entityName}. ${REASON_HINT}`
+                : `Applies from ${dateLabel(addDays(hotel.businessDate, 1))}, the next business date. ${REASON_HINT}`
+            }
             error={problems.reason}
             validate={reasonProblem}
             onChange={(event) => set({ reason: event.target.value })}
@@ -122,9 +126,10 @@ function CompanyNote({
 }: Props & { canEdit: boolean; onEdit: () => void }) {
   const hotel = state.base
   const pending = hotel.pendingEntity
+  const [asking, setAsking] = useState(false)
   if (pending) {
     return (
-      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm bg-bl-bg px-3 py-2 text-sm text-bl">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm bg-bl-bg px-3 py-2 text-sm text-bl">
         <span className="grow">
           {pending.name} from {dateLabel(pending.from)}
         </span>
@@ -133,13 +138,28 @@ function CompanyNote({
             size="sm"
             className="max-lg:h-11"
             disabled={!online}
-            loading={state.cancelling}
-            onClick={state.cancelChange}
+            onClick={() => setAsking(true)}
           >
             Cancel change
           </Button>
         ) : null}
-      </p>
+        {asking
+          ? createPortal(
+              <ReasonDialog
+                open
+                title={`Keep ${hotel.name} with ${hotel.entityName}?`}
+                description={`The move to ${pending.name} from ${dateLabel(pending.from)} is cancelled.`}
+                label="Reason for cancelling the change"
+                confirmLabel="Cancel change"
+                pending={state.cancelling}
+                error={state.problems.form}
+                onConfirm={(reason) => state.cancelChange(reason, () => setAsking(false))}
+                onClose={() => setAsking(false)}
+              />,
+              document.body,
+            )
+          : null}
+      </div>
     )
   }
   if (!hotel.entityDetailsMissing && !canManage) return null

@@ -3,9 +3,10 @@
 // only `property.operating_times` (GMs) change the check-in and check-out times; the rest is
 // read-only for them. Offline, everything is read-only.
 import { useQuery } from '@tanstack/react-query'
+import { useRouteContext } from '@tanstack/react-router'
 import type { Property } from '@vento/shared'
-import { ChevronLeft, MapPin } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ChevronLeft, Info, MapPin, Plus } from 'lucide-react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { NEEDS_CONNECTION, SettingsOffline } from '@/components/settings/offline-note'
 import { useProperty } from '@/components/shell/property-context'
 import { Button } from '@/components/ui/button'
@@ -13,6 +14,7 @@ import { Card } from '@/components/ui/card'
 import { PageHeader } from '@/components/ui/page-header'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { orpc } from '@/lib/api'
+import { cn } from '@/lib/cn'
 import { useMe } from '@/lib/me'
 import { usePageTitle } from '@/lib/title'
 import { useOnline } from '@/offline/connection'
@@ -28,10 +30,17 @@ import { useHotelForm } from './use-hotel-form'
 
 const FORM_ID = 'hotel-settings'
 
-export function HotelSettings({ hotel, addButton }: { hotel: Property; addButton: ReactNode }) {
+export function HotelSettings({
+  hotel,
+  onAdd,
+}: {
+  hotel: Property
+  onAdd?: (() => void) | undefined
+}) {
   usePageTitle(`${hotel.name} · Hotel settings`)
   const me = useMe()
   const online = useOnline()
+  const { user } = useRouteContext({ from: '/_app' })
   const { canSeeAll, selectAll } = useProperty()
   // The switch's copy shows at once (and offline); the fresh one brings the latest version.
   const fresh = useQuery({
@@ -39,11 +48,16 @@ export function HotelSettings({ hotel, addButton }: { hotel: Property; addButton
     placeholderData: hotel,
   })
   const latest = fresh.data ?? hotel
-  const state = useHotelForm(latest, async () => (await fresh.refetch()).data)
+  const state = useHotelForm(latest, async () => (await fresh.refetch()).data, user.name)
   const { base, form, problems } = state
   const canManage = me.can('setup.manage')
   const canTimes = canManage || me.can('property.operating_times')
   const status = hotelStatus(base)
+  const banner = useRef<HTMLDivElement>(null)
+  // A problem with the whole save is announced and focused, so nobody misses it below the fold.
+  useEffect(() => {
+    if (problems.form) banner.current?.focus()
+  }, [problems.form])
   const save = (
     <Button
       type="submit"
@@ -51,7 +65,8 @@ export function HotelSettings({ hotel, addButton }: { hotel: Property; addButton
       variant="primary"
       size="lg"
       className="max-lg:h-11"
-      disabled={!online || !state.dirty}
+      // After someone else's save, Reload first: this form started from their earlier version.
+      disabled={!online || !state.dirty || state.stale}
       loading={state.saving}
     >
       Save changes
@@ -59,30 +74,48 @@ export function HotelSettings({ hotel, addButton }: { hotel: Property; addButton
   )
 
   return (
-    <div className="flex flex-col gap-5 pb-16 md:pb-0">
+    <div className="flex flex-col gap-5">
       <SettingsOffline />
-      {canSeeAll ? (
-        <button
-          type="button"
-          onClick={selectAll}
-          className="-mb-2 inline-flex min-h-11 w-fit items-center gap-1 text-sm font-medium text-text-2 hover:text-pri-ink lg:min-h-0"
-        >
-          <ChevronLeft className="size-4" aria-hidden="true" />
-          All hotels
-        </button>
+      {canSeeAll || onAdd ? (
+        <div className="-mb-2 flex flex-wrap items-center justify-between gap-2">
+          {canSeeAll ? (
+            <button
+              type="button"
+              onClick={selectAll}
+              className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-text-2 hover:text-pri-ink lg:min-h-0"
+            >
+              <ChevronLeft className="size-4" aria-hidden="true" />
+              All hotels
+            </button>
+          ) : (
+            <span />
+          )}
+          {onAdd ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="max-lg:h-11"
+              disabled={!online}
+              onClick={onAdd}
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              Add a hotel
+            </Button>
+          ) : null}
+        </div>
       ) : null}
       <PageHeader
         title={<span className="break-words">{base.name}</span>}
         badge={<StatusBadge tone={status.tone}>{status.label}</StatusBadge>}
         description={`Hotel settings · Owned by ${base.entityName}`}
-        actions={
-          <span className="flex flex-wrap items-center gap-2">
-            {!online ? <span className="text-sm text-text-3">{NEEDS_CONNECTION}</span> : null}
-            {addButton}
-            {canTimes ? <span className="max-md:hidden">{save}</span> : null}
-          </span>
-        }
       />
+      {canManage ? null : (
+        <p className="-mt-2 flex items-start gap-2 text-text-2">
+          <Info className="mt-0.5 size-4 flex-none text-text-3" aria-hidden="true" />
+          You can change check-in and check-out times. Ask the owner or a group admin to change
+          anything else.
+        </p>
+      )}
       <NextSteps hotel={base} />
       {addressMissing(base) ? (
         <p className="flex items-start gap-2.5 rounded-lg border border-am-dot/30 bg-am-bg px-4 py-3 text-am">
@@ -92,8 +125,10 @@ export function HotelSettings({ hotel, addButton }: { hotel: Property; addButton
       ) : null}
       {problems.form ? (
         <div
+          ref={banner}
+          tabIndex={-1}
           role="alert"
-          className="flex flex-wrap items-center gap-3 rounded-lg bg-ro-bg px-4 py-3 text-ro"
+          className="flex flex-wrap items-center gap-3 rounded-lg bg-ro-bg px-4 py-3 text-ro outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <p className="grow">{problems.form}</p>
           {state.stale ? (
@@ -110,7 +145,7 @@ export function HotelSettings({ hotel, addButton }: { hotel: Property; addButton
           <AddressFields
             form={form}
             problems={problems}
-            disabled={!canManage || !online}
+            readOnly={!canManage || !online}
             onChange={state.set}
           />
         </Section>
@@ -119,14 +154,14 @@ export function HotelSettings({ hotel, addButton }: { hotel: Property; addButton
             <TimeZoneField
               value={form.timeZone}
               live={base.liveSince !== null}
-              disabled={!canManage || !online}
+              readOnly={!canManage || !online}
               error={problems.timeZone}
               onChange={(timeZone) => state.set({ timeZone })}
             />
             <TimeFields
               form={form}
               problems={problems}
-              disabled={!canTimes || !online}
+              readOnly={!canTimes || !online}
               onChange={state.set}
             />
           </div>
@@ -134,13 +169,29 @@ export function HotelSettings({ hotel, addButton }: { hotel: Property; addButton
         </Section>
       </form>
 
-      {canManage ? <ArchiveHotel hotel={base} online={online} /> : null}
-
       {canTimes ? (
-        <div className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-3 border-t border-border bg-surface px-4 py-3 md:hidden [&_button]:w-full">
+        // The page's one Save. Phones: always at the foot of the screen. Wider screens: once
+        // something's changed, so it's in reach however far down the change was made.
+        <div
+          className={cn(
+            'sticky bottom-0 z-20 -mx-4 flex items-center gap-3 border-t border-border bg-surface px-4 py-3 sm:-mx-6 sm:px-6 max-md:[&_button[type=submit]]:grow',
+            'md:mx-0 md:rounded-lg md:border md:px-4 md:shadow-[var(--shadow-lg)]',
+            !state.dirty && online && 'md:hidden',
+          )}
+        >
+          <p className={cn('grow text-text-2', online && 'max-md:hidden')}>
+            {online ? `Unsaved changes to ${base.name}` : NEEDS_CONNECTION}
+          </p>
+          {state.dirty ? (
+            <Button className="max-md:hidden" onClick={state.discard}>
+              Discard
+            </Button>
+          ) : null}
           {save}
         </div>
       ) : null}
+
+      {canManage ? <ArchiveHotel hotel={base} online={online} /> : null}
       <LeaveConfirm dirty={state.dirty} name={base.name} onDiscard={state.discard} />
     </div>
   )

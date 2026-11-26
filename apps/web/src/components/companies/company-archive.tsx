@@ -35,23 +35,26 @@ export function ArchiveCompany({ company, onDone }: { company: Entity; onDone: (
     },
   })
   return (
-    <>
-      <span className="flex basis-full flex-col gap-1 sm:basis-auto">
-        <Button
-          variant="danger"
-          className="w-fit"
-          disabled={!online || Boolean(blocked)}
-          aria-describedby={blocked ? noteId : undefined}
-          onClick={() => setAsking(true)}
-        >
-          Archive company
-        </Button>
-        {blocked ? (
-          <span id={noteId} className="max-w-xs text-sm text-text-3">
-            {blocked}
-          </span>
-        ) : null}
-      </span>
+    <section
+      aria-labelledby={`${noteId}-title`}
+      className="mt-6 flex flex-col items-start gap-2 rounded-lg border border-ro-dot/40 p-4"
+    >
+      <h3 id={`${noteId}-title`} className="font-semibold text-ro">
+        Archive company
+      </h3>
+      <p id={noteId} className="text-sm text-text-2">
+        {blocked ??
+          'It leaves the owning-company picker. Its history is kept, and you can restore it.'}
+      </p>
+      <Button
+        variant="danger"
+        className="max-lg:h-11"
+        disabled={!online || Boolean(blocked)}
+        aria-describedby={noteId}
+        onClick={() => setAsking(true)}
+      >
+        Archive company
+      </Button>
       <ReasonDialog
         open={asking}
         title={`Archive ${company.name}?`}
@@ -67,7 +70,7 @@ export function ArchiveCompany({ company, onDone }: { company: Entity; onDone: (
           setAsking(false)
         }}
       />
-    </>
+    </section>
   )
 }
 

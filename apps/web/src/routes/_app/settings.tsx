@@ -1,6 +1,7 @@
 // Settings (design #25): a section list beside the page on desktop, tabs on phones. Only sections
 // that are built are listed; the rest arrive with their bricks.
-import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
+import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/cn'
 import { useMe } from '@/lib/me'
 
@@ -27,6 +28,15 @@ const SECTIONS = [
 function SettingsLayout() {
   const me = useMe()
   const sections = SECTIONS.filter((section) => section.needs.some((p) => me.can(p)))
+  const list = useRef<HTMLUListElement>(null)
+  const { pathname } = useLocation()
+  // On phones the sections scroll sideways: keep the open one in view.
+  useEffect(() => {
+    if (!pathname.startsWith('/settings')) return
+    list.current
+      ?.querySelector<HTMLElement>('[data-status="active"]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [pathname])
 
   return (
     <div className="flex flex-col gap-5 lg:flex-row lg:gap-10">
@@ -34,7 +44,11 @@ function SettingsLayout() {
         <p className="mb-2 hidden px-2.5 text-xs font-semibold tracking-[0.05em] text-text-3 uppercase lg:block">
           Settings
         </p>
-        <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 lg:mx-0 lg:flex-col lg:px-0">
+        {/* Phones: no scrollbar, and the right edge fades to say there's more. */}
+        <ul
+          ref={list}
+          className="-mx-4 flex gap-1 overflow-x-auto pr-10 pl-4 [scrollbar-width:none] max-lg:[mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] lg:mx-0 lg:flex-col lg:px-0 [&::-webkit-scrollbar]:hidden"
+        >
           {sections.map((section) => (
             <li key={section.to} className="flex-none">
               <Link

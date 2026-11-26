@@ -1,12 +1,12 @@
 // Hotel logos: a signed upload URL, then the API checks the stored file before the hotel uses it.
 // Storage is in memory here; providers/storage.test.ts covers the real S3 API against RustFS.
 import type { LogoUpload, Property } from '@vento/shared'
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { fileUploads } from '../db/schema/tenancy.ts'
 import { solidPng } from '../storage/png.ts'
 import { createTestApp } from '../test/harness.ts'
-import { purgeUnconfirmedUploads } from './logo.ts'
+import { checkedKey, purgeUnconfirmedUploads } from './logo.ts'
 import { type Kora, koraGroup, lastEvent, type Problem } from './testing.ts'
 
 const url = process.env.TEST_DATABASE_URL
@@ -38,9 +38,15 @@ describe.skipIf(!url)('hotel logos', () => {
   it('gives a 5-minute upload link with a new key under the group and hotel each time', async () => {
     const first = await upload(null)
     const second = await upload(null)
-    expect(first.key).toMatch(new RegExp(`^logos/${kora.orgId}/${kora.abuja.id}/[0-9a-f-]+\\.png$`))
+    expect(first.key).toMatch(
+      new RegExp(`^logos/${kora.orgId}/${kora.abuja.id}/uploads/[0-9a-f-]+\\.png$`),
+    )
     expect(second.key).not.toBe(first.key)
-    expect(first).toMatchObject({ method: 'PUT', headers: { 'content-type': 'image/png' } })
+    // If-None-Match: * is part of the signed request, so the link can't replace a file.
+    expect(first).toMatchObject({
+      method: 'PUT',
+      headers: { 'content-type': 'image/png', 'if-none-match': '*' },
+    })
     const minutes = (Date.parse(first.expiresAt) - Date.now()) / 60_000
     expect(minutes).toBeGreaterThan(4)
     expect(minutes).toBeLessThanOrEqual(5)
@@ -67,8 +73,9 @@ describe.skipIf(!url)('hotel logos', () => {
     expect(saved.status).toBe(200)
     expect(saved.data.logo).toEqual({
       uploadId: sent.uploadId,
-      url: expect.stringContaining(sent.key),
+      url: expect.stringContaining(checkedKey(sent.key)),
     })
+    expect(t.storage.files.has(sent.key)).toBe(false)
     expect(await lastEvent(t, kora.owner, 'property', kora.abuja.id)).toMatchObject({
       action: 'property.logo_changed',
       after: expect.objectContaining({ width: 400, height: 300, contentType: 'image/png' }),
@@ -85,6 +92,7 @@ describe.skipIf(!url)('hotel logos', () => {
       'This logo is 120 px wide. Use one at least 200 px on each side.',
     )
     expect(t.storage.files.has(small.key)).toBe(false)
+    expect(t.storage.files.has(checkedKey(small.key))).toBe(false)
     const property = await t.rpc<Property>(kora.owner.cookie, 'properties/get', {
       id: kora.abuja.id,
     })
@@ -105,6 +113,28 @@ describe.skipIf(!url)('hotel logos', () => {
     expect(row?.status).toBe('rejected')
   })
 
+  it('never lets a second upload under the same link change a checked logo', async () => {
+    const sent = await upload(solidPng(400, 400, [1, 1, 1]))
+    await setLogo(sent.uploadId)
+    const checked = t.storage.files.get(checkedKey(sent.key))
+    // Whatever arrives later under the upload link stays at the upload key, which nothing reads.
+    await t.storage.put(sent.key, new TextEncoder().encode('<svg onload="alert(1)"></svg>'))
+    const again = await setLogo(sent.uploadId)
+    expect(again.status).toBe(200)
+    expect(t.storage.files.get(checkedKey(sent.key))).toBe(checked)
+    expect(again.data.logo?.url).toContain(checkedKey(sent.key))
+  })
+
+  it('refuses an upload confirmed more than an hour after its link was given', async () => {
+    const late = await upload(solidPng(300, 300, [5, 5, 5]))
+    await t.db
+      .update(fileUploads)
+      .set({ createdAt: new Date(Date.now() - 61 * 60 * 1000) })
+      .where(eq(fileUploads.id, late.uploadId))
+    const refused = await setLogo(late.uploadId)
+    expect(refused.data.data).toMatchObject({ code: 'LOGO_NOT_UPLOADED' })
+  })
+
   it('says the logo didn’t upload when the file never arrived', async () => {
     const missing = await upload(null)
     const refused = await setLogo(missing.uploadId)
@@ -121,7 +151,7 @@ describe.skipIf(!url)('hotel logos', () => {
       propertyId: kora.abuja.id,
     })
     expect(removed.data.logo).toBeNull()
-    expect(t.storage.files.has(sent.key)).toBe(true)
+    expect(t.storage.files.has(checkedKey(sent.key))).toBe(true)
     expect((await lastEvent(t, kora.owner, 'property', kora.abuja.id))?.action).toBe(
       'property.logo_removed',
     )
@@ -152,15 +182,22 @@ describe.skipIf(!url)('hotel logos', () => {
     expect(asked.status).toBe(403)
   })
 
-  it('deletes uploads never confirmed within a day', async () => {
+  it('deletes uploads never confirmed, and rejected ones sent again, after a day', async () => {
     const stale = await upload(solidPng(300, 300, [9, 9, 9]))
+    const rejected = await upload(solidPng(100, 100, [9, 9, 9]))
+    await setLogo(rejected.uploadId)
+    // Sent again under its link after the rejection.
+    await t.storage.put(rejected.key, solidPng(100, 100, [9, 9, 9]))
     const tomorrow = new Date(Date.now() + 25 * 60 * 60 * 1000)
     expect(await purgeUnconfirmedUploads(t.db, t.storage, tomorrow)).toBeGreaterThan(0)
     expect(t.storage.files.has(stale.key)).toBe(false)
-    const [row] = await t.db
-      .select({ status: fileUploads.status })
+    expect(t.storage.files.has(rejected.key)).toBe(false)
+    const rows = await t.db
+      .select({ id: fileUploads.id, status: fileUploads.status, purgedAt: fileUploads.purgedAt })
       .from(fileUploads)
-      .where(eq(fileUploads.id, stale.uploadId))
-    expect(row?.status).toBe('expired')
+      .where(inArray(fileUploads.id, [stale.uploadId, rejected.uploadId]))
+    const byId = new Map(rows.map((row) => [row.id, row]))
+    expect(byId.get(stale.uploadId)).toMatchObject({ status: 'expired', purgedAt: tomorrow })
+    expect(byId.get(rejected.uploadId)).toMatchObject({ status: 'rejected', purgedAt: tomorrow })
   })
 })

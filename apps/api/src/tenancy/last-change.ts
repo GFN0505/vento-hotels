@@ -6,13 +6,21 @@ import type { Reader } from './property-views.ts'
 
 export async function lastChangeBy(
   db: Reader,
-  record: { entityType: string; entityId: string; actions: readonly string[]; timeZone: string },
+  record: {
+    organizationId: string
+    entityType: string
+    entityId: string
+    actions: readonly string[]
+    timeZone: string
+  },
 ): Promise<{ name: string; at: string } | null> {
   const [event] = await db
     .select({ actorName: auditEvents.actorName, createdAt: auditEvents.createdAt })
     .from(auditEvents)
     .where(
+      // Leads with the organization, matching the (organization_id, entity_type, entity_id) index.
       and(
+        eq(auditEvents.organizationId, record.organizationId),
         eq(auditEvents.entityType, record.entityType),
         eq(auditEvents.entityId, record.entityId),
         inArray(auditEvents.action, [...record.actions]),

@@ -82,12 +82,16 @@ export function NextSteps({ hotel }: { hotel: Property }) {
   return (
     <section
       aria-labelledby="next-steps-heading"
-      className="relative overflow-hidden rounded-lg border border-pri-line bg-surface shadow-card"
+      className="@container relative overflow-hidden rounded-lg border border-pri-line bg-surface shadow-card"
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-linear-to-r from-pri to-logo-dot" />
       <header className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
-        <div className="flex flex-col gap-0.5">
-          <h2 id="next-steps-heading" className="text-base font-semibold">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2
+            id="next-steps-heading"
+            className="truncate text-base font-semibold"
+            title={`Next steps for ${hotel.name}`}
+          >
             Next steps for {hotel.name}
           </h2>
           <p className="text-sm text-text-2">Get it ready for its first guests.</p>
@@ -101,9 +105,9 @@ export function NextSteps({ hotel }: { hotel: Property }) {
           <X className="size-4" aria-hidden="true" />
         </button>
       </header>
-      <ol className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
+      <ol className="grid gap-px border-t border-border bg-border @2xl:grid-cols-3">
         {steps.map((step, index) => (
-          <li key={step.key} className="flex items-center gap-3 bg-surface px-5 py-3.5">
+          <li key={step.key} className="flex min-w-0 items-center gap-3 bg-surface px-5 py-3.5">
             <span
               aria-hidden="true"
               className={cn(
@@ -122,7 +126,7 @@ export function NextSteps({ hotel }: { hotel: Property }) {
               step.link(
                 cn(
                   linkClass,
-                  'grow justify-center sm:justify-start',
+                  'min-w-0 grow justify-center @2xl:justify-start',
                   step.key === next
                     ? 'bg-pri text-white hover:bg-pri-hover'
                     : 'border border-border-strong bg-surface hover:bg-surface-2',
