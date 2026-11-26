@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, calendarDateIn, nightsBetween, stayDatesSchema } from './dates.ts'
+import { addDays, calendarDateIn, instantAt, nightsBetween, stayDatesSchema } from './dates.ts'
 
 describe('nightsBetween', () => {
   it('counts nights for the walkthrough stays', () => {
@@ -46,5 +46,21 @@ describe('calendarDateIn', () => {
     const at = new Date('2026-11-24T23:30:00Z')
     expect(calendarDateIn('Africa/Lagos', at)).toBe('2026-11-25')
     expect(calendarDateIn('UTC', at)).toBe('2026-11-24')
+  })
+})
+
+describe('instantAt', () => {
+  it('finds check-in time in Lagos (UTC+1, no daylight saving)', () => {
+    expect(instantAt('2026-12-09', '14:00', 'Africa/Lagos').toISOString()).toBe(
+      '2026-12-09T13:00:00.000Z',
+    )
+  })
+  it('handles zones behind UTC and summer time', () => {
+    expect(instantAt('2026-07-01', '09:30', 'Europe/London').toISOString()).toBe(
+      '2026-07-01T08:30:00.000Z',
+    )
+    expect(instantAt('2026-01-15', '00:00', 'America/New_York').toISOString()).toBe(
+      '2026-01-15T05:00:00.000Z',
+    )
   })
 })
