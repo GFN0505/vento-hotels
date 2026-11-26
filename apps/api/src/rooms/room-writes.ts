@@ -102,7 +102,6 @@ export async function createRoom(
         .returning({ id: rooms.id })
       if (!row) throw new Error('room insert returned nothing')
       const links = await setConnections(tx, access, property, row.id, input.connectingRoomIds)
-      await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [input.roomTypeId] })
       await recordAudit(
         tx,
         access,
@@ -178,8 +177,10 @@ export async function updateRoom(
       }
       if (set.roomTypeId) {
         await roomCountChanged(tx, {
+          organizationId: access.organizationId,
           propertyId: property.id,
-          roomTypeIds: [room.roomTypeId, set.roomTypeId],
+          businessDate: property.businessDate,
+          removedFrom: [room.roomTypeId],
         })
       }
       if (input.connectingRoomIds) {
@@ -242,7 +243,6 @@ export async function deleteRoom(
       if (await hasHistory(tx, room.id)) throw hasHistoryError(room.number)
       const property = await holdProperty(tx, access, room.propertyId)
       await tx.delete(rooms).where(eq(rooms.id, room.id))
-      await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [room.roomTypeId] })
       await recordAudit(tx, access, {
         action: 'room.deleted',
         entityType: 'room',

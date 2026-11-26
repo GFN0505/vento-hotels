@@ -66,7 +66,7 @@ export async function archivePreview(
 ): Promise<ArchivePreview> {
   requirePermission(access, 'setup.manage', SETUP_ONLY)
   const [property] = await deps.db
-    .select({ id: properties.id })
+    .select({ id: properties.id, businessDate: properties.businessDate })
     .from(properties)
     .where(and(eq(properties.id, id), propertyScope(access), isNull(properties.archivedAt)))
   if (!property) throw hotelNotFound()

@@ -4,6 +4,7 @@ import { devicesContract } from './devices.ts'
 import { financeContract } from './finance.ts'
 import { governanceContract } from './governance.ts'
 import { ratesContract } from './rates.ts'
+import { reservationsContract } from './reservations.ts'
 import { roomsContract } from './rooms.ts'
 import { systemContract } from './system.ts'
 import { teamContract } from './team.ts'
@@ -19,6 +20,7 @@ export const contract = {
   ...roomsContract,
   ...financeContract,
   ...ratesContract,
+  ...reservationsContract,
 }
 export type Contract = typeof contract
 

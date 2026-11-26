@@ -1,21 +1,41 @@
 // What stops a hotel being archived. Each later brick adds its check here, inside the archive
 // transaction (spec: stage-1-hotels-and-companies.md, "Archive a hotel"):
-// - brick 4: in-house guests, and future reservations that aren't cancelled;
+// - brick 4: upcoming reservations that aren't cancelled (in-house guests come with check-in, brick 8);
 // - bricks 9–10: folios with a balance, open cashier shifts;
 // - Stage 3: open POS checks.
-// Nothing is booked, posted or open yet, so for now nothing blocks.
+import { and, count, eq, gt, inArray } from 'drizzle-orm'
+import { reservations } from '../db/schema/reservations.ts'
 import type { Reader } from './property-views.ts'
 
 export type ArchiveBlocker = {
   code: string
   count: number
-  // One line for the dialog, e.g. "12 guests in house".
+  // One line for the dialog, e.g. "12 upcoming reservations".
   label: string
 }
 
 export async function archiveBlockers(
-  _db: Reader,
-  _property: { id: string },
+  db: Reader,
+  property: { id: string; businessDate: string },
 ): Promise<ArchiveBlocker[]> {
-  return []
+  const blockers: ArchiveBlocker[] = []
+  const [upcoming] = await db
+    .select({ value: count() })
+    .from(reservations)
+    .where(
+      and(
+        eq(reservations.propertyId, property.id),
+        inArray(reservations.status, ['tentative', 'confirmed', 'checked_in']),
+        gt(reservations.departure, property.businessDate),
+      ),
+    )
+  const value = upcoming?.value ?? 0
+  if (value > 0) {
+    blockers.push({
+      code: 'UPCOMING_RESERVATIONS',
+      count: value,
+      label: value === 1 ? '1 upcoming reservation' : `${value} upcoming reservations`,
+    })
+  }
+  return blockers
 }

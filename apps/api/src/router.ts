@@ -22,6 +22,12 @@ import * as firstRate from './rates/first-rate.ts'
 import * as planReads from './rates/plan-reads.ts'
 import * as planWrites from './rates/plan-writes.ts'
 import * as rateDates from './rates/rate-dates.ts'
+import { availability } from './reservations/availability.ts'
+import { createReservation } from './reservations/book.ts'
+import { getReservation } from './reservations/detail.ts'
+import { searchGuests } from './reservations/guests.ts'
+import { listReservations } from './reservations/list.ts'
+import { quoteReservation } from './reservations/quote.ts'
 import * as inspected from './rooms/inspected.ts'
 import * as roomBatch from './rooms/room-batch.ts'
 import * as roomBulk from './rooms/room-bulk.ts'
@@ -355,6 +361,28 @@ export const router = base.router({
     ),
     undoDates: inOrganization.rates.undoDates.handler(({ context, input }) =>
       rateDates.undoRateDates(context.db, context.access, input),
+    ),
+  },
+  reservations: {
+    availability: inOrganization.reservations.availability.handler(({ context, input }) =>
+      availability(context.db, context.access, input),
+    ),
+    quote: inOrganization.reservations.quote.handler(({ context, input }) =>
+      quoteReservation(context.db, context.access, input),
+    ),
+    create: inOrganization.reservations.create.handler(({ context, input }) =>
+      createReservation(context.db, context.access, input),
+    ),
+    list: inOrganization.reservations.list.handler(({ context, input }) =>
+      listReservations(context.db, context.access, input),
+    ),
+    get: inOrganization.reservations.get.handler(({ context, input }) =>
+      getReservation(context.db, context.access, input.id),
+    ),
+  },
+  guests: {
+    search: inOrganization.guests.search.handler(({ context, input }) =>
+      searchGuests(context.db, context.access, input),
     ),
   },
   taxes: {

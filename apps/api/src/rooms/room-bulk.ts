@@ -63,8 +63,10 @@ export async function changeRoomType(
         ),
       )
     await roomCountChanged(tx, {
+      organizationId: access.organizationId,
       propertyId: property.id,
-      roomTypeIds: [...typesOf(moving), input.roomTypeId],
+      businessDate: property.businessDate,
+      removedFrom: typesOf(moving).filter((id) => id !== input.roomTypeId),
     })
     const to = { roomTypeId: input.roomTypeId, roomTypeName: names.get(input.roomTypeId) }
     await recordAuditMany(
@@ -102,7 +104,12 @@ export async function archiveRooms(
     const ids = leaving.map((room) => room.id)
     await tx.update(rooms).set({ archivedAt: new Date() }).where(inArray(rooms.id, ids))
     await dropConnections(tx, access, property, ids)
-    await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: typesOf(leaving) })
+    await roomCountChanged(tx, {
+      organizationId: access.organizationId,
+      propertyId: property.id,
+      businessDate: property.businessDate,
+      removedFrom: typesOf(leaving),
+    })
     const names = await typeNames(tx, property.id, typesOf(leaving))
     await recordAuditMany(
       tx,
@@ -146,7 +153,6 @@ export async function restoreRooms(
           returning.map((room) => room.id),
         ),
       )
-    await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: typesOf(returning) })
     await recordAuditMany(
       tx,
       access,

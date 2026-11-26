@@ -349,7 +349,12 @@ export async function archiveRoomType(
     await tx.update(roomTypes).set({ archivedAt: new Date() }).where(eq(roomTypes.id, type.id))
     // Records tonight's prices for the type, so a restore later today is compared with them.
     const rates = await tonightAfter(tx, access, property, tonight, undefined)
-    await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [type.id] })
+    await roomCountChanged(tx, {
+      organizationId: access.organizationId,
+      propertyId: property.id,
+      businessDate: property.businessDate,
+      removedFrom: [type.id],
+    })
     await recordAudit(tx, access, {
       action: 'room_type.archived',
       entityType: 'room_type',
@@ -388,7 +393,6 @@ export async function restoreRoomType(
         .update(roomTypes)
         .set({ archivedAt: null, sortOrder: nextSortOrder(property.id) })
         .where(eq(roomTypes.id, type.id))
-      await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [type.id] })
       await roomTypeRestored(tx, access, property, { id: type.id, name: type.name })
       // Back on its plans: cheaper tonight than before it was archived needs a reason.
       const rates = await tonightAfter(tx, access, property, tonight, input.reason)

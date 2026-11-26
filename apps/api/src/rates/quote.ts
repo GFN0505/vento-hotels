@@ -17,14 +17,21 @@ import {
   quoteNights,
   type RestrictionBreak,
 } from '@vento/shared'
-import { sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import type { Access } from '../tenancy/access.ts'
-import { loadRatesProperty, type Reader, requireRatesRead } from './context.ts'
+import {
+  loadRatesProperty,
+  lockHotelRatesShared,
+  type RatesProperty,
+  type Reader,
+  requireRatesRead,
+} from './context.ts'
 
 // Brick 4 passes its booking transaction; reads plus the shared rates lock.
 export type QuoteReader = Reader & Pick<Database, 'execute'>
 
+import { and, eq, isNull } from 'drizzle-orm'
+import { ratePlans } from '../db/schema/rates.ts'
 import {
   notOnPlan,
   pastDate,
@@ -38,7 +45,7 @@ import {
 import { loadRoomTypes, type PropertyRoomType } from './guards.ts'
 import { termsOf } from './plan-model.ts'
 import { findPlan } from './plan-reads.ts'
-import { loadPricing, type Pricing, sourceFor } from './pricing-data.ts'
+import { loadPricing, type PlanCore, type Pricing, sourceFor } from './pricing-data.ts'
 
 export type StayRequest = {
   propertyId: string
@@ -51,6 +58,10 @@ export type StayRequest = {
 
 export type StayQuote = {
   ratePlanId: string
+  // Names for messages and the stay's terms snapshot (not part of the hash: renaming isn't a price).
+  planName: string
+  planCode: string
+  roomTypeName: string
   // The plan's version the quote was made at; brick 4 stores it on the stay.
   ratePlanVersion: number
   // A hash of everything priced (nights, total, terms, breaks). The plan's version doesn't move when
@@ -77,19 +88,35 @@ export type StayQuote = {
 
 export const MAX_STAY_NIGHTS = 365
 
-function requireStay(
-  request: StayRequest,
-  type: PropertyRoomType,
+// Rates exist from the business date to 2 years ahead; nothing is quoted outside them.
+export function requireStayDates(
+  request: Pick<StayRequest, 'arrival' | 'departure'>,
   property: { businessDate: string },
 ): void {
   if (request.departure <= request.arrival) {
     throw new ORPCError('BAD_REQUEST', { message: 'Departure must be after arrival' })
   }
-  // Rates exist from the business date to 2 years ahead; nothing is quoted outside them.
   if (request.arrival < property.businessDate) throw pastDate(request.arrival)
   const last = lastRateDate(property.businessDate)
   if (addDays(request.departure, -1) > last) throw tooFarAhead(last)
   if (nightsBetween(request.arrival, request.departure) > MAX_STAY_NIGHTS) throw stayTooLong()
+}
+
+export const fitsParty = (
+  type: PropertyRoomType,
+  party: Pick<StayRequest, 'adults' | 'children'>,
+) =>
+  party.adults >= 1 &&
+  party.adults <= type.maxAdults &&
+  party.children >= 0 &&
+  party.children <= type.maxChildren
+
+function requireStay(
+  request: StayRequest,
+  type: PropertyRoomType,
+  property: { businessDate: string },
+): void {
+  requireStayDates(request, property)
   if (
     request.adults < 1 ||
     request.adults > type.maxAdults ||
@@ -105,9 +132,7 @@ async function loadStayPricing(db: QuoteReader, access: Access, request: StayReq
   const property = await loadRatesProperty(db, access, request.propertyId)
   // Shared with other quotes, exclusive with rates writes at this hotel: inside a booking
   // transaction the prices read here can't change until it commits.
-  await db.execute(
-    sql`select pg_advisory_xact_lock_shared(hashtextextended(${`rates:${property.id}`}, 0))`,
-  )
+  await lockHotelRatesShared(db, property.id)
   const scope = { organizationId: access.organizationId, propertyId: property.id }
   const types = await loadRoomTypes(db, scope)
   const type = types.find((t) => t.id === request.roomTypeId)
@@ -125,7 +150,10 @@ function quoteOne(
   planId: string,
   type: PropertyRoomType,
   request: StayRequest,
-): Omit<StayQuote, 'terms' | 'ratePlanVersion' | 'quoteHash'> | null {
+): Omit<
+  StayQuote,
+  'terms' | 'ratePlanVersion' | 'quoteHash' | 'planName' | 'planCode' | 'roomTypeName'
+> | null {
   const plan = pricing.byId.get(planId)
   if (!plan) return null
   const source = sourceFor(plan, type.id, pricing)
@@ -179,6 +207,9 @@ export async function quoteStay(
   }
   return {
     ...priced,
+    planName: plan.name,
+    planCode: plan.code,
+    roomTypeName: type.name,
     ratePlanVersion: plan.version,
     quoteHash: createHash('sha256').update(JSON.stringify(priced)).digest('hex'),
   }
@@ -216,4 +247,69 @@ export async function listBookablePlans(
     })
   }
   return plans
+}
+
+export type BookableOption = {
+  plan: PlanCore
+  // A derived plan's parent code, for "BAR + ₦18,000".
+  parentCode: string | null
+  terms: ReturnType<typeof termsOf>
+  nights: QuoteLine[]
+  total: string
+  breaks: RestrictionBreak[]
+}
+
+export type BookableType = {
+  type: PropertyRoomType
+  fits: boolean
+  plans: BookableOption[]
+}
+
+// Every active room type of a hotel with the plans that sell it for a stay, in sort order, from one
+// load of the hotel's prices (Room & rate). Types that can't take the party are listed with
+// `fits: false`; corporate-only plans join with corporate accounts (brick 12).
+export async function bookableByType(
+  db: QuoteReader,
+  access: Access,
+  request: Omit<StayRequest, 'roomTypeId'>,
+): Promise<{ property: RatesProperty; types: BookableType[]; anyPlans: boolean }> {
+  requireRatesRead(access)
+  const property = await loadRatesProperty(db, access, request.propertyId)
+  requireStayDates(request, property)
+  const scope = { organizationId: access.organizationId, propertyId: property.id }
+  const [types, pricing, rows] = await Promise.all([
+    loadRoomTypes(db, scope),
+    loadPricing(db, scope, { from: request.arrival, to: addDays(request.departure, -1) }),
+    db
+      .select()
+      .from(ratePlans)
+      .where(
+        and(
+          eq(ratePlans.organizationId, access.organizationId),
+          eq(ratePlans.propertyId, property.id),
+          isNull(ratePlans.archivedAt),
+        ),
+      ),
+  ])
+  const termsById = new Map(rows.map((row) => [row.id, termsOf(row)]))
+  const result = types.map((type) => {
+    const plans: BookableOption[] = []
+    for (const plan of pricing.plans) {
+      const terms = termsById.get(plan.id)
+      if (plan.bookableBy !== 'anyone' || !terms) continue
+      const quote = quoteOne(pricing, plan.id, type, { ...request, roomTypeId: type.id })
+      if (!quote) continue
+      const parentCode = (plan.parentId && pricing.byId.get(plan.parentId)?.code) || null
+      plans.push({
+        plan,
+        parentCode,
+        terms,
+        nights: quote.nights,
+        total: quote.total,
+        breaks: quote.breaks,
+      })
+    }
+    return { type, fits: fitsParty(type, request), plans }
+  })
+  return { property, types: result, anyPlans: pricing.plans.length > 0 }
 }

@@ -111,7 +111,11 @@ function scopeWords(tax: TaxRow, hotels: Hotel[], here: Hotel): string {
 // --- Loading ----------------------------------------------------------------------------------------
 
 // The taxes that apply to a hotel: the group's VAT, its state's taxes, its service charge.
-export async function taxesFor(db: Reader, access: Access, hotel: Hotel): Promise<TaxRow[]> {
+export async function taxesFor(
+  db: Reader,
+  access: Pick<Access, 'organizationId'>,
+  hotel: Hotel,
+): Promise<TaxRow[]> {
   return db
     .select()
     .from(taxes)
@@ -149,27 +153,37 @@ export async function liveRates(db: Reader, organizationId: string, taxIds: stri
 }
 
 // Whether the hotel's owning company is VAT registered on a date, counting a scheduled change of
-// company or of registration (both applied by night audit from their date).
-export async function vatRegisteredOn(db: Reader, hotel: Hotel, date: string) {
-  const entityId =
-    hotel.pendingEntityId && hotel.pendingEntityFrom && hotel.pendingEntityFrom <= date
-      ? hotel.pendingEntityId
-      : hotel.entityId
-  const [entity] = await db
+// company or of registration (both applied by night audit from their date). Loads both companies
+// once and answers for any date.
+export async function vatRegistration(db: Reader, hotel: Hotel) {
+  const ids = [hotel.entityId, hotel.pendingEntityId].filter((id): id is string => id !== null)
+  const rows = await db
     .select({
+      id: entities.id,
       name: entities.name,
       vatRegistered: entities.vatRegistered,
       pendingVatRegistered: entities.pendingVatRegistered,
       pendingVatFrom: entities.pendingVatFrom,
     })
     .from(entities)
-    .where(eq(entities.id, entityId))
-  if (!entity) return { registered: false, entityName: hotel.entityName }
-  const registered =
-    entity.pendingVatFrom && entity.pendingVatRegistered !== null && entity.pendingVatFrom <= date
-      ? entity.pendingVatRegistered
-      : entity.vatRegistered
-  return { registered, entityName: entity.name }
+    .where(inArray(entities.id, ids))
+  return (date: string) => {
+    const entityId =
+      hotel.pendingEntityId && hotel.pendingEntityFrom && hotel.pendingEntityFrom <= date
+        ? hotel.pendingEntityId
+        : hotel.entityId
+    const entity = rows.find((row) => row.id === entityId)
+    if (!entity) return { registered: false, entityName: hotel.entityName }
+    const registered =
+      entity.pendingVatFrom && entity.pendingVatRegistered !== null && entity.pendingVatFrom <= date
+        ? entity.pendingVatRegistered
+        : entity.vatRegistered
+    return { registered, entityName: entity.name }
+  }
+}
+
+export async function vatRegisteredOn(db: Reader, hotel: Hotel, date: string) {
+  return (await vatRegistration(db, hotel))(date)
 }
 
 const isSetUp = (rows: TaxRow[], hotel: Hotel) =>
@@ -177,41 +191,57 @@ const isSetUp = (rows: TaxRow[], hotel: Hotel) =>
 
 // --- Rules in force -------------------------------------------------------------------------------
 
+// The rates in force for a hotel on each of some dates (a stay's nights), from one load of its taxes
+// and rate versions: a scheduled change applies to the nights it covers. Throws TAXES_NOT_SET_UP
+// for a hotel whose taxes were never set up: nothing is quoted or posted without taxes. No
+// permission check: callers have checked theirs (the front desk books without the taxes page).
+export async function rulesByNight(
+  db: Reader,
+  access: Pick<Access, 'organizationId'>,
+  hotel: Hotel,
+  dates: readonly string[],
+): Promise<Map<string, TaxRuleInForce[]>> {
+  const rows = await taxesFor(db, access, hotel)
+  if (!isSetUp(rows, hotel)) throw taxesNotSetUp(hotel.name)
+  // One after the other: inside a booking this runs on the transaction's single connection.
+  const rates = await liveRates(
+    db,
+    access.organizationId,
+    rows.map((tax) => tax.id),
+  )
+  const vat = await vatRegistration(db, hotel)
+  const byDate = new Map<string, TaxRuleInForce[]>()
+  for (const date of new Set(dates)) {
+    const registered = vat(date).registered
+    const rules: TaxRuleInForce[] = []
+    for (const tax of rows) {
+      if (tax.kind === 'vat' && !registered) continue
+      const version = versionInForce(rates.get(tax.id) ?? [], date)
+      if (!version?.ratePercent) continue
+      rules.push({
+        taxId: tax.id,
+        rateId: version.id,
+        kind: tax.kind,
+        name: tax.name,
+        ratePercent: dec(version.ratePercent).toString(),
+        categories: version.categories as TaxableCategory[],
+        base: version.base,
+      })
+    }
+    byDate.set(date, orderTaxRules(rules))
+  }
+  return byDate
+}
+
 // The rates in force for a hotel on a business date: VAT (when the owning company is VAT registered
-// that day), the hotel's state taxes and its service charge. Throws TAXES_NOT_SET_UP for a hotel
-// whose taxes were never set up: nothing is quoted or posted without taxes.
+// that day), the hotel's state taxes and its service charge.
 export async function rulesInForceFor(
   db: Reader,
-  access: Access,
+  access: Pick<Access, 'organizationId'>,
   hotel: Hotel,
   date: string,
 ): Promise<TaxRuleInForce[]> {
-  const rows = await taxesFor(db, access, hotel)
-  if (!isSetUp(rows, hotel)) throw taxesNotSetUp(hotel.name)
-  const [rates, vat] = await Promise.all([
-    liveRates(
-      db,
-      access.organizationId,
-      rows.map((tax) => tax.id),
-    ),
-    vatRegisteredOn(db, hotel, date),
-  ])
-  const rules: TaxRuleInForce[] = []
-  for (const tax of rows) {
-    if (tax.kind === 'vat' && !vat.registered) continue
-    const version = versionInForce(rates.get(tax.id) ?? [], date)
-    if (!version?.ratePercent) continue
-    rules.push({
-      taxId: tax.id,
-      rateId: version.id,
-      kind: tax.kind,
-      name: tax.name,
-      ratePercent: dec(version.ratePercent).toString(),
-      categories: version.categories as TaxableCategory[],
-      base: version.base,
-    })
-  }
-  return orderTaxRules(rules)
+  return (await rulesByNight(db, access, hotel, [date])).get(date) ?? []
 }
 
 export async function taxRulesInForce(
