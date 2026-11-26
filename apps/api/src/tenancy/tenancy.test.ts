@@ -2,6 +2,7 @@
 // real HTTP endpoints (spec: docs/specs/stage-0-auth-and-tenancy.md).
 import type { Entity, Property } from '@vento/shared'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { ABUJA_ADDRESS } from '../test/addresses.ts'
 import { createTestApp, PASSWORD } from '../test/harness.ts'
 
 const url = process.env.TEST_DATABASE_URL
@@ -39,7 +40,7 @@ describe.skipIf(!url)('sign-in, organizations and properties', () => {
       await t.rpc<Property>(owner.cookie, 'properties/create', {
         entityId: entity.data.id,
         name: 'Kora Abuja',
-        state: 'FCT',
+        ...ABUJA_ADDRESS,
       })
     ).data
 

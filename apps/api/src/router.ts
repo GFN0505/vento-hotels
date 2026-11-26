@@ -9,6 +9,7 @@ import { guardDeviceSession } from './devices/session-guard.ts'
 import * as governance from './governance/service.ts'
 import { noteOrganization } from './observability/request-context.ts'
 import type { EmailProvider } from './providers/email.ts'
+import type { StorageProvider } from './providers/storage.ts'
 import { clientAddress, type RateLimiter } from './rate-limit.ts'
 import * as inspected from './rooms/inspected.ts'
 import * as roomBatch from './rooms/room-batch.ts'
@@ -20,6 +21,10 @@ import type { HealthCheck } from './system/health.ts'
 import * as invitations from './team/invitations.ts'
 import * as team from './team/members.ts'
 import { loadAccess } from './tenancy/access.ts'
+import * as entities from './tenancy/entities.ts'
+import * as logo from './tenancy/logo.ts'
+import * as hotels from './tenancy/properties.ts'
+import * as hotelArchive from './tenancy/property-archive.ts'
 import * as tenancy from './tenancy/service.ts'
 
 export type AppDeps = {
@@ -27,6 +32,9 @@ export type AppDeps = {
   db: Database
   auth: Auth
   email: EmailProvider
+  // Object storage for uploads (logos). Unset when the server has no storage settings: uploads
+  // answer "not set up" and nothing else changes.
+  storage?: StorageProvider | undefined
   // The address people open in the browser, for links in emails.
   webOrigin: string
   limiter: RateLimiter
@@ -80,21 +88,59 @@ export const router = base.router({
   },
   entities: {
     list: inOrganization.entities.list.handler(({ context, input }) =>
-      tenancy.listEntities(context.db, context.access, input),
+      entities.listEntities(context.db, context.access, input),
+    ),
+    get: inOrganization.entities.get.handler(({ context, input }) =>
+      entities.getEntity(context.db, context.access, input.id),
     ),
     create: inOrganization.entities.create.handler(({ context, input }) =>
-      tenancy.createEntity(context.db, context.access, input),
+      entities.createEntity(context.db, context.access, input),
+    ),
+    update: inOrganization.entities.update.handler(({ context, input }) =>
+      entities.updateEntity(context.db, context.access, input),
+    ),
+    archive: inOrganization.entities.archive.handler(({ context, input }) =>
+      entities.archiveEntity(context.db, context.access, input),
+    ),
+    restore: inOrganization.entities.restore.handler(({ context, input }) =>
+      entities.restoreEntity(context.db, context.access, input),
     ),
   },
   properties: {
     list: inOrganization.properties.list.handler(({ context, input }) =>
-      tenancy.listProperties(context.db, context.access, input),
+      hotels.listProperties(context, context.access, input),
     ),
     get: inOrganization.properties.get.handler(({ context, input }) =>
-      tenancy.getProperty(context.db, context.access, input.id),
+      hotels.getProperty(context, context.access, input.id),
     ),
     create: inOrganization.properties.create.handler(({ context, input }) =>
-      tenancy.createProperty(context.db, context.access, input),
+      hotels.createProperty(context, context.access, input),
+    ),
+    update: inOrganization.properties.update.handler(({ context, input }) =>
+      hotels.updateProperty(context, context.access, input),
+    ),
+    cancelEntityChange: inOrganization.properties.cancelEntityChange.handler(({ context, input }) =>
+      hotels.cancelEntityChange(context, context.access, input),
+    ),
+    archivePreview: inOrganization.properties.archivePreview.handler(({ context, input }) =>
+      hotelArchive.archivePreview(context, context.access, input.id),
+    ),
+    archive: inOrganization.properties.archive.handler(({ context, input }) =>
+      hotelArchive.archiveProperty(context, context.access, input),
+    ),
+    restore: inOrganization.properties.restore.handler(({ context, input }) =>
+      hotelArchive.restoreProperty(context, context.access, input),
+    ),
+    // Signing is cheap, but each URL adds a pending upload row: 60 per person per hour is plenty.
+    logoUploadUrl: inOrganization.properties.logoUploadUrl.handler(({ context, input }) => {
+      context.limiter.take(`logo-upload:${context.access.memberId}`, 60, 3600)
+      return logo.logoUploadUrl(context, context.access, input)
+    }),
+    setLogo: inOrganization.properties.setLogo.handler(({ context, input }) =>
+      logo.setLogo(context, context.access, input),
+    ),
+    removeLogo: inOrganization.properties.removeLogo.handler(({ context, input }) =>
+      logo.removeLogo(context, context.access, input),
     ),
   },
   members: {

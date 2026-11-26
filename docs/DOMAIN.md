@@ -6,13 +6,13 @@ Shared vocabulary for the Nigerian hotel group platform. Code, UI copy, table na
 | Term | Meaning | Notes |
 |---|---|---|
 | **Organization** | The customer: a hotel group (or a single independent hotel). | The data boundary. Every domain row has `organizationId`. Never call it "tenant" in code. |
-| **Property** | One hotel, resort or serviced-apartment building. | Address, star rating, time zone (default `Africa/Lagos`), check-in/out times, current **business date**, owning entity. Operational data belongs to a property. |
+| **Property** | One hotel, resort or serviced-apartment building. Shown in the app as **hotel**. | Name (unique in the group, archived included), logo (PNG or JPEG), address (street, area, LGA, state; Nigeria only), time zone (default `Africa/Lagos`, fixed once live), check-in and check-out times, current **business date**, owning entity. Status **setting up** until its first night audit, then **live**. Archived, never deleted: devices revoked, access kept for a restore. Operational data belongs to a property. |
 | **Go-live** | The point a property starts trading on Vento: its first night audit has completed. | Stored as `properties.live_since` (the business date that audit closed; null until then, set by night audit from brick 13). Before go-live, setup changes need no reason and raise no exceptions; after it, changes that move sellable rooms need a reason and reach the owner's daily report. |
-| **Entity** | A legal company inside the organization: holding or operating company. | RC number, TIN, VAT status, base currency NGN. Ledgers, bank accounts, payroll and contracts belong to an entity. One entity can own several properties. |
+| **Entity** | A legal company inside the organization: holding or operating company. Shown in the app as **company** (Settings › Companies, "Owning company"). | Legal name, RC number (CAC prefix RC, BN, IT, LP or LLP), TIN, VAT registered, base currency NGN. Name, RC number and TIN are each unique in the group. Archived only when it owns no active hotel. A change of owning company or VAT registration on a live hotel applies from the next business date. Ledgers, bank accounts, payroll and contracts belong to an entity. One entity can own several properties. |
 | **Department** | Revenue or cost centre within a property: `rooms`, `food`, `beverage`, `events`, `laundry`, `spa`, `other_operated`, `admin`, `sales_marketing`, `maintenance`, `utilities`. | USALI-style; used for revenue, cost and payroll reporting. |
 | **Member** | A user in the organization, with a role. | Roles: `owner`, `group_admin`, `general_manager`, `revenue_manager`, `front_desk`, `sales`, `fnb_manager`, `cashier`, `waiter`, `housekeeping_supervisor`, `room_attendant`, `maintenance`, `storekeeper`, `finance`, `hr`, `viewer`. Permissions are module × action, optionally limited to properties or entities. |
 | **Guest** | A person who stays, books or dines. | One profile across the group. Nationality, ID (encrypted), preferences, notes, `vip` flag, `blacklisted` with reason. |
-| **Company (corporate account)** | A business with negotiated rates and/or credit. | Credit limit, payment terms, contact persons, contracted rates per property. Billed through the city ledger. |
+| **Company (corporate account)** | A business with negotiated rates and/or credit. Shown in the app as **corporate account** (or "corporate"), never "company" alone, so it isn't confused with the group's own companies. | Credit limit, payment terms, contact persons, contracted rates per property. Billed through the city ledger. |
 | **Travel agent** | Agency that books on behalf of guests. | Commission %, may have a city ledger account. |
 | **Supplier** | Vendor of goods or services. | Payables, purchase orders, WHT status. |
 | **Employee** | Staff member on payroll, or casual on a daily rate. | Belongs to an entity, works at one or more properties. |
@@ -31,7 +31,7 @@ Permissions are `module.action`, granted by role and optionally limited to prope
 | Refund | – | – | – | – | – | ≤ ₦100,000 | ✓ | any |
 | Comp room night | – | – | – | – | – | ✓ | – | ✓ |
 | Settle to city ledger (within credit limit) | ✓ | – | – | – | – | ✓ | ✓ | ✓ |
-| Exceed a company's credit limit | – | – | – | – | – | ✓ | ✓ | ✓ |
+| Exceed a corporate account's credit limit | – | – | – | – | – | ✓ | ✓ | ✓ |
 | Post POS bill to a room | – | ✓ | ✓ | – | ✓ | ✓ | – | ✓ |
 | POS void before ticket sent | – | ✓ | ✓ | – | ✓ | ✓ | – | ✓ |
 | POS void after ticket sent / comp item | – | – | – | – | ✓ | ✓ | – | ✓ |
@@ -45,9 +45,10 @@ Permissions are `module.action`, granted by role and optionally limited to prope
 | Change permissions or limits | – | – | – | – | – | – | – | owner only |
 | Manage companies, properties, people and their access | – | – | – | – | – | – | – | ✓ |
 | Set up room types and rooms | – | – | – | – | – | ✓ | – | ✓ |
+| Edit a hotel's check-in and check-out times | – | – | – | – | – | ✓ | – | ✓ |
 | View the audit log | – | – | – | – | – | ✓ | ✓ | ✓ |
 
-The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `stay.rate_override`); keep the two in step. An organization's owner can override any role's rule except the owner's own (`permissions.set`, with a reason, audited); people who manage the team can view the matrix. Managing people (invite, change role or hotels, remove) uses the same permission as setup. Only an owner can invite, change or remove an owner or group admin; nobody changes their own role or access; a manager limited to some hotels can only hand out those hotels. The night auditor is a `front_desk` member working the night shift; "(night)" means the run-night-audit permission is granted to night-shift front desk staff, not a separate role. Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get only their own module's actions: e.g. `room_attendant` and `housekeeping_supervisor` can change room status, do room checks and post minibar charges; only `housekeeping_supervisor` records inspections. A member can't approve their own over-limit action.
+The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `stay.rate_override`); keep the two in step. An organization's owner can override any role's rule except the owner's own (`permissions.set`, with a reason, audited); people who manage the team can view the matrix. Managing people (invite, change role or hotels, remove) uses the same permission as setup. Only an owner can invite, change or remove an owner or group admin; nobody changes their own role or access; a manager limited to some hotels can only hand out those hotels. The night auditor is a `front_desk` member working the night shift; "(night)" means the run-night-audit permission is granted to night-shift front desk staff, not a separate role. Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get only their own module's actions: e.g. `room_attendant` and `housekeeping_supervisor` can change room status, do room checks and post minibar charges; only `housekeeping_supervisor` records inspections. A member can't approve their own over-limit action. Archiving or restoring a hotel or company needs a reason. A GM's "Edit a hotel's check-in and check-out times" covers only those two fields of their own hotels; every other hotel and company detail needs "Manage companies, properties, people and their access". A member limited to some hotels who manages setup may change a company only when every active hotel it owns is within their access, and gets access to any hotel they add.
 
 ## Devices and sign-in
 | Term | Meaning | Notes |
@@ -176,7 +177,7 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 | Term | Meaning | Notes |
 |---|---|---|
 | **Room discrepancy** | Front desk status and housekeeping's physical check disagree. | `sleeper` = system occupied, room found vacant; `skipper` = system vacant, room found used. Checked at configured times (e.g. 10:00, 16:00, 22:00); each one must be resolved with a reason. |
-| **Exception** | Any event the owner should see: rate below plan, override, discount, comp, void, refund, quick turn, early checkout with refund, unmatched payment, cash variance, POS void after send, stock variance above threshold, room count changed (room archived, restored or moved to another type after go-live; its audit events carry `roomCountChange: true` and `liveProperty: true`). | Generated from audit events; thresholds are configuration. Listed in the owner's daily report with staff names. |
+| **Exception** | Any event the owner should see: rate below plan, override, discount, comp, void, refund, quick turn, early checkout with refund, unmatched payment, cash variance, POS void after send, stock variance above threshold, room count changed (room archived, restored or moved to another type after go-live; its audit events carry `roomCountChange: true` and `liveProperty: true`), setup changed (live hotel archived or restored, owning company changed, company TIN or VAT registration changed; its audit events carry `exception: 'setup_changed'` and `liveProperty: true`). | Generated from audit events; thresholds are configuration. Listed in the owner's daily report with staff names. |
 | **Blind count** | Cashier counts the drawer without seeing the expected total. | Variance = counted − expected, revealed after submission. |
 | **Owner's daily report** | Morning summary after night audit. | Sent by WhatsApp and email to owners and GMs; one page. |
 
@@ -206,7 +207,7 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 
 ## Locale defaults
 - Base currency `NGN` (₦). Foreign currency stored with its FX rate and source.
-- Addresses: line 1, area, LGA, state, country. Nigerian states and LGAs from a fixed list.
+- Addresses: line 1, area, LGA, state, country. Nigerian states and LGAs from a fixed list in `@vento/shared` (`NIGERIAN_STATES`: 36 states + FCT; `NIGERIAN_LGAS`: 774 LGAs by state).
 - Phone numbers in E.164 (`+234…` and foreign).
 - Dates shown as `25 Nov 2026`, stays as `25–28 Nov 2026 · 3 nights`. Money as `₦125,000.00` and `$85.00`.
 - Personal data under the **NDPA 2023**: collect only what's needed, never store BVN or raw card data, consent for marketing, export and deletion on request (except records the law says to keep). ID and passport numbers are encrypted at rest and masked in the UI.
@@ -222,5 +223,6 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 - Which legacy PMS exports to support for import first (e.g. Opera, eZee, Hotelogix, Excel).
 - Subscription pricing for customers: per property, per room, or per module.
 - Default permission limits and exception thresholds — confirm with pilot hotels.
+- Company identifiers: the current TIN format(s) under the Nigeria Tax Administration Act 2025 (single Tax ID with the JTB and NRS; older TINs look like `21847390-0001`) and CAC's current number prefixes (RC, BN, IT, LP, LLP). Until confirmed, validation is loose: a CAC prefix and up to 8 digits, and 8–14 digits with an optional hyphen.
 - Kitchen display while offline: does it need a local server/bridge on the hotel network, or do we rely on printed tickets during outages?
 - Terms of Service and Privacy Policy (NDPA 2023): to be written, with legal review, before the first paying customer. Sign-up shows no consent line until these pages exist, so it never links to nothing.

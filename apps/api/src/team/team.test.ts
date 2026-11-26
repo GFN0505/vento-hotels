@@ -12,6 +12,7 @@ import { newId } from '@vento/shared'
 import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { invitations } from '../db/schema/auth.ts'
+import { ABUJA_ADDRESS } from '../test/addresses.ts'
 import { createTestApp } from '../test/harness.ts'
 
 const url = process.env.TEST_DATABASE_URL
@@ -74,6 +75,7 @@ describe.skipIf(!url)('team: invites and members', () => {
       await t.rpc<Property>(owner.cookie, 'properties/create', {
         entityId: entity.id,
         name: 'Kora Abuja',
+        ...ABUJA_ADDRESS,
       })
     ).data
     groupAdmin = await t.signUp('Emeka Kalu')

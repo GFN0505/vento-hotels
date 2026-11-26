@@ -1,6 +1,6 @@
-// The demo world from docs/journeys/README.md: Kora Hotels Group, Kora Hospitality Ltd, four hotels
-// and the people in the walkthroughs, each with a role, hotels, a sign-in and a staff PIN; room
-// types and 382 rooms; devices at Kora Victoria Island; a pending invite; and one permission change
+// The demo world from docs/journeys/README.md: Kora Hotels Group, its three companies, four hotels
+// (Kora Victoria Island with a placeholder logo when storage is given) and the people in the
+// walkthroughs, each with a role, hotels, a sign-in and a staff PIN; room types and 382 rooms; devices at Kora Victoria Island; a pending invite; and one permission change
 // with its reason. Used for local development, browser tests and sales demos. Everything here is
 // made up.
 import { createHash, randomBytes } from 'node:crypto'
@@ -19,6 +19,8 @@ import {
   memberProperties,
   properties,
 } from '../db/schema/tenancy.ts'
+import type { StorageProvider } from '../providers/storage.ts'
+import { seedLogo } from './logo.ts'
 import { seedRooms } from './rooms.ts'
 
 // The demo hotels went live on Vento this many business days before the seed was loaded.
@@ -26,20 +28,50 @@ export const LIVE_DAYS_AGO = 10
 
 type HotelKey = 'vi' | 'ikeja' | 'abuja' | 'ph'
 
+type CompanyKey = 'hospitality' | 'abuja' | 'ph'
+
+// The three companies from the designs (spec: stage-1-hotels-and-companies.md, "Demo seed").
+const COMPANIES: Record<CompanyKey, { name: string; rcNumber: string; tin: string }> = {
+  hospitality: { name: 'Kora Hospitality Ltd', rcNumber: 'RC 1184402', tin: '21847390-0001' },
+  abuja: { name: 'Kora Hotels Abuja Ltd', rcNumber: 'RC 1290517', tin: '22910455-0001' },
+  ph: { name: 'Kora PH Ltd', rcNumber: 'RC 1377281', tin: '23308817-0001' },
+}
+
+// Kora Ikeja GRA has no street, so completing a hotel's address can be tried on it.
 const HOTELS: Record<
   HotelKey,
-  { name: string; area: string; lga: string; state: string; rooms: number }
+  {
+    name: string
+    company: CompanyKey
+    street: string | null
+    area: string
+    lga: string
+    state: string
+    rooms: number
+  }
 > = {
   vi: {
     name: 'Kora Victoria Island',
+    company: 'hospitality',
+    street: 'Plot 1412 Ahmadu Bello Way',
     area: 'Victoria Island',
     lga: 'Eti-Osa',
     state: 'Lagos',
     rooms: 120,
   },
-  ikeja: { name: 'Kora Ikeja GRA', area: 'Ikeja GRA', lga: 'Ikeja', state: 'Lagos', rooms: 86 },
+  ikeja: {
+    name: 'Kora Ikeja GRA',
+    company: 'hospitality',
+    street: null,
+    area: 'Ikeja GRA',
+    lga: 'Ikeja',
+    state: 'Lagos',
+    rooms: 86,
+  },
   abuja: {
     name: 'Kora Abuja',
+    company: 'abuja',
+    street: 'Plot 12 Aminu Kano Crescent',
     area: 'Wuse 2',
     lga: 'Abuja Municipal',
     state: 'FCT (Abuja)',
@@ -47,6 +79,8 @@ const HOTELS: Record<
   },
   ph: {
     name: 'Kora Port Harcourt',
+    company: 'ph',
+    street: '15 Tombia Street',
     area: 'GRA Phase 2',
     lga: 'Obio-Akpor',
     state: 'Rivers',
@@ -88,6 +122,8 @@ const DEVICES: { name: string; kind: DeviceKind }[] = [
 
 export type SeedOptions = {
   password: string
+  // Where the placeholder logo goes. Without storage the demo has no logo, and nothing else changes.
+  storage?: StorageProvider | undefined
   // Tests use their own slug and email domain so they never collide with a seeded dev database.
   slug?: string
   emailDomain?: string
@@ -115,19 +151,23 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
   const passwordHash = await hashPassword(options.password)
   const pinHashes = await Promise.all(PEOPLE.map((person) => hashPassword(person.pin)))
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const organizationId = newId()
     await tx.insert(organizations).values({ id: organizationId, name: 'Kora Hotels Group', slug })
 
-    const entityId = newId()
-    await tx.insert(entities).values({
-      id: entityId,
-      organizationId,
-      name: 'Kora Hospitality Ltd',
-      rcNumber: '1184402',
-      tin: '21847390-0001',
-      vatRegistered: true,
-    })
+    const companyIds = {} as Record<CompanyKey, string>
+    for (const [key, company] of Object.entries(COMPANIES) as [
+      CompanyKey,
+      (typeof COMPANIES)[CompanyKey],
+    ][]) {
+      companyIds[key] = newId()
+      await tx.insert(entities).values({
+        id: companyIds[key],
+        organizationId,
+        ...company,
+        vatRegistered: true,
+      })
+    }
 
     const hotelIds = {} as Record<HotelKey, string>
     const businessDate = calendarDateIn('Africa/Lagos')
@@ -136,8 +176,9 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
       await tx.insert(properties).values({
         id: hotelIds[key],
         organizationId,
-        entityId,
+        entityId: companyIds[hotel.company],
         name: hotel.name,
+        addressLine1: hotel.street,
         area: hotel.area,
         lga: hotel.lga,
         state: hotel.state,
@@ -285,7 +326,18 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
     return {
       status: 'seeded' as const,
       organizationId,
+      viId: hotelIds.vi,
+      ownerMemberId: owner.memberId,
       people: seeded.map(({ name, email, role, pin }) => ({ name, email, role, pin })),
     }
   })
+  // After the group is saved: storage is outside the database, so it's never written mid-transaction.
+  if (options.storage) {
+    await seedLogo(db, options.storage, {
+      organizationId: result.organizationId,
+      propertyId: result.viId,
+      memberId: result.ownerMemberId,
+    })
+  }
+  return { status: result.status, organizationId: result.organizationId, people: result.people }
 }

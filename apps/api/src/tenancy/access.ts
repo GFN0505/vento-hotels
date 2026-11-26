@@ -40,7 +40,12 @@ export type Access = {
 }
 
 // What a PIN session on a shared device may never do: those need a password sign-in.
-const NOT_ON_SHARED_DEVICES: Permission[] = ['setup.manage', 'permissions.manage', 'rooms.setup']
+const NOT_ON_SHARED_DEVICES: Permission[] = [
+  'setup.manage',
+  'permissions.manage',
+  'rooms.setup',
+  'property.operating_times',
+]
 
 export async function effectiveRules(
   db: Pick<Database, 'select'>,

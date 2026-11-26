@@ -1,10 +1,15 @@
 // Vento's own tenancy tables (decision 0003): legal entities, properties (hotels), and which
 // properties each member may access.
+import { sql } from 'drizzle-orm'
 import {
+  type AnyPgColumn,
   boolean,
   char,
+  check,
+  foreignKey,
   index,
   integer,
+  pgEnum,
   pgTable,
   text,
   time,
@@ -34,9 +39,28 @@ export const entities = pgTable(
     vatRegistered: boolean().notNull().default(false),
     baseCurrency: char({ length: 3 }).notNull().default('NGN'),
     archivedAt: archivedAt(),
+    // Bumped by every edit; a save names the version it started from (optimistic locking).
+    version: integer().notNull().default(1),
     ...timestamps,
   },
-  (t) => [index().on(t.organizationId), uniqueIndex().on(t.organizationId, t.name)],
+  (t) => [
+    index().on(t.organizationId),
+    uniqueIndex().on(t.organizationId, t.name),
+    // Target of composite foreign keys, so a hotel can't name another group's company.
+    unique('entities_organization_id_id_unique').on(t.organizationId, t.id),
+    // Names are unique in the group whatever the capitals, archived companies included.
+    uniqueIndex('entities_organization_id_lower_name_unique').on(
+      t.organizationId,
+      sql`lower(${t.name})`,
+    ),
+    uniqueIndex('entities_organization_id_rc_number_unique')
+      .on(t.organizationId, t.rcNumber)
+      .where(sql`${t.rcNumber} is not null`),
+    // A TIN is the same number with or without its hyphen.
+    uniqueIndex('entities_organization_id_tin_digits_unique')
+      .on(t.organizationId, sql`regexp_replace(${t.tin}, '[^0-9]', '', 'g')`)
+      .where(sql`${t.tin} is not null`),
+  ],
 )
 
 // One hotel. Operational data (rooms, reservations, folios…) belongs to a property.
@@ -62,13 +86,35 @@ export const properties = pgTable(
     // Go-live: the business date closed by the first completed night audit (set by brick 13).
     // Null until then; before go-live, room setup changes need no reason and raise no exceptions.
     liveSince: calendarDate(),
+    // A change of owning company on a live hotel waits for the next business date, so a business
+    // date is never split between two companies' books. Night audit applies it (brick 13).
+    pendingEntityId: uuid(),
+    pendingEntityFrom: calendarDate(),
+    // The current logo. Old files are kept, so documents already issued keep what they showed.
+    logoUploadId: uuid().references((): AnyPgColumn => fileUploads.id, { onDelete: 'restrict' }),
     archivedAt: archivedAt(),
+    // Bumped by every edit of the settings form; a save names the version it started from.
+    version: integer().notNull().default(1),
     ...timestamps,
   },
   (t) => [
     index().on(t.organizationId),
     index().on(t.entityId),
+    index().on(t.pendingEntityId).where(sql`${t.pendingEntityId} is not null`),
     uniqueIndex().on(t.organizationId, t.name),
+    uniqueIndex('properties_organization_id_lower_name_unique').on(
+      t.organizationId,
+      sql`lower(${t.name})`,
+    ),
+    foreignKey({
+      name: 'properties_pending_entity_fk',
+      columns: [t.organizationId, t.pendingEntityId],
+      foreignColumns: [entities.organizationId, entities.id],
+    }).onDelete('restrict'),
+    check(
+      'properties_pending_entity_complete',
+      sql`(${t.pendingEntityId} is null) = (${t.pendingEntityFrom} is null)`,
+    ),
     // Target of composite foreign keys from property-owned tables (rooms, room types…).
     unique('properties_organization_id_id_unique').on(t.organizationId, t.id),
   ],
@@ -155,4 +201,47 @@ export const memberPins = pgTable(
     ...timestamps,
   },
   (t) => [index().on(t.organizationId)],
+)
+
+export const fileUploadStatusEnum = pgEnum('file_upload_status', [
+  'pending',
+  'confirmed',
+  'rejected',
+  'expired',
+])
+
+// A file sent straight to object storage through a short-lived signed URL. `pending` until the API
+// has checked the stored file (type from its first bytes, size, dimensions) and confirmed it;
+// pending uploads older than a day are deleted by the storage.purgeUnconfirmed job. Every upload
+// has its own key, so a file is never overwritten.
+export const fileUploads = pgTable(
+  'file_uploads',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    propertyId: uuid(),
+    // What the file is for, e.g. 'property_logo'.
+    purpose: text().notNull(),
+    storageKey: text().notNull().unique(),
+    contentType: text().notNull(),
+    byteSize: integer().notNull(),
+    status: fileUploadStatusEnum().notNull().default('pending'),
+    width: integer(),
+    height: integer(),
+    createdByMemberId: uuid(),
+    confirmedAt: timestamp({ withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [
+    index().on(t.organizationId),
+    index().on(t.propertyId),
+    index().on(t.status, t.createdAt),
+    // Composite, so a file can't name another group's hotel.
+    foreignKey({
+      name: 'file_uploads_property_fk',
+      columns: [t.organizationId, t.propertyId],
+      foreignColumns: [properties.organizationId, properties.id],
+    }).onDelete('restrict'),
+    check('file_uploads_byte_size_positive', sql`${t.byteSize} > 0`),
+  ],
 )

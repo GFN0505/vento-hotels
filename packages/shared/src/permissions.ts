@@ -17,6 +17,8 @@ export const PERMISSIONS = {
   'setup.manage': { label: 'Manage companies, properties, people and their access' },
   // Rooms have their own row so a GM can set them up without managing people (spec, decision 1).
   'rooms.setup': { label: 'Set up room types and rooms' },
+  // GMs change their hotels' times without managing people or companies (hotels spec, question 1).
+  'property.operating_times': { label: "Edit a hotel's check-in and check-out times" },
   'permissions.manage': { label: 'Change permissions or limits' },
   'audit.view': { label: 'View the audit log' },
   // Front office
@@ -30,7 +32,7 @@ export const PERMISSIONS = {
   refund: { label: 'Refund', limit: 'amount_ngn' },
   'room_night.comp': { label: 'Comp room night' },
   'city_ledger.settle': { label: 'Settle to city ledger (within credit limit)' },
-  'credit_limit.exceed': { label: "Exceed a company's credit limit" },
+  'credit_limit.exceed': { label: "Exceed a corporate account's credit limit" },
   'cashier_shift.operate': { label: 'Open / close cashier shift' },
   'rates.edit': { label: 'Edit rates and restrictions' },
   'night_audit.run': { label: 'Run night audit' },
@@ -51,7 +53,13 @@ export type Permission = keyof typeof PERMISSIONS
 export const PERMISSION_GROUPS: readonly { label: string; permissions: readonly Permission[] }[] = [
   {
     label: 'Setup',
-    permissions: ['setup.manage', 'rooms.setup', 'permissions.manage', 'audit.view'],
+    permissions: [
+      'setup.manage',
+      'rooms.setup',
+      'property.operating_times',
+      'permissions.manage',
+      'audit.view',
+    ],
   },
   {
     label: 'Front office',
@@ -113,6 +121,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
   group_admin: groupAdminAll,
   general_manager: {
     'rooms.setup': yes,
+    'property.operating_times': yes,
     'audit.view': yes,
     'reservation.manage': yes,
     'stay.rate_override': upTo('50'),

@@ -3,11 +3,12 @@ import { serve } from '@hono/node-server'
 import { createApp } from './app.ts'
 import { createAuth } from './auth/auth.ts'
 import { createDatabase } from './db/client.ts'
-import { loadEnv } from './env.ts'
+import { loadEnv, storageSettings } from './env.ts'
 import { type Jobs, QueuedEmailProvider, startJobs } from './jobs/queue.ts'
 import { flushErrorTracking, reportError, startErrorTracking } from './observability/errors.ts'
 import { logger } from './observability/log.ts'
 import { ConsoleEmailProvider, FileEmailProvider, NoEmailProvider } from './providers/email.ts'
+import { S3StorageProvider } from './providers/storage.ts'
 import { RateLimiter } from './rate-limit.ts'
 import { healthCheck } from './system/health.ts'
 
@@ -17,6 +18,13 @@ startErrorTracking({ dsn: env.SENTRY_DSN, environment: env.DEPLOY_ENV })
 process.on('unhandledRejection', (error) => reportError(error, 'unhandled'))
 
 const database = createDatabase(env.DATABASE_URL)
+const s3 = storageSettings(env)
+const storage = s3 ? new S3StorageProvider(s3) : undefined
+if (!storage) logger.warn('No storage settings (S3_*): uploads are switched off')
+// Locally the bucket is created on first start, with CORS for the web app on any localhost port.
+if (storage && env.DEPLOY_ENV === 'local') {
+  await storage.prepareLocalBucket().catch((error: unknown) => reportError(error, 'storage setup'))
+}
 const deliver =
   env.DEPLOY_ENV !== 'local'
     ? new NoEmailProvider()
@@ -25,7 +33,7 @@ const deliver =
       : new ConsoleEmailProvider()
 // With jobs on, email goes through the queue and is retried if the provider fails.
 const jobs: Jobs | undefined = env.JOBS_ENABLED
-  ? await startJobs({ databaseUrl: env.DATABASE_URL, email: deliver })
+  ? await startJobs({ databaseUrl: env.DATABASE_URL, email: deliver, db: database.db, storage })
   : undefined
 const email = jobs ? new QueuedEmailProvider(jobs.queue) : deliver
 const limiter = new RateLimiter(env.NODE_ENV !== 'test')
@@ -44,6 +52,7 @@ const app = createApp({
   db: database.db,
   auth,
   email,
+  storage,
   webOrigin: env.WEB_ORIGIN,
   limiter,
   allFeatures: env.VENTO_ALL_FEATURES,

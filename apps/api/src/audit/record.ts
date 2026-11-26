@@ -7,6 +7,8 @@ import type { Access } from '../tenancy/access.ts'
 type Writer = Pick<Database, 'insert'>
 
 export type AuditEvent = {
+  // Set when other events must point at this one (side effects carry `causedBy: <id>` in `after`).
+  id?: string
   // `<entity>.<verb>`, e.g. 'property.created', 'permission.changed'.
   action: string
   entityType: string
@@ -28,6 +30,7 @@ export type Actor = Pick<Access, 'organizationId' | 'userId' | 'memberId' | 'use
 
 function auditRow(access: Actor, event: AuditEvent) {
   return {
+    ...(event.id ? { id: event.id } : {}),
     organizationId: access.organizationId,
     actorUserId: access.userId,
     actorMemberId: access.memberId,

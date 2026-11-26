@@ -1,66 +1,17 @@
-// Entities, properties and property access. organizationId always comes from `access` (the
-// session), never from input. Reads outside the caller's scope answer NOT_FOUND, so they don't
-// reveal that the record exists.
+// The signed-in member's organization and Home's figures. Companies and hotels live in
+// entities.ts and properties.ts. organizationId always comes from `access` (the session), never
+// from input.
 import { ORPCError } from '@orpc/server'
-import {
-  calendarDateIn,
-  type Entity,
-  type PageQuery,
-  PERMISSION_KEYS,
-  type Property,
-  pageOffset,
-  toPage,
-} from '@vento/shared'
-import { and, asc, count, eq, gt, isNull } from 'drizzle-orm'
-import { recordAudit } from '../audit/record.ts'
+import { PERMISSION_KEYS } from '@vento/shared'
+import { and, count, eq, gt, isNull } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
-import { isUniqueViolation } from '../db/errors.ts'
 import { invitations, members, organizations, users } from '../db/schema/auth.ts'
 import { rooms } from '../db/schema/rooms.ts'
-import {
-  devices,
-  entities,
-  memberPins,
-  memberProperties,
-  properties,
-} from '../db/schema/tenancy.ts'
+import { devices, memberPins, memberProperties, properties } from '../db/schema/tenancy.ts'
 import { idleSecondsFor } from '../devices/service.ts'
-import { type Access, can, propertyScope, requirePermission, scopeToProperties } from './access.ts'
-
-const entityColumns = {
-  id: entities.id,
-  name: entities.name,
-  rcNumber: entities.rcNumber,
-  tin: entities.tin,
-  vatRegistered: entities.vatRegistered,
-  baseCurrency: entities.baseCurrency,
-}
-
-const propertyColumns = {
-  id: properties.id,
-  entityId: properties.entityId,
-  name: properties.name,
-  addressLine1: properties.addressLine1,
-  area: properties.area,
-  lga: properties.lga,
-  state: properties.state,
-  country: properties.country,
-  timeZone: properties.timeZone,
-  checkInTime: properties.checkInTime,
-  checkOutTime: properties.checkOutTime,
-  businessDate: properties.businessDate,
-  liveSince: properties.liveSince,
-}
-
-// Postgres returns `time` as HH:MM:SS; the API speaks HH:MM.
-function toProperty(row: typeof properties.$inferSelect | Record<string, unknown>): Property {
-  const r = row as Property
-  return { ...r, checkInTime: r.checkInTime.slice(0, 5), checkOutTime: r.checkOutTime.slice(0, 5) }
-}
+import { type Access, can, propertyScope, scopeToProperties } from './access.ts'
 
 const notFound = () => new ORPCError('NOT_FOUND', { message: "We couldn't find that" })
-const nameTaken = (what: string) =>
-  new ORPCError('CONFLICT', { message: `A ${what} with this name already exists` })
 
 // The shared device of a PIN session (with its idle time), and whether the member has a PIN.
 async function deviceAndPin(db: Database, access: Access) {
@@ -99,140 +50,6 @@ export async function currentOrganization(db: Database, access: Access) {
     permissions: PERMISSION_KEYS.filter((key) => access.rules[key].allowed),
     features: access.features,
     ...(await deviceAndPin(db, access)),
-  }
-}
-
-export async function listEntities(db: Database, access: Access, query: PageQuery) {
-  const where = and(eq(entities.organizationId, access.organizationId), isNull(entities.archivedAt))
-  const [rows, [total]] = await Promise.all([
-    db
-      .select(entityColumns)
-      .from(entities)
-      .where(where)
-      .orderBy(asc(entities.name))
-      .limit(query.pageSize)
-      .offset(pageOffset(query)),
-    db.select({ value: count() }).from(entities).where(where),
-  ])
-  return toPage(rows as Entity[], total?.value ?? 0, query)
-}
-
-export async function createEntity(
-  db: Database,
-  access: Access,
-  input: {
-    name: string
-    rcNumber?: string | undefined
-    tin?: string | undefined
-    vatRegistered: boolean
-  },
-): Promise<Entity> {
-  requirePermission(access, 'setup.manage')
-  try {
-    return await db.transaction(async (tx) => {
-      const [row] = await tx
-        .insert(entities)
-        .values({
-          organizationId: access.organizationId,
-          name: input.name,
-          rcNumber: input.rcNumber ?? null,
-          tin: input.tin ?? null,
-          vatRegistered: input.vatRegistered,
-        })
-        .returning(entityColumns)
-      const entity = row as Entity
-      await recordAudit(tx, access, {
-        action: 'entity.created',
-        entityType: 'entity',
-        entityId: entity.id,
-        after: entity,
-      })
-      return entity
-    })
-  } catch (error) {
-    if (isUniqueViolation(error)) throw nameTaken('company')
-    throw error
-  }
-}
-
-export async function listProperties(db: Database, access: Access, query: PageQuery) {
-  const where = and(propertyScope(access), isNull(properties.archivedAt))
-  const [rows, [total]] = await Promise.all([
-    db
-      .select(propertyColumns)
-      .from(properties)
-      .where(where)
-      .orderBy(asc(properties.name))
-      .limit(query.pageSize)
-      .offset(pageOffset(query)),
-    db.select({ value: count() }).from(properties).where(where),
-  ])
-  return toPage(rows.map(toProperty), total?.value ?? 0, query)
-}
-
-export async function getProperty(db: Database, access: Access, id: string): Promise<Property> {
-  const [row] = await db
-    .select(propertyColumns)
-    .from(properties)
-    .where(and(propertyScope(access), eq(properties.id, id)))
-  if (!row) throw notFound()
-  return toProperty(row)
-}
-
-export async function createProperty(
-  db: Database,
-  access: Access,
-  input: {
-    entityId: string
-    name: string
-    addressLine1?: string | undefined
-    area?: string | undefined
-    lga?: string | undefined
-    state?: string | undefined
-    timeZone: string
-    checkInTime?: string | undefined
-    checkOutTime?: string | undefined
-  },
-): Promise<Property> {
-  requirePermission(access, 'setup.manage')
-  const [entity] = await db
-    .select({ id: entities.id })
-    .from(entities)
-    .where(and(eq(entities.id, input.entityId), eq(entities.organizationId, access.organizationId)))
-  if (!entity) throw new ORPCError('BAD_REQUEST', { message: 'Choose a company from this group' })
-
-  try {
-    return await db.transaction(async (tx) => {
-      const [row] = await tx
-        .insert(properties)
-        .values({
-          organizationId: access.organizationId,
-          entityId: entity.id,
-          name: input.name,
-          addressLine1: input.addressLine1 ?? null,
-          area: input.area ?? null,
-          lga: input.lga ?? null,
-          state: input.state ?? null,
-          timeZone: input.timeZone,
-          ...(input.checkInTime ? { checkInTime: input.checkInTime } : {}),
-          ...(input.checkOutTime ? { checkOutTime: input.checkOutTime } : {}),
-          // A new property starts on today's date in its own time zone; night audit moves it after.
-          businessDate: calendarDateIn(input.timeZone),
-        })
-        .returning(propertyColumns)
-      const property = toProperty(row as Property)
-      await recordAudit(tx, access, {
-        action: 'property.created',
-        entityType: 'property',
-        entityId: property.id,
-        propertyId: property.id,
-        after: property,
-      })
-      return property
-    })
-  } catch (error) {
-    if (isUniqueViolation(error)) throw nameTaken('property')
-    throw error
   }
 }
 
