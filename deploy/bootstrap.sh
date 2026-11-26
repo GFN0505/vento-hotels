@@ -49,4 +49,4 @@ else
 fi
 
 systemctl enable --now fail2ban
-echo "Done. Next: put .env in /opt/vento (see deploy/.env.server.example) and run the Deploy workflow."
+echo "Done. Next: put .env in /opt/vento (see deploy/server.env.example) and run the Deploy workflow."
