@@ -40,7 +40,9 @@ self.addEventListener('fetch', (event) => {
   // Pages: the network first, so a deploy shows at once; the kept app when there's no connection.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/').then((page) => page ?? Response.error())),
+      fetch(request).catch(() =>
+        caches.match('/', { ignoreVary: true }).then((page) => page ?? Response.error()),
+      ),
     )
     return
   }
@@ -48,7 +50,10 @@ self.addEventListener('fetch', (event) => {
   // Built files have their content in their name, so a kept copy is always right. Files not kept
   // at install (rarer fonts, for example) are kept the first time they're used.
   event.respondWith(
-    caches.match(request).then(
+    // ignoreVary: module scripts are requested with an Origin header the install-time copies
+    // didn't have; a response that varies on it would otherwise never match. Built files carry
+    // their content in their name, so any stored copy is the right one.
+    caches.match(request, { ignoreVary: true }).then(
       (hit) =>
         hit ??
         fetch(request).then((response) => {
