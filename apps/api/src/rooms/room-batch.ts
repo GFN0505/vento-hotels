@@ -193,10 +193,14 @@ export async function createManyRooms(
       return createTypesAndRooms(tx, access, property, input)
     })
   } catch (error) {
-    if (!isUniqueViolation(error)) throw error
-    // Two copies of the same request racing: the loser answers like a replay.
+    // Two copies of the same request racing: the loser answers like a replay. It loses either on a
+    // unique index, or on a pre-check that ran after the winner committed (a CONFLICT).
+    const lostRace =
+      isUniqueViolation(error) || (error instanceof ORPCError && error.code === 'CONFLICT')
+    if (!lostRace) throw error
     const prior = await appliedBatch(db, access, property.id, numbers, input.batchId)
     if (prior) return prior
+    if (!isUniqueViolation(error)) throw error
     if (violatedConstraint(error)?.startsWith('room_types')) {
       for (const type of input.newTypes) await requireNoClashFor(db, property.id, type)
     }
