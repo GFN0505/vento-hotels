@@ -137,7 +137,7 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('heading', { name: 'Next steps for Kora Lekki' }).waitFor()
       await expectAccessible(page)
       await page.getByRole('button', { name: 'Archive hotel' }).click()
-      await page.getByText(/history and reports are kept/).waitFor()
+      await page.getByRole('dialog').getByText(/history and reports are kept/).waitFor()
       await expectAccessible(page)
       await page.keyboard.press('Escape')
       await page.getByRole('button', { name: 'All hotels' }).click()
