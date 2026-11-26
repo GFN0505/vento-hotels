@@ -1,6 +1,7 @@
 // The empty Rate plans page (design #19, OnbRate): one weekday price per room type, an optional Fri
 // and Sat price, and "Also create a Bed & breakfast plan at +₦18,000". One click after typing creates
-// Best available (and Bed & breakfast) with the recommended terms.
+// Best available (and Bed & breakfast) with the recommended terms. Guest pays per night shows each
+// weekday price with the tax lines in force on the business date.
 import { useMutation } from '@tanstack/react-query'
 import { BREAKFAST_SUPPLEMENT, type RatesOverview } from '@vento/shared'
 import { type FormEvent, useState } from 'react'
@@ -11,12 +12,15 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Field } from '@/components/ui/field'
 import { PageHeader } from '@/components/ui/page-header'
 import { api } from '@/lib/api'
+import { cn } from '@/lib/cn'
 import { problemMessage } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
 import { useOnline } from '@/offline/connection'
 import { FirstRateAside } from './first-rate-aside'
 import * as M from './first-rate-model'
 import { EXCL, formatNaira, NEEDS_CONNECTION, plural } from './format'
+import { useGuestPays } from './guest-pays'
+import { GuestPays } from './guest-pays-cell'
 import { groupTyped } from './money-input'
 import { useRatesRefresh } from './queries'
 
@@ -24,6 +28,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
   const online = useOnline()
   const refresh = useRatesRefresh()
   const types = overview.roomTypes
+  const guest = useGuestPays(overview.property.id)
   const [rows, setRows] = useState<M.FirstRateRows>({})
   const [breakfast, setBreakfast] = useState(true)
   const [problems, setProblems] = useState<Record<string, string | undefined>>({})
@@ -85,9 +90,17 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                   <th scope="col" className="px-3 py-2">
                     Weekday (Sun–Thu)
                   </th>
-                  <th scope="col" className="w-[34%] px-3 py-2 pr-4 sm:w-40 sm:pr-5">
+                  <th
+                    scope="col"
+                    className={cn('w-[34%] px-3 py-2 sm:w-40', guest.visible ? '' : 'pr-4 sm:pr-5')}
+                  >
                     Fri and Sat
                   </th>
+                  {guest.visible ? (
+                    <th scope="col" className="px-3 py-2 pr-4 text-right max-md:hidden sm:pr-5">
+                      Guest pays per night
+                    </th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -120,7 +133,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                         }
                       />
                     </td>
-                    <td className="px-3 py-3 pr-4 sm:pr-5">
+                    <td className={cn('px-3 py-3', guest.visible ? '' : 'pr-4 sm:pr-5')}>
                       <Field
                         label={`${type.name}, Friday and Saturday price`}
                         hideLabel
@@ -139,6 +152,11 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                         }
                       />
                     </td>
+                    {guest.visible ? (
+                      <td className="num px-3 py-3 pt-5 pr-4 text-right whitespace-nowrap max-md:hidden sm:pr-5">
+                        <GuestPays guest={guest} price={rows[type.id]?.weekday ?? ''} />
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -167,7 +185,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
             </Button>
           </div>
         </form>
-        <FirstRateAside breakfast={breakfast} types={types} rows={rows} />
+        <FirstRateAside breakfast={breakfast} types={types} rows={rows} guest={guest} />
       </div>
     </div>
   )

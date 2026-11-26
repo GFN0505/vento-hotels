@@ -5,16 +5,20 @@ import { Check } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import type * as M from './first-rate-model'
 import { EXCL, formatNaira } from './format'
+import type { useGuestPays } from './guest-pays'
+import { GuestPays } from './guest-pays-cell'
 
 // What the new plans come with, so nobody has to guess (the recommended terms, spec OQ 9 and 10).
 export function FirstRateAside({
   breakfast,
   types,
   rows,
+  guest,
 }: {
   breakfast: boolean
   types: RatesOverview['roomTypes']
   rows: M.FirstRateRows
+  guest: ReturnType<typeof useGuestPays>
 }) {
   const lines = [
     'Room only',
@@ -53,7 +57,19 @@ export function FirstRateAside({
               {withBreakfast.map((row) => (
                 <li key={row.id} className="flex justify-between gap-3">
                   <span className="min-w-0 truncate">{row.name}</span>
-                  <span className="num font-medium text-text">{formatNaira(row.price)}</span>
+                  <span className="num flex flex-col items-end">
+                    <span className="font-medium text-text">{formatNaira(row.price)}</span>
+                    {guest.visible ? (
+                      <span className="text-sm text-text-3">
+                        Guest pays{' '}
+                        <GuestPays
+                          guest={guest}
+                          price={row.price}
+                          mealAllocation={BREAKFAST_SUPPLEMENT}
+                        />
+                      </span>
+                    ) : null}
+                  </span>
                 </li>
               ))}
             </ul>
