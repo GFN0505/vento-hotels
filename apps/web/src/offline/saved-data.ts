@@ -93,6 +93,9 @@ export function rememberedSession(): SessionSnapshot | undefined {
   }
 }
 
+// Announced when someone signs out, for what lives only in memory (the booking sheet's draft).
+export const SIGNED_OUT = 'vento:signed-out'
+
 export async function clearSavedData(client?: QueryClient) {
   savedAt = undefined
   try {

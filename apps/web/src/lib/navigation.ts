@@ -68,6 +68,9 @@ export const MODULES: readonly NavGroup[] = [
         icon: CalendarDays,
         feature: 'front_desk',
         roles: [...FRONT_DESK_TEAM, 'revenue_manager', 'sales'],
+        // Making bookings, or reading them (finance and the night auditor, read-only): the same
+        // list as RESERVATION_READERS in @vento/shared, written out so the menu loads without it.
+        needs: ['reservation.manage', 'night_audit.run', 'leakage.view'],
         stage: 1,
         about: 'Every booking in one list: new, modify, cancel, no-show, deposits.',
       },

@@ -13,8 +13,10 @@ type SheetProps = {
   description?: ReactNode
   children: ReactNode
   footer?: ReactNode
-  // md for a record, lg for a builder with a preview.
-  size?: 'md' | 'lg'
+  // md for a record, lg for a builder with a preview, xl for a flow with steps and a summary.
+  size?: 'md' | 'lg' | 'xl'
+  // The middle without its padding, for layouts with their own columns.
+  bare?: boolean
 }
 
 export function Sheet({
@@ -25,6 +27,7 @@ export function Sheet({
   children,
   footer,
   size = 'md',
+  bare = false,
 }: SheetProps) {
   const modal = useModal(open, onClose)
   const titleId = useId()
@@ -42,7 +45,11 @@ export function Sheet({
       className={cn(
         'sheet fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none flex-col overflow-hidden border-border bg-surface p-0 text-text open:flex',
         'md:left-auto md:border-l md:shadow-[var(--shadow-lg)]',
-        size === 'lg' ? 'md:w-[min(960px,100vw-48px)]' : 'md:w-[480px]',
+        size === 'xl'
+          ? 'md:w-[min(1060px,100vw-48px)]'
+          : size === 'lg'
+            ? 'md:w-[min(960px,100vw-48px)]'
+            : 'md:w-[480px]',
         'backdrop:bg-[var(--overlay)]',
       )}
     >
@@ -68,7 +75,9 @@ export function Sheet({
               <X className="size-4" aria-hidden="true" />
             </button>
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">{children}</div>
+          <div className={cn('min-h-0 flex-1 overflow-y-auto', !bare && 'px-5 py-5 sm:px-6')}>
+            {children}
+          </div>
           {footer ? (
             <footer className="flex flex-none flex-wrap items-center gap-2 border-t border-border bg-surface px-5 py-3 sm:px-6 max-lg:[&_button]:h-11">
               {footer}
