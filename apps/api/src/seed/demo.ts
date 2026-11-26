@@ -1,7 +1,8 @@
 // The demo world from docs/journeys/README.md: Kora Hotels Group, Kora Hospitality Ltd, four hotels
-// and the people in the walkthroughs, each with a role, hotels, a sign-in and a staff PIN; devices
-// at Kora Victoria Island; a pending invite; and one permission change with its reason. Used for
-// local development, browser tests and sales demos. Everything here is made up.
+// and the people in the walkthroughs, each with a role, hotels, a sign-in and a staff PIN; room
+// types and 382 rooms; devices at Kora Victoria Island; a pending invite; and one permission change
+// with its reason. Used for local development, browser tests and sales demos. Everything here is
+// made up.
 import { createHash, randomBytes } from 'node:crypto'
 import { calendarDateIn, type DeviceKind, type MemberRole, newId } from '@vento/shared'
 import { hashPassword } from 'better-auth/crypto'
@@ -18,6 +19,7 @@ import {
   memberProperties,
   properties,
 } from '../db/schema/tenancy.ts'
+import { seedRooms } from './rooms.ts'
 
 type HotelKey = 'vi' | 'ikeja' | 'abuja' | 'ph'
 
@@ -125,6 +127,7 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
     })
 
     const hotelIds = {} as Record<HotelKey, string>
+    const businessDate = calendarDateIn('Africa/Lagos')
     for (const [key, hotel] of Object.entries(HOTELS) as [HotelKey, (typeof HOTELS)[HotelKey]][]) {
       hotelIds[key] = newId()
       await tx.insert(properties).values({
@@ -135,7 +138,9 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
         area: hotel.area,
         lga: hotel.lga,
         state: hotel.state,
-        businessDate: calendarDateIn('Africa/Lagos'),
+        businessDate,
+        // The group has traded since 2024, so room changes ask for a reason in the demo.
+        liveSince: '2024-03-01',
       })
     }
 
@@ -187,6 +192,13 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
       memberId: owner.memberId,
       userName: owner.name,
     }
+
+    const hotels = Object.fromEntries(
+      (Object.keys(HOTELS) as HotelKey[]).map((key) => [key, { id: hotelIds[key], businessDate }]),
+    ) as Record<HotelKey, { id: string; businessDate: string }>
+    const roomCount = await seedRooms(tx, actor, organizationId, hotels)
+    const expected = Object.values(HOTELS).reduce((sum, hotel) => sum + hotel.rooms, 0)
+    if (roomCount !== expected) throw new Error(`Seeded ${roomCount} rooms, expected ${expected}`)
 
     // Shared devices at Kora Victoria Island. Their secrets are random and thrown away: to use
     // one, register a real browser from Settings › Devices.

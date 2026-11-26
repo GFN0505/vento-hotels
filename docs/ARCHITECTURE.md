@@ -5,7 +5,7 @@ How the code is laid out and how a request flows through it. The *why* behind th
 Each section says honestly where it stands: **Built in brick N** (on `main`), **In review (brick N)** (open pull request, not merged), or **Planned (brick N)** for the Stage 0 bricks: 1 monorepo skeleton, 2 local infra, 3 shared basics, 4 Drizzle and the API server, 5 auth, 6 permissions and audit, 7 web shell, 8 devices and PIN, 9 offline, 10 seed and deploy.
 
 ## Layout
-*Built in bricks 1–4: the workspace, `api/src/infra/`, the `shared` basics, the API server and database layer. Built in brick 5: `auth/`, `tenancy/`, `providers/email.ts`, `db/schema/auth.ts` and `tenancy.ts`, `shared/src/roles.ts` and `contracts/tenancy.ts`. In review (brick 6): `audit/`, `governance/`, `db/schema/governance.ts`, `shared/src/permissions.ts` and `contracts/governance.ts`. Everything else is planned for the bricks shown.*
+*Built in bricks 1–4: the workspace, `api/src/infra/`, the `shared` basics, the API server and database layer. Built in brick 5: `auth/`, `tenancy/`, `providers/email.ts`, `db/schema/auth.ts` and `tenancy.ts`, `shared/src/roles.ts` and `contracts/tenancy.ts`. In review (brick 6): `audit/`, `governance/`, `db/schema/governance.ts`, `shared/src/permissions.ts` and `contracts/governance.ts`. In review (Stage 1, brick 1): `rooms/`, `db/schema/rooms.ts`, `seed/rooms.ts`, `shared/src/rooms.ts` and `contracts/rooms.ts`. Everything else is planned for the bricks shown.*
 ```
 apps/
   api/                       Hono + oRPC server on Node 24
@@ -17,17 +17,19 @@ apps/
       infra/                 settings reader (zod) and database/storage checks        (bricks 2–3)
       db/columns.ts          id (uuidv7), timestamps, archivedAt, amount, currency    (brick 4)
       db/client.ts           pg pool + Drizzle, snake_case columns                    (brick 4)
-      db/schema/             auth.ts (Better Auth), tenancy.ts (entities, properties) (brick 5)
+      db/schema/             auth.ts (Better Auth), tenancy.ts (entities, properties) (brick 5); rooms.ts (Stage 1)
       db/migrate.ts          applies migrations as a release step, never on app start (brick 4)
       auth/auth.ts           Better Auth: email + password, organizations, /api/auth/* (brick 5)
       tenancy/access.ts      loadAccess, scopeToProperties, requirePermission, requireWithinLimit (bricks 5–6)
       tenancy/service.ts     entities, properties, member property access            (brick 5)
-      audit/record.ts        recordAudit(tx, access, event), same transaction          (brick 6)
+      audit/record.ts        recordAudit / recordAuditMany(tx, access, …), same transaction (brick 6)
       governance/service.ts  audit log, permissions matrix list/set                  (brick 6)
       team/                  members list/update/remove, invitations, join from link   (brick 8)
       features/              feature switches per group, `pnpm features` command       (brick 9)
       devices/               shared devices, staff PINs, PIN sign-in checks            (brick 10)
-      seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14)
+      rooms/                 room types and rooms per property: reads, writes, bulk, locks,
+                             connecting rooms, Mark inspected, the roomCountChanged hook (Stage 1)
+      seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14); rooms.ts: 382 rooms (Stage 1)
       jobs/                  pg-boss queue, email retries, heartbeat                   (brick 17); business jobs from Stage 1
       observability/         pino logs with request ids, Sentry error reports          (brick 17)
       providers/             email, SMS, WhatsApp, payments, channel manager, storage (as needed)
@@ -55,9 +57,10 @@ packages/
       ids.ts                 newId() UUID v7, idSchema                                 (brick 3)
       dates.ts               calendar dates, nights, property-time-zone date           (brick 3)
       pagination.ts          page query and { items, page, pageSize, total }           (brick 3)
-      contracts/             the oRPC contract, starting with system.health          (brick 4)
+      contracts/             the oRPC contract, one file per module (system, tenancy, governance, team, devices, rooms) (from brick 4)
       locale.ts              NGN default, supported currencies, Africa/Lagos           (brick 1)
       permissions.ts         permission keys, limit kinds, default matrix            (brick 6)
+      rooms.ts               room fields, numbering, "Add rooms by floor" expansion   (Stage 1)
       <module>/              zod schemas and the oRPC contract per module             (from brick 5)
 ```
 
@@ -99,6 +102,7 @@ packages/
 - **Folio postings and ledger entries are append-only.** Corrections are reversals with a reason. The ledger balances per entity.
 - **Business date** is a `date` per property that only moves forward at night audit. Charges, revenue and reports use it, not the wall clock.
 - **Availability locking:** booking, modifying, cancelling and channel ingest lock the room-type inventory rows for the dates (`SELECT … FOR UPDATE`) in one transaction. Overbooking only up to a configured limit.
+- **Rooms** (migration 0008, Stage 1 brick 1): `room_types`, `rooms` and `room_connections` per property, and `properties.live_since` (go-live). A room's type is a composite foreign key `(property_id, room_type_id)`, so a room can't use another hotel's type even by a hand-written query; connecting rooms are one row per pair. Room numbers are unique per hotel including archived rooms (a database constraint), so concurrent bulk adds can't create the same room twice. **The number of rooms in a type is never stored**: it is counted from active rooms. Every change to it (create, bulk create, archive, restore, delete, change type, archive a type) calls `roomCountChanged(tx, …)` in `apps/api/src/rooms/room-count.ts` inside its transaction; it does nothing yet, and brick 4 makes it lock and adjust the room-type inventory rows from the business date on. Room writes hold their types `FOR SHARE` and archiving a type takes it `FOR UPDATE`, so a type can't be archived while rooms are being added to it.
 - Statutory rates (VAT, consumption tax, service charge, payroll deductions) are versioned configuration with effective dates.
 
 ## Background jobs

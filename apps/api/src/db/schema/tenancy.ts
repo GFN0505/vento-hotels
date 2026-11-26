@@ -58,6 +58,9 @@ export const properties = pgTable(
     checkOutTime: time().notNull().default('12:00'),
     // Only night audit moves this forward (decision 0006).
     businessDate: calendarDate().notNull(),
+    // Go-live: the business date closed by the first completed night audit (set by brick 13).
+    // Null until then; before go-live, room setup changes need no reason and raise no exceptions.
+    liveSince: calendarDate(),
     archivedAt: archivedAt(),
     ...timestamps,
   },

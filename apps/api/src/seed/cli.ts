@@ -33,7 +33,7 @@ async function main() {
       return
     }
     console.log(
-      '✓ Loaded Kora Hotels Group: Kora Hospitality Ltd, 4 hotels, 10 people, 3 devices, 1 invite\n',
+      '✓ Loaded Kora Hotels Group: Kora Hospitality Ltd, 4 hotels, 382 rooms, 10 people, 3 devices, 1 invite\n',
     )
     console.log(`  Sign in at http://localhost:5180 with any email below and DEMO_PASSWORD.\n`)
     for (const person of result.people) {

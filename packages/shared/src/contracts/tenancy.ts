@@ -43,6 +43,9 @@ export const propertySchema = z.object({
   checkInTime: z.string(),
   checkOutTime: z.string(),
   businessDate: calendarDateSchema,
+  // Go-live: the business date closed by the property's first night audit; null until then.
+  // Before go-live, room setup changes need no reason and raise no exceptions.
+  liveSince: calendarDateSchema.nullable(),
 })
 export type Property = z.infer<typeof propertySchema>
 
@@ -96,6 +99,8 @@ export const homeSummarySchema = z.object({
   members: z.number().int().nullable(),
   pendingInvites: z.number().int().nullable(),
   devices: z.number().int().nullable(),
+  // Active rooms across the hotels the member can see (the "Set up rooms" checklist step).
+  rooms: z.number().int(),
   // Per hotel the member can see: who can work there (including group-wide people) and its shared
   // devices. Counts only, so every role can see how its own hotel is staffed.
   byHotel: z.array(
@@ -103,6 +108,7 @@ export const homeSummarySchema = z.object({
       propertyId: idSchema,
       people: z.number().int(),
       devices: z.number().int(),
+      rooms: z.number().int(),
     }),
   ),
 })

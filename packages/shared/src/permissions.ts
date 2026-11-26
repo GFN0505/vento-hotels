@@ -15,6 +15,8 @@ type PermissionDefinition = {
 export const PERMISSIONS = {
   // Setup (Stage 0)
   'setup.manage': { label: 'Manage companies, properties, people and their access' },
+  // Rooms have their own row so a GM can set them up without managing people (spec, decision 1).
+  'rooms.setup': { label: 'Set up room types and rooms' },
   'permissions.manage': { label: 'Change permissions or limits' },
   'audit.view': { label: 'View the audit log' },
   // Front office
@@ -47,7 +49,10 @@ export type Permission = keyof typeof PERMISSIONS
 
 // How the permissions grid groups rows (design #26).
 export const PERMISSION_GROUPS: readonly { label: string; permissions: readonly Permission[] }[] = [
-  { label: 'Setup', permissions: ['setup.manage', 'permissions.manage', 'audit.view'] },
+  {
+    label: 'Setup',
+    permissions: ['setup.manage', 'rooms.setup', 'permissions.manage', 'audit.view'],
+  },
   {
     label: 'Front office',
     permissions: [
@@ -107,6 +112,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
   owner: ownerAll,
   group_admin: groupAdminAll,
   general_manager: {
+    'rooms.setup': yes,
     'audit.view': yes,
     'reservation.manage': yes,
     'stay.rate_override': upTo('50'),

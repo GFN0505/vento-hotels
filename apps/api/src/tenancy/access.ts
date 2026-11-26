@@ -40,7 +40,7 @@ export type Access = {
 }
 
 // What a PIN session on a shared device may never do: those need a password sign-in.
-const NOT_ON_SHARED_DEVICES: Permission[] = ['setup.manage', 'permissions.manage']
+const NOT_ON_SHARED_DEVICES: Permission[] = ['setup.manage', 'permissions.manage', 'rooms.setup']
 
 export async function effectiveRules(
   db: Pick<Database, 'select'>,
@@ -192,10 +192,15 @@ export function can(access: Access, permission: Permission): boolean {
   return access.rules[permission].allowed
 }
 
-// Server-side permission check (non-negotiable 3). UI hiding is cosmetic only.
-export function requirePermission(access: Access, permission: Permission): void {
+// Server-side permission check (non-negotiable 3). UI hiding is cosmetic only. A module can say
+// who to ask in `message`.
+export function requirePermission(
+  access: Access,
+  permission: Permission,
+  message = "You don't have access to this",
+): void {
   if (!can(access, permission)) {
-    throw new ORPCError('FORBIDDEN', { message: "You don't have access to this" })
+    throw new ORPCError('FORBIDDEN', { message })
   }
 }
 

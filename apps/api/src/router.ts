@@ -10,6 +10,11 @@ import * as governance from './governance/service.ts'
 import { noteOrganization } from './observability/request-context.ts'
 import type { EmailProvider } from './providers/email.ts'
 import { clientAddress, type RateLimiter } from './rate-limit.ts'
+import * as inspected from './rooms/inspected.ts'
+import * as roomBulk from './rooms/room-bulk.ts'
+import * as roomReads from './rooms/room-reads.ts'
+import * as roomTypes from './rooms/room-types.ts'
+import * as roomWrites from './rooms/room-writes.ts'
 import type { HealthCheck } from './system/health.ts'
 import * as invitations from './team/invitations.ts'
 import * as team from './team/members.ts'
@@ -179,6 +184,70 @@ export const router = base.router({
     ),
     set: inOrganization.permissions.set.handler(({ context, input }) =>
       governance.setPermission(context.db, context.access, input),
+    ),
+  },
+  roomTypes: {
+    list: inOrganization.roomTypes.list.handler(({ context, input }) =>
+      roomTypes.listRoomTypes(context.db, context.access, input),
+    ),
+    get: inOrganization.roomTypes.get.handler(({ context, input }) =>
+      roomTypes.getRoomType(context.db, context.access, input.id),
+    ),
+    create: inOrganization.roomTypes.create.handler(({ context, input }) =>
+      roomTypes.createRoomType(context.db, context.access, input),
+    ),
+    update: inOrganization.roomTypes.update.handler(({ context, input }) =>
+      roomTypes.updateRoomType(context.db, context.access, input),
+    ),
+    archive: inOrganization.roomTypes.archive.handler(({ context, input }) =>
+      roomTypes.archiveRoomType(context.db, context.access, input),
+    ),
+    restore: inOrganization.roomTypes.restore.handler(({ context, input }) =>
+      roomTypes.restoreRoomType(context.db, context.access, input),
+    ),
+    reorder: inOrganization.roomTypes.reorder.handler(({ context, input }) =>
+      roomTypes.reorderRoomTypes(context.db, context.access, input),
+    ),
+  },
+  rooms: {
+    list: inOrganization.rooms.list.handler(({ context, input }) =>
+      roomReads.listRooms(context.db, context.access, input),
+    ),
+    summary: inOrganization.rooms.summary.handler(({ context, input }) =>
+      roomReads.roomsSummary(context.db, context.access, input),
+    ),
+    get: inOrganization.rooms.get.handler(({ context, input }) =>
+      roomReads.getRoom(context.db, context.access, input.id),
+    ),
+    checkNumbers: inOrganization.rooms.checkNumbers.handler(({ context, input }) =>
+      roomReads.checkNumbers(context.db, context.access, input),
+    ),
+    create: inOrganization.rooms.create.handler(({ context, input }) =>
+      roomWrites.createRoom(context.db, context.access, input),
+    ),
+    createMany: inOrganization.rooms.createMany.handler(({ context, input }) =>
+      roomWrites.createManyRooms(context.db, context.access, input),
+    ),
+    update: inOrganization.rooms.update.handler(({ context, input }) =>
+      roomWrites.updateRoom(context.db, context.access, input),
+    ),
+    delete: inOrganization.rooms.delete.handler(({ context, input }) =>
+      roomWrites.deleteRoom(context.db, context.access, input),
+    ),
+    changeType: inOrganization.rooms.changeType.handler(({ context, input }) =>
+      roomBulk.changeRoomType(context.db, context.access, input),
+    ),
+    archive: inOrganization.rooms.archive.handler(({ context, input }) =>
+      roomBulk.archiveRooms(context.db, context.access, input),
+    ),
+    restore: inOrganization.rooms.restore.handler(({ context, input }) =>
+      roomBulk.restoreRooms(context.db, context.access, input),
+    ),
+    markInspected: inOrganization.rooms.markInspected.handler(({ context, input }) =>
+      inspected.markInspected(context.db, context.access, input),
+    ),
+    undoMarkInspected: inOrganization.rooms.undoMarkInspected.handler(({ context, input }) =>
+      inspected.undoMarkInspected(context.db, context.access, input),
     ),
   },
 })

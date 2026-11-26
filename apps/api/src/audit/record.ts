@@ -26,8 +26,8 @@ export type Actor = Pick<Access, 'organizationId' | 'userId' | 'memberId' | 'use
   deviceId?: string | null
 }
 
-export async function recordAudit(tx: Writer, access: Actor, event: AuditEvent): Promise<void> {
-  await tx.insert(auditEvents).values({
+function auditRow(access: Actor, event: AuditEvent) {
+  return {
     organizationId: access.organizationId,
     actorUserId: access.userId,
     actorMemberId: access.memberId,
@@ -42,7 +42,21 @@ export async function recordAudit(tx: Writer, access: Actor, event: AuditEvent):
     reason: event.reason ?? null,
     approverMemberId: event.approverMemberId ?? null,
     businessDate: event.businessDate ?? null,
-  })
+  }
+}
+
+export async function recordAudit(tx: Writer, access: Actor, event: AuditEvent): Promise<void> {
+  await tx.insert(auditEvents).values(auditRow(access, event))
+}
+
+// Many events in one statement, e.g. one per room when 500 rooms are added in one go.
+export async function recordAuditMany(
+  tx: Writer,
+  access: Actor,
+  events: readonly AuditEvent[],
+): Promise<void> {
+  if (events.length === 0) return
+  await tx.insert(auditEvents).values(events.map((event) => auditRow(access, event)))
 }
 
 // For changes made through Better Auth's own endpoints (add or remove member, change role), whose
