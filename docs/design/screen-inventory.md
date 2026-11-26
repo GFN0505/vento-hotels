@@ -13,7 +13,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Screen | Status | Stage | Notes |
 |---|---|---|---|
 | Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7); accept invite built (brick 8)** | 0 | Includes "no property assigned" and "device not registered" states. 2FA and device states still to build |
-| Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** | 0 | Approval prompt in Stage 1 (with the first action that needs it); offline PIN sign-in in brick 15 |
+| Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** | 0 | Approval prompt in Stage 1 (with the first action that needs it); offline PIN sign-in ships with the outbox (decision 0024) |
 | Onboarding and setup checklist | designed #19 · **first steps and Home checklist built (bricks 7, 13)** | 0 | Built: create account, confirm email, group + company + first hotel; Home's "Finish setting up" with the Stage 0 steps. Rooms, rates and first booking steps come with Stage 1 |
 | Properties list and property settings | designed #25 | 0 | Logo, address, time zone, check-in/out times, business date, owning entity |
 | Entities and departments | designed #25 | 0 | RC number, TIN, VAT status |
@@ -24,7 +24,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Notifications centre | designed #29 | 0 | Bell menu + full list; what each role is alerted about |
 | My profile and preferences | pattern | 0 | Password, 2FA, PIN reset, theme |
 | Global search results (beyond ⌘K) | pattern | 0 | |
-| Error pages: 404, no access, offline first load, session expired | designed #24 | 0 | |
+| Error pages: 404, no access, offline first load, session expired | designed #24 · **offline banner and offline reopen built (brick 16)** | 0 | Built: the app reopens offline with what was saved and an offline banner; 404 built earlier. A first visit with no connection still shows the browser's own page |
 | Mobile "More" menu per role | partial (global patterns) | 0 | |
 | Sync queue and conflict resolution | designed #36 | 0 | Needs a real screen: what failed, why, retry or discard |
 

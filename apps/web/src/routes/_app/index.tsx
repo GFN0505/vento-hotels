@@ -19,7 +19,6 @@ import { Workspace } from '@/components/home/workspace'
 import { useProperty } from '@/components/shell/property-context'
 import { EmptyState } from '@/components/ui/empty-state'
 import { orpc } from '@/lib/api'
-import { authClient } from '@/lib/auth'
 import { cn } from '@/lib/cn'
 import { useMe } from '@/lib/me'
 import { visibleGroups } from '@/lib/navigation'
@@ -48,12 +47,13 @@ const RUNS_HOTEL = new Set(['owner', 'group_admin', 'general_manager', 'front_de
 
 function Home() {
   const me = useMe()
-  const session = authClient.useSession()
+  // From the sign-in check, so the greeting works offline too.
+  const { user } = Route.useRouteContext()
   const hotelsQuery = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
   const summary = useQuery(orpc.organization.home.queryOptions())
   const { properties, current, allHotels, canSeeAll, select, selectAll } = useProperty()
   const role = me.role
-  const firstName = session.data?.user.name.split(' ')[0]
+  const firstName = user.name.split(' ')[0]
   const group = me.data?.organization.name ?? ''
   // Team and device prompts are for people who run the setup (and not while previewing a role).
   const managesTeam = me.can('setup.manage') && summary.data?.members != null

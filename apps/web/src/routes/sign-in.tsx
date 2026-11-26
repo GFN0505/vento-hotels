@@ -12,6 +12,7 @@ import { emailProblem } from '@/lib/email'
 import { CANT_REACH_VENTO, isConnectionProblem } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
 import { safeRedirect } from '@/lib/redirect'
+import { hasSession } from '@/lib/session'
 import { usePageTitle } from '@/lib/title'
 
 type SignInSearch = { redirect?: string | undefined }
@@ -23,8 +24,7 @@ export const Route = createFileRoute('/sign-in')({
   },
   // Already signed in: go straight on.
   beforeLoad: async ({ search }) => {
-    const { data } = await authClient.getSession()
-    if (data) throw redirect({ href: search.redirect ?? '/' })
+    if (await hasSession()) throw redirect({ href: search.redirect ?? '/' })
   },
   component: SignIn,
 })

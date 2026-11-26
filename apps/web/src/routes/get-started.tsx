@@ -13,13 +13,13 @@ import { emailProblem } from '@/lib/email'
 import { CANT_REACH_VENTO, isConnectionProblem } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
 import { checkNewPassword } from '@/lib/password'
+import { hasSession } from '@/lib/session'
 import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/get-started')({
   // Already signed in: go straight home.
   beforeLoad: async () => {
-    const { data } = await authClient.getSession()
-    if (data) throw redirect({ to: '/' })
+    if (await hasSession()) throw redirect({ to: '/' })
   },
   component: GetStarted,
 })
