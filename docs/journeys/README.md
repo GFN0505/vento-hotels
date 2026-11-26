@@ -35,10 +35,20 @@ All walkthroughs use the demo seed, so names and numbers match across documents,
 - **Organization:** Kora Hotels Group (4 properties, 382 rooms).
 - **Entity:** Kora Hospitality Ltd (owns all four properties).
 - **Properties:**
-  - **Kora Victoria Island**, Victoria Island, Eti-Osa, Lagos. 120 rooms. The walkthroughs happen here. Room types and BAR rates (room only, per night, excl. taxes): Standard Queen ₦120,000 (3rd floor, e.g. 301–305), Deluxe King ₦150,000 (4th floor, e.g. 401–406), Executive King ₦210,000 (5th and 6th floors, e.g. 501–504, 611), Junior Suite ₦320,000 (11th floor, e.g. 1101–1102). Outlets: **Calabash restaurant** (06:30–23:00; main hall, terrace, private room), **Pool bar** (10:00–00:00), **Room service** (24 hours). Kitchen printers KITCHEN-1 and GRILL-1, bar printer BAR-2.
+  - **Kora Victoria Island**, Victoria Island, Eti-Osa, Lagos. 120 rooms: 14 on each of floors 3–10, 8 suites on floor 11. The walkthroughs happen here. Room types (code), guests, BAR rate (room only, per night, excl. taxes) and rooms:
+
+    | Room type | Code | Bed · guests | Size | BAR | Rooms |
+    |---|---|---|---|---|---|
+    | Standard Queen | `STQ` | Queen · 2 adults | 24 m² | ₦120,000 | 36: 301–314, 701–714, 801–808 |
+    | Deluxe King | `DLK` | King · 2 adults + 1 child | 32 m² | ₦150,000 | 48: 401–414, 809–814, 901–914, 1001–1014 |
+    | Executive King | `EXK` | King · 2 adults + 1 child | 40 m² | ₦210,000 | 28: 501–514, 601–614 |
+    | Junior Suite | `JRS` | King + sofa bed · 3 adults + 1 child | 58 m² | ₦320,000 | 8: 1101–1108 |
+
+    Floors 3–6 are one type each; floors 7–10 are mixed (7 Standard Queen, 8 Standard Queen 801–808 and Deluxe King 809–814, 9 and 10 Deluxe King). Features: 401 City view, connecting to 402; 406 City view; 407 Roll-in shower; 412 Near lift; 502 Quiet side (Mr Mensah's "quiet room"); 1102 Ocean view, Bathtub. Accessible: 307, 407, 507, 901. Tunde set the rooms up himself (`going-live.md` step 3). In the seed so far every room is `vacant` + `inspected`; stays, the 503 out-of-order and the 25 Nov room statuses are added by later Stage 1 bricks. Outlets: **Calabash restaurant** (06:30–23:00; main hall, terrace, private room), **Pool bar** (10:00–00:00), **Room service** (24 hours). Kitchen printers KITCHEN-1 and GRILL-1, bar printer BAR-2.
   - **Kora Ikeja GRA**, Ikeja GRA, Ikeja, Lagos. 86 rooms.
   - **Kora Abuja**, Wuse 2, Abuja Municipal, FCT. 104 rooms.
   - **Kora Port Harcourt**, GRA Phase 2, Obio-Akpor, Rivers. 72 rooms.
+  - The other three hotels use the same four room types and codes in simple blocks of 14 rooms per floor from floor 1, with the Junior Suites on the top floor: Ikeja GRA 28 / 28 / 28 / 2, Abuja 28 / 42 / 28 / 6, Port Harcourt 28 / 28 / 14 / 2 (Standard Queen / Deluxe King / Executive King / Junior Suite).
 - **Rate plans:** BAR (rates above, room only), BAR Bed & Breakfast, Non-refundable (BAR − 10%), Corporate (negotiated per company).
 - **Corporate rate:** Acme Energy, Executive King ₦180,000 per night at Kora Victoria Island (as in the tape chart design); Deluxe King ₦130,000 with breakfast.
 - **Taxes and charges:** VAT, Lagos consumption tax and a 10% service charge, all from configuration. Amounts marked * in the walkthroughs use **illustrative** rates (VAT 7.5%, Lagos consumption tax 5%), the same as the designs — verify against current law before they go into the seed.

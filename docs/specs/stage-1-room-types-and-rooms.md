@@ -25,7 +25,7 @@ A hotel can't sell, assign or count a room Vento doesn't know about. Today a GM 
 Tunde, GM at Kora Victoria Island, business date 13 Nov 2026 (setup week, `going-live.md` step 3).
 
 1. Home shows the setup checklist step **Set up rooms** ("Room types and rooms, so you can sell them"). He clicks it and lands on **Rooms**, which is empty and opens straight into the builder (the `OnbRooms` layout): "Describe the pattern once; Vento numbers every room."
-2. Under **Room types** he types four lines: Standard Queen (Queen, 2 guests), Deluxe King (King, 3), Executive King (King, 3), Junior Suite (King + sofa bed, 4). Each line gets a code suggested from the name (he changes Executive King's to `EXK`).
+2. Under **Room types** he types four lines: Standard Queen (Queen), Deluxe King (King), Executive King (King), Junior Suite (King + sofa bed), each with its max adults. Each line gets a code suggested from the name (he changes Junior Suite's suggested `JNS` to `JRS`). Children and sizes are added afterwards in each type's **Edit**, as built.
 3. Under **Rooms** he adds lines of "type · floors · numbers on each floor": Standard Queen · floors 3–3 · 01–14; Deluxe King · 4–4 · 01–14; Executive King · 5–6 · 01–14; and so on (the full seed layout is below).
 4. The **preview grid** shows every room as a chip coloured by type, floor by floor, with a legend ("Standard Queen 36 · Deluxe King 48 · Executive King 28 · Junior Suite 8"). He clicks chip 1008 and changes it to Deluxe King. Clashes are marked before anything is saved.
 5. He clicks **Create 120 rooms** (main path: 2 clicks after typing, plus any chip fixes). Toast: "120 rooms created at Kora Victoria Island."
