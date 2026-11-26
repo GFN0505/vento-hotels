@@ -3,13 +3,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
+import { PreviewBanner } from '@/components/shell/preview-banner'
 import { PropertyProvider } from '@/components/shell/property-context'
 import { Sidebar } from '@/components/shell/sidebar'
 import { TopBar } from '@/components/shell/top-bar'
 import { orpc } from '@/lib/api'
 import { useIdleLock } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
+import { visibleGroups } from '@/lib/navigation'
 import { loadSignedIn } from '@/lib/session'
+import { ViewAsProvider } from '@/lib/view-as'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async () => {
@@ -27,19 +30,36 @@ export const Route = createFileRoute('/_app')({
 })
 
 function AppLayout() {
+  return (
+    <ViewAsProvider>
+      <Shell />
+    </ViewAsProvider>
+  )
+}
+
+function Shell() {
   const { user } = Route.useRouteContext()
   const [menuOpen, setMenuOpen] = useState(false)
   const organization = useMe()
   const showSettings = organization.can('setup.manage') || organization.can('permissions.manage')
+  const groups = organization.role ? visibleGroups(organization.role, organization.has) : []
   const properties = useQuery(orpc.properties.list.queryOptions({ input: { pageSize: 100 } }))
   useIdleLock(organization.data?.device?.idleSeconds, user.name.split(' ')[0] ?? user.name)
 
   return (
     <PropertyProvider properties={properties.data?.items ?? []}>
+      {/* First tab stop: keyboard users skip the menu in one key press. */}
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-surface focus:px-4 focus:py-2 focus:font-medium focus:text-pri-ink focus:shadow-[var(--shadow-lg)]"
+      >
+        Skip to main content
+      </a>
       <div className="flex min-h-dvh">
         <div className="sticky top-0 hidden h-dvh lg:block">
           <Sidebar
             groupName={organization.data?.organization.name ?? ''}
+            groups={groups}
             showSettings={showSettings}
           />
         </div>
@@ -47,6 +67,7 @@ function AppLayout() {
           <div className="fixed inset-0 z-40 flex lg:hidden">
             <Sidebar
               groupName={organization.data?.organization.name ?? ''}
+              groups={groups}
               showSettings={showSettings}
               onNavigate={() => setMenuOpen(false)}
             />
@@ -59,8 +80,9 @@ function AppLayout() {
           </div>
         ) : null}
         <div className="flex min-w-0 grow flex-col">
+          <PreviewBanner />
           <TopBar user={user} onOpenMenu={() => setMenuOpen(true)} />
-          <main className="flex-1 p-4 sm:p-6">
+          <main id="main" tabIndex={-1} className="flex-1 p-4 outline-none sm:p-6">
             <Outlet />
           </main>
         </div>

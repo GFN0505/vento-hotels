@@ -2,11 +2,12 @@
 // click outside, and when focus leaves it, and hands focus back to the avatar on Escape.
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { KeyRound, LogOut } from 'lucide-react'
+import { Eye, KeyRound, LogOut } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { authClient } from '@/lib/auth'
 import { lockDevice } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
+import { PreviewRoleDialog } from './preview-role-dialog'
 import { SetPinDialog } from './set-pin-dialog'
 
 function initials(name: string): string {
@@ -23,6 +24,7 @@ type AccountMenuProps = { name: string; email: string; onSharedDevice: boolean }
 export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
   const me = useMe()
   const [settingPin, setSettingPin] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
@@ -87,6 +89,19 @@ export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
             <span className="truncate text-sm text-text-2">{email}</span>
           </div>
           <div className="my-1 h-px bg-border" />
+          {me.real.canPreview && !onSharedDevice ? (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                setPreviewing(true)
+              }}
+              className="flex h-11 w-full items-center gap-2 rounded-sm px-3 text-left hover:bg-surface-2 lg:h-9"
+            >
+              <Eye className="size-4 text-text-2" aria-hidden="true" />
+              Preview as a role
+            </button>
+          ) : null}
           {onSharedDevice ? null : (
             <button
               type="button"
@@ -110,6 +125,7 @@ export function AccountMenu({ name, email, onSharedDevice }: AccountMenuProps) {
           </button>
         </div>
       ) : null}
+      <PreviewRoleDialog open={previewing} onClose={() => setPreviewing(false)} />
       <SetPinDialog
         open={settingPin}
         onClose={() => setSettingPin(false)}

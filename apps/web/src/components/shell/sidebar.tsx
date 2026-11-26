@@ -1,72 +1,92 @@
-// Navy sidebar from the designs (Shell components · Sidebar). Only screens that exist are listed;
-// each module adds its entry here when it ships, under the design's groups (Front office, Revenue,
-// Operations, Back office).
+// Navy sidebar from the designs (Shell components · Sidebar): Home, the modules grouped as Front
+// office, Revenue, Operations and Back office, and Settings at the foot. Each person sees the
+// modules switched on for their group (decision 0021) that their role uses (lib/navigation.ts).
 import { Link } from '@tanstack/react-router'
-import { Home, Settings } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { Logo } from '@/components/logo'
 import { cn } from '@/lib/cn'
-
-type NavItem = {
-  to: '/' | '/settings'
-  label: string
-  icon: ComponentType<{ className?: string }>
-  // Exact match for Home; Settings stays highlighted on its sub-pages.
-  exact: boolean
-}
-
-// Module entries carry their feature: they show only when it's switched on for the group
-// (decision 0021). e.g. { to: '/arrivals', label: 'Arrivals', icon: …, feature: 'front_desk' }
-
-const HOME: NavItem = { to: '/', label: 'Home', icon: Home, exact: true }
-const SETTINGS: NavItem = { to: '/settings', label: 'Settings', icon: Settings, exact: false }
+import { HOME_ENTRY, type NavGroup } from '@/lib/navigation'
 
 type SidebarProps = {
   groupName: string
+  groups: NavGroup[]
   // Settings shows only for people who can use it; the API checks anyway.
   showSettings: boolean
   onNavigate?: () => void
 }
 
-export function Sidebar({ groupName, showSettings, onNavigate }: SidebarProps) {
-  const nav: { group?: string; items: NavItem[] }[] = [
-    { items: [HOME] },
-    ...(showSettings ? [{ group: 'Admin', items: [SETTINGS] }] : []),
-  ]
+const itemClass = cn(
+  'flex h-11 flex-none items-center gap-3 rounded-sm px-3 text-[14px] font-medium text-side-text lg:h-10 [@media(max-height:820px)]:lg:h-8',
+  'hover:bg-side-2 hover:text-white',
+  'data-[status=active]:bg-brand/22 data-[status=active]:text-white',
+)
+
+function Item({
+  to,
+  label,
+  icon: Icon,
+  exact,
+  onNavigate,
+}: {
+  to: string
+  label: string
+  icon: ComponentType<{ className?: string }>
+  exact?: boolean
+  onNavigate: (() => void) | undefined
+}) {
+  return (
+    <Link
+      to={to}
+      onClick={onNavigate}
+      activeOptions={{ exact: exact ?? false }}
+      className={itemClass}
+    >
+      <Icon className="size-[18px] flex-none" aria-hidden="true" />
+      <span className="truncate">{label}</span>
+    </Link>
+  )
+}
+
+export function Sidebar({ groupName, groups, showSettings, onNavigate }: SidebarProps) {
   return (
     <nav
       aria-label="Main"
-      className="flex h-full w-[264px] flex-none flex-col gap-1 bg-side px-3 py-4 text-side-text"
+      className="flex h-full w-[280px] flex-none flex-col bg-side px-3 py-4 text-side-text lg:w-[248px] xl:w-[280px]"
     >
-      <div className="flex flex-col gap-1 px-2 pt-1 pb-3.5">
+      <div className="flex flex-col gap-1 px-2 pt-1 pb-4">
         <Logo size={28} wordmark product className="text-[16px] text-white" />
-        <span className="truncate pl-[38px] text-sm font-medium text-side-mute">{groupName}</span>
+        <span className="truncate pl-[38px] text-sm font-medium text-side-mute" title={groupName}>
+          {groupName}
+        </span>
       </div>
-      {nav.map((section) => (
-        <div key={section.group ?? 'main'} className="flex flex-col gap-0.5">
-          {section.group ? (
-            <div className="px-2.5 pt-3.5 pb-1.5 text-xs font-semibold tracking-[0.05em] text-side-mute uppercase">
-              {section.group}
+      {/* A soft fade at the bottom says there's more to scroll on short screens. */}
+      <div className="relative flex min-h-0 grow flex-col">
+        <div className="flex min-h-0 grow flex-col gap-0.5 overflow-y-auto pb-6">
+          <Item {...HOME_ENTRY} exact onNavigate={onNavigate} />
+          {groups.map((group) => (
+            <div key={group.label ?? 'main'} className="flex flex-col gap-0.5">
+              {group.label ? (
+                <div className="px-3 pt-4 pb-1.5 text-xs font-semibold tracking-[0.05em] text-side-mute uppercase [@media(max-height:820px)]:pt-2.5 [@media(max-height:820px)]:pb-1">
+                  {group.label}
+                </div>
+              ) : null}
+              {group.entries.map((entry) => (
+                <Item key={entry.to} {...entry} onNavigate={onNavigate} />
+              ))}
             </div>
-          ) : null}
-          {section.items.map(({ to, label, icon: Icon, exact }) => (
-            <Link
-              key={to}
-              to={to}
-              onClick={onNavigate}
-              activeOptions={{ exact }}
-              className={cn(
-                'flex h-11 items-center gap-3 rounded-sm px-3 text-[14px] font-medium text-side-text lg:h-10',
-                'hover:bg-side-2 hover:text-white',
-                'data-[status=active]:bg-brand/22 data-[status=active]:text-white',
-              )}
-            >
-              <Icon className="size-[18px]" aria-hidden="true" />
-              {label}
-            </Link>
           ))}
         </div>
-      ))}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-linear-to-t from-side to-transparent"
+        />
+      </div>
+      {showSettings ? (
+        <div className="mt-2 border-t border-side-2 pt-2">
+          <Item to="/settings" label="Settings" icon={Settings} onNavigate={onNavigate} />
+        </div>
+      ) : null}
     </nav>
   )
 }

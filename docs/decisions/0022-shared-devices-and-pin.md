@@ -17,7 +17,7 @@ Hotels run on shared tablets, PCs and phones. Email and password every switch is
 ## Consequences
 - Every action on a shared device carries the person and the device in the audit log.
 - 4 digits is a small space. It's safe only because the device must be registered (a secret cookie), attempts are limited per person and per device, and PIN sessions are confined to one hotel. Don't relax any of the three without revisiting this decision.
-- Offline PIN sign-in (brick 12) will need PIN verifiers cached on the device; that design comes with the offline shell.
+- Offline PIN sign-in (brick 13) will need PIN verifiers cached on the device; that design comes with the offline shell.
 
 ## Alternatives considered
 - **Shared logins per device:** what hotels do today, and why leakage can't be traced.
