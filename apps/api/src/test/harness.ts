@@ -5,6 +5,7 @@ import { createApp } from '../app.ts'
 import { createAuth } from '../auth/auth.ts'
 import { createDatabase } from '../db/client.ts'
 import { MemoryEmailProvider } from '../providers/email.ts'
+import { RateLimiter } from '../rate-limit.ts'
 import type { HealthCheck } from '../system/health.ts'
 
 export const WEB_ORIGIN = 'http://localhost:5180'
@@ -29,7 +30,14 @@ export function createTestApp(databaseUrl: string, options: { rateLimit?: boolea
     },
     email,
   })
-  const app = createApp({ db: database.db, auth, checkHealth: healthy })
+  const app = createApp({
+    db: database.db,
+    auth,
+    checkHealth: healthy,
+    email,
+    webOrigin: WEB_ORIGIN,
+    limiter: new RateLimiter(options.rateLimit ?? false),
+  })
 
   async function call(
     path: string,

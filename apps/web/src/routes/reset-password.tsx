@@ -32,10 +32,16 @@ function ResetPassword() {
   if (!token || linkError) {
     return (
       <AuthCard title="This link has expired" subtitle="Reset links work once, for 30 minutes.">
-        <Link to="/forgot-password" className="text-pri-ink hover:underline">
+        <Link
+          to="/forgot-password"
+          className="inline-flex min-h-11 items-center text-pri-ink hover:underline"
+        >
           Send a new link
         </Link>
-        <Link to="/sign-in" className="text-sm text-pri-ink hover:underline">
+        <Link
+          to="/sign-in"
+          className="inline-flex min-h-11 items-center text-sm text-pri-ink hover:underline"
+        >
           Back to sign in
         </Link>
       </AuthCard>

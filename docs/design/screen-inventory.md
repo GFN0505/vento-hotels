@@ -12,13 +12,13 @@ Covered by round 4 of the design prompt (screens 24–29).
 
 | Screen | Status | Stage | Notes |
 |---|---|---|---|
-| Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7)** | 0 | Includes "no property assigned" and "device not registered" states. Invite, 2FA and device states still to build |
+| Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7); accept invite built (brick 8)** | 0 | Includes "no property assigned" and "device not registered" states. 2FA and device states still to build |
 | Shared-device PIN sign-in, approval prompt | designed #22 | 0 | |
 | Onboarding and setup checklist | designed #19 · **first steps built (brick 7)** | 0 | Built: create account, confirm email, group + company + first hotel. Rooms, rates, first booking and the checklist come with Stage 1 |
 | Properties list and property settings | designed #25 | 0 | Logo, address, time zone, check-in/out times, business date, owning entity |
 | Entities and departments | designed #25 | 0 | RC number, TIN, VAT status |
-| Members and roles | designed #25 | 0 | Invite, assign roles, limit to properties/entities |
-| **Permissions matrix and limits editor** | designed #26 | 0 | Roles × actions grid with limits; owner only; every change audited |
+| Members and roles | designed #25 · **built (brick 8)** | 0 | Invite, assign roles, limit to properties. PIN-only staff, 2FA and entity limits still to build |
+| **Permissions matrix and limits editor** | designed #26 · **built (brick 8)** | 0 | Roles × actions grid with limits; owner only; every change audited. Effective dates, approvers and export still to build |
 | Devices | designed #25 | 0 | Register, name, bind to property, revoke |
 | **Audit log viewer** | designed #28 | 0 | Filter by staff, action, property, date; before/after diff; also a drawer on every record |
 | Notifications centre | designed #29 | 0 | Bell menu + full list; what each role is alerted about |

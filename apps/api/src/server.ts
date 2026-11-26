@@ -5,10 +5,15 @@ import { createAuth } from './auth/auth.ts'
 import { createDatabase } from './db/client.ts'
 import { loadEnv } from './env.ts'
 import { ConsoleEmailProvider, FileEmailProvider } from './providers/email.ts'
+import { RateLimiter } from './rate-limit.ts'
 import { healthCheck } from './system/health.ts'
 
 const env = loadEnv()
 const database = createDatabase(env.DATABASE_URL)
+const email =
+  env.EMAIL_OUTBOX_DIR && env.NODE_ENV !== 'production'
+    ? new FileEmailProvider(env.EMAIL_OUTBOX_DIR)
+    : new ConsoleEmailProvider()
 const auth = createAuth({
   db: database.db,
   settings: {
@@ -17,14 +22,14 @@ const auth = createAuth({
     webOrigin: env.WEB_ORIGIN,
     rateLimit: env.NODE_ENV !== 'test',
   },
-  email:
-    env.EMAIL_OUTBOX_DIR && env.NODE_ENV !== 'production'
-      ? new FileEmailProvider(env.EMAIL_OUTBOX_DIR)
-      : new ConsoleEmailProvider(),
+  email,
 })
 const app = createApp({
   db: database.db,
   auth,
+  email,
+  webOrigin: env.WEB_ORIGIN,
+  limiter: new RateLimiter(env.NODE_ENV !== 'test'),
   checkHealth: healthCheck({ databaseUrl: env.DATABASE_URL, s3Endpoint: env.S3_ENDPOINT }),
 })
 

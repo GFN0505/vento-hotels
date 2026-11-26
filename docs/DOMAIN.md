@@ -42,10 +42,10 @@ Permissions are `module.action`, granted by role and optionally limited to prope
 | Approve payroll run | – | – | – | – | – | – | ✓ | ✓ |
 | View owner's daily report and leakage alerts | – | – | – | – | – | ✓ | ✓ | ✓ |
 | Change permissions or limits | – | – | – | – | – | – | – | owner only |
-| Manage companies, properties and property access | – | – | – | – | – | – | – | ✓ |
+| Manage companies, properties, people and their access | – | – | – | – | – | – | – | ✓ |
 | View the audit log | – | – | – | – | – | ✓ | ✓ | ✓ |
 
-The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `stay.rate_override`); keep the two in step. An organization's owner can override any role's rule except the owner's own (`permissions.set`, with a reason, audited). The night auditor is a `front_desk` member working the night shift; "(night)" means the run-night-audit permission is granted to night-shift front desk staff, not a separate role. Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get only their own module's actions: e.g. `room_attendant` and `housekeeping_supervisor` can change room status, do room checks and post minibar charges; only `housekeeping_supervisor` records inspections. A member can't approve their own over-limit action.
+The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `stay.rate_override`); keep the two in step. An organization's owner can override any role's rule except the owner's own (`permissions.set`, with a reason, audited); people who manage the team can view the matrix. Managing people (invite, change role or hotels, remove) uses the same permission as setup. Only an owner can invite, change or remove an owner or group admin; nobody changes their own role or access; a manager limited to some hotels can only hand out those hotels. The night auditor is a `front_desk` member working the night shift; "(night)" means the run-night-audit permission is granted to night-shift front desk staff, not a separate role. Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get only their own module's actions: e.g. `room_attendant` and `housekeeping_supervisor` can change room status, do room checks and post minibar charges; only `housekeeping_supervisor` records inspections. A member can't approve their own over-limit action.
 
 ## Devices and sign-in
 | Term | Meaning | Notes |

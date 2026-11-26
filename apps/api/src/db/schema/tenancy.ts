@@ -2,7 +2,7 @@
 // properties each member may access.
 import { boolean, char, index, pgTable, text, time, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import { archivedAt, calendarDate, id, timestamps } from '../columns.ts'
-import { members, organizations } from './auth.ts'
+import { invitations, members, organizations } from './auth.ts'
 
 const organizationId = () =>
   uuid()
@@ -73,6 +73,27 @@ export const memberProperties = pgTable(
   },
   (t) => [
     uniqueIndex().on(t.memberId, t.propertyId),
+    index().on(t.organizationId),
+    index().on(t.propertyId),
+  ],
+)
+
+// Hotels an invited person will see once they join, when invitations.all_properties is false.
+export const invitationProperties = pgTable(
+  'invitation_properties',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    invitationId: uuid()
+      .notNull()
+      .references(() => invitations.id, { onDelete: 'cascade' }),
+    propertyId: uuid()
+      .notNull()
+      .references(() => properties.id, { onDelete: 'cascade' }),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex().on(t.invitationId, t.propertyId),
     index().on(t.organizationId),
     index().on(t.propertyId),
   ],

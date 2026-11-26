@@ -21,11 +21,14 @@ function NotFound() {
   return (
     <AuthCard title="Page not found" subtitle="The link may be old, or the page has moved.">
       {isPending ? null : session ? (
-        <Link to="/" className="text-pri-ink hover:underline">
+        <Link to="/" className="inline-flex min-h-11 items-center text-pri-ink hover:underline">
           Go to home
         </Link>
       ) : (
-        <Link to="/sign-in" className="text-pri-ink hover:underline">
+        <Link
+          to="/sign-in"
+          className="inline-flex min-h-11 items-center text-pri-ink hover:underline"
+        >
           Go to sign in
         </Link>
       )}

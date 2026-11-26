@@ -93,4 +93,10 @@ export async function expectAccessible(page: Page) {
       `${v.id} (${v.impact}): ${v.help}\n    ${v.nodes.map((n) => n.target.join(' ')).join('\n    ')}`,
   )
   expect(problems, `Accessibility problems on ${page.url()}`).toEqual([])
+  // Nothing wider than the screen (docs/UX-STANDARD.md, section 6): a long email or name that
+  // pushes the page sideways also zooms phones out and hides bottom sheets.
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  )
+  expect(overflow, `Page scrolls sideways on ${page.url()}`).toBeLessThanOrEqual(0)
 }

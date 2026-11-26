@@ -1,12 +1,13 @@
 // A labelled native select. Native on purpose: phones show their own picker, and it works with
 // the keyboard and screen readers without extra code.
-import { type SelectHTMLAttributes, useId } from 'react'
+import { type ReactNode, type SelectHTMLAttributes, useId } from 'react'
 import { cn } from '@/lib/cn'
 
 type SelectFieldProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label: string
-  hint?: string
-  options: readonly string[]
+  hint?: ReactNode
+  // Plain strings are both value and label.
+  options: readonly (string | { value: string; label: string })[]
   placeholder?: string
 }
 
@@ -38,11 +39,15 @@ export function SelectField({
         {...props}
       >
         {placeholder ? <option value="">{placeholder}</option> : null}
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
+        {options.map((option) => {
+          const { value, label: text } =
+            typeof option === 'string' ? { value: option, label: option } : option
+          return (
+            <option key={value} value={value}>
+              {text}
+            </option>
+          )
+        })}
       </select>
       {hint ? (
         <p id={hintId} className="text-sm text-text-3">

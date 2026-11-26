@@ -20,7 +20,7 @@ import { and, count, desc, eq, inArray, type SQL, sql } from 'drizzle-orm'
 import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { auditEvents, permissionOverrides } from '../db/schema/governance.ts'
-import { type Access, effectiveRules, requirePermission } from '../tenancy/access.ts'
+import { type Access, can, effectiveRules, requirePermission } from '../tenancy/access.ts'
 
 // A member limited to some properties sees only events at those properties; group-level events
 // (setup, permissions) are for members who see every property.
@@ -88,7 +88,8 @@ function view(role: MemberRole, permission: Permission, rule: PermissionRule): P
 }
 
 export async function listPermissions(db: Database, access: Access) {
-  requirePermission(access, 'permissions.manage')
+  // People who manage the team can see the rules; only permissions.manage can change them.
+  if (!can(access, 'permissions.manage')) requirePermission(access, 'setup.manage')
   const perRole = await Promise.all(
     MEMBER_ROLES.map(async (role) => ({
       role,

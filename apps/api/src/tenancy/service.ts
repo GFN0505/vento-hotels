@@ -6,16 +6,17 @@ import {
   calendarDateIn,
   type Entity,
   type PageQuery,
+  PERMISSION_KEYS,
   type Property,
   pageOffset,
   toPage,
 } from '@vento/shared'
-import { and, asc, count, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, count, eq, isNull } from 'drizzle-orm'
 import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
-import { members, organizations } from '../db/schema/auth.ts'
-import { entities, memberProperties, properties } from '../db/schema/tenancy.ts'
+import { organizations } from '../db/schema/auth.ts'
+import { entities, properties } from '../db/schema/tenancy.ts'
 import { type Access, propertyScope, requirePermission } from './access.ts'
 
 const entityColumns = {
@@ -61,6 +62,7 @@ export async function currentOrganization(db: Database, access: Access) {
   return {
     organization: org,
     member: { id: access.memberId, role: access.role, allProperties: access.allProperties },
+    permissions: PERMISSION_KEYS.filter((key) => access.rules[key].allowed),
   }
 }
 
@@ -196,70 +198,4 @@ export async function createProperty(
     if (isUniqueViolation(error)) throw nameTaken('property')
     throw error
   }
-}
-
-export async function setPropertyAccess(
-  db: Database,
-  access: Access,
-  input:
-    | { memberId: string; allProperties: true }
-    | { memberId: string; allProperties: false; propertyIds: string[] },
-): Promise<{ ok: true }> {
-  requirePermission(access, 'setup.manage')
-  const propertyIds = input.allProperties ? [] : [...new Set(input.propertyIds)]
-
-  await db.transaction(async (tx) => {
-    const [member] = await tx
-      .select({ id: members.id, allProperties: members.allProperties })
-      .from(members)
-      .where(and(eq(members.id, input.memberId), eq(members.organizationId, access.organizationId)))
-    if (!member) throw notFound()
-
-    if (propertyIds.length > 0) {
-      const found = await tx
-        .select({ id: properties.id })
-        .from(properties)
-        .where(
-          and(
-            eq(properties.organizationId, access.organizationId),
-            inArray(properties.id, propertyIds),
-          ),
-        )
-      if (found.length !== propertyIds.length) {
-        throw new ORPCError('BAD_REQUEST', { message: 'Choose properties from this group' })
-      }
-    }
-
-    const beforeIds = (
-      await tx
-        .select({ id: memberProperties.propertyId })
-        .from(memberProperties)
-        .where(eq(memberProperties.memberId, member.id))
-    )
-      .map((row) => row.id)
-      .sort()
-
-    await tx
-      .update(members)
-      .set({ allProperties: input.allProperties })
-      .where(eq(members.id, member.id))
-    await tx.delete(memberProperties).where(eq(memberProperties.memberId, member.id))
-    if (propertyIds.length > 0) {
-      await tx.insert(memberProperties).values(
-        propertyIds.map((propertyId) => ({
-          organizationId: access.organizationId,
-          memberId: member.id,
-          propertyId,
-        })),
-      )
-    }
-    await recordAudit(tx, access, {
-      action: 'member.property_access_changed',
-      entityType: 'member',
-      entityId: member.id,
-      before: { allProperties: member.allProperties, propertyIds: beforeIds },
-      after: { allProperties: input.allProperties, propertyIds: [...propertyIds].sort() },
-    })
-  })
-  return { ok: true }
 }

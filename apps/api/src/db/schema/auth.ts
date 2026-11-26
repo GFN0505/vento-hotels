@@ -117,6 +117,10 @@ export const invitations = pgTable(
     inviterId: uuid()
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    // Vento's invites (decision 0020): SHA-256 of the secret in the link, never the secret itself,
+    // and which hotels the person will see (the list is in invitation_properties).
+    tokenHash: text().unique(),
+    allProperties: boolean().notNull().default(false),
     createdAt: created(),
   },
   (t) => [index().on(t.organizationId), index().on(t.email)],

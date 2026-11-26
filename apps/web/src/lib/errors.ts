@@ -8,3 +8,20 @@ export function isConnectionProblem(failure: { status?: number | undefined } | n
   const status = failure.status ?? 0
   return status === 0 || status >= 500
 }
+
+// The message to show for a failed API call: the API's own words for problems with the request
+// (they're written for people), and the connection message for everything else.
+export function problemMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'status' in error && 'message' in error) {
+    const { status, message } = error as { status: unknown; message: unknown }
+    if (
+      typeof status === 'number' &&
+      status >= 400 &&
+      status < 500 &&
+      typeof message === 'string'
+    ) {
+      return message
+    }
+  }
+  return CANT_REACH_VENTO
+}
