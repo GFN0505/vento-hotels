@@ -2,6 +2,7 @@ import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-qu
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { startErrorTracking } from './observability/errors'
 import { markReachable, markUnreachable } from './offline/connection'
 import { keepSaving, restore } from './offline/saved-data'
 import { neverReached } from './offline/unreachable'
@@ -40,11 +41,12 @@ declare module '@tanstack/react-router' {
 const root = document.getElementById('root')
 if (!root) throw new Error('Missing #root element in index.html')
 
-if (import.meta.env.PROD) {
-  window.addEventListener('load', () => {
+window.addEventListener('load', () => {
+  startErrorTracking()
+  if (import.meta.env.PROD) {
     void import('./offline/register').then(({ registerServiceWorker }) => registerServiceWorker())
-  })
-}
+  }
+})
 
 // The data last seen goes into the cache before the first render, so pages open offline. Not a
 // top-level await: that makes the bundler load every route up front.

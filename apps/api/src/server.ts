@@ -4,16 +4,28 @@ import { createApp } from './app.ts'
 import { createAuth } from './auth/auth.ts'
 import { createDatabase } from './db/client.ts'
 import { loadEnv } from './env.ts'
+import { type Jobs, QueuedEmailProvider, startJobs } from './jobs/queue.ts'
+import { flushErrorTracking, reportError, startErrorTracking } from './observability/errors.ts'
+import { logger } from './observability/log.ts'
 import { ConsoleEmailProvider, FileEmailProvider } from './providers/email.ts'
 import { RateLimiter } from './rate-limit.ts'
 import { healthCheck } from './system/health.ts'
 
 const env = loadEnv()
+if (env.LOG_LEVEL) logger.level = env.LOG_LEVEL
+startErrorTracking({ dsn: env.SENTRY_DSN, environment: env.NODE_ENV })
+process.on('unhandledRejection', (error) => reportError(error, 'unhandled'))
+
 const database = createDatabase(env.DATABASE_URL)
-const email =
+const deliver =
   env.EMAIL_OUTBOX_DIR && env.NODE_ENV !== 'production'
     ? new FileEmailProvider(env.EMAIL_OUTBOX_DIR)
     : new ConsoleEmailProvider()
+// With jobs on, email goes through the queue and is retried if the provider fails.
+const jobs: Jobs | undefined = env.JOBS_ENABLED
+  ? await startJobs({ databaseUrl: env.DATABASE_URL, email: deliver })
+  : undefined
+const email = jobs ? new QueuedEmailProvider(jobs.queue) : deliver
 const limiter = new RateLimiter(env.NODE_ENV !== 'test')
 const auth = createAuth({
   db: database.db,
@@ -33,18 +45,27 @@ const app = createApp({
   webOrigin: env.WEB_ORIGIN,
   limiter,
   allFeatures: env.VENTO_ALL_FEATURES,
-  checkHealth: healthCheck({ databaseUrl: env.DATABASE_URL, s3Endpoint: env.S3_ENDPOINT }),
+  checkHealth: healthCheck({
+    databaseUrl: env.DATABASE_URL,
+    s3Endpoint: env.S3_ENDPOINT,
+    jobs,
+  }),
 })
 
 const server = serve({ fetch: app.fetch, port: env.API_PORT }, (info) => {
-  console.log(`✓ Vento Hotels API on http://localhost:${info.port} (health: /health)`)
+  logger.info(
+    { port: info.port, jobs: Boolean(jobs) },
+    `Vento Hotels API on http://localhost:${info.port} (health: /health)`,
+  )
 })
 
-// Finish in-flight requests on Ctrl+C or a platform stop, close the database pool, then exit.
+// Finish in-flight requests and jobs on Ctrl+C or a platform stop, then close the database pool.
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
     server.close(() => {
-      database.close().finally(() => process.exit(0))
+      Promise.allSettled([jobs?.stop(), flushErrorTracking()])
+        .then(() => database.close())
+        .finally(() => process.exit(0))
     })
   })
 }
