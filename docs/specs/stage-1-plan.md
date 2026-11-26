@@ -1,6 +1,6 @@
 # Stage 1 plan: front office
 
-- **Status:** draft
+- **Status:** approved (owner, 2026-11-26)
 - **Goal (from `docs/PRODUCT.md`):** a pilot hotel runs its front desk without its old PMS: rooms, manual rates, reservations, tape chart, check-in/out, walk-ins, folios, payments, cashier shifts, corporate accounts with credit limits and settle-to-company, night audit, guest register, core reports, owner's daily report, data import.
 - **Rule:** one brick = one spec = one pull request, in this order, each ending usable and tested on the demo seed. Everything sits behind the `front_desk` switch (decision 0021); the pilot gets it when brick 17 lands.
 
