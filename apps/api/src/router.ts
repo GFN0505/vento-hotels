@@ -6,6 +6,12 @@ import type { Auth } from './auth/auth.ts'
 import type { Database } from './db/client.ts'
 import * as devices from './devices/service.ts'
 import { guardDeviceSession } from './devices/session-guard.ts'
+import * as bankAccounts from './finance/bank-accounts.ts'
+import * as fx from './finance/fx-rates.ts'
+import * as paymentMethods from './finance/payment-methods.ts'
+import * as terminals from './finance/pos-terminals.ts'
+import * as taxWrites from './finance/tax-writes.ts'
+import * as taxes from './finance/taxes.ts'
 import * as governance from './governance/service.ts'
 import { noteOrganization } from './observability/request-context.ts'
 import type { EmailProvider } from './providers/email.ts'
@@ -349,6 +355,91 @@ export const router = base.router({
     ),
     undoDates: inOrganization.rates.undoDates.handler(({ context, input }) =>
       rateDates.undoRateDates(context.db, context.access, input),
+    ),
+  },
+  taxes: {
+    get: inOrganization.taxes.get.handler(({ context, input }) =>
+      taxes.getTaxSetup(context.db, context.access, input.propertyId),
+    ),
+    setUp: inOrganization.taxes.setUp.handler(({ context, input }) =>
+      taxWrites.setUpTaxes(context.db, context.access, input.propertyId),
+    ),
+    create: inOrganization.taxes.create.handler(({ context, input }) =>
+      taxWrites.createTax(context.db, context.access, input),
+    ),
+    update: inOrganization.taxes.update.handler(({ context, input }) =>
+      taxWrites.updateTax(context.db, context.access, input),
+    ),
+    schedule: inOrganization.taxes.schedule.handler(({ context, input }) =>
+      taxWrites.scheduleTaxRate(context.db, context.access, input),
+    ),
+    cancel: inOrganization.taxes.cancel.handler(({ context, input }) =>
+      taxWrites.cancelTaxRate(context.db, context.access, input),
+    ),
+    verify: inOrganization.taxes.verify.handler(({ context, input }) =>
+      taxWrites.verifyTaxRate(context.db, context.access, input),
+    ),
+    inForce: inOrganization.taxes.inForce.handler(({ context, input }) =>
+      taxes.taxRulesInForce(context.db, context.access, input),
+    ),
+    quote: inOrganization.taxes.quote.handler(({ context, input }) =>
+      taxes.quoteTaxLines(context.db, context.access, input),
+    ),
+  },
+  paymentMethods: {
+    get: inOrganization.paymentMethods.get.handler(({ context, input }) =>
+      paymentMethods.getPaymentSetup(context.db, context.access, input.propertyId),
+    ),
+    set: inOrganization.paymentMethods.set.handler(({ context, input }) =>
+      paymentMethods.setPaymentMethod(context.db, context.access, input),
+    ),
+  },
+  bankAccounts: {
+    list: inOrganization.bankAccounts.list.handler(({ context, input }) =>
+      bankAccounts.listBankAccounts(context.db, context.access, input),
+    ),
+    create: inOrganization.bankAccounts.create.handler(({ context, input }) =>
+      bankAccounts.createBankAccount(context, context.access, input),
+    ),
+    update: inOrganization.bankAccounts.update.handler(({ context, input }) =>
+      bankAccounts.updateBankAccount(context, context.access, input),
+    ),
+    archive: inOrganization.bankAccounts.archive.handler(({ context, input }) =>
+      bankAccounts.archiveBankAccount(context, context.access, input),
+    ),
+    restore: inOrganization.bankAccounts.restore.handler(({ context, input }) =>
+      bankAccounts.restoreBankAccount(context, context.access, input),
+    ),
+  },
+  posTerminals: {
+    list: inOrganization.posTerminals.list.handler(({ context, input }) =>
+      terminals.listPosTerminals(context.db, context.access, input),
+    ),
+    create: inOrganization.posTerminals.create.handler(({ context, input }) =>
+      terminals.createPosTerminal(context.db, context.access, input),
+    ),
+    update: inOrganization.posTerminals.update.handler(({ context, input }) =>
+      terminals.updatePosTerminal(context.db, context.access, input),
+    ),
+    archive: inOrganization.posTerminals.archive.handler(({ context, input }) =>
+      terminals.archivePosTerminal(context.db, context.access, input),
+    ),
+    restore: inOrganization.posTerminals.restore.handler(({ context, input }) =>
+      terminals.restorePosTerminal(context.db, context.access, input),
+    ),
+  },
+  fxRates: {
+    summary: inOrganization.fxRates.summary.handler(({ context }) =>
+      fx.fxSummary(context.db, context.access),
+    ),
+    list: inOrganization.fxRates.list.handler(({ context, input }) =>
+      fx.listFxRates(context.db, context.access, input),
+    ),
+    enter: inOrganization.fxRates.enter.handler(({ context, input }) =>
+      fx.enterFxRates(context.db, context.access, input),
+    ),
+    forHotel: inOrganization.fxRates.forHotel.handler(({ context, input }) =>
+      fx.fxRateForHotel(context.db, context.access, input),
     ),
   },
 })

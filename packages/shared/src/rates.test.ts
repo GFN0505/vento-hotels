@@ -377,7 +377,7 @@ describe('foreign equivalents for guests', () => {
     expect(
       foreignEquivalent('150000.00', 'USD', {
         rate: '1425',
-        source: 'cbn_official',
+        source: 'cbn',
         date: '2026-11-25',
       }),
     ).toEqual({

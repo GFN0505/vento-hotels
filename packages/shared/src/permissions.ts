@@ -19,6 +19,8 @@ export const PERMISSIONS = {
   'rooms.setup': { label: 'Set up room types and rooms' },
   // GMs change their hotels' times without managing people or companies (hotels spec, question 1).
   'property.operating_times': { label: "Edit a hotel's check-in and check-out times" },
+  // Finance sets these up without managing people (taxes and payments spec, decision 5).
+  'finance.setup': { label: 'Set up taxes, payment methods, bank accounts and POS terminals' },
   'permissions.manage': { label: 'Change permissions or limits' },
   'audit.view': { label: 'View the audit log' },
   // Front office
@@ -43,6 +45,7 @@ export const PERMISSIONS = {
   'pos.discount': { label: 'POS discount on a bill', limit: 'percent' },
   'pos.reopen_bill': { label: 'Reopen a closed POS bill' },
   // Back office and owner
+  'fx.enter': { label: 'Enter FX rates' },
   'payroll.approve': { label: 'Approve payroll run' },
   'leakage.view': { label: "View owner's daily report and leakage alerts" },
 } as const satisfies Record<string, PermissionDefinition>
@@ -57,6 +60,7 @@ export const PERMISSION_GROUPS: readonly { label: string; permissions: readonly 
       'setup.manage',
       'rooms.setup',
       'property.operating_times',
+      'finance.setup',
       'permissions.manage',
       'audit.view',
     ],
@@ -90,7 +94,7 @@ export const PERMISSION_GROUPS: readonly { label: string; permissions: readonly 
       'pos.reopen_bill',
     ],
   },
-  { label: 'Back office', permissions: ['payroll.approve', 'leakage.view'] },
+  { label: 'Back office', permissions: ['fx.enter', 'payroll.approve', 'leakage.view'] },
 ]
 export const PERMISSION_KEYS = Object.keys(PERMISSIONS) as Permission[]
 
@@ -144,6 +148,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'cashier_shift.operate': yes,
     'rates.edit': yes,
     'night_audit.run': yes,
+    'fx.enter': yes,
     'pos.post_to_room': yes,
     'pos.void_before_send': yes,
     'pos.void_after_send': yes,
@@ -169,6 +174,8 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'night_audit.run': yes,
   },
   finance: {
+    'finance.setup': yes,
+    'fx.enter': yes,
     'audit.view': yes,
     'folio.void_own_same_day': yes,
     'folio.void_same_day': yes,

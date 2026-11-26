@@ -27,7 +27,9 @@ export const moneySchema = z.object({
 })
 export type Money = { amount: string; currency: SupportedCurrency }
 
-export const fxRateSourceSchema = z.enum(['cbn_official', 'bank', 'manual'])
+// Where an FX rate came from: the CBN official rate, or a market rate set by finance (decision 3 of
+// the taxes and payments spec).
+export const fxRateSourceSchema = z.enum(['cbn', 'market'])
 
 // A rate stored beside every foreign-currency amount: NGN per 1 unit of the foreign currency.
 export const fxRateSchema = z.object({

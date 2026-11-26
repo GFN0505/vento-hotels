@@ -50,8 +50,10 @@ Permissions are `module.action`, granted by role and optionally limited to prope
 | Set up room types and rooms | – | – | – | – | – | ✓ | – | ✓ |
 | Edit a hotel's check-in and check-out times | – | – | – | – | – | ✓ | – | ✓ |
 | View the audit log | – | – | – | – | – | ✓ | ✓ | ✓ |
+| Set up taxes, payment methods, bank accounts and POS terminals (`finance.setup`) | – | – | – | – | – | – | ✓ | ✓ |
+| Enter FX rates (`fx.enter`) | – | – | – | – | – | ✓ | ✓ | ✓ |
 
-The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `stay.rate_override`); keep the two in step. Reading rate plans and the rate calendar comes with `rates.edit`, `rooms.setup` or `reservation.manage` (read-only for the last two). An organization's owner can override any role's rule except the owner's own (`permissions.set`, with a reason, audited); people who manage the team can view the matrix. Managing people (invite, change role or hotels, remove) uses the same permission as setup. Only an owner can invite, change or remove an owner or group admin; nobody changes their own role or access; a manager limited to some hotels can only hand out those hotels. The night auditor is a `front_desk` member working the night shift; "(night)" means the run-night-audit permission is granted to night-shift front desk staff, not a separate role. Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get only their own module's actions: e.g. `room_attendant` and `housekeeping_supervisor` can change room status, do room checks and post minibar charges; only `housekeeping_supervisor` records inspections. A member can't approve their own over-limit action. Archiving or restoring a hotel or company needs a reason. A GM's "Edit a hotel's check-in and check-out times" covers only those two fields of their own hotels; every other hotel and company detail needs "Manage companies, properties, people and their access". A member limited to some hotels who manages setup may change a company only when every active hotel it owns is within their access, and gets access to any hotel they add.
+The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `stay.rate_override`); keep the two in step. Reading rate plans and the rate calendar comes with `rates.edit`, `rooms.setup` or `reservation.manage` (read-only for the last two). Reading taxes comes with `rates.edit` or `rooms.setup`; reading payment setup and FX rates with `rooms.setup` or `fx.enter`. VAT can be changed only with whole-group access, a state tax only when every hotel of the group in that state is within access, and a company's bank accounts only when every active hotel it owns is. `finance.setup` and `fx.enter` are refused in a PIN session on a shared device. An organization's owner can override any role's rule except the owner's own (`permissions.set`, with a reason, audited); people who manage the team can view the matrix. Managing people (invite, change role or hotels, remove) uses the same permission as setup. Only an owner can invite, change or remove an owner or group admin; nobody changes their own role or access; a manager limited to some hotels can only hand out those hotels. The night auditor is a `front_desk` member working the night shift; "(night)" means the run-night-audit permission is granted to night-shift front desk staff, not a separate role. Roles not shown (housekeeping, maintenance, storekeeper, hr, sales, viewer) get only their own module's actions: e.g. `room_attendant` and `housekeeping_supervisor` can change room status, do room checks and post minibar charges; only `housekeeping_supervisor` records inspections. A member can't approve their own over-limit action. Archiving or restoring a hotel or company needs a reason. A GM's "Edit a hotel's check-in and check-out times" covers only those two fields of their own hotels; every other hotel and company detail needs "Manage companies, properties, people and their access". A member limited to some hotels who manages setup may change a company only when every active hotel it owns is within their access, and gets access to any hotel they add.
 
 ## Devices and sign-in
 | Term | Meaning | Notes |
@@ -102,7 +104,11 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 | **Posting** | A line on a folio: a **charge** (room, F&B, minibar, laundry, event, penalty, tax) or a **payment**. | Append-only. Business date, department, revenue code, amount, currency, tax lines, user, source (POS check id, night audit). |
 | **Void / correction** | Reversal of a posting. | New negative posting linked to the original, with reason and user. Post-audit corrections need a higher permission. |
 | **Routing** | Rule that sends certain charges to another folio (e.g. room & breakfast to the company). | Set on the stay. |
-| **Payment method** | `cash`, `bank_transfer`, `pos_terminal`, `card_online` (Paystack), `city_ledger`, `voucher`, `complimentary`. | Each maps to a ledger account. Transfers and POS terminal payments carry a reference for reconciliation. |
+| **Payment method** | Per hotel, each on or off: `cash` (NGN plus chosen foreign currencies), `bank_transfer`, `pos_terminal`, `city_ledger`, `card_online` (Paystack, from Stage 4). `voucher` and `complimentary` aren't configured in Stage 1. | The reference each takes is fixed. Each maps to a ledger account from Stage 5. Transfers and POS terminal payments carry a reference for reconciliation. |
+| **Bank account** | A company's account: bank, 10-digit account number (NUBAN), account name, currency. | Unique in the group (bank + number); shown masked (`Zenith Bank ••••4471`); shared by every hotel the company owns. |
+| **Guest transfer account** | The NGN account a hotel's guests are told to transfer to. | One per hotel. Changing it on a live hotel emails the owners at once. |
+| **POS terminal** | A card terminal registered to a hotel: provider, name, terminal ID unique in the group, the bank account it settles into. | POS payments must name an active terminal of the hotel (brick 10). |
+| **FX rate** | Naira per unit of USD, GBP or EUR for a rate date, group-wide, source CBN official (`cbn`; `market` from brick 10), up to 4 decimals. | A hotel uses the latest rate dated on or before its business date. A replaced rate is kept, superseded. Payments store their own copy. |
 | **City ledger** | Receivables owed by companies and travel agents after check-out. | Invoices, statements, ageing 0–30, 31–60, 61–90, 90+; credit limit warnings. |
 | **Cashier shift** | A period a cashier holds a float and takes payments. | Opening float, takings by method, expected vs counted cash, variance with reason. |
 | **Business date** | The hotel's accounting day. | Moves forward only at night audit; can differ from the calendar date after midnight. |
@@ -113,11 +119,15 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 ## Taxes and charges
 | Term | Meaning | Notes |
 |---|---|---|
-| **VAT** | Federal value added tax on accommodation and F&B. | Rate and exemptions from versioned configuration. |
-| **Consumption tax** | State tax on hotel, restaurant and event sales (e.g. Lagos Hotel Occupancy and Restaurant Consumption Law). | Rate set per state with effective dates. |
-| **Service charge** | Percentage added to the bill by the hotel. | Rate per property; may be distributed to staff through payroll. |
-| **Tax line** | Each tax or charge computed on a posting. | Stored with rate, base and amount at the time of posting; never recomputed retroactively. |
-| **Inclusive / exclusive pricing** | Whether shown prices already include taxes. | Per rate plan and menu; the folio always shows the breakdown. |
+| **VAT** | Federal tax, one per group, with dated rates and the categories it applies to. | Charged only when the hotel's owning company is VAT registered on that business date. Rates are data to verify against current law. |
+| **Consumption tax** | State tax (`state_tax`), one or more per state per group (e.g. Lagos consumption tax, paid to Lagos State IRS), applying to every hotel of the group in that state, with dated rates. | Vento ships a template for Lagos only; other states are added by hand. |
+| **Service charge** | Hotel charge, at most one per hotel, configured with dated rates like a tax; not paid to an authority. | May be distributed to staff through payroll. |
+| **Tax rate** | A dated version of a tax or charge: rate %, categories, calculated on the charge or the charge plus service charge, start date, source, reason, verified by and on. | Status `scheduled`, `current`, `past` or `stopped`. Never edited in place; a change is a new version starting after the business date of every hotel it covers. A version may be a stop ("not charged from …"). |
+| **Tax category** | What kind of sale a charge is, for tax: `accommodation`, `food`, `beverage`, `events`, `laundry`, `other`, `exempt`. | `exempt` never gets a line. |
+| **To verify** | A rate in force with no recorded legal source and verifier. | Seeded and template rates start this way; the first night audit won't run while one is in force. |
+| **Tax line** | Each tax or charge computed on a posting: tax, rate version, rate, base and amount, rounded half-up to the kobo once. | Stored at posting, never recomputed; reversals copy them negated. Lines appear as service charge, VAT, then state taxes. |
+| **Rounding line** | The kobo difference on an inclusive price. | Part of net revenue, never of a tax. |
+| **Inclusive / exclusive pricing** | Per rate plan and menu. | Inclusive prices back out the net and put any rounding difference on one rounding line, so the lines sum to the price. The folio always shows the breakdown. |
 
 ## Distribution
 | Term | Meaning | Notes |
@@ -186,7 +196,7 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 | Term | Meaning | Notes |
 |---|---|---|
 | **Room discrepancy** | Front desk status and housekeeping's physical check disagree. | `sleeper` = system occupied, room found vacant; `skipper` = system vacant, room found used. Checked at configured times (e.g. 10:00, 16:00, 22:00); each one must be resolved with a reason. |
-| **Exception** | Any event the owner should see: rate below plan, override, discount, comp, void, refund, quick turn, early checkout with refund, unmatched payment, cash variance, POS void after send, stock variance above threshold, room count changed (room archived, restored or moved to another type after go-live; its audit events carry `roomCountChange: true` and `liveProperty: true`), setup changed (live hotel archived or restored, owning company changed or a scheduled change cancelled, company TIN or VAT registration changed; its audit events carry `exception: 'setup_changed'` and `liveProperty: true`), rate lowered for tonight (after go-live, a plan's price for the current business date lowered; or a plan × room type removed and added back cheaper the same business date; or a new or restored plan open to anyone priced below the base plan tonight; one event per save carries `exception: 'rate_lowered_tonight'` and `liveProperty: true`). | Generated from audit events; thresholds are configuration. Listed in the owner's daily report with staff names. |
+| **Exception** | Any event the owner should see: rate below plan, override, discount, comp, void, refund, quick turn, early checkout with refund, unmatched payment, cash variance, POS void after send, stock variance above threshold, room count changed (room archived, restored or moved to another type after go-live; its audit events carry `roomCountChange: true` and `liveProperty: true`), setup changed (live hotel archived or restored, owning company changed or a scheduled change cancelled, company TIN or VAT registration changed; tax or charge added, scheduled, stopped or cancelled; bank account added, changed, archived or restored; guest transfer account changed; POS terminal added, changed, archived or restored; its audit events carry `exception: 'setup_changed'` and `liveProperty: true`), rate lowered for tonight (after go-live, a plan's price for the current business date lowered; or a plan × room type removed and added back cheaper the same business date; or a new or restored plan open to anyone priced below the base plan tonight; one event per save carries `exception: 'rate_lowered_tonight'` and `liveProperty: true`). | Generated from audit events; thresholds are configuration. Listed in the owner's daily report with staff names. |
 | **Blind count** | Cashier counts the drawer without seeing the expected total. | Variance = counted − expected, revealed after submission. |
 | **Owner's daily report** | Morning summary after night audit. | Sent by WhatsApp and email to owners and GMs; one page. |
 
@@ -215,7 +225,7 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 | **Opening balance** | Balance brought in at go-live: city ledger per company, deposits held, ledger accounts per entity, stock per store. | Posted as dated opening entries, clearly marked. |
 
 ## Locale defaults
-- Base currency `NGN` (₦). Foreign currency stored with its FX rate and source.
+- Base currency `NGN` (₦). Foreign currency stored with its FX rate and source. FX rates are naira per unit, CBN official, entered daily.
 - Addresses: line 1, area, LGA, state, country. Nigerian states and LGAs from a fixed list in `@vento/shared` (`NIGERIAN_STATES`: 36 states + FCT; `NIGERIAN_LGAS`: 774 LGAs by state).
 - Phone numbers in E.164 (`+234…` and foreign).
 - Dates shown as `25 Nov 2026`, stays as `25–28 Nov 2026 · 3 nights`. Money as `₦125,000.00` and `$85.00`.
@@ -224,9 +234,11 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 ## Open questions
 - Channel manager provider (e.g. SiteMinder, Channex, a local provider) and certification path.
 - Payments: Paystack for cards and transfers. Which POS terminal providers (Moniepoint, OPay, bank terminals) do we reconcile with, and how (statement import vs API)?
-- Foreign-currency guests: settle in USD at the desk, or convert to NGN at check-out at a configured rate?
+- Foreign-currency guests: settled (owner, Nov 2026): folios, charges and tax lines are always in naira; foreign cash is taken as tender at the day's rate from brick 10.
+- FX rates: fetch the CBN official rate automatically (later), or keep typing it daily as now?
+- Tax rates and bases: VAT and Lagos consumption tax rates, whether consumption tax applies alongside VAT, and on what base, are seeded To verify; finance or legal must confirm them under the Nigeria Tax Act 2025 and the Lagos law before the pilot.
 - Key-card systems to support after v1 (ASSA ABLOY VingCard, Salto, Dormakaba).
-- Fiscal / e-invoicing requirements under the 2025 tax reform (FIRS e-invoicing) and which states' consumption tax rules to ship first.
+- Fiscal / e-invoicing requirements under the 2025 tax reform (FIRS e-invoicing). (State consumption tax templates: Lagos only; other states added by hand, owner, Nov 2026.)
 - WhatsApp Business API provider (e.g. Termii, Twilio) and template approval. SMS and email providers (e.g. Termii, Resend).
 - Printing: which thermal printers to certify, and whether network kitchen printers need a local print bridge app or Android print services are enough.
 - Which legacy PMS exports to support for import first (e.g. Opera, eZee, Hotelogix, Excel).

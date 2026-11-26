@@ -13,8 +13,8 @@
 
 1. **Thu 12 Nov, 10:00 · Create the group.**
    - *Does:* Mrs Okafor signs up, sets up 2FA, and follows onboarding (#19), which asks only for names and the state: organization "Kora Hotels Group" → company "Kora Hospitality Ltd" → hotel "Kora Victoria Island", Lagos.
-   - *Sees:* a setup checklist on Home: **Complete hotel and company details** ("Address, RC number, TIN and VAT, for invoices and the guest register"), **Set up rooms** ("Room types and rooms, so you can sell them"), **Set rates** ("Prices for each room type, so you can take bookings"), taxes, payment methods, staff, devices, imports, go-live date.
-   - *Behind the scenes:* one transaction creates organization, company and hotel (time zone Africa/Lagos, owned by Kora Hospitality Ltd); she becomes `owner`. Audit events for each. Taxes (#27) come pre-filled from Vento's versioned rules for Lagos: VAT, Lagos consumption tax, and a 10% service charge she confirms. She doesn't type any rates.
+   - *Sees:* a setup checklist on Home: **Complete hotel and company details** ("Address, RC number, TIN and VAT, for invoices and the guest register"), **Set up rooms** ("Room types and rooms, so you can sell them"), **Set rates** ("Prices for each room type, so you can take bookings"), **Set up taxes and payments** ("VAT, consumption tax, service charge and where guests pay"), staff, devices, imports, go-live date.
+   - *Behind the scenes:* one transaction creates organization, company and hotel (time zone Africa/Lagos, owned by Kora Hospitality Ltd); she becomes `owner`. Audit events for each. Taxes and payments are set up in step 4a.
 
 1b. **10:10 · Complete the hotel and company.**
    - *Does:* she clicks **Complete** on the checklist. Kora Victoria Island is her only hotel, so **Settings › Hotels** (#25) opens its settings with "Add Kora Victoria Island's address. Registration cards, invoices and guest messages use it." She types Plot 1412 Ahmadu Bello Way and Victoria Island, picks Lagos then Eti-Osa, and clicks **Save changes**. She clicks **Upload** under the logo and picks `kora-logo.png`. Under Owning company it says "Kora Hospitality Ltd · RC number and TIN missing"; **Edit company** opens a side sheet where she types RC 1184402 and TIN 21847390-0001, sets VAT registered to Yes and clicks **Save company**.
@@ -55,6 +55,11 @@
    - *Sees:* derived plans marked with a link icon; changing Best available moves Bed & breakfast and Non-refundable.
    - *Behind the scenes:* audit events `rate_plan.created` and `rates.dates_changed`; nothing reaches the owner's report before go-live.
 
+4a. **Fri 13 Nov, 11:30 · Taxes and payments.**
+   - *Does:* Kunle Ade (finance) clicks **Set up taxes and payments** on the checklist, then **Set up for Lagos**. He checks VAT, Lagos consumption tax and the 10% service charge against the current law and marks each verified with its source. On Payments he ticks USD and GBP for cash, adds Zenith Bank ••••4471 as the guest transfer account and the three Moniepoint and OPay terminals.
+   - *Sees:* 'How a bill adds up': ₦150,000.00 + ₦15,000.00 + ₦11,250.00 + ₦7,500.00 = ₦183,750.00 (illustrative rates, To verify until he records the source).
+   - *Behind the scenes:* `taxes.set_up`, `tax_rate.verified`, `bank_account.created`, `pos_terminal.created`; nothing reaches the owner's report before go-live.
+
 5. **11:00 · Guests, with duplicates.**
    - *Does:* uploads 3,412 guest rows from the old PMS.
    - *Sees:* 27 invalid rows ("Row 806: phone `0803 12` is too short", "Row 1,214: ID number given without ID type"). He skips them; they download as an Excel file with an `errors` column. Apply: 3,385 guests. Then "41 possible duplicates" opens #41: e.g. "Daniel Mensah" and "D. Mensah", same phone `+233…`. He keeps the full name and both emails, and merges.
@@ -92,7 +97,7 @@
 12. **Mon 16 Nov · Parallel run.**
     - *Does:* Chiamaka and the evening agent do every check-in, payment and check-out in both systems. Before the day starts, Tunde runs a top-up import of bookings taken since Saturday; existing source references are skipped.
     - *Sees:* at 22:00 Tunde opens the comparison: in-house 74 vs 75, room revenue and deposits held. The difference is a 15:10 walk-in entered only in the old PMS. Chiamaka enters it in Vento; the numbers match.
-    - *Behind the scenes:* business date 16 Nov is Vento's first business date.
+    - *Behind the scenes:* business date 16 Nov is Vento's first business date. Tunde enters the day's CBN rates each morning on Settings › FX rates (a ⌘K entry comes with the command palette brick).
 
 13. **Tue 17 Nov, 01:00 · Go-live at night audit.**
     - *Does:* Ibrahim runs the old PMS's last night audit, then Vento's first (#15) for 16 Nov.
@@ -149,6 +154,7 @@ If a hotel later closes, **Archive hotel** at the foot of its settings shows wha
 - Members and Devices follow the hotel switch, and Home's per-hotel people and device counts match them (`apps/web/e2e/hotel-switch.spec.ts`, `apps/api/src/tenancy/hotel-switch.test.ts`).
 - Tunde (GM, `rooms.setup`) creates the 4 room types (`STQ`, `DLK`, `EXK`, `JRS`) and 120 rooms with the builder in one transaction; the per-type counts are 36 / 48 / 28 / 8; a room in two lines keeps **Create** disabled; a front desk member is refused by the server.
 - **Mark 120 inspected** writes one `room.status_changed` per room with reason "Set up" and can be undone; before go-live no reason is asked and no exception is raised.
+- Set up for Lagos adds VAT, Lagos consumption tax and service charge marked To verify; the checklist step is done only once each is verified and a guest transfer account exists (`apps/api/src/finance/taxes.test.ts`, `apps/api/src/finance/payments.test.ts`).
 - Room import (later Stage 1 brick) reports duplicate room numbers and unknown room type codes by row; corrected file applies 120 rooms.
 - Guest import skips invalid rows, flags duplicates on phone without merging; merge on #41 combines history and is undoable.
 - City ledger opening balances require owner or finance; undo within 24 hours creates reversals; a second job is refused until the first is undone; ageing uses original invoice dates.

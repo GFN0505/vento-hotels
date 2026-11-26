@@ -2,6 +2,7 @@
 import type {
   AuditEventView,
   Entity,
+  FxSummary,
   HomeSummary,
   MemberView,
   Property,
@@ -9,9 +10,12 @@ import type {
   RatePlanView,
   RoomTypeView,
   RoomView,
+  TaxSetup,
 } from '@vento/shared'
 import { addDays, calendarDateIn, newId } from '@vento/shared'
+import { eq } from 'drizzle-orm'
 import { afterAll, describe, expect, it } from 'vitest'
+import { organizations } from '../db/schema/auth.ts'
 import { switchFeature } from '../features/switches.ts'
 import { createTestApp } from '../test/harness.ts'
 import { LIVE_DAYS_AGO, seedDemo } from './demo.ts'
@@ -90,6 +94,40 @@ describe.skipIf(!url)('demo seed', () => {
       ['Kora Hotels Abuja Ltd', 'RC 1290517', '22910455-0001', ['Kora Abuja']],
       ['Kora PH Ltd', 'RC 1377281', '23308817-0001', ['Kora Port Harcourt']],
     ])
+  })
+
+  it('gives Victoria Island taxes that add up to ₦183,750.00 on a ₦150,000 room, and today’s FX rates', async () => {
+    const cookie = await signInAs(`kunle@${options.emailDomain}`)
+    const [group] = await t.db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.slug, options.slug))
+    await switchFeature(t.db, group?.id ?? '', {
+      feature: 'front_desk',
+      to: 'on',
+      reason: 'Seed test',
+    })
+    const hotels = await t.rpc<{ items: Property[] }>(cookie, 'properties/list', {})
+    const vi = hotels.data.items.find((h) => h.name === 'Kora Victoria Island')
+    const quote = await t.rpc<{ gross: string }>(cookie, 'taxes/quote', {
+      propertyId: vi?.id,
+      category: 'accommodation',
+      amount: '150000',
+      pricing: 'exclusive',
+    })
+    expect(quote.data.gross).toBe('183750.00')
+    const setup = await t.rpc<TaxSetup>(cookie, 'taxes/get', { propertyId: vi?.id })
+    const sc = setup.data.taxes.find((tax) => tax.kind === 'service_charge')
+    expect(sc?.rates.map((r) => [r.ratePercent, r.status])).toEqual([
+      ['12.5', 'scheduled'],
+      ['10', 'current'],
+    ])
+    expect(setup.data.taxes.find((tax) => tax.kind === 'vat')?.rates[0]?.verifiedByName).toBe(
+      'Kunle Ade',
+    )
+    const fx = await t.rpc<FxSummary>(cookie, 'fxRates/summary')
+    expect(fx.data.currencies.map((c) => c.latest?.rate)).toEqual(['1620', '1950', '1870'])
+    expect(fx.data.currencies[0]?.recent).toHaveLength(30)
   })
 
   it('leaves Ikeja GRA without a street, and gives only Victoria Island a logo', async () => {

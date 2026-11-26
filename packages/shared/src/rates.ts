@@ -508,9 +508,8 @@ export function quoteNights(input: QuoteInput): {
 // --- Foreign equivalents (the seam for brick 3) ---------------------------------------------------
 
 const FX_SOURCES: Record<FxRate['source'], string> = {
-  cbn_official: 'CBN',
-  bank: 'bank rate',
-  manual: 'set by the hotel',
+  cbn: 'CBN',
+  market: 'market rate',
 }
 const SYMBOLS: Record<string, string> = { USD: '$', GBP: '£', EUR: '€' }
 

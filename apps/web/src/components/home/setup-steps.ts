@@ -1,6 +1,7 @@
 // The setup steps for a new group (design: OnbHome), from Home's summary and the member's own
 // state. Shared by the checklist and Home's "Setup" tile so they always agree.
 import { useQuery } from '@tanstack/react-query'
+import type { PaymentSetup, TaxSetup } from '@vento/shared'
 import { useProperty } from '@/components/shell/property-context'
 import { orpc } from '@/lib/api'
 import { useMe } from '@/lib/me'
@@ -11,6 +12,7 @@ export type SetupStepKey =
   | 'hotel'
   | 'details'
   | 'rooms'
+  | 'taxes'
   | 'rates'
   | 'team'
   | 'pin'
@@ -31,6 +33,14 @@ export function useSetupSteps(): { steps: SetupStep[]; done: number; ready: bool
   const summary = useQuery(orpc.organization.home.queryOptions())
   // The hotel chosen in the top bar (or the last one picked, with All hotels).
   const { current } = useProperty()
+  // The chosen hotel's taxes and payment setup, for "Set up taxes and payments".
+  const financeOn = me.has('front_desk') && me.can('finance.setup') && Boolean(current)
+  const hotelInput = { input: { propertyId: current?.id ?? '' } }
+  const taxes = useQuery({ ...orpc.taxes.get.queryOptions(hotelInput), enabled: financeOn })
+  const payments = useQuery({
+    ...orpc.paymentMethods.get.queryOptions(hotelInput),
+    enabled: financeOn,
+  })
   const s = summary.data
   if (!s || !me.data) return { steps: [], done: 0, ready: false }
   const steps: SetupStep[] = [
@@ -71,6 +81,16 @@ export function useSetupSteps(): { steps: SetupStep[]; done: number; ready: bool
           },
         ]
       : []),
+    ...(financeOn
+      ? [
+          {
+            key: 'taxes' as const,
+            label: 'Set up taxes and payments',
+            why: 'VAT, consumption tax, service charge and where guests pay',
+            done: taxesAndPaymentsDone(taxes.data, payments.data),
+          },
+        ]
+      : []),
     {
       key: 'team',
       label: 'Invite your team',
@@ -97,4 +117,18 @@ export function useSetupSteps(): { steps: SetupStep[]; done: number; ready: bool
     },
   ]
   return { steps, done: steps.filter((step) => step.done).length, ready: true }
+}
+
+// Done when the hotel's taxes are set up and every rate in force is verified, and, with bank
+// transfer on, guests have an account to transfer to (spec: "Home, ⌘K and navigation").
+export function taxesAndPaymentsDone(
+  taxes: TaxSetup | undefined,
+  payments: PaymentSetup | undefined,
+): boolean {
+  if (!taxes?.setUp || !payments) return false
+  const verified = taxes.taxes.every((tax) =>
+    tax.rates.every((rate) => rate.status !== 'current' || !rate.toVerify),
+  )
+  const transfer = payments.methods.find((m) => m.method === 'bank_transfer')
+  return verified && (!transfer?.enabled || payments.guestTransferAccount !== null)
 }

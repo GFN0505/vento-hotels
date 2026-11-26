@@ -188,6 +188,54 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
+    test('taxes and charges, payments and FX rates, with their sheets, have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      const domain = seedDemoGroup(
+        `a11y-finance-${theme}-${testInfo.project.name}`,
+        'Demo-pass-42!',
+      )
+      await signIn(page, `kunle@${domain}`, 'Demo-pass-42!')
+      await page.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page
+        .getByLabel('Hotel', { exact: true })
+        .selectOption({ label: 'Kora Victoria Island' })
+      await page.goto('/settings/taxes')
+      await page.getByRole('heading', { name: 'How a bill adds up' }).waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Schedule a change' }).first().click()
+      await page.getByLabel('Source').waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+
+      await page.goto('/settings/payments')
+      await page.getByRole('heading', { name: 'POS terminals' }).waitFor()
+      await page.getByText('Moniepoint · Desk 1').first().waitFor()
+      await expectAccessible(page)
+      await page.getByText('Zenith Bank · ••••4471 · NGN').click()
+      await page.getByLabel('Account number').waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+
+      await page.goto('/settings/fx-rates')
+      await page.getByRole('heading', { name: 'History' }).waitFor()
+      await expectAccessible(page)
+
+      await page.getByLabel('Hotel', { exact: true }).selectOption({ label: 'All hotels' })
+      await page.goto('/settings/taxes')
+      await page.getByText('Taxes are set per hotel. Pick a hotel.').waitFor()
+      await expectAccessible(page)
+    })
+
+    test('taxes with nothing set up has no accessibility problems', async ({ page }, testInfo) => {
+      await signUpOwnerWithGroup(page, `a11y-taxes-${theme}-${testInfo.project.name}`)
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.goto('/settings/taxes')
+      await page.getByText('No taxes set up').waitFor()
+      await expectAccessible(page)
+    })
+
     test('members and devices, with All hotels and with one hotel, have no accessibility problems', async ({
       page,
     }, testInfo) => {

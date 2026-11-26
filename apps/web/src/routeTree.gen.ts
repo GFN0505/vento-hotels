@@ -27,9 +27,12 @@ import { Route as AppRatesRoomsRouteImport } from './routes/_app/rates/rooms'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsCompaniesRouteImport } from './routes/_app/settings/companies'
 import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/devices'
+import { Route as AppSettingsFxRatesRouteImport } from './routes/_app/settings/fx-rates'
 import { Route as AppSettingsHotelsRouteImport } from './routes/_app/settings/hotels'
 import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/members'
+import { Route as AppSettingsPaymentsRouteImport } from './routes/_app/settings/payments'
 import { Route as AppSettingsPermissionsRouteImport } from './routes/_app/settings/permissions'
+import { Route as AppSettingsTaxesRouteImport } from './routes/_app/settings/taxes'
 import { Route as AppRatesPlansIndexRouteImport } from './routes/_app/rates/plans/index'
 import { Route as AppRatesPlansPlanIdRouteImport } from './routes/_app/rates/plans/$planId'
 import { Route as AppRatesPlansNewRouteImport } from './routes/_app/rates/plans/new'
@@ -123,6 +126,11 @@ const AppSettingsDevicesRoute = AppSettingsDevicesRouteImport.update({
   path: '/devices',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsFxRatesRoute = AppSettingsFxRatesRouteImport.update({
+  id: '/fx-rates',
+  path: '/fx-rates',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsHotelsRoute = AppSettingsHotelsRouteImport.update({
   id: '/hotels',
   path: '/hotels',
@@ -133,9 +141,19 @@ const AppSettingsMembersRoute = AppSettingsMembersRouteImport.update({
   path: '/members',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsPaymentsRoute = AppSettingsPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsPermissionsRoute = AppSettingsPermissionsRouteImport.update({
   id: '/permissions',
   path: '/permissions',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsTaxesRoute = AppSettingsTaxesRouteImport.update({
+  id: '/taxes',
+  path: '/taxes',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppRatesPlansIndexRoute = AppRatesPlansIndexRouteImport.update({
@@ -170,9 +188,12 @@ export interface FileRoutesByFullPath {
   '/rates/rooms': typeof AppRatesRoomsRoute
   '/settings/companies': typeof AppSettingsCompaniesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
+  '/settings/fx-rates': typeof AppSettingsFxRatesRoute
   '/settings/hotels': typeof AppSettingsHotelsRoute
   '/settings/members': typeof AppSettingsMembersRoute
+  '/settings/payments': typeof AppSettingsPaymentsRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
+  '/settings/taxes': typeof AppSettingsTaxesRoute
   '/rates/': typeof AppRatesIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
   '/rates/plans/$planId': typeof AppRatesPlansPlanIdRoute
@@ -193,9 +214,12 @@ export interface FileRoutesByTo {
   '/rates/rooms': typeof AppRatesRoomsRoute
   '/settings/companies': typeof AppSettingsCompaniesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
+  '/settings/fx-rates': typeof AppSettingsFxRatesRoute
   '/settings/hotels': typeof AppSettingsHotelsRoute
   '/settings/members': typeof AppSettingsMembersRoute
+  '/settings/payments': typeof AppSettingsPaymentsRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
+  '/settings/taxes': typeof AppSettingsTaxesRoute
   '/rates': typeof AppRatesIndexRoute
   '/settings': typeof AppSettingsIndexRoute
   '/rates/plans/$planId': typeof AppRatesPlansPlanIdRoute
@@ -220,9 +244,12 @@ export interface FileRoutesById {
   '/_app/rates/rooms': typeof AppRatesRoomsRoute
   '/_app/settings/companies': typeof AppSettingsCompaniesRoute
   '/_app/settings/devices': typeof AppSettingsDevicesRoute
+  '/_app/settings/fx-rates': typeof AppSettingsFxRatesRoute
   '/_app/settings/hotels': typeof AppSettingsHotelsRoute
   '/_app/settings/members': typeof AppSettingsMembersRoute
+  '/_app/settings/payments': typeof AppSettingsPaymentsRoute
   '/_app/settings/permissions': typeof AppSettingsPermissionsRoute
+  '/_app/settings/taxes': typeof AppSettingsTaxesRoute
   '/_app/rates/': typeof AppRatesIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/rates/plans/$planId': typeof AppRatesPlansPlanIdRoute
@@ -247,9 +274,12 @@ export interface FileRouteTypes {
     | '/rates/rooms'
     | '/settings/companies'
     | '/settings/devices'
+    | '/settings/fx-rates'
     | '/settings/hotels'
     | '/settings/members'
+    | '/settings/payments'
     | '/settings/permissions'
+    | '/settings/taxes'
     | '/rates/'
     | '/settings/'
     | '/rates/plans/$planId'
@@ -270,9 +300,12 @@ export interface FileRouteTypes {
     | '/rates/rooms'
     | '/settings/companies'
     | '/settings/devices'
+    | '/settings/fx-rates'
     | '/settings/hotels'
     | '/settings/members'
+    | '/settings/payments'
     | '/settings/permissions'
+    | '/settings/taxes'
     | '/rates'
     | '/settings'
     | '/rates/plans/$planId'
@@ -296,9 +329,12 @@ export interface FileRouteTypes {
     | '/_app/rates/rooms'
     | '/_app/settings/companies'
     | '/_app/settings/devices'
+    | '/_app/settings/fx-rates'
     | '/_app/settings/hotels'
     | '/_app/settings/members'
+    | '/_app/settings/payments'
     | '/_app/settings/permissions'
+    | '/_app/settings/taxes'
     | '/_app/rates/'
     | '/_app/settings/'
     | '/_app/rates/plans/$planId'
@@ -445,6 +481,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsDevicesRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/fx-rates': {
+      id: '/_app/settings/fx-rates'
+      path: '/fx-rates'
+      fullPath: '/settings/fx-rates'
+      preLoaderRoute: typeof AppSettingsFxRatesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/hotels': {
       id: '/_app/settings/hotels'
       path: '/hotels'
@@ -459,11 +502,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsMembersRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/payments': {
+      id: '/_app/settings/payments'
+      path: '/payments'
+      fullPath: '/settings/payments'
+      preLoaderRoute: typeof AppSettingsPaymentsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/permissions': {
       id: '/_app/settings/permissions'
       path: '/permissions'
       fullPath: '/settings/permissions'
       preLoaderRoute: typeof AppSettingsPermissionsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/taxes': {
+      id: '/_app/settings/taxes'
+      path: '/taxes'
+      fullPath: '/settings/taxes'
+      preLoaderRoute: typeof AppSettingsTaxesRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/rates/plans/': {
@@ -515,18 +572,24 @@ const AppRatesRouteWithChildren = AppRatesRoute._addFileChildren(
 interface AppSettingsRouteChildren {
   AppSettingsCompaniesRoute: typeof AppSettingsCompaniesRoute
   AppSettingsDevicesRoute: typeof AppSettingsDevicesRoute
+  AppSettingsFxRatesRoute: typeof AppSettingsFxRatesRoute
   AppSettingsHotelsRoute: typeof AppSettingsHotelsRoute
   AppSettingsMembersRoute: typeof AppSettingsMembersRoute
+  AppSettingsPaymentsRoute: typeof AppSettingsPaymentsRoute
   AppSettingsPermissionsRoute: typeof AppSettingsPermissionsRoute
+  AppSettingsTaxesRoute: typeof AppSettingsTaxesRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsCompaniesRoute: AppSettingsCompaniesRoute,
   AppSettingsDevicesRoute: AppSettingsDevicesRoute,
+  AppSettingsFxRatesRoute: AppSettingsFxRatesRoute,
   AppSettingsHotelsRoute: AppSettingsHotelsRoute,
   AppSettingsMembersRoute: AppSettingsMembersRoute,
+  AppSettingsPaymentsRoute: AppSettingsPaymentsRoute,
   AppSettingsPermissionsRoute: AppSettingsPermissionsRoute,
+  AppSettingsTaxesRoute: AppSettingsTaxesRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 

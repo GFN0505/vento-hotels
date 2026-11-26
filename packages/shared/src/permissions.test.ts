@@ -42,6 +42,16 @@ describe('default permissions matrix (docs/DOMAIN.md)', () => {
     expect(defaultRule('general_manager', 'setup.manage').allowed).toBe(false)
   })
 
+  it('lets finance, owners and group admins set up taxes and payments, and nobody else', () => {
+    const allowed = MEMBER_ROLES.filter((role) => defaultRule(role, 'finance.setup').allowed)
+    expect(allowed.sort()).toEqual(['finance', 'group_admin', 'owner'])
+  })
+
+  it('lets GMs, finance, owners and group admins enter FX rates, and nobody else', () => {
+    const allowed = MEMBER_ROLES.filter((role) => defaultRule(role, 'fx.enter').allowed)
+    expect(allowed.sort()).toEqual(['finance', 'general_manager', 'group_admin', 'owner'])
+  })
+
   it('denies what the table leaves blank', () => {
     expect(defaultRule('waiter', 'pos.void_after_send').allowed).toBe(false)
     expect(defaultRule('front_desk', 'refund').allowed).toBe(false)

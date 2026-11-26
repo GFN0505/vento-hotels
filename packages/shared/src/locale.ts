@@ -58,3 +58,57 @@ export type NigerianState = (typeof NIGERIAN_STATES)[number]
 export function isNigerianState(value: string): value is NigerianState {
   return (NIGERIAN_STATES as readonly string[]).includes(value)
 }
+
+// ISO 3166-2:NG subdivision codes, the scope of a state tax ("LA", "FC", "RI").
+export const STATE_CODES: Record<NigerianState, string> = {
+  Abia: 'AB',
+  Adamawa: 'AD',
+  'Akwa Ibom': 'AK',
+  Anambra: 'AN',
+  Bauchi: 'BA',
+  Bayelsa: 'BY',
+  Benue: 'BE',
+  Borno: 'BO',
+  'Cross River': 'CR',
+  Delta: 'DE',
+  Ebonyi: 'EB',
+  Edo: 'ED',
+  Ekiti: 'EK',
+  Enugu: 'EN',
+  'FCT (Abuja)': 'FC',
+  Gombe: 'GO',
+  Imo: 'IM',
+  Jigawa: 'JI',
+  Kaduna: 'KD',
+  Kano: 'KN',
+  Katsina: 'KT',
+  Kebbi: 'KE',
+  Kogi: 'KO',
+  Kwara: 'KW',
+  Lagos: 'LA',
+  Nasarawa: 'NA',
+  Niger: 'NI',
+  Ogun: 'OG',
+  Ondo: 'ON',
+  Osun: 'OS',
+  Oyo: 'OY',
+  Plateau: 'PL',
+  Rivers: 'RI',
+  Sokoto: 'SO',
+  Taraba: 'TA',
+  Yobe: 'YO',
+  Zamfara: 'ZA',
+}
+
+export function stateCodeOf(state: string | null | undefined): string | null {
+  return state && isNigerianState(state) ? STATE_CODES[state] : null
+}
+
+// The state as said in a sentence: "Lagos", "FCT".
+export function stateShortName(code: string): string {
+  if (code === 'FC') return 'FCT'
+  const found = (Object.entries(STATE_CODES) as [NigerianState, string][]).find(
+    ([, value]) => value === code,
+  )
+  return found?.[0] ?? code
+}

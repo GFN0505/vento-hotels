@@ -19,7 +19,7 @@ apps/
       infra/                 settings reader (zod) and database/storage checks        (bricks 2–3)
       db/columns.ts          id (uuidv7), timestamps, archivedAt, amount, currency    (brick 4)
       db/client.ts           pg pool + Drizzle, snake_case columns                    (brick 4)
-      db/schema/             auth.ts (Better Auth), tenancy.ts, governance.ts          (bricks 5–12); rooms.ts (Stage 1)
+      db/schema/             auth.ts (Better Auth), tenancy.ts, governance.ts          (bricks 5–12); rooms.ts, finance.ts (Stage 1)
       db/migrate.ts          applies migrations as a release step, never on app start (brick 4)
       auth/auth.ts           Better Auth: email + password, organizations, two-step, /api/auth/* (bricks 5, 12)
       tenancy/access.ts      loadAccess, scopeToProperties, requirePermission, requireWithinLimit (bricks 5–6)
@@ -39,6 +39,9 @@ apps/
       rooms/                 room types and rooms per property: reads, writes, bulk, locks,
                              connecting rooms, "Add rooms by floor" with new types (room-batch.ts),
                              Mark inspected, the roomCountChanged hook (Stage 1)
+      finance/               taxes and charges (taxes.ts reads, rules in force and quotes; tax-writes.ts set up,
+                             schedule, cancel, verify), payment methods, bank accounts (guest transfer account and
+                             the owners' email), POS terminals, FX rates (Stage 1 brick 3)
       rates/                 rate plans and rates per property (Stage 1 brick 2): plan reads and writes,
                              the first-rate table, the rate calendar, Change dates with Undo, the
                              "₦0 or less" and "lowered tonight" guards (guards.ts), quoteStay and
@@ -52,7 +55,7 @@ apps/
       storage/               what an uploaded image really is (PNG/JPEG from its bytes); PNGs for the seed and tests (Stage 1)
       test/harness.ts        signs real people in for tests through Better Auth        (brick 5)
       pdf/                   @react-pdf/renderer documents                            (Stage 1)
-    drizzle/                 generated SQL migrations, committed (0000–0014)          (bricks 4–12, Stage 1)
+    drizzle/                 generated SQL migrations, committed (0000–0015)          (bricks 4–12, Stage 1)
   web/                       Vite + React 19 SPA
     src/
       routes/                sign-in, get-started, setup, forgot/reset password, join, lock, _app (shell): Home, module pages, settings (bricks 7–12)
@@ -86,9 +89,11 @@ packages/
       rooms.ts               room fields, numbering, "Add rooms by floor" expansion   (Stage 1)
       rates.ts               rate plan fields and the pricing maths: derived prices rounded half-up to
                              the naira, weekend nights, date prices, restrictions, quotes (Stage 1)
+      taxes.ts               tax kinds, categories and bases; `taxLines` (every tax line comes from it) (Stage 1)
+      fx.ts, payments.ts     FX display helper and typo check; payment methods, banks, NUBAN, terminal IDs (Stage 1)
       features.ts            the feature catalog (decision 0021)                       (brick 9)
       devices.ts, pin.ts     device kinds and idle times; the PIN rule                 (brick 10)
-      contracts/             the oRPC contract: system, tenancy, governance, team, devices (bricks 4–10), rooms, rates (Stage 1)
+      contracts/             the oRPC contract: system, tenancy, governance, team, devices (bricks 4–10), rooms, rates, finance (Stage 1)
 deploy/                      images, compose.yml, Caddyfile, backups, server bootstrap (brick 18)
 ```
 New modules from Stage 1 add their own folder in `apps/api/src/` (service, router, tests next to them) and their schemas and contract in `packages/shared/src/`, following the `add-module` skill.
@@ -153,6 +158,7 @@ New modules from Stage 1 add their own folder in `apps/api/src/` (service, route
 - **Hotels and companies** (migration 0010, Stage 1): `properties` and `entities` gain a `version` (each save sends the version it started from, so nobody overwrites someone else's change) and case-insensitive unique names per group, archived included; a company's RC number and TIN (compared by digits) are unique per group. A live hotel's change of owning company is stored as `pending_entity_id` + `pending_entity_from` (the next business date) and applied by night audit, so a business date is never split between two companies' books; a composite key `(organization_id, pending_entity_id) → entities(organization_id, id)` keeps it in the group. `file_uploads` records every file sent to storage (`pending → confirmed | rejected | expired`), with a composite key to its hotel; `properties.logo_upload_id` points at the current logo. Migration 0011 makes a hotel's company (`entity_id`) and logo composite keys with `organization_id` too, adds the uploader's member key, and stores a live company's scheduled VAT registration change (`pending_vat_registered` + `pending_vat_from`, applied by night audit like the company change). Writes that attach something to a hotel (devices, invitations and access grants, rooms and room types) hold the hotel row `FOR SHARE` in their transaction, and archiving takes it `FOR UPDATE`, so nothing new lands on a hotel while it is archived.
 - **Rate plans** (migration 0013, Stage 1 brick 2): `rate_plans` (terms, own or derived, a self-referencing composite key `(property_id, parent_id) → rate_plans(property_id, id)` so a parent is always in the same hotel, `version` for "someone else saved first"), `rate_plan_room_types` (the room types a plan sells, with the standard weekday and Fri–Sat prices on own-price plans) and `rate_dates` (one row per own-price plan × room type × night with a date price, restrictions or a season name; a row with nothing set is deleted). All carry `organization_id` and `property_id` with composite keys to their hotel; money is `numeric(14,2)` with `currency` (NGN only, a check), percentages `numeric(7,4)`, and check constraints mirror the form rules (whole naira, one adjustment, meal allocation with meal plans). **A derived plan's prices are never stored**: every reader prices through `@vento/shared`'s maths (`rates/pricing-data.ts` loads the inputs), and every rates write re-checks inside its transaction that no derived plan drops to ₦0 or less and, after go-live, that tonight's prices didn't go down without a reason. Each Change dates apply and Undo is a row in `rate_date_batches` (migration 0014: batch id unique, business date, the audit event holding its cells, undone by), which answers replays, Undo and Undo's night-audit expiry. Prices don't move inventory, so no availability lock is taken; `quoteStay` takes the hotel's rates lock in shared mode and returns a `quoteHash` brick 4 compares before booking; bookings (brick 4) call `quoteStay` inside their own transaction. Every rates write, and a room type restore (which puts the type back on plans), first takes one transaction-scoped advisory lock per hotel (`lockHotelRates` in `rates/context.ts`), then plan rows, then room types, so rates writes at a hotel queue instead of deadlocking; a restore also bumps the version of every plan the type comes back on, so an editor opened before it gets "someone else saved first".
 - Statutory rates (VAT, consumption tax, service charge, payroll deductions) are versioned configuration with effective dates.
+- **Taxes, payments and FX** (migration 0015, Stage 1 brick 3): `taxes` (VAT one per group, state taxes per state code, a service charge per hotel; partial unique indexes enforce it) with dated `tax_rates` versions. A trigger refuses deleting a version or changing anything but its verification and the cancelling of a scheduled one, so history can't be rewritten by hand. `tax_templates` holds Vento's illustrative starting rules (VAT, Lagos consumption tax, 10% service charge), copied in only by "Set up for …"; calculations read only the group's own rules. `taxRulesInForce`/`quoteTaxLines` (`finance/taxes.ts`) give the rules for a hotel on a business date (VAT only while its owning company is VAT registered that day) and refuse with `TAXES_NOT_SET_UP` when there are none; every line comes from the shared `taxLines`. `bank_accounts` belong to a company (composite key), `payment_method_settings` per hotel and method (the guest transfer account sits on the bank transfer row), `pos_terminals` per hotel settling into a company account, terminal IDs unique in the group. `fx_rates` are group-wide, one live rate per currency, date and source; a replacement supersedes the old row, and a trigger refuses deletes and edits.
 
 ## Background jobs
 *Built in brick 17: the queue, email retries and the heartbeat (decision 0025). Stage 1 adds the first business jobs.*
