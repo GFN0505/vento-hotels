@@ -16,8 +16,14 @@ import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { members, sessions, users } from '../db/schema/auth.ts'
 import { memberPins, memberProperties, properties } from '../db/schema/tenancy.ts'
-import { type Access, requirePermission } from '../tenancy/access.ts'
-import { containsPattern, grantableAccess, requireCanManage, visibleMembers } from './rules.ts'
+import { type Access, requireListableHotel, requirePermission } from '../tenancy/access.ts'
+import {
+  containsPattern,
+  grantableAccess,
+  requireCanManage,
+  visibleMembers,
+  worksAt,
+} from './rules.ts'
 
 type Reader = Pick<Database, 'select'>
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
@@ -98,10 +104,19 @@ function toView(
 export async function listMembers(
   db: Database,
   access: Access,
-  query: PageQuery & { search?: string | undefined; filter?: RoleFilter | undefined },
+  query: PageQuery & {
+    search?: string | undefined
+    filter?: RoleFilter | undefined
+    propertyId?: string | undefined
+  },
 ) {
   requirePermission(access, 'setup.manage')
   const conditions: (SQL | undefined)[] = [visibleMembers(access)]
+  // The hotel narrows within who the caller may already see; it never widens it.
+  if (query.propertyId) {
+    await requireListableHotel(db, access, query.propertyId)
+    conditions.push(worksAt(query.propertyId))
+  }
   if (query.search) {
     const pattern = containsPattern(query.search)
     conditions.push(or(ilike(users.name, pattern), ilike(users.email, pattern)))

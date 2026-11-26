@@ -13,7 +13,12 @@ export type Person = { cookie: string; userId: string; email: string; memberId: 
 export type Page<T> = { items: T[]; page: number; pageSize: number; total: number }
 export type Problem = { message: string; code: string; data?: Record<string, unknown> }
 
-async function person(t: TestApp, orgId: string, name: string, role: string): Promise<Person> {
+export async function person(
+  t: TestApp,
+  orgId: string,
+  name: string,
+  role: string,
+): Promise<Person> {
   const signedUp = await t.signUp(name)
   await t.addMember(orgId, signedUp, role)
   const current = await t.rpc<{ member: { id: string } }>(signedUp.cookie, 'organization/current')

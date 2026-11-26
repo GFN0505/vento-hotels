@@ -37,7 +37,7 @@ Mrs Okafor picks Kora Abuja in the top bar, opens Members and roles, and sees al
 
 ## User flow
 **A. The owner looks at Kora Abuja's team** (Mrs Okafor, laptop, Thu 26 Nov 2026; All hotels selected; demo seed with the additions under "Demo seed").
-1. **Settings › Members and roles**. The eyebrow says "All hotels". People **12**, with a **Can see** column ("Whole group", "Kora Victoria Island", "Kora Victoria Island, Kora Ikeja GRA"). Invited **1**: ngozi@kora.example · General manager · Kora Abuja.
+1. **Settings › Members and roles**. The eyebrow says "All hotels". People **11**, with a **Can see** column ("Whole group", "Kora Victoria Island", "Kora Victoria Island, Kora Ikeja GRA"). Invited **1**: ngozi@kora.example · General manager · Kora Abuja.
 2. She chooses **Kora Abuja** in the top-bar switch (1 choice). The page stays on Members. The rows fade to a skeleton (never Victoria Island's rows under Abuja's name), then:
    - Eyebrow "Kora Abuja". Description: "People who work at Kora Abuja, including 2 with access to the whole group."
    - People **2**: Adaeze Okafor (you) and Kunle Ade, each marked **Whole group**.
@@ -247,8 +247,8 @@ To make the rule visible in review:
 
   | Hotel | People | Devices | Invites |
   |---|---|---|---|
-  | All hotels | 12 | 4 | 1 |
-  | Kora Victoria Island | 12 (2 whole group, 10 assigned) | 3 | 0 |
+  | All hotels | 11 | 4 | 1 |
+  | Kora Victoria Island | 11 (2 whole group, 9 assigned) | 3 | 0 |
   | Kora Ikeja GRA | 3 (2 whole group, Sade) | 1 | 0 |
   | Kora Abuja | 2 (whole group only) | 0 | 1 (Ngozi) |
 

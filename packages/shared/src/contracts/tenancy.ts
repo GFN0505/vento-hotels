@@ -264,14 +264,18 @@ export const homeSummarySchema = z.object({
   devices: z.number().int().nullable(),
   // Active rooms across the hotels the member can see (the "Set up rooms" checklist step).
   rooms: z.number().int(),
-  // Per hotel the member can see: who can work there (including group-wide people) and its shared
-  // devices. Counts only, so every role can see how its own hotel is staffed.
+  // Per hotel the member can see: who works there (including whole-group people, the same rule as
+  // members.list with that hotel) and its live shared devices. Counts only, so every role can see
+  // how its own hotel is staffed.
   byHotel: z.array(
     z.object({
       propertyId: idSchema,
       people: z.number().int(),
       devices: z.number().int(),
       rooms: z.number().int(),
+      // Pending, unexpired invites for this hotel, whole-group invites included; null for people
+      // who don't manage the team.
+      invites: z.number().int().nullable(),
     }),
   ),
 })

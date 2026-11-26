@@ -22,8 +22,13 @@ import { isUniqueViolation } from '../db/errors.ts'
 import { accounts, invitations, members, organizations, users } from '../db/schema/auth.ts'
 import { invitationProperties, memberProperties, properties } from '../db/schema/tenancy.ts'
 import type { EmailProvider } from '../providers/email.ts'
-import { type Access, loadAccess, requirePermission } from '../tenancy/access.ts'
-import { grantableAccess, type NormalizedAccess, requireCanManage } from './rules.ts'
+import {
+  type Access,
+  loadAccess,
+  requireListableHotel,
+  requirePermission,
+} from '../tenancy/access.ts'
+import { grantableAccess, invitedTo, type NormalizedAccess, requireCanManage } from './rules.ts'
 
 type Reader = Pick<Database, 'select'>
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
@@ -193,13 +198,20 @@ export async function createInvitations(
   return { invited: toSend.length - notSent.length, alreadyMembers, notSent }
 }
 
-export async function listInvitations(db: Database, access: Access, query: PageQuery) {
-  // Invites are a group-level list, for people who manage the whole group's people.
+export async function listInvitations(
+  db: Database,
+  access: Access,
+  query: PageQuery & { propertyId?: string | undefined },
+) {
+  // Invites are a group-level list, for people who manage the whole group's people. A hotel is
+  // checked first, so a hotel outside the caller's access is "not found" for everyone.
   requirePermission(access, 'setup.manage')
+  if (query.propertyId) await requireListableHotel(db, access, query.propertyId)
   if (!access.allProperties) return toPage<InvitationView>([], 0, query)
   const where = and(
     eq(invitations.organizationId, access.organizationId),
     eq(invitations.status, 'pending'),
+    query.propertyId ? invitedTo(query.propertyId) : undefined,
   )
   const [rows, [total]] = await Promise.all([
     db

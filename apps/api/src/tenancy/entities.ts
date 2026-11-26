@@ -16,13 +16,12 @@ import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { entities, properties } from '../db/schema/tenancy.ts'
-import { type Access, can, propertyScope, requirePermission } from './access.ts'
+import { type Access, can, requireListableHotel, requirePermission } from './access.ts'
 import {
   companyIsArchived,
   companyNameTaken,
   companyNotFound,
   companyOwnsHotels,
-  hotelNotFound,
   numberTaken,
   outsideAccess,
   reasonRequired,
@@ -160,15 +159,10 @@ export async function listEntities(
   query: PageQuery & { status: 'active' | 'archived'; propertyId?: string | undefined },
 ): Promise<Page<Entity>> {
   requirePermission(access, 'setup.manage', SETUP_ONLY)
-  let owner: string | undefined
-  if (query.propertyId) {
-    const [hotel] = await db
-      .select({ entityId: properties.entityId })
-      .from(properties)
-      .where(and(eq(properties.id, query.propertyId), propertyScope(access)))
-    if (!hotel) throw hotelNotFound()
-    owner = hotel.entityId
-  }
+  // One hotel chosen: only the company that owns it, for everyone who may see the hotel.
+  const owner = query.propertyId
+    ? (await requireListableHotel(db, access, query.propertyId)).entityId
+    : undefined
   const where = and(
     eq(entities.organizationId, access.organizationId),
     query.status === 'archived' ? isNotNull(entities.archivedAt) : isNull(entities.archivedAt),

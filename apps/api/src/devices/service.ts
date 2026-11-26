@@ -19,7 +19,12 @@ import { isUniqueViolation } from '../db/errors.ts'
 import { accounts, members, organizations, sessions, users } from '../db/schema/auth.ts'
 import { devices, memberPins, memberProperties, properties } from '../db/schema/tenancy.ts'
 import { requireCanManage, visibleMembers } from '../team/rules.ts'
-import { type Access, propertyScope, requirePermission } from '../tenancy/access.ts'
+import {
+  type Access,
+  propertyScope,
+  requireListableHotel,
+  requirePermission,
+} from '../tenancy/access.ts'
 
 type Reader = Pick<Database, 'select'>
 
@@ -95,27 +100,39 @@ function toView(row: DeviceRow, thisDeviceHash: string | undefined): DeviceView 
 export async function listDevices(
   db: Database,
   access: Access,
-  query: PageQuery,
+  query: PageQuery & { propertyId?: string | undefined },
   headers: Headers,
 ) {
   requirePermission(access, 'setup.manage')
-  const where = propertyScope(access)
+  if (query.propertyId) await requireListableHotel(db, access, query.propertyId)
+  // One hotel's devices, or every device at an active hotel: an archived hotel's devices were
+  // revoked with it, and their history stays in the audit log.
+  const where = and(
+    eq(devices.organizationId, access.organizationId),
+    propertyScope(access),
+    query.propertyId ? eq(devices.propertyId, query.propertyId) : isNull(properties.archivedAt),
+  )
   const secret = deviceSecretFrom(headers)
   const [rows, [total]] = await Promise.all([
     db
       .select(deviceColumns)
       .from(devices)
       .innerJoin(properties, eq(properties.id, devices.propertyId))
-      .where(and(eq(devices.organizationId, access.organizationId), where))
-      // Live devices first, then by name.
-      .orderBy(sql`${devices.revokedAt} is not null`, asc(devices.name))
+      .where(where)
+      // Live devices first, then by hotel (one hotel: all the same), then by name.
+      .orderBy(
+        sql`${devices.revokedAt} is not null`,
+        asc(properties.name),
+        asc(devices.name),
+        asc(devices.id),
+      )
       .limit(query.pageSize)
       .offset(pageOffset(query)),
     db
       .select({ value: count() })
       .from(devices)
       .innerJoin(properties, eq(properties.id, devices.propertyId))
-      .where(and(eq(devices.organizationId, access.organizationId), where)),
+      .where(where),
   ])
   const thisHash = secret ? hashSecret(secret) : undefined
   return toPage(

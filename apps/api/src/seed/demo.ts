@@ -1,7 +1,8 @@
 // The demo world from docs/journeys/README.md: Kora Hotels Group, its three companies, four hotels
 // (Kora Victoria Island with a placeholder logo when storage is given) and the people in the
-// walkthroughs, each with a role, hotels, a sign-in and a staff PIN; room types and 382 rooms; devices at Kora Victoria Island; a pending invite; and one permission change
-// with its reason. Used for local development, browser tests and sales demos. Everything here is
+// walkthroughs, each with a role, hotels, a sign-in and a staff PIN; room types and 382 rooms;
+// devices at Kora Victoria Island and Kora Ikeja GRA (none at Abuja or Port Harcourt, for the empty
+// state); a pending invite; and one permission change with its reason. Used for local development, browser tests and sales demos. Everything here is
 // made up.
 import { createHash, randomBytes } from 'node:crypto'
 import { addDays, calendarDateIn, type DeviceKind, type MemberRole, newId } from '@vento/shared'
@@ -112,12 +113,21 @@ const PEOPLE: {
   { name: 'Halima Yusuf', email: 'halima', role: 'cashier', hotels: ['vi'], pin: '9264' },
   { name: 'Femi Adeyemi', email: 'femi', role: 'fnb_manager', hotels: ['vi'], pin: '7430' },
   { name: 'Kunle Ade', email: 'kunle', role: 'finance', hotels: 'all', pin: '2671' },
+  // The member with 2 of 4 hotels: a hotel switch without All hotels.
+  {
+    name: 'Sade Bakare',
+    email: 'sade',
+    role: 'revenue_manager',
+    hotels: ['vi', 'ikeja'],
+    pin: '6294',
+  },
 ]
 
-const DEVICES: { name: string; kind: DeviceKind }[] = [
-  { name: 'FD-VI-01', kind: 'front_desk' },
-  { name: 'POS-VI-03', kind: 'pos' },
-  { name: 'HK-VI-07', kind: 'housekeeping' },
+const DEVICES: { name: string; kind: DeviceKind; hotel: HotelKey }[] = [
+  { name: 'FD-VI-01', kind: 'front_desk', hotel: 'vi' },
+  { name: 'POS-VI-03', kind: 'pos', hotel: 'vi' },
+  { name: 'HK-VI-07', kind: 'housekeeping', hotel: 'vi' },
+  { name: 'FD-IKJ-01', kind: 'front_desk', hotel: 'ikeja' },
 ]
 
 export type SeedOptions = {
@@ -245,14 +255,14 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
     const expected = Object.values(HOTELS).reduce((sum, hotel) => sum + hotel.rooms, 0)
     if (roomCount !== expected) throw new Error(`Seeded ${roomCount} rooms, expected ${expected}`)
 
-    // Shared devices at Kora Victoria Island. Their secrets are random and thrown away: to use
-    // one, register a real browser from Settings › Devices.
+    // Shared devices. Their secrets are random and thrown away: to use one, register a real
+    // browser from Settings › Devices.
     for (const device of DEVICES) {
       const deviceId = newId()
       await tx.insert(devices).values({
         id: deviceId,
         organizationId,
-        propertyId: hotelIds.vi,
+        propertyId: hotelIds[device.hotel],
         name: device.name,
         kind: device.kind,
         tokenHash: sha256(randomBytes(32).toString('base64url')),
@@ -262,8 +272,8 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
         action: 'device.registered',
         entityType: 'device',
         entityId: deviceId,
-        propertyId: hotelIds.vi,
-        after: { name: device.name, kind: device.kind, propertyName: HOTELS.vi.name },
+        propertyId: hotelIds[device.hotel],
+        after: { name: device.name, kind: device.kind, propertyName: HOTELS[device.hotel].name },
       })
     }
 

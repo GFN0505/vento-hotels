@@ -36,7 +36,7 @@ async function main() {
       return
     }
     console.log(
-      `✓ Loaded Kora Hotels Group: 3 companies, 4 hotels, 382 rooms, 10 people, 3 devices, 1 invite${storage ? '' : ' (no logo: storage settings missing or unreachable)'}\n`,
+      `✓ Loaded Kora Hotels Group: 3 companies, 4 hotels, 382 rooms, ${result.people.length} people, 4 devices, 1 invite${storage ? '' : ' (no logo: storage settings missing or unreachable)'}\n`,
     )
     console.log(`  Sign in at http://localhost:5180 with any email below and DEMO_PASSWORD.\n`)
     for (const person of result.people) {

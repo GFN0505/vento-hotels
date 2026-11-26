@@ -20,6 +20,7 @@ import type { Database } from '../db/client.ts'
 import { members } from '../db/schema/auth.ts'
 import { organizationFeatures, permissionOverrides } from '../db/schema/governance.ts'
 import { devices, memberProperties, properties } from '../db/schema/tenancy.ts'
+import { hotelArchived, hotelNotFound } from './errors.ts'
 
 export type Access = {
   organizationId: string
@@ -180,6 +181,25 @@ export function propertyScope(access: Access): SQL {
     eq(properties.organizationId, access.organizationId),
     scopeToProperties(access, properties.id),
   ) as SQL
+}
+
+// The hotel a list is narrowed to (one hotel chosen in the top bar). Every list that takes a
+// `propertyId` calls this first, so they all answer the same way: another group's hotel, an
+// unknown id and a hotel outside the member's access are all "We couldn't find that hotel" (never
+// revealing it exists); an archived hotel the member could see says so. The switch only narrows:
+// the caller still filters by its own scope as well.
+export async function requireListableHotel(
+  db: Pick<Database, 'select'>,
+  access: Access,
+  propertyId: string,
+): Promise<{ id: string; entityId: string }> {
+  const [hotel] = await db
+    .select({ id: properties.id, entityId: properties.entityId, archivedAt: properties.archivedAt })
+    .from(properties)
+    .where(and(eq(properties.id, propertyId), propertyScope(access)))
+  if (!hotel) throw hotelNotFound()
+  if (hotel.archivedAt) throw hotelArchived()
+  return { id: hotel.id, entityId: hotel.entityId }
 }
 
 // A module that's switched off is off for everyone, owners included, and says so before any

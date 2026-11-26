@@ -38,6 +38,9 @@ export type MemberView = z.infer<typeof memberViewSchema>
 export const memberListSchema = pageQuerySchema.extend({
   search: z.string().trim().max(120).optional(),
   filter: z.enum(Object.keys(ROLE_FILTERS) as [keyof typeof ROLE_FILTERS]).optional(),
+  // Only the people who work at this hotel (one hotel chosen in the top bar), whole-group people
+  // included. Without it, everyone the caller may see.
+  propertyId: idSchema.optional(),
 })
 
 export const updateMemberSchema = z.object({
@@ -58,6 +61,11 @@ export const invitationViewSchema = z.object({
   status: z.enum(['pending', 'expired']),
 })
 export type InvitationView = z.infer<typeof invitationViewSchema>
+
+export const invitationListSchema = pageQuerySchema.extend({
+  // Only invites that include this hotel, plus whole-group invites.
+  propertyId: idSchema.optional(),
+})
 
 const email = z.email('Enter a valid email').trim().toLowerCase().max(254)
 
@@ -109,7 +117,7 @@ export const teamContract = {
     remove: oc.input(z.object({ memberId: idSchema })).output(ok),
   },
   invitations: {
-    list: oc.input(pageQuerySchema).output(pageSchema(invitationViewSchema)),
+    list: oc.input(invitationListSchema).output(pageSchema(invitationViewSchema)),
     create: oc.input(createInvitationsSchema).output(
       z.object({
         invited: z.number().int(),
