@@ -52,7 +52,9 @@ test('staff sign in on a registered device with a PIN, and lock it for the next 
   await enterPin(page, '8391')
 
   // In, confined to the device's hotel, with Lock instead of settings.
-  await expect(page.getByRole('heading', { name: 'Kora Hotels Group' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /^Good (morning|afternoon|evening)/ }),
+  ).toBeVisible()
   await expect(page.getByRole('link', { name: 'Settings' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Lock' }).click()
   await expect(page.getByRole('heading', { name: 'Tap your name' })).toBeVisible()

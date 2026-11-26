@@ -3,7 +3,7 @@
 // modules switched on for their group (decision 0021) that their role uses (lib/navigation.ts).
 import { Link } from '@tanstack/react-router'
 import { Settings } from 'lucide-react'
-import type { ComponentType } from 'react'
+import { type ComponentType, useCallback, useEffect, useRef, useState } from 'react'
 import { Logo } from '@/components/logo'
 import { cn } from '@/lib/cn'
 import { HOME_ENTRY, type NavGroup } from '@/lib/navigation'
@@ -49,6 +49,21 @@ function Item({
 }
 
 export function Sidebar({ groupName, groups, showSettings, onNavigate }: SidebarProps) {
+  // The fade at the bottom shows only while there's more menu to scroll to.
+  const scroller = useRef<HTMLDivElement>(null)
+  const [moreBelow, setMoreBelow] = useState(false)
+  const update = useCallback(() => {
+    const el = scroller.current
+    if (el) setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
+  }, [])
+  useEffect(() => {
+    update()
+    const el = scroller.current
+    if (!el) return
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [update])
   return (
     <nav
       aria-label="Main"
@@ -62,7 +77,11 @@ export function Sidebar({ groupName, groups, showSettings, onNavigate }: Sidebar
       </div>
       {/* A soft fade at the bottom says there's more to scroll on short screens. */}
       <div className="relative flex min-h-0 grow flex-col">
-        <div className="flex min-h-0 grow flex-col gap-0.5 overflow-y-auto pb-6">
+        <div
+          ref={scroller}
+          onScroll={update}
+          className="flex min-h-0 grow flex-col gap-0.5 overflow-y-auto pb-2"
+        >
           <Item {...HOME_ENTRY} exact onNavigate={onNavigate} />
           {groups.map((group) => (
             <div key={group.label ?? 'main'} className="flex flex-col gap-0.5">
@@ -77,10 +96,12 @@ export function Sidebar({ groupName, groups, showSettings, onNavigate }: Sidebar
             </div>
           ))}
         </div>
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-linear-to-t from-side to-transparent"
-        />
+        {moreBelow ? (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-side to-transparent"
+          />
+        ) : null}
       </div>
       {showSettings ? (
         <div className="mt-2 border-t border-side-2 pt-2">

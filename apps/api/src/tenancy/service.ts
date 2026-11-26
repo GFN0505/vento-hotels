@@ -11,14 +11,14 @@ import {
   pageOffset,
   toPage,
 } from '@vento/shared'
-import { and, asc, count, eq, isNull } from 'drizzle-orm'
+import { and, asc, count, eq, gt, isNull } from 'drizzle-orm'
 import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
-import { organizations, users } from '../db/schema/auth.ts'
+import { invitations, members, organizations, users } from '../db/schema/auth.ts'
 import { devices, entities, memberPins, properties } from '../db/schema/tenancy.ts'
 import { idleSecondsFor } from '../devices/service.ts'
-import { type Access, propertyScope, requirePermission } from './access.ts'
+import { type Access, can, propertyScope, requirePermission } from './access.ts'
 
 const entityColumns = {
   id: entities.id,
@@ -225,5 +225,46 @@ export async function createProperty(
   } catch (error) {
     if (isUniqueViolation(error)) throw nameTaken('property')
     throw error
+  }
+}
+
+// Home's figures: the hotels you can see, and for people who manage the team, how many people,
+// pending invites and live shared devices there are.
+export async function homeSummary(db: Database, access: Access) {
+  const [[hotels], team] = await Promise.all([
+    db
+      .select({ value: count() })
+      .from(properties)
+      .where(and(propertyScope(access), isNull(properties.archivedAt))),
+    can(access, 'setup.manage')
+      ? Promise.all([
+          db
+            .select({ value: count() })
+            .from(members)
+            .where(eq(members.organizationId, access.organizationId)),
+          db
+            .select({ value: count() })
+            .from(invitations)
+            .where(
+              and(
+                eq(invitations.organizationId, access.organizationId),
+                eq(invitations.status, 'pending'),
+                gt(invitations.expiresAt, new Date()),
+              ),
+            ),
+          db
+            .select({ value: count() })
+            .from(devices)
+            .where(
+              and(eq(devices.organizationId, access.organizationId), isNull(devices.revokedAt)),
+            ),
+        ])
+      : Promise.resolve(undefined),
+  ])
+  return {
+    hotels: hotels?.value ?? 0,
+    members: team?.[0][0]?.value ?? null,
+    pendingInvites: team?.[1][0]?.value ?? null,
+    devices: team?.[2][0]?.value ?? null,
   }
 }

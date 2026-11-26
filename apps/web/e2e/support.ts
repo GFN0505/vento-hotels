@@ -63,7 +63,9 @@ export async function signUpOwnerWithGroup(page: Page, tag: string): Promise<str
   await page.getByLabel('Company', { exact: true }).fill('Kora Hospitality Ltd')
   await page.getByLabel('First hotel').fill('Kora Victoria Island')
   await page.getByRole('button', { name: 'Continue' }).click()
-  await expect(page.getByRole('heading', { name: 'Kora Hotels Group' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /^Good (morning|afternoon|evening)/ }),
+  ).toBeVisible()
   return email
 }
 

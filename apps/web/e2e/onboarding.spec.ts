@@ -39,17 +39,21 @@ test('an owner sets up their hotel group and lands on home', async ({ page }, te
   await page.getByLabel('State').selectOption('Lagos')
   await page.getByRole('button', { name: 'Continue' }).click()
 
-  await expect(page.getByRole('heading', { name: 'Kora Hotels Group' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /^Good (morning|afternoon|evening)/ }),
+  ).toBeVisible()
   await expect(
     page.getByRole('listitem').filter({ hasText: 'Kora Victoria Island' }),
-  ).toContainText('Business date')
+  ).toContainText('Check-in')
 
   // Sign out and back in: straight to home, the group already set up.
   await page.getByRole('button', { name: /^Account:/ }).click()
   await page.getByRole('button', { name: 'Sign out' }).click()
   await expect(page).toHaveURL(/\/sign-in$/)
   await signIn(page, email, PASSWORD)
-  await expect(page.getByRole('heading', { name: 'Kora Hotels Group' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: /^Good (morning|afternoon|evening)/ }),
+  ).toBeVisible()
 })
 
 test('sign-up checks the details before sending them', async ({ page }) => {

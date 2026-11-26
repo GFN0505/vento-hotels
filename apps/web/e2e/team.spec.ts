@@ -42,7 +42,9 @@ test('the owner invites a front desk agent, who joins from the email in one step
   await ada.getByLabel('Create a password').fill(JOINER_PASSWORD)
   await ada.getByLabel('Confirm password', { exact: true }).fill(JOINER_PASSWORD)
   await ada.getByRole('button', { name: 'Accept and continue' }).click()
-  await expect(ada.getByRole('heading', { name: 'Kora Hotels Group' })).toBeVisible()
+  await expect(
+    ada.getByRole('heading', { name: /^Good (morning|afternoon|evening)/ }),
+  ).toBeVisible()
   // Front desk doesn't manage people, so Settings isn't offered.
   await expect(ada.getByRole('link', { name: 'Settings' })).toHaveCount(0)
 
