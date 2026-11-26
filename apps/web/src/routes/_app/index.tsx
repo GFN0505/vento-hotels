@@ -14,13 +14,15 @@ import {
 } from 'lucide-react'
 import { SetupChecklist } from '@/components/home/setup-checklist'
 import { useSetupSteps } from '@/components/home/setup-steps'
+import { WelcomeBanner } from '@/components/home/welcome-banner'
+import { Workspace } from '@/components/home/workspace'
 import { EmptyState } from '@/components/ui/empty-state'
-import { PageHeader } from '@/components/ui/page-header'
 import { StatTile } from '@/components/ui/stat-tile'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { orpc } from '@/lib/api'
 import { authClient } from '@/lib/auth'
 import { useMe } from '@/lib/me'
+import { visibleGroups } from '@/lib/navigation'
 import { initials } from '@/lib/team'
 import { usePageTitle } from '@/lib/title'
 
@@ -69,9 +71,23 @@ function Home() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader
+      <WelcomeBanner
+        date={new Intl.DateTimeFormat('en-GB', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          timeZone: 'Africa/Lagos',
+        }).format(new Date())}
         title={`${greeting()}${firstName ? `, ${firstName}` : ''}`}
-        description={[group, hotel ? formatDate(hotel.businessDate) : null]
+        subtitle={[
+          group,
+          properties.data
+            ? properties.data.items.length === 1
+              ? hotel?.name
+              : plural(properties.data.items.length, 'hotel')
+            : null,
+        ]
           .filter(Boolean)
           .join(' · ')}
       />
@@ -93,10 +109,13 @@ function Home() {
           </StatTile>
         ) : (
           <StatTile
-            icon={Building2}
-            label="Hotels"
-            value={s?.hotels}
-            context={s && s.hotels === 1 ? hotel?.name : `in ${group}`}
+            icon={CalendarDays}
+            tone={behind ? 'amber' : 'slate'}
+            label="Business date"
+            value={hotel ? formatDate(hotel.businessDate, 'short') : undefined}
+            context={
+              behind ? 'Behind the calendar: run night audit' : 'Moves forward at night audit'
+            }
           />
         )}
         {managesTeam ? (
@@ -126,11 +145,11 @@ function Home() {
           />
         ) : null}
         <StatTile
-          icon={CalendarDays}
-          tone={behind ? 'amber' : 'slate'}
-          label="Business date"
-          value={hotel ? formatDate(hotel.businessDate, 'short') : undefined}
-          context={behind ? 'Behind the calendar: run night audit' : 'Moves forward at night audit'}
+          icon={Building2}
+          tone="amber"
+          label="Hotels"
+          value={s?.hotels}
+          context={s && s.hotels === 1 ? hotel?.name : `in ${group}`}
         />
       </div>
 
@@ -139,6 +158,8 @@ function Home() {
         {/* While setup is unfinished, it comes first on phones. */}
         <SetupChecklist className="max-xl:order-first" />
       </div>
+
+      <Workspace groups={me.role ? visibleGroups(me.role, me.has) : []} />
     </div>
   )
 }

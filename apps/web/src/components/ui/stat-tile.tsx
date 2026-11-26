@@ -59,10 +59,15 @@ export function StatTile({
       )}
       {context ? <span className="text-[13px] text-text-2 sm:text-sm">{context}</span> : null}
       {children}
+      {/* A soft wash along the bottom (as in Vento Real Estate's tiles): where a trend will sit. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-5 border-t border-dashed border-pri-line bg-linear-to-b from-pri-soft/60 to-transparent"
+      />
     </>
   )
   const classes = cn(
-    'group flex min-w-0 flex-col gap-2.5 rounded-lg border border-border bg-surface p-4 shadow-card sm:min-h-[132px] sm:gap-3 sm:p-5',
+    'group relative flex min-w-0 flex-col gap-2.5 overflow-hidden rounded-lg border border-border bg-surface p-4 pb-7 shadow-card sm:min-h-[140px] sm:gap-3 sm:p-5 sm:pb-8',
     'motion-safe:animate-[tile-in_320ms_ease-out_both]',
     to &&
       'transition duration-150 hover:-translate-y-px hover:border-pri-line hover:shadow-[var(--shadow-lg)]',

@@ -39,6 +39,8 @@ export type ModulePath =
 export type ModuleEntry = {
   to: ModulePath
   label: string
+  // A few words for Home's workspace card.
+  tagline: string
   icon: LucideIcon
   feature: Feature
   // Roles besides owner and group admin who use it.
@@ -59,6 +61,7 @@ export const MODULES: readonly NavGroup[] = [
     entries: [
       {
         to: '/reservations',
+        tagline: 'Bookings, deposits and no-shows',
         label: 'Reservations',
         icon: CalendarDays,
         feature: 'front_desk',
@@ -68,6 +71,7 @@ export const MODULES: readonly NavGroup[] = [
       },
       {
         to: '/tape-chart',
+        tagline: 'Rooms by night at a glance',
         label: 'Tape chart',
         icon: ChartGantt,
         feature: 'front_desk',
@@ -77,6 +81,7 @@ export const MODULES: readonly NavGroup[] = [
       },
       {
         to: '/front-desk',
+        tagline: 'Arrivals, check-in and folios',
         label: 'Front desk',
         icon: BedDouble,
         feature: 'front_desk',
@@ -86,6 +91,7 @@ export const MODULES: readonly NavGroup[] = [
       },
       {
         to: '/guests',
+        tagline: 'Guests, companies and groups',
         label: 'Guests & sales',
         icon: Users,
         feature: 'guests_sales',
@@ -100,6 +106,7 @@ export const MODULES: readonly NavGroup[] = [
     entries: [
       {
         to: '/rates',
+        tagline: 'Rates, booking engine and OTAs',
         label: 'Rates & channels',
         icon: Tag,
         feature: 'booking_engine',
@@ -114,6 +121,7 @@ export const MODULES: readonly NavGroup[] = [
     entries: [
       {
         to: '/housekeeping',
+        tagline: 'Room status and inspections',
         label: 'Housekeeping',
         icon: Sparkles,
         feature: 'housekeeping',
@@ -123,6 +131,7 @@ export const MODULES: readonly NavGroup[] = [
       },
       {
         to: '/maintenance',
+        tagline: 'Work orders and the diesel log',
         label: 'Maintenance',
         icon: Wrench,
         feature: 'housekeeping',
@@ -132,6 +141,7 @@ export const MODULES: readonly NavGroup[] = [
       },
       {
         to: '/restaurant',
+        tagline: 'Orders, tickets and bills to rooms',
         label: 'Restaurant & bar',
         icon: UtensilsCrossed,
         feature: 'restaurant_pos',
@@ -141,6 +151,7 @@ export const MODULES: readonly NavGroup[] = [
       },
       {
         to: '/stores',
+        tagline: 'Stock, purchasing and counts',
         label: 'Stores',
         icon: Package,
         feature: 'inventory',
@@ -155,6 +166,7 @@ export const MODULES: readonly NavGroup[] = [
     entries: [
       {
         to: '/finance',
+        tagline: 'Ledgers, city ledger and tax',
         label: 'Finance',
         icon: Landmark,
         feature: 'finance',
@@ -164,6 +176,7 @@ export const MODULES: readonly NavGroup[] = [
       },
       {
         to: '/hr',
+        tagline: 'Staff, rosters and payroll',
         label: 'HR & payroll',
         icon: IdCard,
         feature: 'hr_payroll',
@@ -173,6 +186,7 @@ export const MODULES: readonly NavGroup[] = [
       },
       {
         to: '/analytics',
+        tagline: 'Occupancy, ADR and board packs',
         label: 'Analytics',
         icon: ChartColumn,
         feature: 'analytics',
@@ -182,6 +196,7 @@ export const MODULES: readonly NavGroup[] = [
       },
       {
         to: '/leakage',
+        tagline: 'Voids, discounts and comps by name',
         label: 'Leakage',
         icon: ShieldCheck,
         feature: 'front_desk',
