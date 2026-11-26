@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createType } from '../rooms/testing.ts'
 import { ABUJA_ADDRESS } from '../test/addresses.ts'
 import { createTestApp } from '../test/harness.ts'
-import { type Kora, koraWithRates, setBusinessDate, TERMS } from './testing.ts'
+import { formOf, type Kora, koraWithRates, setBusinessDate, TERMS } from './testing.ts'
 
 const url = process.env.TEST_DATABASE_URL
 
@@ -76,5 +76,61 @@ describe.skipIf(!url)('rates under concurrent edits', () => {
     expect([archive.status, follow.status].filter((status) => status === 200)).toHaveLength(1)
     const loser = archive.status === 200 ? follow : archive
     expect(['PARENT_ARCHIVED', 'HAS_DERIVED_PLANS']).toContain(loser.data.data?.code)
+  })
+  it('lets a room type restore and plan saves at the same hotel queue, never deadlock', async () => {
+    const villa = await createType(t, kora.owner.cookie, hotel.id, {
+      name: 'Garden Villa',
+      code: 'GVL',
+    })
+    const parent = (
+      await t.rpc<RatePlanView>(kora.owner.cookie, 'ratePlans/create', {
+        propertyId: hotel.id,
+        name: 'Villas',
+        code: 'VILLA',
+        pricing: 'own',
+        roomTypes: [
+          { roomTypeId: type.id, weekday: '200000' },
+          { roomTypeId: villa.id, weekday: '400000' },
+        ],
+        ...TERMS,
+      })
+    ).data
+    const child = (
+      await t.rpc<RatePlanView>(kora.owner.cookie, 'ratePlans/create', {
+        propertyId: hotel.id,
+        name: 'Villas B&B',
+        code: 'VILLA-BB',
+        pricing: 'derived',
+        parentId: parent.id,
+        adjustment: { kind: 'amount', value: '18000' },
+        mealPlan: 'bed_breakfast',
+        roomTypes: [{ roomTypeId: type.id }],
+        ...TERMS,
+      })
+    ).data
+    const save = async (id: string, minStay: number) => {
+      const plan = (await t.rpc<RatePlanView>(kora.owner.cookie, 'ratePlans/get', { id })).data
+      return t.rpc<{ message?: string }>(kora.owner.cookie, 'ratePlans/update', {
+        ...formOf(plan),
+        minStay,
+      })
+    }
+    for (let round = 1; round <= 5; round++) {
+      await t.rpc(kora.owner.cookie, 'roomTypes/archive', { id: villa.id })
+      const results = await Promise.all([
+        t.rpc<{ message?: string }>(kora.owner.cookie, 'roomTypes/restore', { id: villa.id }),
+        save(parent.id, round),
+        save(child.id, round),
+      ])
+      // Each either succeeds or, when the other changed the plan first, gets a clean conflict.
+      for (const result of results) {
+        expect([200, 409]).toContain(result.status)
+        expect(result.data.message ?? '').not.toMatch(/deadlock/i)
+      }
+      expect(results[0]?.status).toBe(200)
+    }
+    const after = (await t.rpc<RatePlanView>(kora.owner.cookie, 'ratePlans/get', { id: child.id }))
+      .data
+    expect(after.roomTypes.map((row) => row.roomTypeId)).toContain(villa.id)
   })
 })

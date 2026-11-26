@@ -14,6 +14,7 @@ import type { Access } from '../tenancy/access.ts'
 import {
   auditAt,
   holdRatesProperty,
+  lockRatesOfPlan,
   type RatesProperty,
   requireRatesEdit,
   type Tx,
@@ -28,9 +29,10 @@ import {
   planNotFound,
   roomTypeArchived,
   tooFarAhead,
+  undoExpired,
   undoNotFound,
 } from './errors.ts'
-import { requireDerivedPositive, tonightAfter, tonightBefore } from './guards.ts'
+import { requireValidPrices, tonightAfter, tonightBefore } from './guards.ts'
 import type { PlanRow } from './plan-model.ts'
 import { plansInScope } from './plan-reads.ts'
 
@@ -205,7 +207,12 @@ async function followerNames(tx: Tx, planId: string): Promise<string[]> {
 // The apply's event, if this batch was already applied (a retry after a timeout).
 async function appliedBatch(tx: Tx, access: Access, planId: string, batchId: string) {
   const [event] = await tx
-    .select({ id: auditEvents.id, createdAt: auditEvents.createdAt, after: auditEvents.after })
+    .select({
+      id: auditEvents.id,
+      createdAt: auditEvents.createdAt,
+      businessDate: auditEvents.businessDate,
+      after: auditEvents.after,
+    })
     .from(auditEvents)
     .where(
       and(
@@ -227,6 +234,7 @@ export async function setRateDates(
 ): Promise<SetDatesResult> {
   requireRatesEdit(access)
   return db.transaction(async (tx) => {
+    await lockRatesOfPlan(tx, access, input.ratePlanId)
     const plan = await lockOwnPlan(tx, access, input.ratePlanId)
     const property = await holdRatesProperty(tx, access, plan.propertyId)
     const done = await appliedBatch(tx, access, plan.id, input.batchId)
@@ -271,7 +279,7 @@ export async function setRateDates(
     }
     await writeCells(tx, scope, stored, after)
     if (after.some((cell, i) => cell.price !== before[i]?.price)) {
-      await requireDerivedPositive(tx, access, property)
+      await requireValidPrices(tx, access, property)
     }
     const flags = await tonightAfter(tx, access, property, tonight, input.reason)
     const summary: SetDatesResult = {
@@ -320,10 +328,15 @@ export async function undoRateDates(
 ): Promise<{ restored: number; skippedDates: number; message: string | null }> {
   requireRatesEdit(access)
   return db.transaction(async (tx) => {
+    await lockRatesOfPlan(tx, access, input.ratePlanId)
     const plan = await lockOwnPlan(tx, access, input.ratePlanId)
     const property = await holdRatesProperty(tx, access, plan.propertyId)
     const original = await appliedBatch(tx, access, plan.id, input.batchId)
     if (!original) throw undoNotFound()
+    // Undo lasts until night audit moves the business date past the one the change was made on.
+    if (original.businessDate && original.businessDate < property.businessDate) {
+      throw undoExpired()
+    }
     const [undone] = await tx
       .select({ id: auditEvents.id })
       .from(auditEvents)
@@ -392,7 +405,7 @@ export async function undoRateDates(
       ratePlanId: plan.id,
     }
     await writeCells(tx, scope, stored, after)
-    await requireDerivedPositive(tx, access, property)
+    await requireValidPrices(tx, access, property)
     const flags = await tonightAfter(tx, access, property, tonight, input.reason)
     // Before this undo's own event, so the message names whoever changed the dates since.
     const message = await skipMessage(tx, access, plan.id, original.createdAt, changedSince, past)

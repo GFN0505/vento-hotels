@@ -8,6 +8,8 @@ import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { rooms, roomTypes } from '../db/schema/rooms.ts'
 import { type BaseRate, baseRates } from '../rates/base-rate.ts'
+import { lockHotelRates } from '../rates/context.ts'
+import { roomTypeRestored } from '../rates/room-type-restored.ts'
 import { type Access, scopeToProperties } from '../tenancy/access.ts'
 import {
   auditAt,
@@ -368,6 +370,9 @@ export async function restoreRoomType(
   let name: string | undefined
   try {
     return await db.transaction(async (tx) => {
+      // Restoring adds the type back to rate plans, so it takes the hotel's rates lock before the
+      // type row, in the same order as rate plan writes (rates lock → plans → room types).
+      await lockHotelRates(tx, (await findType(tx, access, input.id)).propertyId)
       const type = await lockType(tx, access, input.id)
       if (!type.archivedAt) return view(tx, access, type)
       propertyId = type.propertyId
@@ -379,6 +384,7 @@ export async function restoreRoomType(
         .set({ archivedAt: null, sortOrder: nextSortOrder(property.id) })
         .where(eq(roomTypes.id, type.id))
       await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [type.id] })
+      await roomTypeRestored(tx, access, property, { id: type.id, name: type.name })
       await recordAudit(tx, access, {
         action: 'room_type.restored',
         entityType: 'room_type',

@@ -281,6 +281,54 @@ describe.skipIf(!url)('rate calendar and date changes', () => {
     expect(cellOf(cal, 'STQ', 'BAR', '2027-01-12')?.price).toBe('120000.00')
   })
 
+  it("refuses a date price below a meal plan's allocation", async () => {
+    const plan = (
+      await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/create', {
+        propertyId: kora.vi.id,
+        name: 'Acme Energy B&B',
+        code: 'ACME-BB',
+        pricing: 'own',
+        bookableBy: 'corporate_only',
+        mealPlan: 'bed_breakfast',
+        mealAllocation: '18000',
+        roomTypes: [{ roomTypeId: kora.types.dlk.id, weekday: '130000' }],
+        ...TERMS,
+      })
+    ).data
+    const response = await setDates({
+      ratePlanId: plan.id,
+      roomTypeIds: [kora.types.dlk.id],
+      from: '2027-01-12',
+      to: '2027-01-12',
+      prices: [{ roomTypeId: kora.types.dlk.id, price: '15000' }],
+    })
+    expect(response.data).toMatchObject({
+      message:
+        "Acme Energy B&B's meal allocation (₦18,000) would be more than its price for Deluxe King on 12 Jan 2027. Lower the allocation or raise the price.",
+      data: { code: 'MEAL_ALLOCATION_ABOVE_PRICE', date: '2027-01-12' },
+    })
+  })
+
+  it('stops undo once night audit has moved the business date on', async () => {
+    const applied = await setDates({
+      roomTypeIds: [kora.types.jrs.id],
+      from: '2027-03-01',
+      to: '2027-03-01',
+      closed: true,
+    })
+    await setBusinessDate(t, kora.vi.id, '2026-11-26')
+    const undo = await t.rpc<Problem>(kora.gm.cookie, 'rates/undoDates', {
+      ratePlanId: bar.id,
+      batchId: applied.data.batchId,
+    })
+    await setBusinessDate(t, kora.vi.id, '2026-11-25')
+    expect(undo.data).toMatchObject({
+      message:
+        "This change can't be undone any more: night audit has run since. Change the dates again instead.",
+      data: { code: 'UNDO_EXPIRED' },
+    })
+  })
+
   it('undoes an apply, leaving dates someone changed since', async () => {
     const applied = await setDates({
       roomTypeIds: [kora.types.exk.id],

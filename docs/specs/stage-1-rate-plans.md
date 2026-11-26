@@ -229,6 +229,14 @@ Kora Victoria Island (prices excl. taxes and service charge, illustrative):
 - All hotels selected: "Rates are set per hotel. Pick a hotel."
 - Owner's daily report line: "Rate lowered for tonight · Deluxe King · Best available ₦150,000 → ₦120,000 (and 2 plans that follow it) · Tunde Bello · 21:40 · Reason: …"
 
+## Decisions after approval (lead, 2026-11-26)
+Questions raised while building the server half, settled consistently with the owner's choices:
+1. **Shared devices:** `rates.edit` is refused in a PIN session on a shared device, like `rooms.setup`; rates change on a manager's own sign-in. Reading rates by PIN (front desk, `reservation.manage`) still works.
+2. **Meal allocation is never more than the price it is part of:** a save is refused when any standard price, date price or derived price of a meal plan, from the business date to 2 years ahead, would be below its allocation: "Acme Energy B&B's meal allocation (₦18,000) would be more than its price for Deluxe King on 12 Jan 2027. Lower the allocation or raise the price." (`MEAL_ALLOCATION_ABOVE_PRICE`). It applies to the plan's own saves and to changes on its parent.
+3. **Undo of a dates change** works until night audit moves the business date past the date the change was made on; after that: "This change can't be undone any more: night audit has run since. Change the dates again instead." (`UNDO_EXPIRED`).
+4. **Corporate-only plans** stay as specified: listed, priced and shown under Corporate plans, never returned by `listBookablePlans` until brick 12 links them to a corporate account. `quoteStay` returns the plan's `bookableBy`, and brick 4 must refuse a corporate-only plan for a booking without a linked account.
+5. **Restoring an archived room type** puts it back on every plan that sold it (its rows and standard prices are kept while archived) and also on active plans derived from a parent that sells it, including plans created while it was archived; each such plan gets a `rate_plan.changed` event with `followsRestoreOf`. Every plan the type comes back on gets a new version, so an editor opened while the type was archived is told someone else saved first instead of dropping the type on save. Rates writes and room type restores at one hotel queue behind one lock, so they never deadlock.
+
 ## Out of scope
 - Channels, "Where it sells", mapping, ARI, parity, rooms left on the calendar, max stay and closed to departure (Stage 4; rooms left with brick 4).
 - Tax rules and the Guest pays column (brick 3), FX rates and USD prices (brick 3; USD-priced plans after v1 unless Open question 15 changes).

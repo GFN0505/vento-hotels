@@ -355,20 +355,19 @@ export function nightOf(
   }
 }
 
-// The first night from `from` to `to` (both included) on which a derived plan would cost ₦0 or
-// less, or null. Saves that would make one are refused (spec, Rates).
-export function firstNonPositiveNight(
+// The first night from `from` to `to` (both included) whose price fails `ok`, or null. Only the
+// standard prices (on the first weekday and weekend nights they apply to) and the date prices in
+// range can produce a price, so those are the only nights checked.
+export function firstNightWhere(
   source: Pick<PriceSource, 'standard' | 'dates'>,
-  adjustment: RateAdjustment,
+  adjustment: RateAdjustment | null,
   from: CalendarDate,
   to: CalendarDate,
+  ok: (price: Decimal) => boolean,
 ): CalendarDate | null {
   if (to < from) return null
-  // Only the standard prices and the dated prices in range can produce a night's price.
   const candidates: { date: CalendarDate; price: string }[] = []
   const nights = nightsBetween(from, to)
-  // Standard prices: the first weekday and the first weekend night in range not covered by a date
-  // price are the earliest nights each could apply.
   let weekday: CalendarDate | null = null
   let weekend: CalendarDate | null = null
   for (let i = 0; i <= nights && (weekday === null || weekend === null); i++) {
@@ -383,10 +382,35 @@ export function firstNonPositiveNight(
     if (cell.price && date >= from && date <= to) candidates.push({ date, price: cell.price })
   }
   const bad = candidates
-    .filter((c) => !dec(derivePrice(c.price, adjustment)).greaterThan(0))
+    .filter((c) => !ok(dec(adjustment ? derivePrice(c.price, adjustment) : c.price)))
     .map((c) => c.date)
     .sort()
   return bad[0] ?? null
+}
+
+// The first night on which a derived plan would cost ₦0 or less, or null. Saves that would make
+// one are refused (spec, Rates).
+export function firstNonPositiveNight(
+  source: Pick<PriceSource, 'standard' | 'dates'>,
+  adjustment: RateAdjustment,
+  from: CalendarDate,
+  to: CalendarDate,
+): CalendarDate | null {
+  return firstNightWhere(source, adjustment, from, to, (price) => price.greaterThan(0))
+}
+
+// The first night on which a meal plan's price would be below its meal allocation (the food part
+// can't be more than the whole price), or null.
+export function firstNightBelowAllocation(
+  source: Pick<PriceSource, 'standard' | 'dates'>,
+  adjustment: RateAdjustment | null,
+  allocation: string,
+  from: CalendarDate,
+  to: CalendarDate,
+): CalendarDate | null {
+  return firstNightWhere(source, adjustment, from, to, (price) =>
+    price.greaterThanOrEqualTo(allocation),
+  )
 }
 
 // --- Restrictions and quotes ----------------------------------------------------------------------

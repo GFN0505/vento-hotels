@@ -5,6 +5,7 @@
 // Both compare prices through the shared maths, so they see exactly what a quote would.
 import {
   dec,
+  firstNightBelowAllocation,
   firstNonPositiveNight,
   type LoweredTonight,
   lastRateDate,
@@ -14,7 +15,7 @@ import { and, asc, eq, isNull } from 'drizzle-orm'
 import { roomTypes } from '../db/schema/rooms.ts'
 import type { Access } from '../tenancy/access.ts'
 import { isLive, type RatesProperty, type Reader, type Tx } from './context.ts'
-import { derivedNotPositive, lowerTonightReason } from './errors.ts'
+import { allocationAbovePrice, derivedNotPositive, lowerTonightReason } from './errors.ts'
 import { loadPricing, sourceFor } from './pricing-data.ts'
 
 export type PropertyRoomType = {
@@ -55,17 +56,18 @@ export async function loadRoomTypes(
   return rows.map(({ archivedAt, ...row }) => ({ ...row, archived: archivedAt !== null }))
 }
 
-const scopeOf = (access: Access, property: RatesProperty) => ({
+const scopeOf = (access: Access, property: Pick<RatesProperty, 'id'>) => ({
   organizationId: access.organizationId,
   propertyId: property.id,
 })
 
-// Every active derived plan, for every room type it sells, from the business date to the last
-// settable date. Refuses the save (rolling it back) on the first night at ₦0 or less.
-export async function requireDerivedPositive(
+// Every active plan, for every room type it sells, from the business date to the last settable
+// date: a derived plan never costs ₦0 or less, and a meal plan never costs less than its meal
+// allocation. Refuses the save (rolling it back) on the first night that breaks either.
+export async function requireValidPrices(
   tx: Tx,
   access: Access,
-  property: RatesProperty,
+  property: Pick<RatesProperty, 'id' | 'businessDate'>,
 ): Promise<void> {
   const from = property.businessDate
   const to = lastRateDate(from)
@@ -75,12 +77,23 @@ export async function requireDerivedPositive(
     loadRoomTypes(tx, scope, true),
   ])
   for (const plan of pricing.plans) {
-    if (!plan.adjustment) continue
     for (const type of types) {
       const source = sourceFor(plan, type.id, pricing)
       if (!source) continue
-      const date = firstNonPositiveNight(source, plan.adjustment, from, to)
-      if (date) throw derivedNotPositive(plan.name, type.name, date)
+      if (plan.adjustment) {
+        const date = firstNonPositiveNight(source, plan.adjustment, from, to)
+        if (date) throw derivedNotPositive(plan.name, type.name, date)
+      }
+      if (plan.mealAllocation) {
+        const date = firstNightBelowAllocation(
+          source,
+          plan.adjustment,
+          plan.mealAllocation,
+          from,
+          to,
+        )
+        if (date) throw allocationAbovePrice(plan.name, plan.mealAllocation, type.name, date)
+      }
     }
   }
 }

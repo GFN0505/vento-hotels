@@ -1,7 +1,7 @@
 // Errors with the spec's wording ("Empty, error and edge cases" and "UI copy") and a `data.code`
 // from RATE_ERROR_CODES the web app can react to.
 import { ORPCError } from '@orpc/server'
-import { formatRateDate, type LoweredTonight } from '@vento/shared'
+import { formatNaira, formatRateDate, type LoweredTonight } from '@vento/shared'
 
 export const planNotFound = () =>
   new ORPCError('NOT_FOUND', { message: "We couldn't find that rate plan" })
@@ -90,6 +90,26 @@ export const derivedNotPositive = (plan: string, roomType: string, date: string)
   new ORPCError('BAD_REQUEST', {
     message: `${plan} would be ₦0 or less for ${roomType} on ${formatRateDate(date)}. Use a smaller offset.`,
     data: { code: 'DERIVED_NOT_POSITIVE', plan, roomType, date },
+  })
+
+// "Bed & breakfast costs ₦15,000 for Standard Queen on 12 Jan 2027, less than its ₦18,000 meal
+// allocation. Lower the allocation or raise the price."
+export const allocationAbovePrice = (
+  plan: string,
+  allocation: string,
+  roomType: string,
+  date: string,
+) =>
+  new ORPCError('BAD_REQUEST', {
+    message: `${plan}'s meal allocation (${formatNaira(allocation)}) would be more than its price for ${roomType} on ${formatRateDate(date)}. Lower the allocation or raise the price.`,
+    data: { code: 'MEAL_ALLOCATION_ABOVE_PRICE', plan, roomType, date },
+  })
+
+export const undoExpired = () =>
+  new ORPCError('CONFLICT', {
+    message:
+      "This change can't be undone any more: night audit has run since. Change the dates again instead.",
+    data: { code: 'UNDO_EXPIRED' },
   })
 
 export const pastDate = (date: string) =>

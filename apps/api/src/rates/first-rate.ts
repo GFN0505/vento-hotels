@@ -7,11 +7,11 @@ import {
   DEFAULT_DEPOSIT,
   type RatePlanView,
 } from '@vento/shared'
-import { and, count, eq, isNull, sql } from 'drizzle-orm'
+import { and, count, eq, isNull } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { ratePlans } from '../db/schema/rates.ts'
 import type { Access } from '../tenancy/access.ts'
-import { holdRatesProperty, requireRatesEdit } from './context.ts'
+import { holdRatesProperty, lockHotelRates, requireRatesEdit } from './context.ts'
 import { noRoomTypes, plansExist } from './errors.ts'
 import { loadRoomTypes } from './guards.ts'
 import type { PlanTerms } from './plan-model.ts'
@@ -56,14 +56,12 @@ export async function createFirstRatePlans(
 ): Promise<{ plans: RatePlanView[] }> {
   requireRatesEdit(access)
   return db.transaction(async (tx) => {
+    // Two people pressing "Create Best available" at once: the second waits, then sees the first's
+    // plans.
+    await lockHotelRates(tx, input.propertyId)
     const property = await holdRatesProperty(tx, access, input.propertyId)
     const scope = { organizationId: access.organizationId, propertyId: property.id }
     if ((await loadRoomTypes(tx, scope)).length === 0) throw noRoomTypes()
-    // Two people pressing "Create Best available" at once: the second waits, then sees the first's
-    // plans. Held to the end of the transaction, keyed on the hotel.
-    await tx.execute(
-      sql`select pg_advisory_xact_lock(hashtextextended(${`first-rate:${property.id}`}, 0))`,
-    )
     const [active] = await tx
       .select({ value: count() })
       .from(ratePlans)

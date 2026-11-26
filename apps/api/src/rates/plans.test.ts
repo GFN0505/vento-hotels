@@ -206,6 +206,27 @@ describe.skipIf(!url)('rate plans', () => {
     expect(list.data.items.map((plan) => plan.code)).not.toContain('GIVE')
   })
 
+  it('refuses a meal allocation above the price it is part of', async () => {
+    const response = await t.rpc<Problem>(kora.gm.cookie, 'ratePlans/create', {
+      propertyId: kora.vi.id,
+      name: 'Half board',
+      code: 'HB',
+      pricing: 'own',
+      mealPlan: 'half_board',
+      mealAllocation: '125000',
+      roomTypes: [
+        { roomTypeId: kora.types.stq.id, weekday: '120000' },
+        { roomTypeId: kora.types.dlk.id, weekday: '150000' },
+      ],
+      ...TERMS,
+    })
+    expect(response.data).toMatchObject({
+      message:
+        "Half board's meal allocation (₦125,000) would be more than its price for Standard Queen on 25 Nov 2026. Lower the allocation or raise the price.",
+      data: { code: 'MEAL_ALLOCATION_ABOVE_PRICE' },
+    })
+  })
+
   it('saves standard prices with before and after, and refuses a stale save', async () => {
     const current = await get(bar.id)
     const form = formOf(current)
@@ -517,6 +538,57 @@ describe.skipIf(!url)('rate plans', () => {
     expect(await home()).toBe(false)
     await t.rpc(kora.owner.cookie, 'roomTypes/archive', { id: suite.data.id })
     expect(await home()).toBe(true)
+  })
+
+  it('puts a restored room type back on its plans and on plans derived from them', async () => {
+    const villa = (
+      await t.rpc<RoomTypeView>(kora.owner.cookie, 'roomTypes/create', {
+        propertyId: kora.vi.id,
+        name: 'Garden Villa',
+        code: 'GVL',
+        bed: 'king',
+      })
+    ).data
+    const parent = (
+      await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/create', {
+        propertyId: kora.vi.id,
+        name: 'Villas',
+        code: 'VILLA',
+        pricing: 'own',
+        roomTypes: [
+          { roomTypeId: kora.types.jrs.id, weekday: '300000' },
+          { roomTypeId: villa.id, weekday: '400000' },
+        ],
+        ...TERMS,
+      })
+    ).data
+    await t.rpc(kora.owner.cookie, 'roomTypes/archive', { id: villa.id })
+    const child = (
+      await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/create', {
+        propertyId: kora.vi.id,
+        name: 'Villas B&B',
+        code: 'VILLA-BB',
+        pricing: 'derived',
+        parentId: parent.id,
+        adjustment: { kind: 'amount', value: '18000' },
+        mealPlan: 'bed_breakfast',
+        roomTypes: [{ roomTypeId: kora.types.jrs.id }],
+        ...TERMS,
+      })
+    ).data
+    expect(child.roomTypes.map((row) => row.roomTypeId)).toEqual([kora.types.jrs.id])
+    expect((await t.rpc(kora.owner.cookie, 'roomTypes/restore', { id: villa.id })).status).toBe(200)
+    expect((await get(parent.id)).roomTypes.find((row) => row.roomTypeId === villa.id)).toEqual({
+      roomTypeId: villa.id,
+      weekday: '400000.00',
+      weekend: null,
+    })
+    expect((await get(child.id)).roomTypes.map((row) => row.roomTypeId)).toContain(villa.id)
+    expect((await events(child.id))[0]).toMatchObject({
+      action: 'rate_plan.changed',
+      after: expect.objectContaining({ followsRestoreOf: 'Garden Villa' }),
+    })
+    await t.rpc(kora.owner.cookie, 'roomTypes/archive', { id: villa.id })
   })
 
   it('shows the last three events on a plan for its Change history card', async () => {

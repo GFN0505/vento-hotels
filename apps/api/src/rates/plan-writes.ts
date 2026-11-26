@@ -23,6 +23,8 @@ import {
   auditAt,
   holdRatesProperty,
   isLive,
+  lockHotelRates,
+  lockRatesOfPlan,
   type RatesProperty,
   type Reader,
   requireRatesEdit,
@@ -43,7 +45,7 @@ import {
   roomTypeArchived,
   roomTypeNotFound,
 } from './errors.ts'
-import { requireDerivedPositive, tonightAfter, tonightBefore } from './guards.ts'
+import { requireValidPrices, tonightAfter, tonightBefore } from './guards.ts'
 import { type PlanRow, type PlanTerms, termColumns, termsOf } from './plan-model.ts'
 import { findPlan, planHasHistory, plansInScope, planView } from './plan-reads.ts'
 
@@ -302,9 +304,10 @@ export async function createRatePlan(
   const terms = termsFromInput(input)
   try {
     return await db.transaction(async (tx) => {
+      await lockHotelRates(tx, input.propertyId)
       const property = await holdRatesProperty(tx, access, input.propertyId)
       const id = await insertPlan(tx, access, property, terms, input.roomTypes)
-      if (terms.pricing === 'derived') await requireDerivedPositive(tx, access, property)
+      await requireValidPrices(tx, access, property)
       return readBack(tx, access, property, id)
     })
   } catch (error) {
@@ -434,6 +437,7 @@ export async function updateRatePlan(
   let propertyId: string | undefined
   try {
     return await db.transaction(async (tx) => {
+      await lockRatesOfPlan(tx, access, input.id)
       const plan = await lockPlan(tx, access, input.id)
       propertyId = plan.propertyId
       const property = await holdRatesProperty(tx, access, plan.propertyId)
@@ -554,7 +558,7 @@ export async function updateRatePlan(
       const changeId = newId()
       const nameOf = (id: string) => typeNames.get(id) ?? null
       await removeFromFollowers(tx, access, property, plan, removed, typeNames, changeId)
-      await requireDerivedPositive(tx, access, property)
+      await requireValidPrices(tx, access, property)
       const flags = await tonightAfter(tx, access, property, tonight, input.reason)
 
       const events: AuditEvent[] = []
@@ -636,6 +640,7 @@ export async function archiveRatePlan(
 ): Promise<RatePlanView> {
   requireRatesEdit(access)
   return db.transaction(async (tx) => {
+    await lockRatesOfPlan(tx, access, input.id)
     const plan = await lockPlan(tx, access, input.id)
     const property = await holdRatesProperty(tx, access, plan.propertyId)
     if (plan.archivedAt) return planView(tx, property, plan)
@@ -674,6 +679,7 @@ export async function restoreRatePlan(
   let name: string | undefined
   try {
     return await db.transaction(async (tx) => {
+      await lockRatesOfPlan(tx, access, input.id)
       const plan = await lockPlan(tx, access, input.id)
       const property = await holdRatesProperty(tx, access, plan.propertyId)
       if (!plan.archivedAt) return planView(tx, property, plan)
@@ -689,7 +695,7 @@ export async function restoreRatePlan(
           version: plan.version + 1,
         })
         .where(eq(ratePlans.id, plan.id))
-      if (plan.pricing === 'derived') await requireDerivedPositive(tx, access, property)
+      await requireValidPrices(tx, access, property)
       await recordAudit(tx, access, {
         action: 'rate_plan.restored',
         entityType: 'rate_plan',
@@ -714,6 +720,7 @@ export async function deleteRatePlan(
 ): Promise<{ ok: true }> {
   requireRatesEdit(access)
   return db.transaction(async (tx) => {
+    await lockRatesOfPlan(tx, access, input.id)
     const plan = await lockPlan(tx, access, input.id)
     const property = await holdRatesProperty(tx, access, plan.propertyId)
     if (!plan.archivedAt) throw notArchived(plan.name)
@@ -753,6 +760,7 @@ export async function reorderRatePlans(
 ): Promise<{ ok: true }> {
   requireRatesEdit(access)
   return db.transaction(async (tx) => {
+    await lockHotelRates(tx, input.propertyId)
     const property = await holdRatesProperty(tx, access, input.propertyId)
     const current = await tx
       .select({ id: ratePlans.id })

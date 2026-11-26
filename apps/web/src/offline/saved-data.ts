@@ -8,7 +8,7 @@ import { clearAll, getItem, setItem } from './store'
 const KEY = 'queries'
 const SESSION_KEY = 'vento.lastSession'
 
-// The API paths worth keeping. Everything else is fetched fresh. Rooms are kept so the rooms page
+// The API paths worth keeping. Everything else is fetched fresh. Rooms and rates are kept so their pages
 // opens offline (read-only) and the front desk bricks can show rooms through a power cut; hotels and
 // companies so their settings open read-only offline.
 const KEPT = new Set([
@@ -20,6 +20,11 @@ const KEPT = new Set([
   'roomTypes.list',
   'rooms.list',
   'rooms.summary',
+  // Rate plans and the calendar pages already opened (and the ones fetched ahead): read-only offline.
+  'ratePlans.list',
+  'ratePlans.overview',
+  'ratePlans.get',
+  'rates.calendar',
 ])
 
 type Saved = { savedAt: number; state: ReturnType<typeof dehydrate> }

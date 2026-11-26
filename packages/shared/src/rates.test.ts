@@ -5,6 +5,7 @@ import {
   addYears,
   type DateCell,
   derivePrice,
+  firstNightBelowAllocation,
   firstNonPositiveNight,
   foreignEquivalent,
   formatNaira,
@@ -220,6 +221,31 @@ describe('the first night a derived plan would be ₦0 or less', () => {
         '2026-11-26',
       ),
     ).toBe('2026-11-26')
+  })
+})
+
+describe('the first night a meal plan would cost less than its meal allocation', () => {
+  it('allows a price equal to the allocation and finds the first one below it', () => {
+    const s = source('130000.00', null, {
+      '2026-12-10': cell({ price: '18000.00' }),
+      '2026-12-12': cell({ price: '17999.00' }),
+    })
+    expect(firstNightBelowAllocation(s, null, '18000.00', '2026-11-26', '2026-12-31')).toBe(
+      '2026-12-12',
+    )
+    expect(firstNightBelowAllocation(s, null, '18000.00', '2026-11-26', '2026-12-11')).toBeNull()
+  })
+
+  it('compares the derived price, not the parent’s', () => {
+    const parent = source('20000.00')
+    const minus = { kind: 'amount' as const, value: '-5000.00' }
+    expect(firstNightBelowAllocation(parent, minus, '18000.00', '2026-11-26', '2026-11-26')).toBe(
+      '2026-11-26',
+    )
+    const plus = { kind: 'amount' as const, value: '18000.00' }
+    expect(
+      firstNightBelowAllocation(parent, plus, '18000.00', '2026-11-26', '2026-11-30'),
+    ).toBeNull()
   })
 })
 

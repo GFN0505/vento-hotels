@@ -43,6 +43,7 @@ export const RATE_ERROR_CODES = [
   'ROOM_TYPE_ARCHIVED',
   'NO_ROOM_TYPES', // set up rooms first
   'DERIVED_NOT_POSITIVE', // data: { plan, roomType, date }
+  'MEAL_ALLOCATION_ABOVE_PRICE', // data: { plan, roomType, date }
   'PAST_DATE',
   'TOO_FAR_AHEAD', // data.lastDate
   'NO_DATES',
@@ -54,6 +55,7 @@ export const RATE_ERROR_CODES = [
   'PLANS_EXIST',
   'UNDO_NOT_FOUND',
   'ALREADY_UNDONE',
+  'UNDO_EXPIRED', // night audit has run since the change
   'TOO_MANY_GUESTS',
 ] as const
 export type RateErrorCode = (typeof RATE_ERROR_CODES)[number]
@@ -495,6 +497,7 @@ export const ratesContract = {
   rates: {
     calendar: oc.input(calendarInputSchema).output(rateCalendarSchema),
     setDates: oc.input(setRateDatesSchema).output(setRateDatesResultSchema),
+    // Until night audit moves the business date past the change's (UNDO_EXPIRED after), once.
     undoDates: oc
       .input(z.object({ ratePlanId: idSchema, batchId: idSchema, reason }))
       .output(undoRateDatesResultSchema),

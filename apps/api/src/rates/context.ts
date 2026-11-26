@@ -3,8 +3,9 @@
 
 import { ORPCError } from '@orpc/server'
 import { RATES_READERS } from '@vento/shared'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
+import { ratePlans } from '../db/schema/rates.ts'
 import { properties } from '../db/schema/tenancy.ts'
 import {
   type Access,
@@ -13,8 +14,10 @@ import {
   requireFeature,
   requireListableHotel,
   requirePermission,
+  scopeToProperties,
 } from '../tenancy/access.ts'
 import { hotelNotFound } from '../tenancy/errors.ts'
+import { planNotFound } from './errors.ts'
 
 export type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
 export type Reader = Pick<Database, 'select'>
@@ -92,4 +95,29 @@ export function isLive(property: Pick<RatesProperty, 'liveSince'>): boolean {
 // The fields every rates audit event carries.
 export function auditAt(property: RatesProperty) {
   return { propertyId: property.id, businessDate: property.businessDate }
+}
+
+// One lock per hotel for everything that changes its rates, taken first, before any plan or room
+// type row: rate plan writes, date changes, undo, the first-rate table and room type restore (which
+// adds the type to derived plans). With one order for all of them (this lock → plans → room types)
+// a plan save and a room type restore can't deadlock; they queue. Rates change a few times a day,
+// so serialising them per hotel costs nothing. Held until the transaction ends.
+export async function lockHotelRates(tx: Tx, propertyId: string): Promise<void> {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`rates:${propertyId}`}, 0))`)
+}
+
+// The hotel rates lock for a plan named by id. A plan the caller can't see is not found.
+export async function lockRatesOfPlan(tx: Tx, access: Access, planId: string): Promise<void> {
+  const [plan] = await tx
+    .select({ propertyId: ratePlans.propertyId })
+    .from(ratePlans)
+    .where(
+      and(
+        eq(ratePlans.id, planId),
+        eq(ratePlans.organizationId, access.organizationId),
+        scopeToProperties(access, ratePlans.propertyId),
+      ),
+    )
+  if (!plan) throw planNotFound()
+  await lockHotelRates(tx, plan.propertyId)
 }

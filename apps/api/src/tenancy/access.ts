@@ -46,6 +46,8 @@ const NOT_ON_SHARED_DEVICES: Permission[] = [
   'permissions.manage',
   'rooms.setup',
   'property.operating_times',
+  // Rates are changed by a named manager on their own sign-in, never from the front desk PC.
+  'rates.edit',
 ]
 
 export async function effectiveRules(

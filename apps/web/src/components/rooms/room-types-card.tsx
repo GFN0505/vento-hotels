@@ -2,7 +2,8 @@
 // bed, max guests and size, in the order every picker and the tape chart use. Drag a row on a
 // desktop, or use Move up / Move down (also the keyboard way).
 import { useMutation } from '@tanstack/react-query'
-import type { RoomTypeView } from '@vento/shared'
+import { Link } from '@tanstack/react-router'
+import { formatNaira, type RoomTypeView } from '@vento/shared'
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -95,6 +96,13 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
             <th scope="col" className="px-3 py-2">
               Size
             </th>
+            <th
+              scope="col"
+              className="px-3 py-2 text-right"
+              title="Best available's weekday price, excl. taxes and service charge"
+            >
+              Base rate<span className="sr-only">, excl. taxes and service charge</span>
+            </th>
             <th scope="col" className="w-40 px-3 py-2">
               <span className="sr-only">Actions</span>
             </th>
@@ -157,6 +165,9 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
                   <span className="text-text-3">Not set</span>
                 )}
               </td>
+              <td className="px-3 py-2.5 text-right whitespace-nowrap max-md:col-start-1 max-md:p-0 max-md:pl-5 max-md:text-left">
+                <BaseRate type={type} />
+              </td>
               <td className="px-3 py-2.5 text-right max-md:col-start-2 max-md:row-span-2 max-md:row-start-1 max-md:self-center max-md:p-0">
                 <span className="inline-flex items-center gap-1">
                   {canWrite && ordered.length > 1 ? (
@@ -198,5 +209,43 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
       </table>
       {archived.length > 0 ? <ArchivedTypes types={archived} canWrite={canWrite} /> : null}
     </Card>
+  )
+}
+
+// Best available's weekday price (spec: rate plans, "Rooms page and Home"); "Not priced" when that
+// plan doesn't sell the type, linking to it with the type added.
+function BaseRate({ type }: { type: RoomTypeView }) {
+  const base = type.baseRate
+  if (!base) {
+    return (
+      <Link
+        to="/rates/plans"
+        className="text-sm text-text-3 underline-offset-4 hover:text-pri-ink hover:underline"
+      >
+        No rates yet
+      </Link>
+    )
+  }
+  if (base.amount === null) {
+    return (
+      <Link
+        to="/rates/plans/$planId"
+        params={{ planId: base.ratePlanId }}
+        search={{ add: type.id }}
+        className="text-sm font-medium text-am underline-offset-4 hover:underline"
+        aria-label={`${type.name} not priced on ${base.ratePlanName}. Add it`}
+      >
+        Not priced
+      </Link>
+    )
+  }
+  return (
+    <span
+      className="num font-medium"
+      title={`${base.ratePlanName}, weekday, excl. taxes and service charge`}
+    >
+      {formatNaira(base.amount)}
+      <span className="sr-only"> excl. taxes and service charge</span>
+    </span>
   )
 }
