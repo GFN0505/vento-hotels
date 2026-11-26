@@ -5,13 +5,13 @@ import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/cn'
 import { floorName } from './format'
-import type { RoomsSearch, RoomsView } from './rooms-search'
+import type { OnSearch, RoomsSearch, RoomsView } from './rooms-search'
 
 type Props = {
   search: RoomsSearch
   summary: RoomsSummary | undefined
   types: readonly RoomTypeView[]
-  onSearch: (patch: Partial<RoomsSearch>) => void
+  onSearch: OnSearch
 }
 
 const selectClass =

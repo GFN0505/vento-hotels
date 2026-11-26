@@ -138,6 +138,27 @@ describe.skipIf(!url)('rooms', () => {
       expect(row?.value).toBe(36)
     })
 
+    it('answers a resent batch with its original result and creates nothing more', async () => {
+      const batch = [
+        ...floorRooms(deluxe.id, 10, 1, 14),
+        ...floorRooms(suite.id, 11, 1, 8),
+        ...floorRooms(deluxe.id, 4, 1, 14),
+      ]
+      const again = await t.rpc(kora.gm.cookie, 'rooms/createMany', {
+        propertyId: kora.vi.id,
+        batchId,
+        rooms: batch,
+      })
+      expect(again.data).toEqual({ created: 36, batchId })
+      expect((await rooms({})).total).toBe(36)
+      const other = await t.rpc<Problem>(kora.gm.cookie, 'rooms/createMany', {
+        propertyId: kora.vi.id,
+        batchId: newId(),
+        rooms: batch,
+      })
+      expect(other.data.data?.code).toBe('ROOM_NUMBER_TAKEN')
+    })
+
     it('sorts by floor then number, so 1014 comes before 1101', async () => {
       const page = await rooms({ pageSize: 100 })
       const numbers = page.items.map((room) => room.number)
@@ -280,7 +301,12 @@ describe.skipIf(!url)('rooms', () => {
       expect((await roomByNumber('402')).connectingRooms).toEqual([])
       expect(await lastEvent(r401.id)).toMatchObject({
         action: 'room.archived',
-        after: { number: '401', roomTypeName: 'Deluxe King', liveProperty: false },
+        after: {
+          number: '401',
+          roomTypeName: 'Deluxe King',
+          roomCountChange: true,
+          liveProperty: false,
+        },
       })
       const reuse = await t.rpc<Problem>(kora.gm.cookie, 'rooms/create', {
         propertyId: kora.vi.id,
@@ -301,7 +327,10 @@ describe.skipIf(!url)('rooms', () => {
         ids: [r401?.id],
       })
       expect(restored.data.count).toBe(1)
-      expect((await lastEvent(r401?.id ?? ''))?.action).toBe('room.restored')
+      expect(await lastEvent(r401?.id ?? '')).toMatchObject({
+        action: 'room.restored',
+        after: { archived: false, roomCountChange: true },
+      })
     })
 
     it('deletes only archived rooms, which frees the number', async () => {
@@ -333,7 +362,12 @@ describe.skipIf(!url)('rooms', () => {
       expect(moved.data.count).toBe(1)
       expect(await lastEvent(rooms1101.id)).toMatchObject({
         before: { roomTypeId: suite.id, roomTypeName: 'Junior Suite' },
-        after: { roomTypeId: deluxe.id, roomTypeName: 'Deluxe King', liveProperty: false },
+        after: {
+          roomTypeId: deluxe.id,
+          roomTypeName: 'Deluxe King',
+          roomCountChange: true,
+          liveProperty: false,
+        },
       })
     })
   })
@@ -368,14 +402,28 @@ describe.skipIf(!url)('rooms', () => {
         action: 'room.archived',
         actorName: 'Tunde Bello',
         reason: 'Converted to a store',
-        after: { liveProperty: true },
+        after: { roomCountChange: true, liveProperty: true },
       })
     })
 
-    it('needs no reason to change features or the floor', async () => {
+    it('needs no reason to change features or the floor, and flags no count change', async () => {
       const room = await roomByNumber('403')
       const saved = await t.rpc(kora.gm.cookie, 'rooms/update', { id: room.id, floor: 3 })
       expect(saved.status).toBe(200)
+      expect((await lastEvent(room.id))?.after).not.toHaveProperty('roomCountChange')
+    })
+
+    it('flags a type change made on one room as a count change', async () => {
+      const room = await roomByNumber('405')
+      await t.rpc(kora.gm.cookie, 'rooms/update', {
+        id: room.id,
+        roomTypeId: suite.id,
+        reason: 'Refitted as a suite',
+      })
+      expect(await lastEvent(room.id)).toMatchObject({
+        reason: 'Refitted as a suite',
+        after: { roomTypeName: 'Junior Suite', roomCountChange: true, liveProperty: true },
+      })
     })
 
     it('stops Mark inspected once the hotel is live', async () => {
@@ -403,6 +451,11 @@ describe.skipIf(!url)('rooms', () => {
       const active = (await summary()).active
       expect(marked.data.count).toBe(active)
       expect((await summary()).allDirtySetup).toBe(false)
+      const twice = await t.rpc<Problem>(kora.gm.cookie, 'rooms/markInspected', {
+        propertyId: kora.vi.id,
+      })
+      expect(twice.status).toBe(409)
+      expect(twice.data.data?.code).toBe('ROOMS_NOT_ALL_DIRTY')
       const room = await roomByNumber('1001')
       expect(await lastEvent(room.id)).toMatchObject({
         action: 'room.status_changed',
@@ -478,6 +531,53 @@ describe.skipIf(!url)('rooms', () => {
         roomTypeId: abujaType.id,
       })
       expect(typeFromAbuja.status).toBe(404)
+    })
+  })
+
+  describe('connecting rooms under concurrency', () => {
+    const pair = async (floor: number) => {
+      await t.rpc(kora.gm.cookie, 'rooms/createMany', {
+        propertyId: kora.vi.id,
+        batchId: newId(),
+        rooms: floorRooms(deluxe.id, floor, 1, 2),
+      })
+      return [await roomByNumber(`${floor}01`), await roomByNumber(`${floor}02`)] as const
+    }
+
+    it('never links a room to one archived at the same moment', async () => {
+      for (let round = 0; round < 3; round++) {
+        const [a, b] = await pair(20 + round)
+        await Promise.allSettled([
+          t.rpc(kora.gm.cookie, 'rooms/update', { id: a.id, connectingRoomIds: [b.id] }),
+          t.rpc(kora.gm.cookie, 'rooms/archive', { propertyId: kora.vi.id, ids: [b.id] }),
+        ])
+        expect((await roomByNumber(a.number)).connectingRooms).toEqual([])
+      }
+    })
+
+    it('links 401→402 and 402→401 at once without a deadlock', async () => {
+      const [a, b] = await pair(30)
+      const results = await Promise.all([
+        t.rpc(kora.gm.cookie, 'rooms/update', { id: a.id, connectingRoomIds: [b.id] }),
+        t.rpc(kora.gm.cookie, 'rooms/update', { id: b.id, connectingRoomIds: [a.id] }),
+      ])
+      expect(results.map((r) => r.status)).toEqual([200, 200])
+      expect((await roomByNumber(a.number)).connectingRooms).toEqual([
+        { id: b.id, number: b.number },
+      ])
+    })
+
+    it('refuses to link a new room to an archived one', async () => {
+      const [, b] = await pair(31)
+      await t.rpc(kora.gm.cookie, 'rooms/archive', { propertyId: kora.vi.id, ids: [b.id] })
+      const created = await t.rpc(kora.gm.cookie, 'rooms/create', {
+        propertyId: kora.vi.id,
+        number: '3103',
+        floor: 31,
+        roomTypeId: deluxe.id,
+        connectingRoomIds: [b.id],
+      })
+      expect(created.status).toBe(404)
     })
   })
 })

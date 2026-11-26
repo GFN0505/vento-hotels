@@ -9,11 +9,13 @@ import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/field'
 import { cn } from '@/lib/cn'
-import type { DraftCheck, DraftType } from './builder-model'
+import type { DraftCheck, DraftType, TypeOption } from './builder-model'
 import { BED_OPTIONS, bedLabel, toneAt } from './format'
 
 type Props = {
   saved: readonly RoomTypeView[]
+  // Colours per type key, so these swatches match the preview.
+  tones: readonly TypeOption[]
   drafts: readonly DraftType[]
   checks: ReadonlyMap<string, DraftCheck>
   onAdd: () => void
@@ -24,7 +26,8 @@ type Props = {
 const selectClass =
   'h-11 w-full rounded-sm border border-input bg-surface px-2.5 text-[16px] text-text focus:border-ring focus:ring-3 focus:ring-pri-line focus-visible:outline-none lg:h-9 lg:text-base'
 
-export function BuilderTypes({ saved, drafts, checks, onAdd, onChange, onRemove }: Props) {
+export function BuilderTypes({ saved, tones, drafts, checks, onAdd, onChange, onRemove }: Props) {
+  const tone = (key: string) => tones.find((t) => t.key === key)?.toneIndex ?? 0
   return (
     <Card>
       <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
@@ -38,11 +41,11 @@ export function BuilderTypes({ saved, drafts, checks, onAdd, onChange, onRemove 
         </Button>
       </header>
       <ul className="divide-y divide-border">
-        {saved.map((type, index) => (
+        {saved.map((type) => (
           <li key={type.id} className="flex items-center gap-3 px-4 py-2.5 sm:px-5">
             <span
               aria-hidden="true"
-              className={cn('size-2.5 flex-none rounded-[3px]', toneAt(index).swatch)}
+              className={cn('size-2.5 flex-none rounded-[3px]', toneAt(tone(type.id)).swatch)}
             />
             <span className="min-w-0 grow truncate font-medium" title={type.name}>
               {type.name}
@@ -58,7 +61,7 @@ export function BuilderTypes({ saved, drafts, checks, onAdd, onChange, onRemove 
             key={draft.key}
             draft={draft}
             number={index + 1}
-            toneIndex={saved.length + index}
+            toneIndex={tone(draft.key)}
             check={checks.get(draft.key) ?? {}}
             onChange={(change) => onChange(draft.key, change)}
             onRemove={() => onRemove(draft.key)}

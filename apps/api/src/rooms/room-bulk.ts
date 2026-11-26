@@ -30,7 +30,9 @@ function roomEvent(
     entityId: room.id,
     ...auditAt(property),
     before: { number: room.number, ...before },
-    after: { number: room.number, ...after, liveProperty: isLive(property) },
+    // Every bulk action moves sellable rooms: the owner's daily report (brick 16) picks these out
+    // by `roomCountChange` together with `liveProperty`.
+    after: { number: room.number, ...after, roomCountChange: true, liveProperty: isLive(property) },
     reason: reason ?? null,
   }
 }

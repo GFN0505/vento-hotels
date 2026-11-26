@@ -3,18 +3,26 @@
 // transaction rolls back whole and is told which numbers exist.
 import { ORPCError } from '@orpc/server'
 import type { RoomDetail } from '@vento/shared'
-import { eq } from 'drizzle-orm'
+import { and, count, eq, inArray, sql } from 'drizzle-orm'
 import { type AuditEvent, recordAudit, recordAuditMany } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isForeignKeyViolation, isUniqueViolation } from '../db/errors.ts'
+import { auditEvents } from '../db/schema/governance.ts'
 import { rooms } from '../db/schema/rooms.ts'
 import type { Access } from '../tenancy/access.ts'
 import { setConnections } from './connections.ts'
-import { auditAt, loadProperty, type RoomsProperty, requireRoomsSetup, type Tx } from './context.ts'
-import { duplicateNumbers, numbersTaken, roomArchived } from './errors.ts'
+import {
+  auditAt,
+  loadProperty,
+  type Reader,
+  type RoomsProperty,
+  requireRoomsSetup,
+  type Tx,
+} from './context.ts'
+import { duplicateNumbers, numbersTaken, roomArchived, roomNotFound } from './errors.ts'
 import { hasHistory } from './history.ts'
 import { isLive, requireReasonIfLive } from './live.ts'
-import { lockActiveTypes, lockRoom, typeNames } from './locks.ts'
+import { lockActiveTypes, lockRoom, lockRooms, typeNames } from './locks.ts'
 import { roomCountChanged } from './room-count.ts'
 import { roomDetail, takenNumbers } from './room-reads.ts'
 
@@ -74,6 +82,10 @@ export async function createRoom(
   const property = await loadProperty(db, access, input.propertyId)
   try {
     return await db.transaction(async (tx) => {
+      // Partners first (rooms before types), so one being archived meanwhile is seen as archived.
+      if (input.connectingRoomIds.length > 0) {
+        await lockRooms(tx, access, input.connectingRoomIds, property.id)
+      }
       const names = await lockActiveTypes(tx, access, property.id, [input.roomTypeId])
       await requireFreeNumbers(tx, property.id, [input.number])
       const [row] = await tx
@@ -107,7 +119,41 @@ export async function createRoom(
   }
 }
 
-// "Add rooms by floor": up to 500 rooms, all or nothing.
+// How many rooms an earlier request with this batchId created, found through its room.created
+// events on the rooms that now hold these numbers. Only asked when numbers clash, so the normal
+// path costs nothing.
+async function appliedBatch(
+  db: Reader,
+  access: Access,
+  propertyId: string,
+  numbers: string[],
+  batchId: string,
+): Promise<number> {
+  const existing = await db
+    .select({ id: rooms.id })
+    .from(rooms)
+    .where(and(eq(rooms.propertyId, propertyId), inArray(rooms.number, numbers)))
+  if (existing.length === 0) return 0
+  const [row] = await db
+    .select({ value: count() })
+    .from(auditEvents)
+    .where(
+      and(
+        eq(auditEvents.organizationId, access.organizationId),
+        eq(auditEvents.entityType, 'room'),
+        inArray(
+          auditEvents.entityId,
+          existing.map((room) => room.id),
+        ),
+        eq(auditEvents.action, 'room.created'),
+        sql`${auditEvents.after}->>'batchId' = ${batchId}`,
+      ),
+    )
+  return row?.value ?? 0
+}
+
+// "Add rooms by floor": up to 500 rooms, all or nothing. The browser's batchId makes it safe to
+// resend after a timeout: a batch already applied answers with its original result.
 export async function createManyRooms(
   db: Database,
   access: Access,
@@ -122,7 +168,12 @@ export async function createManyRooms(
     return await db.transaction(async (tx) => {
       const typeIds = input.rooms.map((room) => room.roomTypeId)
       const names = await lockActiveTypes(tx, access, property.id, typeIds)
-      await requireFreeNumbers(tx, property.id, numbers)
+      const taken = await takenNumbers(tx, property.id, numbers)
+      if (taken.length > 0) {
+        const prior = await appliedBatch(tx, access, property.id, numbers, input.batchId)
+        if (prior > 0) return { created: prior, batchId: input.batchId }
+        throw numbersTaken(taken)
+      }
       const created = await tx
         .insert(rooms)
         .values(
@@ -153,6 +204,11 @@ export async function createManyRooms(
       return { created: created.length, batchId: input.batchId }
     })
   } catch (error) {
+    // Two copies of the same request racing: the loser answers like a replay.
+    if (isUniqueViolation(error)) {
+      const prior = await appliedBatch(db, access, property.id, numbers, input.batchId)
+      if (prior > 0) return { created: prior, batchId: input.batchId }
+    }
     return explainNumberClash(db, error, property.id, numbers)
   }
 }
@@ -181,7 +237,12 @@ export async function updateRoom(
   let propertyId: string | undefined
   try {
     return await db.transaction(async (tx) => {
-      const room = await lockRoom(tx, access, input.id)
+      // The room and the partners it should connect to are locked together in id order, so edits
+      // linking 401→402 and 402→401 at once can't deadlock, and a partner archived meanwhile is
+      // seen as archived once the lock is ours.
+      const locked = await lockRooms(tx, access, [input.id, ...(input.connectingRoomIds ?? [])])
+      const room = locked.find((row) => row.id === input.id)
+      if (!room) throw roomNotFound()
       propertyId = room.propertyId
       if (room.archivedAt) throw roomArchived(room.number)
       const property = await loadProperty(tx, access, room.propertyId)
@@ -229,7 +290,13 @@ export async function updateRoom(
           entityId: room.id,
           ...auditAt(property),
           before: { number: room.number, ...before },
-          after: { number: after.number ?? room.number, ...after, liveProperty: isLive(property) },
+          after: {
+            number: after.number ?? room.number,
+            ...after,
+            // A type change moves a room between sellable counts (exception for brick 16).
+            ...(set.roomTypeId ? { roomCountChange: true } : {}),
+            liveProperty: isLive(property),
+          },
           reason: input.reason ?? null,
         })
       }

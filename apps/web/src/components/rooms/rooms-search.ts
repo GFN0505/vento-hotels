@@ -14,7 +14,11 @@ export type RoomsSearch = {
   id?: string | undefined
 }
 
+// Filters replace the history entry; opening or closing a sheet adds one, so Back closes it.
+export type OnSearch = (patch: Partial<RoomsSearch>, options?: { push?: boolean }) => void
+
 export const PAGE_SIZE = 100
+export const PHONE_PAGE_SIZE = 50
 
 export function filtersOf(search: RoomsSearch) {
   return { q: search.q, type: search.type, floor: search.floor, show: search.show }

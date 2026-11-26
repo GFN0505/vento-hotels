@@ -12,7 +12,7 @@ import { api } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { problemMessage } from '@/lib/errors'
 import { ArchivedTypes } from './archived-types'
-import { bedLabel, toneAt } from './format'
+import { bedLabel, plural, toneAt, toneIndexes } from './format'
 import { useRoomsRefresh } from './queries'
 
 type Props = {
@@ -27,6 +27,7 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
   const refresh = useRoomsRefresh()
   const [order, setOrder] = useState<string[]>()
   const [dragging, setDragging] = useState<string>()
+  const [expanded, setExpanded] = useState(false)
   const byId = new Map(types.map((type) => [type.id, type]))
   const ordered = (order ?? types.map((t) => t.id)).flatMap((id) => byId.get(id) ?? [])
 
@@ -46,15 +47,34 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
     reorder.mutate(ids)
   }
 
+  const tones = toneIndexes([...types, ...archived])
   return (
     <Card className="overflow-hidden">
       <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
-        <h2 className="text-md font-semibold">Room types</h2>
-        <span className="text-sm text-text-3 max-sm:hidden">
+        <h2 className="text-md font-semibold">
+          Room types
+          <span className="num font-normal text-text-3 md:hidden"> · {types.length}</span>
+        </h2>
+        <span className="text-sm text-text-3 max-md:hidden">
           Pickers and the tape chart follow this order
         </span>
+        {/* Phones fold the types away; rooms are what people come here for most. */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-11 md:hidden"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {expanded ? 'Hide' : `Show ${plural(types.length, 'type')}`}
+        </Button>
       </header>
-      <table className="w-full border-collapse text-left max-md:block">
+      <table
+        className={cn(
+          'w-full border-collapse text-left max-md:block',
+          !expanded && 'max-md:hidden',
+        )}
+      >
         <thead className="max-md:sr-only">
           <tr className="border-b border-border bg-surface-2/50 text-xs font-medium text-text-3">
             <th scope="col" className="w-10 py-2 pl-3">
@@ -107,7 +127,10 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
                 <span className="flex min-w-0 items-center gap-2.5">
                   <span
                     aria-hidden="true"
-                    className={cn('size-2.5 flex-none rounded-[3px]', toneAt(index).swatch)}
+                    className={cn(
+                      'size-2.5 flex-none rounded-[3px]',
+                      toneAt(tones.get(type.id) ?? 0).swatch,
+                    )}
                   />
                   <span className="truncate font-medium" title={type.name}>
                     {type.name}
@@ -137,7 +160,7 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
               <td className="px-3 py-2.5 text-right max-md:col-start-2 max-md:row-span-2 max-md:row-start-1 max-md:self-center max-md:p-0">
                 <span className="inline-flex items-center gap-1">
                   {canWrite && ordered.length > 1 ? (
-                    <span className="inline-flex max-md:hidden">
+                    <span className="inline-flex">
                       <Button
                         size="icon"
                         variant="ghost"

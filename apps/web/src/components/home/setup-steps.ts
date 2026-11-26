@@ -26,12 +26,17 @@ export function useSetupSteps(): { steps: SetupStep[]; done: number; ready: bool
       why: 'Where rooms, staff and money live',
       done: s.hotels > 0,
     },
-    {
-      key: 'rooms',
-      label: 'Set up rooms',
-      why: 'Room types and rooms, so you can sell them',
-      done: s.rooms > 0,
-    },
+    // Only when front desk is switched on for the group (decision 0021).
+    ...(me.has('front_desk')
+      ? [
+          {
+            key: 'rooms' as const,
+            label: 'Set up rooms',
+            why: 'Room types and rooms, so you can sell them',
+            done: s.rooms > 0,
+          },
+        ]
+      : []),
     {
       key: 'team',
       label: 'Invite your team',

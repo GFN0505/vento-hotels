@@ -10,12 +10,12 @@ import { useMe } from '@/lib/me'
 import { usePageTitle } from '@/lib/title'
 import { HotelRooms } from './hotel-rooms'
 import { PickHotel } from './pick-hotel'
-import type { RoomsSearch } from './rooms-search'
+import type { OnSearch, RoomsSearch } from './rooms-search'
 import { PageSkeleton } from './skeletons'
 
 type Props = {
   search: RoomsSearch
-  onSearch: (patch: Partial<RoomsSearch>) => void
+  onSearch: OnSearch
 }
 
 export function RoomsPage({ search, onSearch }: Props) {

@@ -25,9 +25,16 @@ import { OccupancyFields } from './occupancy-fields'
 import { useRoomsRefresh } from './queries'
 import * as F from './room-type-form'
 
-type Props = { hotel: Property; type: RoomTypeView | undefined; onClose: () => void }
+type Props = {
+  hotel: Property
+  type: RoomTypeView | undefined
+  onClose: () => void
+  // Shows the type's rooms in the table, so they can be moved or removed.
+  onViewRooms: (typeId: string) => void
+}
 
-export function RoomTypeSheet({ hotel, type, onClose }: Props) {
+export function RoomTypeSheet({ hotel, type, onClose, onViewRooms }: Props) {
+  const noteId = useId()
   const formId = useId()
   const online = useOnline()
   const refresh = useRoomsRefresh()
@@ -91,15 +98,29 @@ export function RoomTypeSheet({ hotel, type, onClose }: Props) {
         guard.bar ?? (
           <>
             {type && !type.archivedAt ? (
-              <Button
-                variant="danger"
-                className="mr-auto"
-                disabled={!online || busy || rooms > 0}
-                loading={remove.isPending}
-                onClick={() => remove.mutate()}
-              >
-                Remove
-              </Button>
+              <span className="mr-auto flex flex-wrap items-center gap-x-3 gap-y-1">
+                <Button
+                  variant="danger"
+                  disabled={!online || busy || rooms > 0}
+                  aria-describedby={rooms > 0 ? noteId : undefined}
+                  loading={remove.isPending}
+                  onClick={() => remove.mutate()}
+                >
+                  Remove
+                </Button>
+                {rooms > 0 ? (
+                  <span id={noteId} className="text-sm text-text-3">
+                    Move or remove its {plural(rooms, 'room')} first.{' '}
+                    <button
+                      type="button"
+                      onClick={() => onViewRooms(type.id)}
+                      className="inline-flex min-h-11 items-center font-medium text-pri-ink hover:underline lg:min-h-0"
+                    >
+                      View {plural(rooms, 'room')}
+                    </button>
+                  </span>
+                ) : null}
+              </span>
             ) : null}
             <span className="grow" />
             {!online ? <span className="text-sm text-text-3">{NEEDS_CONNECTION}</span> : null}
@@ -123,11 +144,6 @@ export function RoomTypeSheet({ hotel, type, onClose }: Props) {
         {problems.form ? (
           <p role="alert" className="rounded-sm bg-ro-bg px-3 py-2 text-ro">
             {problems.form}
-          </p>
-        ) : null}
-        {type && rooms > 0 ? (
-          <p className="rounded-sm bg-surface-2 px-3 py-2 text-sm text-text-2">
-            To remove {type.name}, move or remove its {plural(rooms, 'room')} first.
           </p>
         ) : null}
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_120px]">

@@ -1,6 +1,6 @@
 // State for "Add rooms by floor": new room types, the floor lines, chip changes in the preview,
 // and which planned numbers the hotel already has (asked of the API as the lines change).
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { MAX_ROOMS_PER_BATCH, type RoomTypeView, suggestCode } from '@vento/shared'
 import { useEffect, useMemo, useState } from 'react'
 import { orpc } from '@/lib/api'
@@ -9,9 +9,11 @@ import {
   checkLine,
   type DraftType,
   type Line,
+  lineNotes,
   plan,
   type TypeOption,
 } from './builder-model'
+import { toneIndexes } from './format'
 
 let counter = 0
 const key = () => `draft-${++counter}`
@@ -48,8 +50,11 @@ export function useFloorBuilder({
   propertyId,
   types,
   hotelHasRooms,
+  startFloor,
 }: {
   propertyId: string
+  // Where the first line starts: the floor above the highest one with rooms, or 1.
+  startFloor: number
   // Every room type of the hotel, archived included (codes stay taken).
   types: readonly RoomTypeView[]
   hotelHasRooms: boolean
@@ -57,21 +62,27 @@ export function useFloorBuilder({
   const active = types.filter((type) => !type.archivedAt)
   // A brand-new hotel starts with one type to name and one line already pointing at it.
   const [drafts, setDrafts] = useState<DraftType[]>(() => (active.length ? [] : [newDraft()]))
-  const [lines, setLines] = useState<Line[]>(() => [newLine(active[0]?.id ?? drafts[0]?.key ?? '')])
+  // A hotel with rooms starts on the next free floor with the type added last.
+  const [lines, setLines] = useState<Line[]>(() => [
+    newLine(active.at(-1)?.id ?? drafts[0]?.key ?? '', String(startFloor)),
+  ])
   const [overrides, setOverrides] = useState<Map<string, string | null>>(() => new Map())
   const [touched, setTouched] = useState(false)
 
+  const tones = toneIndexes(types)
   const options: TypeOption[] = [
-    ...active.map((type, index) => ({
+    ...active.map((type) => ({
       key: type.id,
       name: type.name,
-      toneIndex: index,
+      code: type.code,
+      toneIndex: tones.get(type.id) ?? 0,
       saved: true,
     })),
     ...drafts.map((draft, index) => ({
       key: draft.key,
       name: draft.name.trim() || `New type ${index + 1}`,
-      toneIndex: active.length + index,
+      code: draft.code.trim().toUpperCase() || '·',
+      toneIndex: types.length + index,
       saved: false,
     })),
   ]
@@ -99,10 +110,18 @@ export function useFloorBuilder({
   const taken = useQuery({
     ...orpc.rooms.checkNumbers.queryOptions({ input: { propertyId, numbers: asked } }),
     enabled: hotelHasRooms && asked.length > 0,
-    placeholderData: keepPreviousData,
   })
-  const takenMap = new Map((taken.data?.taken ?? []).map((t) => [t.number, t.archived]))
+  // Until the answer for exactly these numbers is in, Create waits (no stale clash data).
+  const checking =
+    hotelHasRooms && numbersKey !== '' && (askedKey !== numbersKey || taken.isFetching)
+  const takenMap = new Map(
+    (checking ? [] : (taken.data?.taken ?? [])).map((t) => [t.number, t.archived]),
+  )
   const preview = plan(values, overrides, takenMap)
+  const notes = lineNotes(
+    lines.map((line) => ({ key: line.key, value: lineChecks.get(line.key)?.value })),
+    takenMap,
+  )
 
   const usedKeys = new Set(preview.toCreate.map((chip) => chip.typeKey))
   const draftProblems = drafts.some((draft) => {
@@ -130,10 +149,13 @@ export function useFloorBuilder({
     lineChecks,
     preview,
     overrides,
-    checkingNumbers: taken.isFetching,
+    checkingNumbers: checking,
+    notes,
     blocker,
     touched,
     ready:
+      !checking &&
+      (touched || !hotelHasRooms) &&
       preview.toCreate.length > 0 &&
       preview.duplicates.length === 0 &&
       !preview.tooMany &&
@@ -172,13 +194,15 @@ export function useFloorBuilder({
     },
     removeLine: (lineKey: string) =>
       setLines((list) => list.filter((line) => line.key !== lineKey)),
-    setChip: (number: string, typeKey: string | null | undefined) =>
+    setChip: (number: string, typeKey: string | null | undefined) => {
+      setTouched(true)
       setOverrides((map) => {
         const next = new Map(map)
         if (typeKey === undefined) next.delete(number)
         else next.set(number, typeKey)
         return next
-      }),
+      })
+    },
     // After new types are saved, lines and chips point at their real ids.
     typesSaved: (saved: ReadonlyMap<string, string>) => {
       setDrafts((list) => list.filter((draft) => !saved.has(draft.key)))

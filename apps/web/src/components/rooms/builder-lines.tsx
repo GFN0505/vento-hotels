@@ -1,7 +1,7 @@
 // "Rooms" in the builder: one line per block, "type · floors · numbers on each floor". Floor 4 with
 // 01–14 makes 401–414; floor 0 is the ground floor (G01).
 import { roomNumberFor } from '@vento/shared'
-import { Plus, X } from 'lucide-react'
+import { AlertTriangle, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/field'
@@ -14,18 +14,22 @@ type Props = {
   lines: readonly Line[]
   options: readonly TypeOption[]
   checks: ReadonlyMap<string, LineCheck>
+  notes: ReadonlyMap<string, string>
   onAdd: () => void
   onChange: (key: string, change: Partial<Line>) => void
   onRemove: (key: string) => void
 }
 
-export function BuilderLines({ lines, options, checks, onAdd, onChange, onRemove }: Props) {
+export function BuilderLines({ lines, options, checks, notes, onAdd, onChange, onRemove }: Props) {
   return (
     <Card>
       <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
         <div>
           <h3 className="text-md font-semibold">Rooms</h3>
-          <p className="text-sm text-text-2">Floor 4 and numbers 01–14 make rooms 401–414.</p>
+          <p className="text-sm text-text-2">
+            <span className="text-text-3">Example:</span> floor 4 with numbers 01–14 makes rooms
+            401–414.
+          </p>
         </div>
         <Button size="sm" className="max-lg:h-11" onClick={onAdd}>
           <Plus className="size-4" aria-hidden="true" />
@@ -43,6 +47,7 @@ export function BuilderLines({ lines, options, checks, onAdd, onChange, onRemove
               index={index}
               options={options}
               check={checks.get(line.key) ?? {}}
+              note={notes.get(line.key)}
               onChange={(change) => onChange(line.key, change)}
               onRemove={() => onRemove(line.key)}
             />
@@ -61,6 +66,7 @@ function LineRow({
   index,
   options,
   check,
+  note,
   onChange,
   onRemove,
 }: {
@@ -68,6 +74,7 @@ function LineRow({
   index: number
   options: readonly TypeOption[]
   check: LineCheck
+  note: string | undefined
   onChange: (change: Partial<Line>) => void
   onRemove: () => void
 }) {
@@ -151,6 +158,11 @@ function LineRow({
       {problem ? (
         <p className="text-sm text-ro" aria-live="polite">
           {problem}
+        </p>
+      ) : note ? (
+        <p className="flex items-center gap-1.5 text-sm text-am" aria-live="polite">
+          <AlertTriangle className="size-3.5 flex-none" aria-hidden="true" />
+          {note}
         </p>
       ) : null}
     </li>

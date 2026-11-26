@@ -3,7 +3,7 @@
 // After go-live, room status belongs to the front desk and housekeeping (brick 7).
 import { ORPCError } from '@orpc/server'
 import { newId } from '@vento/shared'
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { recordAuditMany } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { auditEvents } from '../db/schema/governance.ts'
@@ -52,6 +52,21 @@ export async function markInspected(
   return db.transaction(async (tx) => {
     const property = await loadProperty(tx, access, input.propertyId)
     requireNotLive(property)
+    // The same rule as the banner (summary.allDirtySetup): offered only while every active room
+    // is still dirty. Locks them in id order, so a concurrent change waits or is seen.
+    const active = await tx
+      .select({ status: rooms.housekeepingStatus })
+      .from(rooms)
+      .where(and(roomsInScope(access), eq(rooms.propertyId, property.id), isNull(rooms.archivedAt)))
+      .orderBy(asc(rooms.id))
+      .for('update')
+    const checked = active.filter((room) => room.status !== 'dirty').length
+    if (checked > 0) {
+      throw new ORPCError('CONFLICT', {
+        message: `${checked === 1 ? '1 room has' : `${checked} rooms have`} already been checked, so rooms can't all be marked inspected at once.`,
+        data: { code: 'ROOMS_NOT_ALL_DIRTY' },
+      })
+    }
     const batchId = newId()
     const changed = await tx
       .update(rooms)

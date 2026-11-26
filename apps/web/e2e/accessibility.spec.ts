@@ -83,11 +83,22 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('dialog', { name: 'Room 401' }).waitFor()
       await expectAccessible(page)
       await page.keyboard.press('Escape')
+      // Phones fold the room types away until asked.
+      const showTypes = page.getByRole('button', { name: 'Show 2 types' })
+      if (await showTypes.isVisible()) await showTypes.click()
       await page.getByRole('button', { name: 'Edit Deluxe King' }).click()
       await page.getByRole('dialog', { name: 'Deluxe King' }).waitFor()
       await expectAccessible(page)
       await page.keyboard.press('Escape')
-      await page.getByRole('button', { name: 'Add rooms by floor' }).first().click()
+      // Phones keep it in the header's More menu.
+      const more = page.getByRole('button', { name: 'More actions' })
+      if (await more.isVisible()) {
+        await more.click()
+        await expectAccessible(page)
+        await page.getByRole('menuitem', { name: 'Add rooms by floor' }).click()
+      } else {
+        await page.getByRole('button', { name: 'Add rooms by floor' }).click()
+      }
       await page.getByRole('dialog', { name: 'Add rooms by floor' }).waitFor()
       await expectAccessible(page)
     })

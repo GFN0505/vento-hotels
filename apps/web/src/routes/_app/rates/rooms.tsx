@@ -2,7 +2,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useCallback } from 'react'
 import { RoomsPage } from '@/components/rooms/rooms-page'
-import type { RoomsSearch } from '@/components/rooms/rooms-search'
+import type { OnSearch, RoomsSearch } from '@/components/rooms/rooms-search'
 
 const text = (value: unknown) =>
   typeof value === 'string' && value.trim() ? value.trim().slice(0, 40) : undefined
@@ -32,9 +32,14 @@ export const Route = createFileRoute('/_app/rates/rooms')({
 function RoomsRoute() {
   const search = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
-  const onSearch = useCallback(
-    (patch: Partial<RoomsSearch>) =>
-      void navigate({ search: (prev) => ({ ...prev, page: undefined, ...patch }) }),
+  // The page never jumps to the top when a filter changes or a sheet opens.
+  const onSearch: OnSearch = useCallback(
+    (patch, options) =>
+      void navigate({
+        search: (prev) => ({ ...prev, page: undefined, ...patch }),
+        replace: !options?.push,
+        resetScroll: false,
+      }),
     [navigate],
   )
   return <RoomsPage search={search} onSearch={onSearch} />

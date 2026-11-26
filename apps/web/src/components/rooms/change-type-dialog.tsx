@@ -10,7 +10,7 @@ import { Field } from '@/components/ui/field'
 import { SelectField } from '@/components/ui/select-field'
 import { api } from '@/lib/api'
 import { problemMessage } from '@/lib/errors'
-import { plural } from './format'
+import { plural, roomNames } from './format'
 import { useRoomsRefresh } from './queries'
 import { REASON_HINT, reasonProblem } from './reason-dialog'
 
@@ -67,9 +67,14 @@ export function ChangeTypeDialog({ hotel, live, rooms, types, onDone, onClose }:
       }}
       title={`Change type of ${what}`}
       description={
-        live
-          ? "Rooms you can sell move between types, so the owner's daily report shows it."
-          : undefined
+        <>
+          <span className="num block font-medium text-text">
+            {roomNames(rooms.map((room) => room.number))}
+          </span>
+          {live
+            ? "Rooms you can sell move between types, so the owner's daily report shows it."
+            : null}
+        </>
       }
       footer={
         <>
@@ -93,7 +98,13 @@ export function ChangeTypeDialog({ hotel, live, rooms, types, onDone, onClose }:
           value={typeId}
           placeholder="Choose a room type"
           options={types.map((type) => ({ value: type.id, label: type.name }))}
-          hint={problems.type ? <span className="text-ro">{problems.type}</span> : undefined}
+          hint={
+            problems.type ? (
+              <span className="text-ro">{problems.type}</span>
+            ) : (
+              'They count under the new type from now on.'
+            )
+          }
           onChange={(event) => setTypeId(event.target.value)}
           data-autofocus
         />

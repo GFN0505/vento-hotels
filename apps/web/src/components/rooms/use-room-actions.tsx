@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { problemMessage } from '@/lib/errors'
-import { plural } from './format'
+import { plural, roomNames } from './format'
 import { useRoomsRefresh } from './queries'
 import { ReasonDialog } from './reason-dialog'
 
@@ -33,7 +33,15 @@ export function useRoomActions({ hotel, live }: { hotel: Property; live: boolean
       await refresh()
       if (kind === 'remove') {
         toast.success(`${named(rooms)} removed`, {
-          action: { label: 'Undo', onClick: () => run.mutate({ kind: 'restore', rooms, reason }) },
+          action: {
+            label: 'Undo',
+            onClick: () =>
+              run.mutate({
+                kind: 'restore',
+                rooms,
+                reason: reason ? `Undo: ${reason}` : undefined,
+              }),
+          },
         })
       } else {
         toast.success(`${named(rooms)} restored`)
@@ -58,15 +66,20 @@ export function useRoomActions({ hotel, live }: { hotel: Property; live: boolean
       open
       title={
         ask.kind === 'remove'
-          ? many
-            ? `Remove ${named(ask.rooms)} from ${hotel.name}?`
-            : `Remove ${named(ask.rooms)}?`
+          ? `Remove ${named(ask.rooms)}${many ? ` from ${hotel.name}` : ''}?`
           : `Restore ${named(ask.rooms)}?`
       }
       description={
-        ask.kind === 'remove'
-          ? "They stop counting as rooms you can sell, and the owner's daily report will show it."
-          : "They count as rooms you can sell again, and the owner's daily report will show it."
+        <>
+          {many ? (
+            <span className="num block font-medium text-text">
+              {roomNames(ask.rooms.map((r) => r.number))}
+            </span>
+          ) : null}
+          {ask.kind === 'remove'
+            ? "They stop counting as rooms you can sell, and the owner's daily report shows it. They stay under Archived and can be restored."
+            : "They count as rooms you can sell again, and the owner's daily report shows it."}
+        </>
       }
       label={`Reason for ${ask.kind === 'remove' ? 'removing' : 'restoring'} ${named(ask.rooms)}`}
       confirmLabel={`${ask.kind === 'remove' ? 'Remove' : 'Restore'} ${named(ask.rooms)}`}

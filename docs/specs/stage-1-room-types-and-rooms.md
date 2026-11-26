@@ -92,7 +92,7 @@ All in the same transaction as the change, with actor, device, property, busines
 
 ### Leakage exceptions
 - **New exception `room_count_changed`**, only after go-live: a room archived, restored, or moved to another type. A room taken out of the count can be sold off the books, and it also flatters occupancy, so the owner sees it. Owner's daily report line: "Room count changed · Room 412 archived · Tunde Bello · Reason: converted to store". Changing features, floor or name raises nothing.
-- This brick writes the audit events with a `liveProperty` flag; the owner's daily report brick (16) turns them into exception rows.
+- This brick writes the audit events with two flags in `after`: `roomCountChange: true` on every archive, restore and type change (one room or bulk), and `liveProperty`; the owner's daily report brick (16) turns events with both set into exception rows.
 
 ### Offline behaviour
 - Setup needs a connection. Offline, the page shows the cached list with the design's banner ("Offline since 17:32. Rooms and plans are read-only offline.") and the add, edit and remove buttons are disabled with "Needs a connection". Nothing is queued.

@@ -28,8 +28,18 @@ test('a new hotel builds its rooms by floor, then edits, filters and removes the
   await expect(sheet.getByText('402', { exact: true })).toBeVisible()
   await sheet.getByRole('button', { name: 'Save room' }).click()
   await expect(page.getByText('Room 401 saved')).toBeVisible()
-  await expect(page.getByText('Accessible · connecting 402')).toBeVisible()
-  await expect(page.getByText('connecting 401', { exact: true })).toBeVisible()
+  await expect(
+    page
+      .getByText(/Accessible · connecting 402/)
+      .filter({ visible: true })
+      .first(),
+  ).toBeVisible()
+  await expect(
+    page
+      .getByText(/connecting 401/)
+      .filter({ visible: true })
+      .first(),
+  ).toBeVisible()
 
   await page.getByRole('button', { name: /^Accessible/ }).click()
   await expect(page.getByRole('button', { name: /^Edit room/ })).toHaveCount(1)

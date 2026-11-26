@@ -1,7 +1,7 @@
 // The builder's preview: every planned room as a chip coloured by its type, floor by floor, with
 // a legend. Click (or arrow to) a chip to change its type or leave it out. Numbers the hotel already
 // has are struck through and skipped; numbers two lines both make are marked until fixed.
-import { LayoutGrid } from 'lucide-react'
+import { AlertTriangle, Ban, LayoutGrid } from 'lucide-react'
 import { type KeyboardEvent, useRef, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
@@ -83,8 +83,9 @@ export function BuilderPreview({ chips, options, takenCount, leftOut, onChip }: 
               </li>
             ))}
           {takenCount ? (
-            <li className="text-text-3 line-through decoration-text-3">
-              {takenCount} already exist
+            <li className="flex items-center gap-1.5 text-text-2">
+              <Ban className="size-3.5 text-text-3" aria-hidden="true" />
+              Skipped: {takenCount} already {takenCount === 1 ? 'exists' : 'exist'}
             </li>
           ) : null}
           {leftOut ? <li className="text-text-3">{leftOut} left out</li> : null}
@@ -132,7 +133,6 @@ export function BuilderPreview({ chips, options, takenCount, leftOut, onChip }: 
                         data-chip
                         tabIndex={mine === Math.min(focusIndex, chips.length - 1) ? 0 : -1}
                         aria-pressed={selected === chip.number}
-                        aria-label={`Room ${chip.number}, ${state || option?.name || 'no type'}`}
                         title={
                           state
                             ? `${chip.number}: ${state}`
@@ -143,11 +143,11 @@ export function BuilderPreview({ chips, options, takenCount, leftOut, onChip }: 
                           setSelected((s) => (s === chip.number ? undefined : chip.number))
                         }
                         className={cn(
-                          'num h-11 w-[60px] rounded-sm text-sm font-semibold ring-1 transition-[box-shadow,transform] ring-inset active:scale-95 lg:h-8 lg:w-14 lg:text-xs',
+                          'num flex h-11 w-[64px] flex-col items-center justify-center rounded-sm ring-1 transition-[box-shadow,transform] ring-inset active:scale-95',
                           chip.duplicate
-                            ? 'bg-ro-bg text-ro ring-ro-dot'
+                            ? 'bg-ro-bg text-ro ring-2 ring-ro-dot'
                             : chip.taken
-                              ? 'bg-surface-2 text-text-3 line-through ring-border'
+                              ? 'bg-surface-2 text-text-2 ring-border-strong'
                               : option
                                 ? toneAt(option.toneIndex).chip
                                 : 'border border-dashed border-border-strong bg-transparent text-text-3 ring-0',
@@ -155,7 +155,35 @@ export function BuilderPreview({ chips, options, takenCount, leftOut, onChip }: 
                             'ring-2 ring-pri ring-offset-2 ring-offset-surface',
                         )}
                       >
-                        {chip.number}
+                        <span className="sr-only">
+                          Room {chip.number}, {state || option?.name || 'no type'}
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className="text-[13px] leading-4 font-semibold lg:text-xs"
+                        >
+                          {chip.number}
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className="flex items-center gap-0.5 text-[10px] leading-3 font-medium"
+                        >
+                          {chip.duplicate ? (
+                            <>
+                              <AlertTriangle className="size-2.5" aria-hidden="true" />
+                              Twice
+                            </>
+                          ) : chip.taken ? (
+                            <>
+                              <Ban className="size-2.5" aria-hidden="true" />
+                              Exists
+                            </>
+                          ) : option ? (
+                            option.code
+                          ) : (
+                            'Out'
+                          )}
+                        </span>
                       </button>
                     )
                   })}

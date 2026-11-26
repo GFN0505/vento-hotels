@@ -28,6 +28,7 @@ export const ROOM_ERROR_CODES = [
   'HAS_HISTORY',
   'NOT_ARCHIVED',
   'PROPERTY_LIVE',
+  'ROOMS_NOT_ALL_DIRTY',
   'REASON_REQUIRED',
   'DUPLICATE_NUMBERS', // data.numbers: string[]
   'LIST_CHANGED',
@@ -117,6 +118,7 @@ export const listRoomTypesSchema = pageQuerySchema.extend({
 // --- Rooms ----------------------------------------------------------------------------------------
 
 export const connectingRoomSchema = z.object({ id: idSchema, number: z.string() })
+export type ConnectingRoom = z.infer<typeof connectingRoomSchema>
 
 export const roomViewSchema = z.object({
   id: idSchema,
@@ -248,7 +250,8 @@ export const roomsContract = {
     restore: oc.input(z.object({ propertyId: idSchema, ids, reason })).output(count),
     // Archived rooms with no history only; frees the number.
     delete: oc.input(z.object({ id: idSchema })).output(ok),
-    // Before go-live only: every dirty active room becomes inspected.
+    // Before go-live only, while every active room is dirty (ROOMS_NOT_ALL_DIRTY otherwise):
+    // every active room becomes inspected.
     markInspected: oc
       .input(z.object({ propertyId: idSchema }))
       .output(z.object({ count: z.number().int(), batchId: idSchema })),

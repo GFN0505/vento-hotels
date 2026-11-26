@@ -3,14 +3,21 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { Property, RoomsSummary, RoomTypeView, RoomView } from '@vento/shared'
 import { AlertTriangle, DoorClosed, Plus, SearchX } from 'lucide-react'
-import { type ReactNode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Pagination } from '@/components/ui/pagination'
 import { orpc } from '@/lib/api'
 import { BulkBar } from './bulk-bar'
 import { ChangeTypeDialog } from './change-type-dialog'
-import { isFiltered, PAGE_SIZE, type RoomsSearch } from './rooms-search'
+import { Message } from './message'
+import {
+  isFiltered,
+  type OnSearch,
+  PAGE_SIZE,
+  PHONE_PAGE_SIZE,
+  type RoomsSearch,
+} from './rooms-search'
 import { RoomsTable } from './rooms-table'
 import { RoomsToolbar } from './rooms-toolbar'
 import { TableSkeleton } from './skeletons'
@@ -23,7 +30,7 @@ type Props = {
   search: RoomsSearch
   canWrite: boolean
   actions: ReturnType<typeof useRoomActions>
-  onSearch: (patch: Partial<RoomsSearch>) => void
+  onSearch: OnSearch
   onOpenRoom: (id: string | undefined) => void
   onBuilder: () => void
 }
@@ -31,13 +38,17 @@ type Props = {
 export function RoomsCard(props: Props) {
   const { hotel, summary, types, search, canWrite, actions, onSearch } = props
   const page = search.page ?? 1
+  // Phones get pages of 50, so a long hotel stays light to scroll on a mid-range phone.
+  const [pageSize] = useState(() =>
+    window.matchMedia('(max-width: 767px)').matches ? PHONE_PAGE_SIZE : PAGE_SIZE,
+  )
   const typeId = types.some((type) => type.id === search.type) ? search.type : undefined
   const rooms = useQuery({
     ...orpc.rooms.list.queryOptions({
       input: {
         propertyId: hotel.id,
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         q: search.q,
         roomTypeId: typeId,
         floor: search.floor,
@@ -66,7 +77,7 @@ export function RoomsCard(props: Props) {
     // Not overflow-hidden: the bulk bar sticks to the bottom of the window while the card shows.
     <Card>
       <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
-        <h2 className="text-md font-semibold">Rooms</h2>
+        <h2 className="text-md font-semibold">All rooms</h2>
         <Button
           size="sm"
           className="max-lg:h-11"
@@ -77,7 +88,34 @@ export function RoomsCard(props: Props) {
           Add room
         </Button>
       </header>
-      <RoomsToolbar search={search} summary={summary} types={types} onSearch={onSearch} />
+      {rooms.data && rooms.data.total > pageSize ? (
+        <a
+          href="#rooms-pages"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-30 focus:m-2 focus:rounded-sm focus:bg-surface focus:px-3 focus:py-2 focus:text-pri-ink focus:shadow-[var(--shadow-lg)]"
+        >
+          Skip to pages
+        </a>
+      ) : null}
+      {/* Stays in view while scrolling a long list; with rooms ticked it becomes the bulk bar. */}
+      <div className="z-20 bg-surface md:sticky md:top-0">
+        {ticked.length > 0 ? (
+          <div className="max-md:hidden">
+            <BulkBar
+              inline
+              count={ticked.length}
+              archived={archivedView}
+              pending={actions.pending}
+              onChangeType={() => setChanging(true)}
+              onRemove={() => actions.remove(ticked, clear)}
+              onRestore={() => actions.restore(ticked, clear)}
+              onClear={clear}
+            />
+          </div>
+        ) : null}
+        <div className={ticked.length > 0 ? 'md:hidden' : undefined}>
+          <RoomsToolbar search={search} summary={summary} types={types} onSearch={onSearch} />
+        </div>
+      </div>
 
       {rooms.isPending ? (
         <TableSkeleton rows={8} label="Loading rooms" />
@@ -151,11 +189,15 @@ export function RoomsCard(props: Props) {
           onRestore={(room) => actions.restore([room])}
         />
       )}
-      {rooms.data && rooms.data.total > PAGE_SIZE ? (
-        <div className="border-t border-border px-4 py-3 sm:px-5">
+      {rooms.data && rooms.data.total > pageSize ? (
+        <div
+          id="rooms-pages"
+          tabIndex={-1}
+          className="border-t border-border px-4 py-3 outline-none sm:px-5"
+        >
           <Pagination
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={rooms.data.total}
             onPage={(next) => onSearch({ page: next })}
           />
@@ -163,6 +205,7 @@ export function RoomsCard(props: Props) {
       ) : null}
       {ticked.length > 0 ? (
         <BulkBar
+          className="md:hidden"
           count={ticked.length}
           archived={archivedView}
           pending={actions.pending}
@@ -186,30 +229,5 @@ export function RoomsCard(props: Props) {
         />
       ) : null}
     </Card>
-  )
-}
-
-function Message({
-  icon: Icon,
-  title,
-  alert,
-  children,
-}: {
-  icon: typeof DoorClosed
-  title: string
-  alert?: boolean
-  children?: ReactNode
-}) {
-  return (
-    <div
-      role={alert ? 'alert' : undefined}
-      className="flex flex-col items-center gap-3 px-6 py-12 text-center"
-    >
-      <span className="grid size-11 place-items-center rounded-xl bg-surface-2 text-text-2 ring-1 ring-border">
-        <Icon className="size-5" aria-hidden="true" strokeWidth={1.7} />
-      </span>
-      <p className="max-w-sm text-[14px] text-text-2">{title}</p>
-      {children}
-    </div>
   )
 }

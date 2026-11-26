@@ -1,6 +1,7 @@
 // The pure part of "Add rooms by floor": checking type and floor lines as typed, and turning them
 // into the preview (numbering comes from expandFloorLines in @vento/shared, as on the API).
 import {
+  compareRoomNumbers,
   expandFloorLines,
   type FloorLine,
   floorLineSchema,
@@ -30,7 +31,13 @@ export type Line = {
   numberTo: string
 }
 
-export type TypeOption = { key: string; name: string; toneIndex: number; saved: boolean }
+export type TypeOption = {
+  key: string
+  name: string
+  code: string
+  toneIndex: number
+  saved: boolean
+}
 
 export type LineCheck = {
   value?: FloorLine
@@ -141,4 +148,35 @@ export function plan(
     takenCount: chips.filter((chip) => chip.taken).length,
     leftOut: chips.filter((chip) => !chip.typeKey).length,
   }
+}
+
+// What to say under each line: the other lines it overlaps, and how many of its numbers the hotel
+// already has ("Overlaps line 2 (1101–1110)", "20 already exist, skipped").
+export function lineNotes(
+  lines: readonly { key: string; value?: FloorLine | undefined }[],
+  taken: ReadonlyMap<string, boolean>,
+): Map<string, string> {
+  const numbers = lines.map((line) =>
+    line.value
+      ? new Set(expandFloorLines([line.value]).rooms.map((r) => r.number))
+      : new Set<string>(),
+  )
+  const notes = new Map<string, string>()
+  lines.forEach((line, i) => {
+    const parts: string[] = []
+    lines.forEach((_, j) => {
+      if (i === j) return
+      const shared = [...(numbers[i] ?? [])]
+        .filter((n) => numbers[j]?.has(n))
+        .sort(compareRoomNumbers)
+      if (shared.length) {
+        const range = shared.length === 1 ? shared[0] : `${shared[0]}–${shared.at(-1)}`
+        parts.push(`Overlaps line ${j + 1} (${range})`)
+      }
+    })
+    const existing = [...(numbers[i] ?? [])].filter((n) => taken.has(n)).length
+    if (existing) parts.push(`${existing} already ${existing === 1 ? 'exists' : 'exist'}, skipped`)
+    if (parts.length) notes.set(line.key, parts.join(' · '))
+  })
+  return notes
 }

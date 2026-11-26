@@ -1,11 +1,11 @@
 // Connecting rooms: type a room number to link it (both rooms then show it), remove with ×.
 
+import type { ConnectingRoom } from '@vento/shared'
 import { Link2, X } from 'lucide-react'
 import { type KeyboardEvent, useId, useState } from 'react'
 import { Input } from '@/components/ui/field'
 import { api } from '@/lib/api'
 import { problemMessage } from '@/lib/errors'
-import type { ConnectingRoom } from './room-form-model'
 
 type Props = {
   propertyId: string

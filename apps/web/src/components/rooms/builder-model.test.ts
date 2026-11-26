@@ -1,6 +1,6 @@
 import type { RoomTypeView } from '@vento/shared'
 import { describe, expect, it } from 'vitest'
-import { checkDraft, checkLine, type DraftType, type Line, plan } from './builder-model'
+import { checkDraft, checkLine, type DraftType, type Line, lineNotes, plan } from './builder-model'
 
 const line = (change: Partial<Line> = {}): Line => ({
   key: 'l1',
@@ -90,5 +90,18 @@ describe('plan', () => {
     const result = plan(twice, new Map(), new Map())
     expect(result.duplicates).toContain('401')
     expect(result.toCreate.some((chip) => chip.number === '401')).toBe(false)
+  })
+})
+
+describe('lineNotes', () => {
+  it('names the line a line overlaps and counts numbers that already exist', () => {
+    const a = { key: 'a', value: checkLine(line({ floorFrom: '11', floorTo: '11' })).value }
+    const b = {
+      key: 'b',
+      value: checkLine(line({ floorFrom: '11', floorTo: '11', numberTo: '10' })).value,
+    }
+    const notes = lineNotes([a, b], new Map([['1114', false]]))
+    expect(notes.get('a')).toBe('Overlaps line 2 (1101–1110) · 1 already exists, skipped')
+    expect(notes.get('b')).toBe('Overlaps line 1 (1101–1110)')
   })
 })

@@ -47,10 +47,18 @@ export function PickHotel({ hotels, onPick }: Props) {
                   <span className="truncate font-semibold">{hotel.name}</span>
                   {where ? <span className="truncate text-sm text-text-2">{where}</span> : null}
                 </span>
-                {count !== undefined ? (
-                  <span className="num flex-none text-sm text-text-2">
-                    {count ? plural(count, 'room') : 'No rooms yet'}
+                {count ? (
+                  <span className="num flex-none text-right text-sm text-text-2">
+                    {plural(count, 'room')}
+                    {hotel.liveSince ? <span className="text-em"> · Live</span> : null}
                   </span>
+                ) : count === 0 ? (
+                  <span className="inline-flex h-9 flex-none items-center rounded-sm bg-pri px-3 text-sm font-medium text-white group-hover:bg-pri-hover max-sm:hidden">
+                    Set up rooms
+                  </span>
+                ) : null}
+                {count === 0 ? (
+                  <span className="text-sm text-text-2 sm:hidden">No rooms yet</span>
                 ) : null}
                 <ChevronRight
                   className="size-4 flex-none text-text-3 transition-transform group-hover:translate-x-0.5 group-hover:text-pri-ink"

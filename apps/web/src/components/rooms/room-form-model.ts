@@ -1,7 +1,5 @@
 // The room sheet's form: values as typed, checks on save, and what changed for the update.
-import { floorSchema, type RoomDetail, roomNumberSchema } from '@vento/shared'
-
-export type ConnectingRoom = { id: string; number: string }
+import { type ConnectingRoom, floorSchema, type RoomDetail, roomNumberSchema } from '@vento/shared'
 
 export type RoomForm = {
   number: string

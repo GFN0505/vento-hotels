@@ -19,12 +19,14 @@ export function bedLabel(type: Pick<RoomTypeView, 'bed' | 'sofaBed'>): string {
 export const plural = (n: number, one: string, many = `${one}s`) =>
   `${n.toLocaleString('en-GB')} ${n === 1 ? one : many}`
 
-// Room type colours, in order. Rose is left out: it means a problem (a clash) everywhere else.
+// Room type colours. Rose is left out: it means a problem (a clash) everywhere else.
 const TONES = [
   { chip: 'bg-pri-soft text-pri-ink ring-pri-line', swatch: 'bg-pri' },
-  { chip: 'bg-bl-bg text-bl ring-bl-dot/40', swatch: 'bg-bl-dot' },
-  { chip: 'bg-em-bg text-em ring-em-dot/40', swatch: 'bg-em-dot' },
+  { chip: 'bg-tl-bg text-tl ring-tl-dot/40', swatch: 'bg-tl-dot' },
   { chip: 'bg-am-bg text-am ring-am-dot/40', swatch: 'bg-am-dot' },
+  { chip: 'bg-bl-bg text-bl ring-bl-dot/40', swatch: 'bg-bl-dot' },
+  { chip: 'bg-fu-bg text-fu ring-fu-dot/40', swatch: 'bg-fu-dot' },
+  { chip: 'bg-em-bg text-em ring-em-dot/40', swatch: 'bg-em-dot' },
   { chip: 'bg-sl-bg text-sl ring-sl-dot/50', swatch: 'bg-sl-dot' },
 ] as const
 
@@ -32,6 +34,22 @@ export type Tone = (typeof TONES)[number]
 
 export function toneAt(index: number): Tone {
   return TONES[((index % TONES.length) + TONES.length) % TONES.length] ?? TONES[0]
+}
+
+// Each type keeps its colour for good: the order types were created in (ids are UUID v7, so they
+// sort by creation), not the display order, which people can change.
+export function toneIndexes(types: readonly { id: string }[]): Map<string, number> {
+  return new Map([...types].sort((a, b) => (a.id < b.id ? -1 : 1)).map((t, i) => [t.id, i]))
+}
+
+// "Room 412", "Rooms 301, 302 and 303", "Rooms 301, 302, 303 and 5 more".
+export function roomNames(numbers: readonly string[]): string {
+  if (numbers.length === 1) return `Room ${numbers[0]}`
+  const shown = numbers.slice(0, 3)
+  const more = numbers.length - shown.length
+  return more > 0
+    ? `Rooms ${shown.join(', ')} and ${more} more`
+    : `Rooms ${shown.slice(0, -1).join(', ')} and ${shown.at(-1)}`
 }
 
 // The `data.code` of a rooms API error (ROOM_ERROR_CODES), when there is one.

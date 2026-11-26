@@ -1,29 +1,32 @@
 // One hotel's rooms: the header with counts, the "mark inspected" banner before go-live, room
 // types, rooms, and the sheets the URL opens. Offline it shows what was saved, read-only.
+import { useQuery } from '@tanstack/react-query'
 import type { Property } from '@vento/shared'
-import { AlertTriangle, Plus, WifiOff } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { orpc } from '@/lib/api'
 import { useOnline } from '@/offline/connection'
 import { BuilderSheet } from './builder-sheet'
 import { FloorBuilder } from './floor-builder'
-import { NEEDS_CONNECTION, plural } from './format'
+import { plural } from './format'
+import { HeaderActions } from './header-actions'
 import { InspectedBanner } from './inspected-banner'
 import { useRoomsSummary, useRoomTypes } from './queries'
 import { RoomSheet } from './room-sheet'
 import { RoomTypeSheet } from './room-type-sheet'
 import { RoomTypesCard } from './room-types-card'
 import { RoomsCard } from './rooms-card'
-import type { RoomsSearch, RoomsSheet } from './rooms-search'
-import { PageSkeleton } from './skeletons'
+import type { OnSearch, RoomsSearch, RoomsSheet } from './rooms-search'
+import { BuilderSkeleton, PageSkeleton } from './skeletons'
 import { useRoomActions } from './use-room-actions'
 
 type Props = {
   hotel: Property
   search: RoomsSearch
   // Merges into the URL's search params; page resets unless given.
-  onSearch: (patch: Partial<RoomsSearch>) => void
+  onSearch: OnSearch
 }
 
 export function HotelRooms({ hotel, search, onSearch }: Props) {
@@ -32,11 +35,18 @@ export function HotelRooms({ hotel, search, onSearch }: Props) {
   const summary = useRoomsSummary(hotel.id)
   const live = summary.data?.live ?? hotel.liveSince !== null
   const actions = useRoomActions({ hotel, live })
+  // Home's summary is usually cached already: it says whether to load in the builder's shape.
+  const home = useQuery(orpc.organization.home.queryOptions())
+  const homeRooms = home.data?.byHotel.find((row) => row.propertyId === hotel.id)?.rooms
 
-  const open = (sheet: RoomsSheet, id?: string) => onSearch({ sheet, id, page: search.page })
-  const close = () => onSearch({ sheet: undefined, id: undefined, page: search.page })
+  const open = (sheet: RoomsSheet, id?: string) =>
+    onSearch({ sheet, id, page: search.page }, { push: true })
+  const close = () =>
+    onSearch({ sheet: undefined, id: undefined, page: search.page }, { push: true })
 
-  if (types.isPending || summary.isPending) return <PageSkeleton />
+  if (types.isPending || summary.isPending) {
+    return homeRooms === 0 ? <BuilderSkeleton /> : <PageSkeleton />
+  }
   if (types.isError || summary.isError) {
     return (
       <div className="flex flex-col gap-6">
@@ -66,7 +76,7 @@ export function HotelRooms({ hotel, search, onSearch }: Props) {
   const sheets = (
     <>
       {search.sheet === 'builder' ? (
-        <BuilderSheet hotel={hotel} types={types.data.items} onClose={close} />
+        <BuilderSheet hotel={hotel} types={types.data.items} floors={s.floors} onClose={close} />
       ) : null}
       {search.sheet === 'type' &&
       (!search.id || types.data.items.some((t) => t.id === search.id)) ? (
@@ -75,6 +85,12 @@ export function HotelRooms({ hotel, search, onSearch }: Props) {
           hotel={hotel}
           type={types.data.items.find((t) => t.id === search.id)}
           onClose={close}
+          onViewRooms={(typeId) =>
+            onSearch(
+              { sheet: undefined, id: undefined, type: typeId, show: undefined, q: undefined },
+              { push: true },
+            )
+          }
         />
       ) : null}
       {search.sheet === 'room' ? (
@@ -114,41 +130,28 @@ export function HotelRooms({ hotel, search, onSearch }: Props) {
         title="Rooms"
         badge={
           live ? (
-            <StatusBadge tone="emerald">Live</StatusBadge>
+            <span title="Live: night audit has run. Changes ask for a reason.">
+              <StatusBadge tone="emerald">
+                Live
+                <span className="sr-only">: night audit has run. Changes ask for a reason.</span>
+              </StatusBadge>
+            </span>
           ) : (
-            <StatusBadge tone="amber">Setting up</StatusBadge>
+            <span title="Setting up: no night audit yet. Changes need no reason.">
+              <StatusBadge tone="amber">Setting up</StatusBadge>
+            </span>
           )
         }
         description={
           <span className="num">{`${hotel.name} · ${plural(s.active, 'room')} · ${plural(types.active.length, 'type')}`}</span>
         }
         actions={
-          <>
-            {!online ? (
-              <span className="inline-flex items-center gap-1.5 self-center text-sm text-text-3">
-                <WifiOff className="size-4" aria-hidden="true" />
-                {NEEDS_CONNECTION}
-              </span>
-            ) : null}
-            <Button
-              size="lg"
-              className="max-lg:h-11"
-              disabled={!online}
-              onClick={() => open('builder')}
-            >
-              Add rooms by floor
-            </Button>
-            <Button
-              size="lg"
-              variant="primary"
-              className="max-lg:h-11"
-              disabled={!online}
-              onClick={() => open('type')}
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              Add room type
-            </Button>
-          </>
+          <HeaderActions
+            online={online}
+            onBuilder={() => open('builder')}
+            onAddType={() => open('type')}
+            onAddRoom={() => open('room')}
+          />
         }
       />
       {s.allDirtySetup && s.active > 0 ? (
