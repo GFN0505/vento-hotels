@@ -8,6 +8,7 @@ import { useHotelGoneRefresh, useHotelLink } from '@/components/shell/hotel-link
 import { OfflineBanner } from '@/components/shell/offline-banner'
 import { PreviewBanner } from '@/components/shell/preview-banner'
 import { PropertyProvider } from '@/components/shell/property-context'
+import { useTitleOnNavigate } from '@/components/shell/route-title'
 import { Sidebar } from '@/components/shell/sidebar'
 import { TopBar } from '@/components/shell/top-bar'
 import { orpc } from '@/lib/api'
@@ -129,6 +130,7 @@ function Shell() {
 function Page() {
   const linking = useHotelLink()
   useHotelGoneRefresh()
+  useTitleOnNavigate()
   return (
     <>
       <HotelChange />

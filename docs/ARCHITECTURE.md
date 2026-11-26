@@ -112,9 +112,9 @@ New modules from Stage 1 add their own folder in `apps/api/src/` (service, route
   - Query keys include it, so one hotel's cached data is never shown under another's name.
   - Offline commands keep the `propertyId` they were made with, whatever the switch says when they sync.
 - **The server decides:**
-  - A list given a `propertyId` calls `requireListableHotel(db, access, propertyId)` (`tenancy/access.ts`): in the organization and the member's access (`propertyScope`), else NOT_FOUND "We couldn't find that hotel"; not archived, else NOT_FOUND "This hotel was archived." Then it filters within the existing scope.
+  - A list given a `propertyId` calls `requireListableHotel(db, access, propertyId)` (`tenancy/access.ts`): in the organization and the member's access (`propertyScope`), else NOT_FOUND "We couldn't find that hotel" (`data.code` `PROPERTY_NOT_FOUND`, from the shared `hotelNotFound` in `tenancy/errors.ts`, also used by the rooms pages); not archived, else NOT_FOUND "This hotel was archived." (`PROPERTY_ARCHIVED`) Then it filters within the existing scope.
   - Without a `propertyId`, a list returns everything within the member's access, as before. The switch only narrows.
-  - "Works at" a hotel (assigned to it, or whole-group access: owner and group admin by role, or "Whole group") is one server predicate, `worksAt` in `team/rules.ts`, shared by `members.list` and Home's per-hotel people. Its twin `invitedTo` does the same for `invitations.list` and Home's per-hotel invites.
+  - "Works at" a hotel (assigned to it, or whole-group access: owner and group admin by role, or "Whole group") is one server predicate, `worksAt` in `team/rules.ts`, shared by `members.list` and Home's per-hotel people. Its twin `invitedTo`, with `openInvite` (pending, expired links included), does the same for `invitations.list` and Home's invite counts. `members.list` with a hotel also returns `wholeGroup`, the count of whole-group people there.
   - `devices.list` without a `propertyId` lists only devices at active hotels (an archived hotel's devices were revoked with it; their history stays in the audit log).
 
 ## Offline path

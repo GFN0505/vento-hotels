@@ -15,7 +15,7 @@ import { SelectField } from '@/components/ui/select-field'
 import { api, orpc } from '@/lib/api'
 import { lockDevice } from '@/lib/device-session'
 import { problemMessage } from '@/lib/errors'
-import { idleTime, KIND_OPTIONS } from './format'
+import { exampleName, idleTime, KIND_OPTIONS } from './format'
 
 type Props = {
   open: boolean
@@ -43,6 +43,9 @@ export function RegisterDialog({ open, hotelId, onClose }: Props) {
   )
   const [problem, setProblem] = useState<Problems>({})
   const [registered, setRegistered] = useState<DeviceView>()
+  // Asked first when nothing is chosen yet (All hotels), since the name usually follows it.
+  const [hotelFirst] = useState(!propertyId)
+  const chosen = properties.find((p) => p.id === propertyId)
 
   const register = useMutation({
     mutationFn: () => api.devices.register({ name: name.trim(), kind, propertyId }),
@@ -50,7 +53,7 @@ export function RegisterDialog({ open, hotelId, onClose }: Props) {
       await queryClient.invalidateQueries({ queryKey: orpc.devices.key() })
       setRegistered(device)
       if (scope?.kind !== 'hotel' || scope.hotel.id !== device.propertyId) {
-        select(device.propertyId)
+        select(device.propertyId, { moveFocus: true })
         toast.success(`${device.name} registered at ${device.propertyName}`)
       }
     },
@@ -72,13 +75,30 @@ export function RegisterDialog({ open, hotelId, onClose }: Props) {
       hotel: propertyId ? undefined : 'Choose the hotel this device is at',
     }
     setProblem(found)
-    const first = found.name ? 'name' : found.hotel ? 'hotel' : undefined
+    const order = hotelFirst ? (['hotel', 'name'] as const) : (['name', 'hotel'] as const)
+    const first = order.find((field) => found[field])
     if (first) {
       ;(event.currentTarget.elements.namedItem(first) as HTMLElement | null)?.focus()
       return
     }
     register.mutate()
   }
+
+  const hotelField =
+    properties.length > 1 ? (
+      <SelectField
+        label="Hotel"
+        name="hotel"
+        required
+        value={propertyId}
+        {...(propertyId ? {} : { placeholder: 'Choose a hotel' })}
+        {...(hotelFirst && !propertyId ? { 'data-autofocus': true } : {})}
+        onChange={(event) => setPropertyId(event.target.value)}
+        options={properties.map((p) => ({ value: p.id, label: p.name }))}
+        hint={chosen ? `This browser becomes a ${chosen.name} device.` : undefined}
+        error={problem.hotel}
+      />
+    ) : null
 
   if (registered) {
     return (
@@ -127,12 +147,13 @@ export function RegisterDialog({ open, hotelId, onClose }: Props) {
             {problem.form}
           </p>
         ) : null}
+        {hotelFirst ? hotelField : null}
         <Field
           label="Name"
           name="name"
-          placeholder="e.g. POS-VI-03"
+          placeholder={exampleName(kind, chosen?.name)}
           maxLength={40}
-          data-autofocus
+          data-autofocus={hotelFirst ? undefined : true}
           value={name}
           onChange={(event) => setName(event.target.value)}
           hint="Staff see this on the lock screen. Many hotels label the device with it too."
@@ -144,18 +165,7 @@ export function RegisterDialog({ open, hotelId, onClose }: Props) {
           onChange={(event) => setKind(event.target.value as DeviceKind)}
           options={KIND_OPTIONS}
         />
-        {properties.length > 1 ? (
-          <SelectField
-            label="Hotel"
-            name="hotel"
-            required
-            value={propertyId}
-            {...(propertyId ? {} : { placeholder: 'Choose a hotel' })}
-            onChange={(event) => setPropertyId(event.target.value)}
-            options={properties.map((p) => ({ value: p.id, label: p.name }))}
-            error={problem.hotel}
-          />
-        ) : null}
+        {hotelFirst ? null : hotelField}
       </form>
     </Dialog>
   )

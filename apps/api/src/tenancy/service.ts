@@ -3,13 +3,13 @@
 // from input.
 import { ORPCError } from '@orpc/server'
 import { PERMISSION_KEYS } from '@vento/shared'
-import { and, count, eq, gt, isNull } from 'drizzle-orm'
+import { and, count, eq, isNull } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { invitations, members, organizations, users } from '../db/schema/auth.ts'
 import { rooms } from '../db/schema/rooms.ts'
 import { devices, memberPins, properties } from '../db/schema/tenancy.ts'
 import { idleSecondsFor } from '../devices/service.ts'
-import { invitedTo, worksAt } from '../team/rules.ts'
+import { invitedTo, openInvite, worksAt } from '../team/rules.ts'
 import { type Access, can, propertyScope, scopeToProperties } from './access.ts'
 
 const notFound = () => new ORPCError('NOT_FOUND', { message: "We couldn't find that" })
@@ -55,8 +55,9 @@ export async function currentOrganization(db: Database, access: Access) {
 }
 
 // Home's figures: the hotels you can see with their active rooms, and for people who manage the
-// team, how many people, pending invites and live shared devices there are. Each hotel's people
-// and invites use the same rules as members.list and invitations.list with that hotel.
+// team, how many people, invites not accepted yet (expired links included, as the Invited list
+// shows them) and live shared devices there are. Each hotel's people and invites use the same rules
+// as members.list and invitations.list with that hotel.
 export async function homeSummary(db: Database, access: Access) {
   const org = access.organizationId
   const managesTeam = can(access, 'setup.manage')
@@ -80,8 +81,7 @@ export async function homeSummary(db: Database, access: Access) {
             invitations,
             and(
               eq(invitations.organizationId, properties.organizationId),
-              eq(invitations.status, 'pending'),
-              gt(invitations.expiresAt, new Date()),
+              openInvite(),
               invitedTo(properties.id),
             ),
           )
@@ -110,13 +110,7 @@ export async function homeSummary(db: Database, access: Access) {
           db
             .select({ value: count() })
             .from(invitations)
-            .where(
-              and(
-                eq(invitations.organizationId, org),
-                eq(invitations.status, 'pending'),
-                gt(invitations.expiresAt, new Date()),
-              ),
-            ),
+            .where(and(eq(invitations.organizationId, org), openInvite())),
           db
             .select({ value: count() })
             .from(devices)

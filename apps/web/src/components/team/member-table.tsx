@@ -9,12 +9,12 @@ import { hotelsSummary, initials, longDate } from '@/lib/team'
 export function MemberTable({
   members,
   onEdit,
-  badgeWholeGroup,
+  hotelId,
 }: {
   members: MemberView[]
   onEdit: (m: MemberView) => void
-  // One hotel in view: whole-group people are marked, since they're listed at every hotel.
-  badgeWholeGroup: boolean
+  // One hotel in view: "Can see" says only what differs from it (Whole group, other hotels).
+  hotelId: string | undefined
 }) {
   return (
     <Card>
@@ -72,24 +72,21 @@ export function MemberTable({
               </td>
               <td className="truncate px-4 py-3 max-xl:col-start-1 max-xl:p-0 max-xl:pl-11 max-xl:text-sm max-xl:text-text-2">
                 {ROLE_INFO[member.role].label}
-                {badgeWholeGroup && member.allProperties ? null : (
+                {hotelId ? (
+                  <CanSeeHere member={member} hotelId={hotelId} phone />
+                ) : (
                   <span className="xl:hidden">
                     {' '}
                     · {hotelsSummary(member.allProperties, member.properties)}
                   </span>
                 )}
-                {badgeWholeGroup && member.allProperties ? (
-                  <span className="mt-1 block xl:hidden">
-                    <WholeGroup />
-                  </span>
-                ) : null}
               </td>
               <td
                 className="truncate px-4 py-3 max-xl:hidden"
                 title={member.properties.map((p) => p.name).join(', ') || undefined}
               >
-                {badgeWholeGroup && member.allProperties ? (
-                  <WholeGroup />
+                {hotelId ? (
+                  <CanSeeHere member={member} hotelId={hotelId} />
                 ) : (
                   hotelsSummary(member.allProperties, member.properties)
                 )}
@@ -125,4 +122,29 @@ function WholeGroup() {
       Whole group
     </span>
   )
+}
+
+// With one hotel in view everyone listed works there, so "Can see" says only what's beyond it:
+// Whole group, or the other hotels; "Only here" (wide screens) for people at this hotel alone.
+function CanSeeHere({
+  member,
+  hotelId,
+  phone = false,
+}: {
+  member: MemberView
+  hotelId: string
+  phone?: boolean
+}) {
+  const others = member.properties.filter((p) => p.id !== hotelId)
+  const content = member.allProperties ? (
+    <WholeGroup />
+  ) : others.length === 1 ? (
+    `Also at ${others[0]?.name}`
+  ) : others.length > 1 ? (
+    `Also at ${others.length} other hotels`
+  ) : phone ? null : (
+    <span className="text-text-3">Only here</span>
+  )
+  if (!content) return null
+  return phone ? <span className="mt-1 block truncate xl:hidden">{content}</span> : content
 }

@@ -1,10 +1,10 @@
 // What every rooms procedure does first: the feature switch, the permission, and the property the
 // change is for (in the caller's organization and hotels, or NOT_FOUND).
-import { ORPCError } from '@orpc/server'
 import { and, eq, isNull } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { properties } from '../db/schema/tenancy.ts'
 import { type Access, propertyScope, requireFeature, requirePermission } from '../tenancy/access.ts'
+import { hotelNotFound } from '../tenancy/errors.ts'
 
 export type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
 export type Reader = Pick<Database, 'select'>
@@ -30,8 +30,6 @@ const propertyColumns = {
 
 const inScope = (access: Access, propertyId: string) =>
   and(eq(properties.id, propertyId), propertyScope(access), isNull(properties.archivedAt))
-
-const hotelNotFound = () => new ORPCError('NOT_FOUND', { message: "We couldn't find that hotel" })
 
 export async function loadProperty(
   db: Reader,

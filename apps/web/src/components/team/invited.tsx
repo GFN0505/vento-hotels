@@ -1,7 +1,7 @@
 // Invited (design #25, SetMembers): invites not accepted yet, with Resend and Cancel. Follows the
 // hotel switch like the people below it.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { type InvitationView, ROLE_INFO } from '@vento/shared'
+import { type InvitationView, type Page, ROLE_INFO } from '@vento/shared'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -14,15 +14,21 @@ import { hotelsSummary, shortDate } from '@/lib/team'
 
 const INVITES_SHOWN = 3
 
-// With one hotel chosen: invites that include it, plus whole-group invites. Hidden when none.
-export function Invited({ propertyId }: { propertyId: string | undefined }) {
-  const [showAll, setShowAll] = useState(false)
-  const invites = useQuery({
+// With one hotel chosen: invites that include it, plus whole-group invites. Only for people who
+// manage the whole team (whole-group access).
+export function useInvites(propertyId: string | undefined, enabled: boolean) {
+  return useQuery({
     ...orpc.invitations.list.queryOptions({ input: { propertyId, pageSize: 50 } }),
+    enabled,
     placeholderData: keepWithinHotel(propertyId),
   })
-  if (!invites.data || invites.data.items.length === 0) return null
-  const { items, total } = invites.data
+}
+
+// Hidden when there are none.
+export function Invited({ invites }: { invites: Page<InvitationView> | undefined }) {
+  const [showAll, setShowAll] = useState(false)
+  if (!invites || invites.items.length === 0) return null
+  const { items, total } = invites
   // A long list of invites shouldn't push People off the screen: first few, then "Show all".
   const shown = showAll ? items : items.slice(0, INVITES_SHOWN)
   return (

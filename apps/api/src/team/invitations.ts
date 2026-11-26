@@ -28,7 +28,13 @@ import {
   requireListableHotel,
   requirePermission,
 } from '../tenancy/access.ts'
-import { grantableAccess, invitedTo, type NormalizedAccess, requireCanManage } from './rules.ts'
+import {
+  grantableAccess,
+  invitedTo,
+  type NormalizedAccess,
+  openInvite,
+  requireCanManage,
+} from './rules.ts'
 
 type Reader = Pick<Database, 'select'>
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
@@ -210,7 +216,7 @@ export async function listInvitations(
   if (!access.allProperties) return toPage<InvitationView>([], 0, query)
   const where = and(
     eq(invitations.organizationId, access.organizationId),
-    eq(invitations.status, 'pending'),
+    openInvite(),
     query.propertyId ? invitedTo(query.propertyId) : undefined,
   )
   const [rows, [total]] = await Promise.all([

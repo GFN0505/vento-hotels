@@ -4,7 +4,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { DeviceView } from '@vento/shared'
 import { MonitorSmartphone, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useProperty } from '@/components/shell/property-context'
 import { useScopedTitle } from '@/components/shell/use-scoped-title'
 import { NoAccess } from '@/components/team/no-access'
@@ -17,7 +17,7 @@ import { problemMessage } from '@/lib/errors'
 import { useMe } from '@/lib/me'
 import { keepWithinHotel, scopePropertyId } from '@/lib/scope'
 import { useOnline } from '@/offline/connection'
-import { DeviceList, DeviceListSkeleton } from './device-list'
+import { DeviceList, DeviceListSkeleton, DevicesByHotel } from './device-list'
 import { LockThisDevice } from './lock-this-device'
 import { RegisterDialog } from './register-dialog'
 import { RenameDialog } from './rename-dialog'
@@ -29,8 +29,12 @@ export function DevicesPage({ register, onRegistered }: Props) {
   useScopedTitle('Devices')
   const me = useMe()
   const online = useOnline()
-  const { scope } = useProperty()
+  const { scope, properties } = useProperty()
   const [registering, setRegistering] = useState(Boolean(register))
+  // A "Register" link followed while already on this page.
+  useEffect(() => {
+    if (register) setRegistering(true)
+  }, [register])
   const [renaming, setRenaming] = useState<DeviceView>()
   const [revoking, setRevoking] = useState<DeviceView>()
   const propertyId = scopePropertyId(scope)
@@ -51,6 +55,8 @@ export function DevicesPage({ register, onRegistered }: Props) {
   const thisOne = lock.data?.status === 'ready' ? lock.data.device : undefined
   const live = list.data?.items.filter((device) => !device.revokedAt).length
   const openRegister = () => setRegistering(true)
+  // One primary action per view: with an empty hotel, its card has Register, not the header.
+  const empty = Boolean(hotel && list.data && list.data.items.length === 0)
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,7 +70,7 @@ export function DevicesPage({ register, onRegistered }: Props) {
         actions={
           thisOne ? (
             <LockThisDevice device={thisOne} hotel={hotel} />
-          ) : (
+          ) : empty ? null : (
             <Button variant="primary" size="lg" className="max-lg:h-11" onClick={openRegister}>
               <Plus className="size-4" aria-hidden="true" />
               Register this device
@@ -92,8 +98,17 @@ export function DevicesPage({ register, onRegistered }: Props) {
           </Button>
         </Card>
       ) : list.data.items.length === 0 ? (
-        // "Register this device" is the page's one primary action, in the header.
-        <EmptyState icon={MonitorSmartphone}>
+        <EmptyState
+          icon={MonitorSmartphone}
+          action={
+            hotel && !thisOne ? (
+              <Button variant="primary" className="max-lg:h-11" onClick={openRegister}>
+                <Plus className="size-4" aria-hidden="true" />
+                Register this device
+              </Button>
+            ) : undefined
+          }
+        >
           {hotel ? (
             <>
               <p className="font-medium text-text">No shared devices at {hotel.name} yet</p>
@@ -117,12 +132,21 @@ export function DevicesPage({ register, onRegistered }: Props) {
           <h2 id="devices-heading" className="font-semibold">
             Shared devices <span className="font-normal text-text-3">{live}</span>
           </h2>
-          <DeviceList
-            devices={list.data.items}
-            showHotel={!hotel}
-            onRename={setRenaming}
-            onRevoke={setRevoking}
-          />
+          {hotel ? (
+            <DeviceList
+              devices={list.data.items}
+              showHotel={false}
+              onRename={setRenaming}
+              onRevoke={setRevoking}
+            />
+          ) : (
+            <DevicesByHotel
+              devices={list.data.items}
+              hotels={properties}
+              onRename={setRenaming}
+              onRevoke={setRevoking}
+            />
+          )}
         </section>
       )}
 

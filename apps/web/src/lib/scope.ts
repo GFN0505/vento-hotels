@@ -57,14 +57,45 @@ export function keepWithinHotel(propertyId: string | undefined) {
 }
 
 // A list said the hotel isn't there for this person (removed from their access, or archived since
-// the switch last loaded). The shell then reloads the hotel list and falls back.
-export function isHotelGone(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false
-  const { status, message, data } = error as { status?: unknown; message?: unknown; data?: unknown }
-  if (status !== 404) return false
+// the switch last loaded), by the API's codes. The shell then reloads the hotel list and falls back.
+export function hotelGoneReason(error: unknown): 'archived' | 'removed' | undefined {
+  if (!error || typeof error !== 'object' || !('data' in error)) return undefined
+  const data = (error as { data: unknown }).data
   const code =
     data && typeof data === 'object' && 'code' in data
       ? (data as { code: unknown }).code
       : undefined
-  return code === 'PROPERTY_ARCHIVED' || message === "We couldn't find that hotel"
+  if (code === 'PROPERTY_ARCHIVED') return 'archived'
+  if (code === 'PROPERTY_NOT_FOUND') return 'removed'
+  return undefined
+}
+
+// The hotel that was on screen and has left the list, if any. Nothing on the first load (no list
+// before), with All hotels, or when the list still has it.
+export function lostHotel(
+  before: readonly Pick<Property, 'id' | 'name'>[],
+  after: readonly Pick<Property, 'id' | 'name'>[],
+  shownId: string | undefined,
+): Pick<Property, 'id' | 'name'> | undefined {
+  if (before.length === 0 || after.length === 0 || !shownId) return undefined
+  if (after.some((p) => p.id === shownId)) return undefined
+  return before.find((p) => p.id === shownId)
+}
+
+// The tab title for a page about to open, from its route's static title, before the page itself
+// mounts and refines it: group-wide pages name the group, others the hotel in view.
+export function titleForRoute(
+  route: { title?: string | undefined; groupWide?: boolean | undefined } | undefined,
+  scope: Scope | undefined,
+  groupName: string | undefined,
+): string | undefined {
+  if (!route?.title) return undefined
+  const where = route.groupWide ? groupName : scope ? scopeName(scope) : undefined
+  return scopedTitle(route.title, where)
+}
+
+// Live regions only speak when their text changes. Saying the same thing again (back to a hotel,
+// then to it again) alternates an invisible suffix so it's still announced.
+export function nextAnnouncement(previous: string, text: string): string {
+  return previous === text ? `${text}\u200B` : text
 }

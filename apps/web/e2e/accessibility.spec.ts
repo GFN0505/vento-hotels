@@ -145,7 +145,7 @@ for (const theme of ['light', 'dark'] as const) {
         .waitFor()
       await expectAccessible(page)
       await page.keyboard.press('Escape')
-      await page.getByRole('button', { name: 'All hotels' }).click()
+      await page.getByRole('button', { name: 'Hotels list' }).click()
       await page.getByText('Kora Hotels Group · 2 hotels').waitFor()
       await expectAccessible(page)
       await page.goto('/settings/companies')

@@ -50,7 +50,7 @@ export function HotelRooms({ hotel, search, onSearch }: Props) {
   if (types.isError || summary.isError) {
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader title="Rooms" description={hotel.name} />
+        <PageHeader title="Rooms" />
         <div
           role="alert"
           className="flex flex-col items-center gap-3 rounded-lg border border-border bg-surface px-6 py-14 text-center shadow-card"
@@ -116,7 +116,7 @@ export function HotelRooms({ hotel, search, onSearch }: Props) {
         <PageHeader
           title="Rooms"
           badge={<StatusBadge tone="amber">Setting up</StatusBadge>}
-          description={`${hotel.name} · Describe the pattern once; Vento numbers every room.`}
+          description="Describe the pattern once; Vento numbers every room."
         />
         <FloorBuilder hotel={hotel} types={types.data.items} hotelHasRooms={false} />
         {sheets}
@@ -143,7 +143,7 @@ export function HotelRooms({ hotel, search, onSearch }: Props) {
           )
         }
         description={
-          <span className="num">{`${hotel.name} · ${plural(s.active, 'room')} · ${plural(types.active.length, 'type')}`}</span>
+          <span className="num">{`${plural(s.active, 'room')} · ${plural(types.active.length, 'type')}`}</span>
         }
         actions={
           <HeaderActions

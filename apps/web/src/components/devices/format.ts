@@ -24,3 +24,25 @@ export function idleTime(kind: DeviceKind): string {
   const seconds = DEVICE_KINDS[kind].idleSeconds
   return seconds < 120 ? `${seconds} seconds` : `${seconds / 60} minutes`
 }
+
+const KIND_CODE: Record<DeviceKind, string> = { front_desk: 'FD', pos: 'POS', housekeeping: 'HK' }
+
+// A short code for a hotel, for example device names: "Kora Abuja" → ABJ, "Kora Victoria Island"
+// → VI. The group's brand (the first word) is left out when there's more after it.
+export function hotelCode(name: string): string {
+  const words = name.split(/\s+/).filter(Boolean)
+  const rest = words.length > 1 ? words.slice(1) : words
+  if (rest.length > 1)
+    return rest
+      .map((word) => word[0]?.toUpperCase())
+      .join('')
+      .slice(0, 3)
+  const word = (rest[0] ?? '').toUpperCase()
+  const consonants = word.slice(1).replace(/[^BCDFGHJKLMNPQRSTVWXYZ]/g, '')
+  return (word.slice(0, 1) + consonants).slice(0, 3)
+}
+
+// "e.g. FD-ABJ-01": the placeholder for a new device's name, from what it's for and where.
+export function exampleName(kind: DeviceKind, hotelName: string | undefined): string {
+  return `e.g. ${KIND_CODE[kind]}-${hotelName ? hotelCode(hotelName) : 'VI'}-01`
+}

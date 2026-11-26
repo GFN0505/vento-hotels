@@ -4,6 +4,8 @@ import { DevicesPage } from '@/components/devices/devices-page'
 
 // ?register=<hotel id> opens "Register this device" bound to that hotel (a new hotel's next steps).
 export const Route = createFileRoute('/_app/settings/devices')({
+  // The tab title as soon as navigation starts (components/shell/route-title.ts).
+  staticData: { title: 'Devices' },
   validateSearch: (search: Record<string, unknown>): { register?: string | undefined } =>
     typeof search.register === 'string' && search.register
       ? { register: search.register.slice(0, 40) }

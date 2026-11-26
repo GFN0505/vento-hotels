@@ -59,8 +59,8 @@ function ArchiveDialog({ hotel, onClose }: { hotel: Property; onClose: () => voi
       onClose()
       // The switch leaves the archived hotel first (the whole group, or the one hotel left), so the
       // refreshed hotel list doesn't read as access lost.
-      if (canSeeAll && remaining.length > 1) selectAll()
-      else if (remaining[0]) select(remaining[0].id)
+      if (canSeeAll && remaining.length > 1) selectAll({ moveFocus: true })
+      else if (remaining[0]) select(remaining[0].id, { moveFocus: true })
       await refresh()
       toast.success(`${archived.name} archived`)
     },

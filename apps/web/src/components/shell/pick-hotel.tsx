@@ -37,7 +37,7 @@ export function PickHotel({ title, aside }: Props) {
             <li key={hotel.id}>
               <button
                 type="button"
-                onClick={() => select(hotel.id)}
+                onClick={() => select(hotel.id, { moveFocus: true })}
                 className="group flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-2/60"
               >
                 <span

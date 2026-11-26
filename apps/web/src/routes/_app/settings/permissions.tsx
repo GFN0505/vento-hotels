@@ -28,6 +28,8 @@ import { useMediaQuery } from '@/lib/media'
 import { formatLimit } from '@/lib/team'
 
 export const Route = createFileRoute('/_app/settings/permissions')({
+  // The tab title as soon as navigation starts (components/shell/route-title.ts).
+  staticData: { title: 'Permissions and limits', groupWide: true },
   component: PermissionsPage,
 })
 

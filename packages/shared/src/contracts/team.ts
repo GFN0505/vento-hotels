@@ -43,6 +43,13 @@ export const memberListSchema = pageQuerySchema.extend({
   propertyId: idSchema.optional(),
 })
 
+export const memberPageSchema = pageSchema(memberViewSchema).extend({
+  // With a propertyId: how many of the people who work at the hotel have access to the whole group
+  // (for "including 2 with access to the whole group"), ignoring search and filters. Null without.
+  wholeGroup: z.number().int().min(0).nullable(),
+})
+export type MemberPage = z.infer<typeof memberPageSchema>
+
 export const updateMemberSchema = z.object({
   memberId: idSchema,
   role: memberRoleSchema,
@@ -112,7 +119,7 @@ const ok = z.object({ ok: z.literal(true) })
 
 export const teamContract = {
   members: {
-    list: oc.input(memberListSchema).output(pageSchema(memberViewSchema)),
+    list: oc.input(memberListSchema).output(memberPageSchema),
     update: oc.input(updateMemberSchema).output(memberViewSchema),
     remove: oc.input(z.object({ memberId: idSchema })).output(ok),
   },

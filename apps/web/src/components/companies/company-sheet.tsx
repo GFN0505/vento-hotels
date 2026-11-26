@@ -101,7 +101,11 @@ export function CompanySheet({ company: given, onClose, onCreated }: Props) {
       open
       onClose={() => (busy ? undefined : guard.close())}
       title={company ? company.name : 'Add a company'}
-      description={company ? companyLine(company) : 'A legal entity in the group that owns hotels.'}
+      description={
+        company
+          ? companyLine(company)
+          : "A legal entity in the group. Companies belong to the group; link hotels to them afterwards, from each hotel's settings."
+      }
       footer={
         guard.bar ?? (
           <>

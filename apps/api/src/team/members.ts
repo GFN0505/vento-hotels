@@ -3,6 +3,7 @@
 import { ORPCError } from '@orpc/server'
 import {
   type AccessChoice,
+  type MemberPage,
   type MemberRole,
   type MemberView,
   type PageQuery,
@@ -22,6 +23,7 @@ import {
   grantableAccess,
   requireCanManage,
   visibleMembers,
+  wholeGroupMember,
   worksAt,
 } from './rules.ts'
 
@@ -109,7 +111,7 @@ export async function listMembers(
     filter?: RoleFilter | undefined
     propertyId?: string | undefined
   },
-) {
+): Promise<MemberPage> {
   requirePermission(access, 'setup.manage')
   const conditions: (SQL | undefined)[] = [visibleMembers(access)]
   // The hotel narrows within who the caller may already see; it never widens it.
@@ -124,7 +126,7 @@ export async function listMembers(
   if (query.filter) conditions.push(inArray(members.role, [...ROLE_FILTERS[query.filter]]))
   const where = and(...conditions)
 
-  const [rows, [total]] = await Promise.all([
+  const [rows, [total], wholeGroup] = await Promise.all([
     db
       .select(memberColumns)
       .from(members)
@@ -141,16 +143,30 @@ export async function listMembers(
       .innerJoin(users, eq(users.id, members.userId))
       .leftJoin(memberPins, eq(memberPins.memberId, members.id))
       .where(where),
+    query.propertyId ? countWholeGroup(db, access) : Promise.resolve(null),
   ])
   const hotels = await hotelsFor(
     db,
     rows.map((row) => row.id),
   )
-  return toPage(
-    rows.map((row) => toView(access, row, hotels)),
-    total?.value ?? 0,
-    query,
-  )
+  return {
+    ...toPage(
+      rows.map((row) => toView(access, row, hotels)),
+      total?.value ?? 0,
+      query,
+    ),
+    wholeGroup,
+  }
+}
+
+// Whole-group people work at every hotel, so their count is the same for each one; still within
+// who the caller may see (none, for a hotel-limited manager).
+async function countWholeGroup(db: Reader, access: Access): Promise<number> {
+  const [row] = await db
+    .select({ value: count() })
+    .from(members)
+    .where(and(visibleMembers(access), wholeGroupMember()))
+  return row?.value ?? 0
 }
 
 async function findMember(db: Reader, access: Access, memberId: string): Promise<MemberRow> {

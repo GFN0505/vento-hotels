@@ -11,11 +11,11 @@ import { PageHeader } from '@/components/ui/page-header'
 import { useMe } from '@/lib/me'
 import { EditMemberDialog } from './edit-member-dialog'
 import { InviteDialog } from './invite-dialog'
-import { Invited } from './invited'
+import { Invited, useInvites } from './invited'
 import type { MembersSearch, OnMembersSearch } from './members-search'
 import { NoAccess } from './no-access'
 import { People, PeopleSkeleton } from './people'
-import { useHotelPeople } from './use-hotel-people'
+import { useMembers } from './use-members'
 
 type Props = { search: MembersSearch; onSearch: OnMembersSearch }
 
@@ -29,20 +29,33 @@ export function MembersPage({ search, onSearch }: Props) {
   // A group with one hotel reads as the group: "works only at" means nothing there.
   const oneHotelGroup = canGrantWholeGroup && properties.length === 1
   const hotel = scope?.kind === 'hotel' && !oneHotelGroup ? scope.hotel : undefined
-  const people = useHotelPeople(hotel?.id, me.can('setup.manage'))
+  // The page's hotel, not the switch's: a group with one hotel lists everyone, including people
+  // whose only hotel was archived ("No hotels yet").
+  const members = useMembers(search, hotel?.id, me.can('setup.manage') && scope !== undefined)
+  const wholeGroup = members.data?.wholeGroup ?? undefined
+  const invites = useInvites(hotel?.id, canGrantWholeGroup && scope !== undefined)
 
   if (me.isPending) return <PeopleSkeleton page />
   if (!me.can('setup.manage')) return <NoAccess what="members and roles" />
 
   const groupName = me.data?.organization.name ?? ''
   const myRole = me.data?.member.role
-  const description = !hotel
-    ? `Who can sign in to ${groupName}, their role, and which hotels they see.`
-    : !canGrantWholeGroup
-      ? `People you manage at ${hotel.name}.`
-      : people.wholeGroup === undefined
-        ? `People who work at ${hotel.name}.`
-        : `People who work at ${hotel.name}, including ${people.wholeGroup} with access to the whole group.`
+  const description = !hotel ? (
+    `Who can sign in to ${groupName}, their role, and which hotels they see.`
+  ) : !canGrantWholeGroup ? (
+    `People you manage at ${hotel.name}.`
+  ) : (
+    <>
+      People who work at {hotel.name}, including{' '}
+      {wholeGroup === undefined ? (
+        // Holds the number's place, so the line doesn't rewrap when it arrives.
+        <span className="inline-block h-3 w-3 animate-pulse rounded-sm bg-surface-2 align-middle" />
+      ) : (
+        wholeGroup
+      )}{' '}
+      with access to the whole group.
+    </>
+  )
   // A new invite starts on the hotel being looked at; a new hotel's "Invite the team" link wins.
   const inviteHotel = search.invite ?? hotel?.id
 
@@ -64,12 +77,15 @@ export function MembersPage({ search, onSearch }: Props) {
         }
       />
 
-      {canGrantWholeGroup && scope ? <Invited propertyId={hotel?.id} /> : null}
+      {/* Invited and People appear together, so People doesn't jump down when invites arrive. */}
+      {canGrantWholeGroup && !invites.isPending ? <Invited invites={invites.data} /> : null}
       <People
         search={search}
         onSearch={onSearch}
         hotel={hotel}
-        onlyWholeGroup={canGrantWholeGroup && people.onlyWholeGroup}
+        waiting={canGrantWholeGroup && invites.isPending}
+        pendingInvites={invites.data?.total ?? 0}
+        members={members}
         onEdit={setEditing}
         onInvite={() => setInviting(true)}
       />
@@ -84,6 +100,7 @@ export function MembersPage({ search, onSearch }: Props) {
         myRole={myRole}
         canGrantWholeGroup={canGrantWholeGroup}
         hotelId={inviteHotel}
+        hotelName={hotel && inviteHotel === hotel.id ? hotel.name : undefined}
       />
       {editing ? (
         <EditMemberDialog

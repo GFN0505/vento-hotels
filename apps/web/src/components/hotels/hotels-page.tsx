@@ -46,7 +46,7 @@ export function HotelsPage({ search, onSearch }: Props) {
   ) : null
 
   // The shell moves focus to the hotel's name once it shows (components/shell/hotel-change.tsx).
-  const open = (hotel: Property) => select(hotel.id)
+  const open = (hotel: Property) => select(hotel.id, { moveFocus: true })
 
   return (
     <>

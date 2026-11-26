@@ -19,6 +19,8 @@ function readSearch(search: Record<string, unknown>): HotelsSearch {
 }
 
 export const Route = createFileRoute('/_app/settings/hotels')({
+  // The tab title as soon as navigation starts (components/shell/route-title.ts).
+  staticData: { title: 'Hotels' },
   validateSearch: readSearch,
   component: HotelsRoute,
 })

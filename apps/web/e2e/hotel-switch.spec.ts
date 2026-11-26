@@ -40,8 +40,9 @@ test('members follow the switch: everyone, then the people who work at Kora Abuj
   await expect(page).toHaveTitle('Members and roles · All hotels · Vento Hotels')
 
   await choose(page, 'Kora Abuja')
-  await expect(title(page, 'Members and roles')).toBeFocused()
-  await expect(page.getByText('Showing Kora Abuja')).toBeAttached()
+  // The top-bar select keeps focus (its arrow keys change hotel); the change is announced.
+  await expect(page.getByText('Showing Kora Abuja', { exact: true })).toBeAttached()
+  await expect(title(page, 'Members and roles')).not.toBeFocused()
   await expect(page).toHaveTitle('Members and roles · Kora Abuja · Vento Hotels')
   await expect(eyebrow(page, 'Kora Abuja')).toBeVisible()
   await expect(
@@ -52,14 +53,13 @@ test('members follow the switch: everyone, then the people who work at Kora Abuj
     page.getByText('Whole group', { exact: true }).filter({ visible: true }),
   ).toHaveCount(2)
   await expect(page.getByText(`ngozi@${domain}`)).toBeVisible()
-  await expect(
-    page.getByText('Nobody works only at Kora Abuja yet.', { exact: false }),
-  ).toBeVisible()
+  await expect(page.getByText('Nobody works only at Kora Abuja yet.')).toBeVisible()
+  await expect(page.getByText('Invite its managers and staff. 1 invite pending.')).toBeVisible()
   await expectAccessible(page)
 
   // A new invite starts on the hotel in view.
   await page.getByRole('button', { name: 'Invite people' }).first().click()
-  const invite = page.getByRole('dialog', { name: 'Invite people' })
+  const invite = page.getByRole('dialog', { name: 'Invite people to Kora Abuja' })
   await expect(invite.getByLabel('Only these hotels')).toBeChecked()
   await expect(invite.getByLabel('Kora Abuja')).toBeChecked()
   await expect(invite.getByLabel('Kora Victoria Island')).not.toBeChecked()
@@ -85,11 +85,14 @@ test('devices follow the switch, and each row names its hotel under All hotels',
   await page.goto('/settings/devices')
   await expect(page).toHaveTitle('Devices · All hotels · Vento Hotels')
   await expect(page.getByRole('heading', { name: 'Shared devices 4' })).toBeVisible()
-  await expect(page.getByText('Front desk PC · Kora Ikeja GRA')).toBeVisible()
-  await expect(page.getByText('Front desk PC · Kora Victoria Island')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Kora Ikeja GRA 1' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Kora Victoria Island 3' })).toBeVisible()
+  await expect(page.getByText(/^No devices yet at/)).toContainText(
+    'Kora Abuja and Kora Port Harcourt.',
+  )
 
   await choose(page, 'Kora Ikeja GRA')
-  await expect(title(page, 'Devices')).toBeFocused()
+  await expect(page.getByText('Showing Kora Ikeja GRA', { exact: true })).toBeAttached()
   await expect(page.getByRole('heading', { name: 'Shared devices 1' })).toBeVisible()
   await expect(page.getByText('FD-IKJ-01')).toBeVisible()
   await expect(page.getByText('Front desk PC', { exact: true })).toBeVisible()
@@ -98,6 +101,8 @@ test('devices follow the switch, and each row names its hotel under All hotels',
   await choose(page, 'Kora Abuja')
   await expect(page.getByText('No shared devices at Kora Abuja yet')).toBeVisible()
   await expect(page.getByText('FD-IKJ-01')).toHaveCount(0)
+  // One primary action: the empty card's, not a second one in the header.
+  await expect(page.getByRole('button', { name: 'Register this device' })).toHaveCount(1)
   await expectAccessible(page)
   await switchToDarkMode(page)
   await expect(page.getByText('No shared devices at Kora Abuja yet')).toBeVisible()
@@ -112,11 +117,14 @@ test('registering a device under All hotels asks for its hotel', async ({ page }
   await page.goto('/settings/devices')
   await page.getByRole('button', { name: 'Register this device' }).click()
   const dialog = page.getByRole('dialog', { name: 'Register this device' })
+  // Under All hotels the hotel comes first, and starts empty.
+  await expect(dialog.getByLabel('Hotel')).toBeFocused()
   await dialog.getByLabel('Name').fill('FD-ABJ-01')
   await dialog.getByLabel("What it's for").selectOption({ label: 'Front desk PC' })
   await dialog.getByRole('button', { name: 'Register' }).click()
   await expect(dialog.getByText('Choose the hotel this device is at')).toBeVisible()
   await dialog.getByLabel('Hotel').selectOption({ label: 'Kora Abuja' })
+  await expect(dialog.getByText('This browser becomes a Kora Abuja device.')).toBeVisible()
   await dialog.getByRole('button', { name: 'Register' }).click()
   await expect(page.getByText('FD-ABJ-01 registered at Kora Abuja')).toBeVisible()
   // This browser is now Kora Abuja's device, so the top bar moves there.
@@ -137,9 +145,7 @@ test('companies and permissions name their scope', async ({ page }) => {
   await page.goto('/settings/companies')
   await expect(page).toHaveTitle('Companies · Kora Abuja · Vento Hotels')
   await expect(
-    page.getByText(
-      'Kora Abuja is owned by Kora Hotels Abuja Ltd. Choose All hotels in the top bar to see every company.',
-    ),
+    page.getByText('Owned by Kora Hotels Abuja Ltd. All hotels shows every company.'),
   ).toBeVisible()
   await choose(page, 'All hotels')
   await expect(page.getByText('Kora Hotels Group · 3 companies')).toBeVisible()
@@ -151,6 +157,8 @@ test('companies and permissions name their scope', async ({ page }) => {
     page.getByText('Permissions are set per role and apply at every hotel.', { exact: false }),
   ).toBeVisible()
   await choose(page, 'Kora Ikeja GRA')
+  // Group-wide: nothing changes, so nothing is announced and focus stays put.
+  await expect(page.getByText('Showing Kora Ikeja GRA', { exact: true })).toHaveCount(0)
   await expect(eyebrow(page, 'Whole group')).toBeVisible()
   await expect(page).toHaveTitle('Permissions and limits · Kora Hotels Group · Vento Hotels')
 })
@@ -174,6 +182,15 @@ test('a link that names a hotel opens on it, then leaves the address bar', async
   ).toBeVisible()
   await expect(page).toHaveURL(/\/settings\/devices$/)
   await expect(page.getByRole('heading', { name: 'Shared devices 4' })).toBeVisible()
+
+  // Home, All hotels: each hotel without devices is its own link, opening on that hotel.
+  await page.goto('/')
+  await page
+    .getByRole('region', { name: 'Needs attention' })
+    .getByRole('link', { name: 'Kora Abuja' })
+    .click()
+  await expect(page.getByText('No shared devices at Kora Abuja yet')).toBeVisible()
+  await expect(page).toHaveURL(/\/settings\/devices$/)
 
   // Home's figures for one hotel link to that hotel.
   await page.goto('/')
@@ -220,4 +237,21 @@ test('Tunde, on one hotel, has no switch and every page names his hotel', async 
   await page.goto('/rates/rooms')
   await expect(eyebrow(page, 'Kora Victoria Island')).toBeVisible()
   await expect(page).toHaveTitle('Rooms · Kora Victoria Island · Vento Hotels')
+})
+
+test('a hotel change resets the page and record sheet, keeps search, and drops a room type filter', async ({
+  page,
+}) => {
+  await signInAs(page, 'adaeze')
+  await page.goto('/rates/rooms')
+  // Picking a hotel on the page moves focus to the title.
+  await page.getByRole('button', { name: /Kora Victoria Island/ }).click()
+  await expect(title(page, 'Rooms')).toBeFocused()
+  await expect(page.getByText('Showing Kora Victoria Island', { exact: true })).toBeAttached()
+  await expect(eyebrow(page, 'Kora Victoria Island')).toBeVisible()
+
+  await page.goto('/rates/rooms?q=1A&type=0193a000-0000-7000-8000-000000000001&page=2')
+  await choose(page, 'Kora Ikeja GRA')
+  await expect(eyebrow(page, 'Kora Ikeja GRA')).toBeVisible()
+  await expect(page).toHaveURL(/\/rates\/rooms\?q=1A$/)
 })

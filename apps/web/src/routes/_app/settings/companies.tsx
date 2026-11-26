@@ -15,6 +15,8 @@ function readSearch(search: Record<string, unknown>): CompaniesSearch {
 }
 
 export const Route = createFileRoute('/_app/settings/companies')({
+  // The tab title as soon as navigation starts (components/shell/route-title.ts).
+  staticData: { title: 'Companies' },
   validateSearch: readSearch,
   component: CompaniesRoute,
 })

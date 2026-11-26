@@ -198,7 +198,12 @@ export const devices = pgTable(
     revokedReason: text(),
     ...timestamps,
   },
-  (t) => [index().on(t.organizationId), uniqueIndex().on(t.organizationId, t.name)],
+  (t) => [
+    index().on(t.organizationId),
+    uniqueIndex().on(t.organizationId, t.name),
+    // Settings › Devices for one hotel, and the hotel's foreign key.
+    index().on(t.organizationId, t.propertyId),
+  ],
 )
 
 // A member's staff PIN, hashed like a password, with the wrong-try counter behind the lockout.

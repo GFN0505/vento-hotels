@@ -40,6 +40,10 @@ function HeaderSkeleton({ actions }: { actions: boolean }) {
 export function PageSkeleton() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true">
+      {/* A title for focus and screen readers to land on while the page loads. */}
+      <h1 tabIndex={-1} className="sr-only">
+        Rooms
+      </h1>
       <HeaderSkeleton actions />
       <div className="rounded-md border border-border bg-surface shadow-card">
         <TableSkeleton rows={4} label="Loading room types" />

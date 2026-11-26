@@ -68,7 +68,7 @@ export function CompaniesPage({ search, onSearch }: Props) {
   const owner = scoped ? list.data?.items[0] : undefined
   const description = scoped
     ? owner
-      ? `${scoped.name} is owned by ${owner.name}.${canSeeAll ? ' Choose All hotels in the top bar to see every company.' : ''}`
+      ? `Owned by ${owner.name}.${canSeeAll ? ' All hotels shows every company.' : ''}`
       : `The company that owns ${scoped.name}.`
     : list.data && !archived
       ? `${group} · ${list.data.total === 1 ? '1 company' : `${list.data.total} companies`}`

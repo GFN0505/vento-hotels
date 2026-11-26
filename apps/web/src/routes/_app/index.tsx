@@ -25,6 +25,8 @@ import { visibleGroups } from '@/lib/navigation'
 import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/_app/')({
+  // The tab title as soon as navigation starts (components/shell/route-title.ts).
+  staticData: { title: 'Home' },
   component: Home,
 })
 
@@ -80,8 +82,8 @@ function Home() {
 
   // The shell moves focus to the greeting and says what's shown when the view changes
   // (components/shell/hotel-change.tsx).
-  const openHotel = (id: string) => select(id)
-  const openGroup = () => selectAll()
+  const openHotel = (id: string) => select(id, { moveFocus: true })
+  const openGroup = () => selectAll({ moveFocus: true })
 
   if (hotelsQuery.isError) {
     return (

@@ -6,12 +6,16 @@ import type {
   Entity,
   HomeSummary,
   InvitationView,
+  MemberPage,
   MemberView,
   Property,
 } from '@vento/shared'
 import { newId } from '@vento/shared'
+import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { LAGOS_ADDRESS } from '../test/addresses.ts'
+import { invitations } from '../db/schema/auth.ts'
+import { switchFeature } from '../features/switches.ts'
+import { ABUJA_ADDRESS, LAGOS_ADDRESS } from '../test/addresses.ts'
 import { createTestApp } from '../test/harness.ts'
 import { type Kora, koraGroup, limitTo, type Page, type Person, person } from './testing.ts'
 
@@ -19,6 +23,7 @@ const url = process.env.TEST_DATABASE_URL
 
 type Problem = { message: string; data?: { code?: string } }
 const LISTS = ['members/list', 'invitations/list', 'devices/list', 'entities/list'] as const
+const NOT_FOUND = [404, "We couldn't find that hotel", 'PROPERTY_NOT_FOUND']
 
 describe.skipIf(!url)('the hotel switch scopes every list', () => {
   const t = createTestApp(url ?? '')
@@ -45,12 +50,12 @@ describe.skipIf(!url)('the hotel switch scopes every list', () => {
       kind: 'front_desk',
       propertyId,
     })
-  const invite = (who: string, role: string, access: object) =>
-    t.rpc(kora.owner.cookie, 'invitations/create', {
-      emails: [`${who}.${newId().slice(-8)}@example.test`],
-      role,
-      access,
-    })
+  const invite = async (who: string, role: string, access: object) => {
+    const email = `${who}.${newId().slice(-8)}@example.test`
+    await t.rpc(kora.owner.cookie, 'invitations/create', { emails: [email], role, access })
+    return email
+  }
+  let abujaInvite: string
 
   beforeAll(async () => {
     kora = await koraGroup(t)
@@ -82,7 +87,10 @@ describe.skipIf(!url)('the hotel switch scopes every list', () => {
     sade = await person(t, kora.orgId, 'Sade Bakare', 'revenue_manager')
     await limitTo(t, kora.owner, sade, [kora.vi.id, ikeja.id])
 
-    await invite('abuja', 'front_desk', { allProperties: false, propertyIds: [kora.abuja.id] })
+    abujaInvite = await invite('abuja', 'front_desk', {
+      allProperties: false,
+      propertyIds: [kora.abuja.id],
+    })
     await invite('vi', 'front_desk', { allProperties: false, propertyIds: [kora.vi.id] })
     await invite('whole', 'finance', { allProperties: true })
 
@@ -133,6 +141,18 @@ describe.skipIf(!url)('the hotel switch scopes every list', () => {
         ['Kunle Ade', true],
         ['Ngozi Obi', false],
       ])
+    })
+
+    it('counts the whole-group people at a hotel, whatever the search or page', async () => {
+      const at = (cookie: string, input: object) =>
+        t.rpc<MemberPage>(cookie, 'members/list', input).then((r) => r.data.wholeGroup)
+      expect(await at(kora.owner.cookie, { propertyId: kora.abuja.id })).toBe(3)
+      expect(
+        await at(kora.owner.cookie, { propertyId: kora.abuja.id, search: 'ngozi', pageSize: 1 }),
+      ).toBe(3)
+      expect(await at(kora.owner.cookie, {})).toBeNull()
+      // A hotel-limited manager doesn't see whole-group people, so counts none.
+      expect(await at(sade.cookie, { propertyId: kora.vi.id })).toBe(0)
     })
 
     it('combines the hotel with search and role filters', async () => {
@@ -237,6 +257,27 @@ describe.skipIf(!url)('the hotel switch scopes every list', () => {
       }
     })
 
+    it('count an expired invite on Home and in the list alike, until it is resent', async () => {
+      await t.db
+        .update(invitations)
+        .set({ expiresAt: new Date(Date.now() - 60_000) })
+        .where(eq(invitations.email, abujaInvite))
+      const home = await t.rpc<HomeSummary>(kora.owner.cookie, 'organization/home', {})
+      const all = await t.rpc<Page<InvitationView>>(kora.owner.cookie, 'invitations/list', {})
+      expect(all.data.total).toBe(home.data.pendingInvites)
+      for (const hotel of home.data.byHotel) {
+        const listed = await t.rpc<Page<InvitationView>>(kora.owner.cookie, 'invitations/list', {
+          propertyId: hotel.propertyId,
+        })
+        expect(listed.data.total).toBe(hotel.invites)
+      }
+      const abuja = await t.rpc<Page<InvitationView>>(kora.owner.cookie, 'invitations/list', {
+        propertyId: kora.abuja.id,
+      })
+      expect(abuja.data.items.find((i) => i.email === abujaInvite)?.status).toBe('expired')
+      expect(home.data.byHotel.find((h) => h.propertyId === kora.abuja.id)?.invites).toBe(2)
+    })
+
     it('gives no invite counts to people who do not manage the team', async () => {
       const gm = await t.rpc<HomeSummary>(kora.gm.cookie, 'organization/home', {})
       expect(gm.data.byHotel).toEqual([
@@ -245,22 +286,53 @@ describe.skipIf(!url)('the hotel switch scopes every list', () => {
     })
   })
 
+  describe('a group left with one hotel', () => {
+    it('still lists, without a hotel, someone whose only hotel was archived', async () => {
+      const owner = await t.signUp('Funmi Lawal')
+      const orgId = await t.createOrganization(owner.cookie, 'Lawal Hotels')
+      const company = (await t.rpc<Entity>(owner.cookie, 'entities/create', { name: 'Lawal Ltd' }))
+        .data
+      const create = (name: string, extra: object = {}) =>
+        t
+          .rpc<Property>(owner.cookie, 'properties/create', {
+            entityId: company.id,
+            name,
+            ...extra,
+          })
+          .then((r) => r.data)
+      const kept = await create('Lawal Ikoyi')
+      const closed = await create('Lawal Abuja', ABUJA_ADDRESS)
+      const me = await t.rpc<{ member: { id: string } }>(owner.cookie, 'organization/current')
+      const staff = await person(t, orgId, 'Bayo Lawal', 'front_desk')
+      await limitTo(t, { ...owner, memberId: me.data.member.id }, staff, [closed.id])
+      await t.rpc(owner.cookie, 'properties/archive', { id: closed.id, reason: 'Sold 30 Nov 2026' })
+
+      const page = await t.rpc<MemberPage>(owner.cookie, 'members/list', {})
+      expect(page.data.items.find((m) => m.name === 'Bayo Lawal')).toMatchObject({
+        allProperties: false,
+        properties: [],
+      })
+      expect(page.data.wholeGroup).toBeNull()
+      expect(await people(owner.cookie, { propertyId: kept.id })).toEqual(['Funmi Lawal'])
+    })
+  })
+
   describe('hotels the caller may not list', () => {
     it.each(LISTS)("%s answers not found for another group's hotel", async (path) => {
       const result = await t.rpc<Problem>(kora.owner.cookie, path, {
         propertyId: kora.otherHotel.id,
       })
-      expect([result.status, result.data.message]).toEqual([404, "We couldn't find that hotel"])
+      expect([result.status, result.data.message, result.data.data?.code]).toEqual(NOT_FOUND)
     })
 
     it.each(LISTS)('%s answers not found for an unknown hotel', async (path) => {
       const result = await t.rpc<Problem>(kora.owner.cookie, path, { propertyId: newId() })
-      expect([result.status, result.data.message]).toEqual([404, "We couldn't find that hotel"])
+      expect([result.status, result.data.message, result.data.data?.code]).toEqual(NOT_FOUND)
     })
 
     it.each(LISTS)('%s answers not found for a hotel outside a member’s 2 of 4', async (path) => {
       const result = await t.rpc<Problem>(sade.cookie, path, { propertyId: kora.abuja.id })
-      expect([result.status, result.data.message]).toEqual([404, "We couldn't find that hotel"])
+      expect([result.status, result.data.message, result.data.data?.code]).toEqual(NOT_FOUND)
     })
 
     it.each(LISTS)('%s says an archived hotel was archived', async (path) => {
@@ -274,7 +346,15 @@ describe.skipIf(!url)('the hotel switch scopes every list', () => {
 
     it('never tells someone outside an archived hotel that it was archived', async () => {
       const result = await t.rpc<Problem>(sade.cookie, 'members/list', { propertyId: lekki.id })
-      expect(result.data.message).toBe("We couldn't find that hotel")
+      expect([result.status, result.data.message, result.data.data?.code]).toEqual(NOT_FOUND)
+    })
+
+    it('uses the same code for a hotel the rooms pages cannot open', async () => {
+      await switchFeature(t.db, kora.orgId, { feature: 'front_desk', to: 'on', reason: 'Test' })
+      const result = await t.rpc<Problem>(kora.owner.cookie, 'roomTypes/list', {
+        propertyId: kora.otherHotel.id,
+      })
+      expect([result.status, result.data.message, result.data.data?.code]).toEqual(NOT_FOUND)
     })
   })
 })

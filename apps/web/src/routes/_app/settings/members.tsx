@@ -20,6 +20,8 @@ function readSearch(search: Record<string, unknown>): MembersSearch {
 }
 
 export const Route = createFileRoute('/_app/settings/members')({
+  // The tab title as soon as navigation starts (components/shell/route-title.ts).
+  staticData: { title: 'Members and roles' },
   validateSearch: readSearch,
   component: MembersRoute,
 })

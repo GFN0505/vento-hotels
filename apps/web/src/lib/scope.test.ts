@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
-  isHotelGone,
+  hotelGoneReason,
   keepWithinHotel,
+  lostHotel,
+  nextAnnouncement,
   propertyIdOf,
   resolveHotelLink,
   scopedTitle,
   scopeName,
   scopePropertyId,
+  titleForRoute,
 } from './scope'
 
 const abuja = { id: '0193a000-0000-7000-8000-000000000003', name: 'Kora Abuja' }
@@ -75,21 +78,73 @@ describe('keepWithinHotel', () => {
   })
 })
 
-describe('isHotelGone', () => {
-  it('recognises a hotel outside access or archived', () => {
-    expect(isHotelGone({ status: 404, message: "We couldn't find that hotel" })).toBe(true)
-    expect(
-      isHotelGone({
-        status: 404,
-        message: 'This hotel was archived.',
-        data: { code: 'PROPERTY_ARCHIVED' },
-      }),
-    ).toBe(true)
+describe('hotelGoneReason', () => {
+  it('tells an archived hotel from one outside access, by the API code', () => {
+    expect(hotelGoneReason({ status: 404, data: { code: 'PROPERTY_ARCHIVED' } })).toBe('archived')
+    expect(hotelGoneReason({ status: 404, data: { code: 'PROPERTY_NOT_FOUND' } })).toBe('removed')
   })
 
-  it('ignores other failures', () => {
-    expect(isHotelGone({ status: 404, message: "We couldn't find that person" })).toBe(false)
-    expect(isHotelGone({ status: 0, message: 'Failed to fetch' })).toBe(false)
-    expect(isHotelGone(undefined)).toBe(false)
+  it('ignores other failures, whatever their wording', () => {
+    expect(hotelGoneReason({ status: 404, message: "We couldn't find that hotel" })).toBeUndefined()
+    expect(hotelGoneReason({ status: 0, message: 'Failed to fetch' })).toBeUndefined()
+    expect(hotelGoneReason(undefined)).toBeUndefined()
+  })
+})
+
+describe('lostHotel', () => {
+  it('names the hotel on screen when it leaves the list', () => {
+    expect(lostHotel(hotels, [ikeja], abuja.id)).toEqual(abuja)
+  })
+
+  it('says nothing on the first load, with All hotels, or when the hotel is still there', () => {
+    expect(lostHotel([], [ikeja], abuja.id)).toBeUndefined()
+    expect(lostHotel(hotels, [ikeja], undefined)).toBeUndefined()
+    expect(lostHotel(hotels, hotels, abuja.id)).toBeUndefined()
+  })
+
+  it('says nothing while the list is empty (failed to load), or for a hotel it never had', () => {
+    expect(lostHotel(hotels, [], abuja.id)).toBeUndefined()
+    expect(lostHotel([ikeja], [ikeja], abuja.id)).toBeUndefined()
+  })
+})
+
+describe('titleForRoute', () => {
+  const abujaScope = { kind: 'hotel', hotel: abuja } as never
+
+  it('names the page and the hotel in view as soon as navigation starts', () => {
+    expect(titleForRoute({ title: 'Devices' }, abujaScope, 'Kora Hotels Group')).toBe(
+      'Devices · Kora Abuja · Vento Hotels',
+    )
+    expect(titleForRoute({ title: 'Devices' }, { kind: 'all' }, 'Kora Hotels Group')).toBe(
+      'Devices · All hotels · Vento Hotels',
+    )
+  })
+
+  it('names the group on group-wide pages, and leaves pages without a title alone', () => {
+    expect(
+      titleForRoute(
+        { title: 'Permissions and limits', groupWide: true },
+        abujaScope,
+        'Kora Hotels Group',
+      ),
+    ).toBe('Permissions and limits · Kora Hotels Group · Vento Hotels')
+    expect(titleForRoute({}, abujaScope, 'Kora Hotels Group')).toBeUndefined()
+    expect(titleForRoute(undefined, abujaScope, 'Kora Hotels Group')).toBeUndefined()
+  })
+})
+
+describe('nextAnnouncement', () => {
+  it('says new text as it is', () => {
+    expect(nextAnnouncement('', 'Showing Kora Abuja')).toBe('Showing Kora Abuja')
+    expect(nextAnnouncement('Showing Kora Abuja', 'Showing all hotels')).toBe('Showing all hotels')
+  })
+
+  it('changes the text when the same thing is said twice, so it is announced again', () => {
+    const once = nextAnnouncement('', 'Showing Kora Abuja')
+    const twice = nextAnnouncement(once, 'Showing Kora Abuja')
+    const thrice = nextAnnouncement(twice, 'Showing Kora Abuja')
+    expect(twice).not.toBe(once)
+    expect(thrice).not.toBe(twice)
+    expect(twice.trim().replace('\u200B', '')).toBe('Showing Kora Abuja')
   })
 })

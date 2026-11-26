@@ -13,7 +13,7 @@ import {
   useState,
 } from 'react'
 import { toast } from 'sonner'
-import { ALL_HOTELS, type Scope } from '@/lib/scope'
+import { ALL_HOTELS, lostHotel, type Scope } from '@/lib/scope'
 
 const STORAGE_KEY = 'vento.propertyId'
 const LAST_HOTEL_KEY = 'vento.lastPropertyId'
@@ -28,11 +28,17 @@ type PropertyState = {
   scope: Scope | undefined
   // The hotels and the member's access have loaded.
   ready: boolean
-  select: (id: string) => void
-  selectAll: () => void
+  // `moveFocus` for in-page controls (a hotel row, Pick a hotel, a link): focus then goes to the
+  // page title. The top-bar select keeps focus, since arrow keys change it one hotel at a time.
+  select: (id: string, options?: ChangeOptions) => void
+  selectAll: (options?: ChangeOptions) => void
+  // Read once by the shell's hotel-change handler: should this change move focus?
+  takeFocusRequest: () => boolean
   // A page with unsaved changes asks before the hotel changes under it (useLeaveGuard).
   setLeaveGuard: (guard: LeaveGuard | undefined) => void
 }
+
+export type ChangeOptions = { moveFocus?: boolean }
 
 // Runs `proceed` now, or once the person has agreed to leave.
 export type LeaveGuard = (proceed: () => void) => void
@@ -82,6 +88,7 @@ export function PropertyProvider({
   const current = properties.find((p) => p.id === lastHotel) ?? properties[0]
 
   const guard = useRef<LeaveGuard | undefined>(undefined)
+  const focusRequest = useRef(false)
   const guarded = (change: () => void) => (guard.current ? guard.current(change) : change())
   const remember = (id: string) => {
     if (previewing) return
@@ -89,7 +96,15 @@ export function PropertyProvider({
     if (id !== ALL_HOTELS) write(LAST_HOTEL_KEY, id)
   }
 
-  useLostHotel({ properties, selectedId, onFallback: setSelectedId, remember })
+  useLostHotel({
+    properties,
+    shownId: allHotels ? undefined : current?.id,
+    onFallback: (id) => {
+      focusRequest.current = true
+      setSelectedId(id)
+      remember(id)
+    },
+  })
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: `guarded` reads a ref; `remember` only `previewing`.
   const value = useMemo(
@@ -106,16 +121,23 @@ export function PropertyProvider({
           : current
             ? ({ kind: 'hotel', hotel: current } as const)
             : undefined,
-      select: (id: string) =>
+      select: (id: string, options?: ChangeOptions) =>
         guarded(() => {
+          focusRequest.current = Boolean(options?.moveFocus)
           setSelectedId(id)
           remember(id)
         }),
-      selectAll: () =>
+      selectAll: (options?: ChangeOptions) =>
         guarded(() => {
+          focusRequest.current = Boolean(options?.moveFocus)
           setSelectedId(ALL_HOTELS)
           remember(ALL_HOTELS)
         }),
+      takeFocusRequest: () => {
+        const asked = focusRequest.current
+        focusRequest.current = false
+        return asked
+      },
       setLeaveGuard: (next: LeaveGuard | undefined) => {
         guard.current = next
       },
@@ -125,33 +147,48 @@ export function PropertyProvider({
   return <PropertyContext.Provider value={value}>{children}</PropertyContext.Provider>
 }
 
-// The chosen hotel left the list (access removed, or archived by someone else): fall back to the
+// Why a hotel left this person's list, when a request said so (shell/hotel-link.tsx): archived,
+// or no longer in their access. Read once, when the switch falls back.
+const goneReasons = new Map<string, 'archived' | 'removed'>()
+export function noteHotelGone(id: string, reason: 'archived' | 'removed') {
+  goneReasons.set(id, reason)
+}
+
+// The hotel on screen left the list (access removed, or archived by someone else): fall back to the
 // first hotel and say so, instead of quietly showing another one.
 function useLostHotel({
   properties,
-  selectedId,
+  shownId,
   onFallback,
-  remember,
 }: {
   properties: Property[]
-  selectedId: string | undefined
+  // The hotel being shown; undefined with All hotels.
+  shownId: string | undefined
   onFallback: (id: string) => void
-  remember: (id: string) => void
 }) {
-  const seen = useRef<Property[]>([])
+  const seen = useRef<{ properties: Property[]; shownId: string | undefined }>({
+    properties: [],
+    shownId: undefined,
+  })
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the hotel list changes only.
   useEffect(() => {
     const before = seen.current
-    seen.current = properties
+    const lost = lostHotel(before.properties, properties, before.shownId)
     const next = properties[0]
-    if (before.length === 0 || !next || !selectedId || selectedId === ALL_HOTELS) return
-    if (properties.some((p) => p.id === selectedId)) return
-    const lost = before.find((p) => p.id === selectedId)
-    if (!lost) return
+    if (!lost || !next) return
     onFallback(next.id)
-    remember(next.id)
-    toast.info(`You no longer have access to ${lost.name}. Showing ${next.name}.`)
+    const archived = goneReasons.get(lost.id) === 'archived'
+    goneReasons.delete(lost.id)
+    toast.info(
+      archived
+        ? `${lost.name} was archived. Showing ${next.name}.`
+        : `You no longer have access to ${lost.name}. Showing ${next.name}.`,
+    )
   }, [properties])
+  // After the check above, so it compares with what was on screen before this change.
+  useEffect(() => {
+    seen.current = { properties, shownId }
+  })
 }
 
 export function useProperty(): PropertyState {

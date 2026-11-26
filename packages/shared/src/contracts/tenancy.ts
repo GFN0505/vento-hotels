@@ -273,7 +273,8 @@ export const homeSummarySchema = z.object({
       people: z.number().int(),
       devices: z.number().int(),
       rooms: z.number().int(),
-      // Pending, unexpired invites for this hotel, whole-group invites included; null for people
+      // Invites not accepted yet for this hotel (pending, expired links included), whole-group
+      // invites included: the same set as invitations.list's total with that hotel. Null for people
       // who don't manage the team.
       invites: z.number().int().nullable(),
     }),

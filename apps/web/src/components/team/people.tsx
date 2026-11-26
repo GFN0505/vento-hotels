@@ -1,20 +1,17 @@
 // People (design #25, SetMembers): search and role filters over the list, which follows the hotel
 // switch. Every state names the hotel when there is one; filters stay when the hotel changes.
-import { useQuery } from '@tanstack/react-query'
 import type { MemberView, Property, RoleFilter } from '@vento/shared'
-import { Search } from 'lucide-react'
+import { Search, UserPlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useProperty } from '@/components/shell/property-context'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Pagination } from '@/components/ui/pagination'
-import { orpc } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { problemMessage } from '@/lib/errors'
-import { keepWithinHotel, scopePropertyId } from '@/lib/scope'
 import { useOnline } from '@/offline/connection'
 import { MemberTable } from './member-table'
 import { MEMBERS_PAGE_SIZE, type MembersSearch, type OnMembersSearch } from './members-search'
+import type { MembersQuery } from './use-members'
 
 const FILTERS: { value: RoleFilter | undefined; label: string }[] = [
   { value: undefined, label: 'All' },
@@ -28,18 +25,20 @@ type Props = {
   onSearch: OnMembersSearch
   // The hotel in view (one hotel chosen in a group with several); undefined for the whole group.
   hotel: Property | undefined
-  // Everyone at the hotel has whole-group access: nobody works only there yet.
-  onlyWholeGroup: boolean
+  members: MembersQuery
+  // Invites still loading: keep the skeleton, so the page settles in one go.
+  waiting: boolean
+  // Invites not accepted yet (for the hotel in view), mentioned in the note.
+  pendingInvites: number
   onEdit: (member: MemberView) => void
   onInvite: () => void
 }
 
-export function People({ search, onSearch, hotel, onlyWholeGroup, onEdit, onInvite }: Props) {
-  const { scope } = useProperty()
+export function People(props: Props) {
+  const { search, onSearch, hotel, members, onEdit, onInvite } = props
   const online = useOnline()
   const [text, setText] = useState(search.q ?? '')
   const page = search.page ?? 1
-  const propertyId = scopePropertyId(scope)
   const at = hotel ? ` at ${hotel.name}` : ''
 
   // Searching waits for a pause in typing, so the list doesn't flicker on every key.
@@ -51,19 +50,6 @@ export function People({ search, onSearch, hotel, onlyWholeGroup, onEdit, onInvi
     return () => clearTimeout(timer)
   }, [text, search.q, onSearch])
 
-  const members = useQuery({
-    ...orpc.members.list.queryOptions({
-      input: {
-        search: search.q,
-        filter: search.filter,
-        page,
-        pageSize: MEMBERS_PAGE_SIZE,
-        propertyId,
-      },
-    }),
-    enabled: scope !== undefined,
-    placeholderData: keepWithinHotel(propertyId),
-  })
   const filtered = Boolean(search.q || search.filter)
 
   return (
@@ -113,7 +99,7 @@ export function People({ search, onSearch, hotel, onlyWholeGroup, onEdit, onInvi
         </fieldset>
       </div>
 
-      {members.isPending ? (
+      {members.isPending || !members.isEnabled || props.waiting ? (
         <PeopleSkeleton />
       ) : members.isError ? (
         <Card className="flex flex-col items-start gap-3 p-5" role="alert">
@@ -153,15 +139,13 @@ export function People({ search, onSearch, hotel, onlyWholeGroup, onEdit, onInvi
         </Card>
       ) : (
         <>
-          <MemberTable
-            members={members.data.items}
-            onEdit={onEdit}
-            badgeWholeGroup={Boolean(hotel)}
-          />
+          <MemberTable members={members.data.items} onEdit={onEdit} hotelId={hotel?.id} />
           <Note
             hotel={hotel}
             justYou={members.data.total === 1}
-            onlyWholeGroup={onlyWholeGroup}
+            // Everyone at the hotel has whole-group access: nobody works only there yet.
+            onlyWholeGroup={members.data.wholeGroup === members.data.total}
+            pendingInvites={props.pendingInvites}
             filtered={filtered}
             onInvite={onInvite}
           />
@@ -182,32 +166,47 @@ function Note({
   hotel,
   justYou,
   onlyWholeGroup,
+  pendingInvites,
   filtered,
   onInvite,
 }: {
   hotel: Property | undefined
   justYou: boolean
   onlyWholeGroup: boolean
+  pendingInvites: number
   filtered: boolean
   onInvite: () => void
 }) {
   if (filtered) return null
-  const text =
-    hotel && onlyWholeGroup
-      ? `Nobody works only at ${hotel.name} yet. Invite its managers and staff.`
-      : !hotel && justYou
-        ? "It's just you so far. Invite your managers and front desk to get started."
-        : undefined
-  if (!text) return null
+  if (!hotel) {
+    if (!justYou) return null
+    return (
+      <Card className="flex flex-wrap items-center gap-3 p-4">
+        <p className="grow text-text-2">
+          It's just you so far. Invite your managers and front desk to get started.
+        </p>
+      </Card>
+    )
+  }
+  if (!onlyWholeGroup) return null
   return (
-    <Card className="flex flex-wrap items-center gap-3 p-4">
-      <p className="min-w-0 grow basis-60 text-text-2">{text}</p>
-      {hotel ? (
-        <Button className="max-lg:h-11" onClick={onInvite}>
-          Invite people
-        </Button>
-      ) : null}
-    </Card>
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-pri-line bg-pri-soft/50 p-4">
+      <span className="grid size-9 flex-none place-items-center rounded-lg bg-pri-soft text-pri-ink">
+        <UserPlus className="size-4" aria-hidden="true" />
+      </span>
+      <p className="min-w-0 grow basis-60">
+        <span className="font-medium">Nobody works only at {hotel.name} yet.</span>{' '}
+        <span className="text-text-2">
+          Invite its managers and staff.
+          {pendingInvites > 0
+            ? ` ${pendingInvites === 1 ? '1 invite' : `${pendingInvites} invites`} pending.`
+            : ''}
+        </span>
+      </p>
+      <Button className="max-lg:h-11" onClick={onInvite}>
+        Invite people
+      </Button>
+    </div>
   )
 }
 
