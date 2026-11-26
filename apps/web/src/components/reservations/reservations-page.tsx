@@ -14,6 +14,7 @@ import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/ui/page-header'
 import { Pagination } from '@/components/ui/pagination'
+import { ScrollRegion } from '@/components/ui/scroll-region'
 import { orpc } from '@/lib/api'
 import { useMe } from '@/lib/me'
 import { keepWithinHotel, scopeName, scopePropertyId } from '@/lib/scope'
@@ -177,13 +178,13 @@ export function ReservationsPage({ search, onSearch }: Props) {
             </EmptyState>
           )
         ) : (
-          <div className="md:overflow-x-auto">
+          <ScrollRegion label="Reservations" className="md:overflow-x-auto">
             <ReservationsTable
               rows={list.data.items}
               showHotel={scope.kind === 'all'}
               dimmed={list.isPlaceholderData}
             />
-          </div>
+          </ScrollRegion>
         )}
       </Card>
       {list.data ? (

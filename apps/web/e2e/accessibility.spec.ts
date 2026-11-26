@@ -276,6 +276,61 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
+    test('reservations: the list (All hotels, one hotel, empty), a reservation and New reservation at Room & rate and Review have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      const domain = seedDemoGroup(`a11y-res-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
+      await signIn(page, `adaeze@${domain}`, 'Demo-pass-42!')
+      await page.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.getByLabel('Hotel', { exact: true }).selectOption({ label: 'All hotels' })
+      await page.goto('/reservations')
+      await page.getByRole('columnheader', { name: 'Hotel' }).waitFor()
+      await expectAccessible(page)
+      await page.getByLabel('Hotel', { exact: true }).selectOption({ label: 'Kora Abuja' })
+      await page.getByText(/^No reservations at Kora Abuja yet/).waitFor()
+      await expectAccessible(page)
+      await page
+        .getByLabel('Hotel', { exact: true })
+        .selectOption({ label: 'Kora Victoria Island' })
+      await page
+        .getByRole('link', { name: /Daniel Mensah/ })
+        .first()
+        .click()
+      await page.getByRole('heading', { name: 'Rate per night' }).waitFor()
+      await expectAccessible(page)
+      await page.goto('/reservations?sheet=new')
+      const sheet = page.getByRole('dialog', { name: 'New reservation' })
+      await sheet.getByLabel('Adults').fill('1')
+      await sheet.getByRole('button', { name: /^Continue/ }).click()
+      await sheet.getByText('Left per night').first().waitFor()
+      const show = sheet.getByRole('button', { name: /^Show .* for / }).first()
+      if (await show.isVisible()) await show.click()
+      await sheet.getByRole('radio').first().check()
+      await sheet.getByText('Deposit due').or(sheet.getByText('No deposit')).first().waitFor()
+      await expectAccessible(page)
+      await sheet.getByRole('button', { name: 'Continue to guest' }).click()
+      await sheet.getByLabel('First name').fill('Sarah')
+      await sheet.getByLabel('Last name').fill('Collins')
+      await sheet.getByRole('textbox', { name: 'Phone', exact: true }).fill('08031234567')
+      await sheet.getByRole('button', { name: 'Continue to review' }).click()
+      await sheet.getByRole('heading', { name: 'Review & book' }).waitFor()
+      await expectAccessible(page)
+    })
+
+    test('the plan editor preview with Guest pays has no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      const domain = seedDemoGroup(`a11y-pays-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
+      await signIn(page, `tunde@${domain}`, 'Demo-pass-42!')
+      await page.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.goto('/rates/plans')
+      await page.getByRole('link', { name: 'Bed & breakfast', exact: true }).click()
+      await page.getByRole('columnheader', { name: 'This plan' }).waitFor()
+      await expectAccessible(page)
+    })
+
     test('the join page for a new person has no accessibility problems', async ({
       page,
       browser,

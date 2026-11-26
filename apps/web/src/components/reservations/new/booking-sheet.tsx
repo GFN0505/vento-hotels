@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { addDays, type Property } from '@vento/shared'
 import { Check } from 'lucide-react'
-import { type KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useLeaveGuard, useProperty } from '@/components/shell/property-context'
 import { Button } from '@/components/ui/button'
@@ -189,9 +189,17 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
     if (online && retrying && !create.isPending) void book()
   }, [online])
 
+  // Enter, ⌘↵ and ⌘← work from anywhere in the sheet, the footer's buttons included.
+  const keys = useRef<(event: KeyboardEvent) => void>(undefined)
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => keys.current?.(event)
+    window.addEventListener('keydown', listener)
+    return () => window.removeEventListener('keydown', listener)
+  }, [])
+
   if (!draft) return null
 
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  keys.current = (event: KeyboardEvent) => {
     if (event.defaultPrevented) return
     const target = event.target as HTMLElement
     const mod = event.metaKey || event.ctrlKey
@@ -200,8 +208,10 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
       go((step - 1) as Draft['step'])
       return
     }
-    if (event.key !== 'Enter' || target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON')
-      return
+    if (!target.closest('dialog')) return
+    if (event.key !== 'Enter' || target.tagName === 'TEXTAREA') return
+    // A focused button keeps its own Enter, except Book's shortcut (⌘↵) below.
+    if (target.tagName === 'BUTTON' && !(mod && step === 4)) return
     if (target.closest('[role="combobox"], [data-no-enter]')) return
     if (mod && step === 4) {
       event.preventDefault()
@@ -315,11 +325,7 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
       }
       footer={footer}
     >
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: Enter and ⌘← move between steps from any field. */}
-      <div
-        onKeyDown={onKeyDown}
-        className="grid min-h-full lg:grid-cols-[200px_minmax(0,1fr)_320px]"
-      >
+      <div className="grid min-h-full lg:grid-cols-[200px_minmax(0,1fr)_320px]">
         <Stepper draft={draft} current={step} canContinue={canContinue} onGo={go} />
         <div className="flex min-w-0 flex-col gap-4 px-5 py-5 sm:px-6">
           {retrying ? (

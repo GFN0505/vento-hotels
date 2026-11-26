@@ -277,6 +277,7 @@ function RoomTypeCard({
           }
         >
           Show {type.plans.length === 1 ? 'the plan' : `${type.plans.length} plans`}
+          <span className="sr-only"> for {type.name}</span>
         </button>
       ) : null}
     </div>
@@ -340,7 +341,7 @@ function PlanOption({
             </span>
           ) : null}
         </span>
-        <span className="text-sm text-text-3">
+        <span className="text-sm text-text-2">
           {mealLabel(plan.terms)} · {terms.charAt(0).toLowerCase() + terms.slice(1)}
         </span>
         {plan.breaks.map((b) => (
@@ -353,9 +354,9 @@ function PlanOption({
         <span className={cn(checked && 'font-medium')}>
           {plan.varies ? 'avg ' : ''}
           {naira(price)}
-          <span className="text-sm text-text-3"> /night</span>
+          <span className="text-sm text-text-2"> /night</span>
         </span>
-        <span className="text-sm text-text-3">{naira(plan.totalIncl)} total incl. taxes</span>
+        <span className="text-sm text-text-2">{naira(plan.totalIncl)} total incl. taxes</span>
       </span>
     </label>
   )

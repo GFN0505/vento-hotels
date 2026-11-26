@@ -36,5 +36,6 @@ export function useGuestPays(propertyId: string) {
       inclusive,
     ).gross
   }
-  return { visible, notSetUp, ready: Boolean(rules.data), pays }
+  // The column shows once the rules are in; until taxes are set up, a note says so instead.
+  return { visible, column: visible && !notSetUp, notSetUp: visible && notSetUp, pays }
 }

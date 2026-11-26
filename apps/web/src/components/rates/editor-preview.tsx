@@ -9,7 +9,7 @@ import { CalendarDays } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
 import { formatNaira, PER_NIGHT_EXCL, shortDate } from './format'
-import { useGuestPays } from './guest-pays'
+import { TAXES_FIRST, useGuestPays } from './guest-pays'
 import { GuestPays } from './guest-pays-cell'
 import type { PlanForm } from './plan-form-model'
 import { previewRows } from './preview-model'
@@ -91,11 +91,14 @@ export function EditorPreview({ overview, form, parent }: Props) {
               <th scope="col" className="num px-3 py-2 text-right">
                 {parent.code}
               </th>
-              <th scope="col" className={cn('py-2 text-right', guest.visible ? 'px-3' : 'px-5')}>
+              <th
+                scope="col"
+                className={cn('py-2 text-right', guest.column ? 'px-3 max-sm:px-5' : 'px-5')}
+              >
                 This plan
               </th>
-              {guest.visible ? (
-                <th scope="col" className="px-5 py-2 text-right">
+              {guest.column ? (
+                <th scope="col" className="px-5 py-2 text-right max-sm:hidden">
                   Guest pays
                 </th>
               ) : null}
@@ -113,14 +116,14 @@ export function EditorPreview({ overview, form, parent }: Props) {
                 <td
                   className={cn(
                     'num py-2.5 text-right font-medium whitespace-nowrap',
-                    guest.visible ? 'px-3' : 'px-5',
+                    guest.column ? 'px-3 max-sm:px-5' : 'px-5',
                     row.notPositive && 'text-ro',
                   )}
                 >
                   {row.price ? formatNaira(row.price) : '—'}
                 </td>
-                {guest.visible ? (
-                  <td className="num px-5 py-2.5 text-right whitespace-nowrap text-text-2">
+                {guest.column ? (
+                  <td className="num px-5 py-2.5 text-right whitespace-nowrap text-text-2 max-sm:hidden">
                     {row.price && !row.notPositive ? (
                       <GuestPays
                         guest={guest}
@@ -138,6 +141,9 @@ export function EditorPreview({ overview, form, parent }: Props) {
           </tbody>
         </table>
       )}
+      {guest.notSetUp ? (
+        <p className="border-t border-border px-5 py-3 text-sm text-text-3">{TAXES_FIRST}</p>
+      ) : null}
     </Card>
   )
 }

@@ -59,7 +59,7 @@ export function FirstRateAside({
                   <span className="min-w-0 truncate">{row.name}</span>
                   <span className="num flex flex-col items-end">
                     <span className="font-medium text-text">{formatNaira(row.price)}</span>
-                    {guest.visible ? (
+                    {guest.column ? (
                       <span className="text-sm text-text-3">
                         Guest pays{' '}
                         <GuestPays

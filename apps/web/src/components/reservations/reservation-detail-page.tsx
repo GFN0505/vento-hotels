@@ -22,6 +22,7 @@ import { TH } from '@/components/settings/table-styles'
 import { useScopedTitle } from '@/components/shell/use-scoped-title'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { ScrollRegion } from '@/components/ui/scroll-region'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { orpc } from '@/lib/api'
 import { cn } from '@/lib/cn'
@@ -293,7 +294,7 @@ function NightsCard({ stay, taxesSetUp }: { stay: Stay; taxesSetUp: boolean }) {
           ({stay.discount?.byName})
         </p>
       ) : null}
-      <div className="overflow-x-auto">
+      <ScrollRegion label="Rate per night" className="overflow-x-auto">
         <table className="w-full border-separate border-spacing-0 text-left">
           <thead>
             <tr>
@@ -346,7 +347,7 @@ function NightsCard({ stay, taxesSetUp }: { stay: Stay; taxesSetUp: boolean }) {
             </tr>
           </tbody>
         </table>
-      </div>
+      </ScrollRegion>
     </Card>
   )
 }
@@ -390,17 +391,19 @@ function DepositCard({ data }: { data: ReservationDetail }) {
             'Not required'
           )}
         </Line>
+      </dl>
+      <div className="flex flex-col gap-2 px-5 pb-4">
         {stay && data.depositDue ? (
           <p className="text-sm text-text-3">
             {depositBasis(stay.terms.deposit, data.depositDue.dueAt, tz)}
           </p>
         ) : null}
         {stay ? (
-          <p className="num mt-1 rounded-sm bg-surface-2 px-3 py-2 text-sm text-text-2">
+          <p className="num rounded-sm bg-surface-2 px-3 py-2 text-sm text-text-2">
             {cancellingNowLine(stay.cancellation, tz)}
           </p>
         ) : null}
-      </dl>
+      </div>
     </Card>
   )
 }

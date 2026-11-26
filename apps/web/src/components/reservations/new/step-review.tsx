@@ -5,6 +5,7 @@ import { DISCOUNT_REASON_LABELS, type Property, SOURCE_LABELS, type StayQuote } 
 import type { ReactNode } from 'react'
 import { TH } from '@/components/settings/table-styles'
 import { Field } from '@/components/ui/field'
+import { ScrollRegion } from '@/components/ui/scroll-region'
 import { cn } from '@/lib/cn'
 import {
   cancellationLine,
@@ -70,8 +71,10 @@ export function StepReview({ draft, quote, hotel }: Props) {
           {stayRange(overlap.arrival, overlap.departure).replace(/ \d{4}$/, '')}.
         </p>
       ))}
-
-      <div className="overflow-x-auto rounded-sm border border-border">
+      <ScrollRegion
+        label="Nights and taxes"
+        className="overflow-x-auto rounded-sm border border-border"
+      >
         <table className="w-full border-separate border-spacing-0 text-left">
           <thead>
             <tr>
@@ -116,7 +119,7 @@ export function StepReview({ draft, quote, hotel }: Props) {
             </tr>
           </tbody>
         </table>
-      </div>
+      </ScrollRegion>
 
       {discount && quote.discount ? (
         <p className="num rounded-sm bg-am-bg px-3 py-2 text-sm text-am">

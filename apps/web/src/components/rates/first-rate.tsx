@@ -19,7 +19,7 @@ import { useOnline } from '@/offline/connection'
 import { FirstRateAside } from './first-rate-aside'
 import * as M from './first-rate-model'
 import { EXCL, formatNaira, NEEDS_CONNECTION, plural } from './format'
-import { useGuestPays } from './guest-pays'
+import { TAXES_FIRST, useGuestPays } from './guest-pays'
 import { GuestPays } from './guest-pays-cell'
 import { groupTyped } from './money-input'
 import { useRatesRefresh } from './queries'
@@ -77,6 +77,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
           <p className="text-text-2">
             Per room per night, {EXCL}. Weekday is Sunday to Thursday nights.
           </p>
+          {guest.notSetUp ? <p className="text-sm text-text-3">{TAXES_FIRST}</p> : null}
           <Card className="overflow-hidden">
             <table className="w-full border-collapse text-left">
               <thead>
@@ -92,11 +93,11 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                   </th>
                   <th
                     scope="col"
-                    className={cn('w-[34%] px-3 py-2 sm:w-40', guest.visible ? '' : 'pr-4 sm:pr-5')}
+                    className={cn('w-[34%] px-3 py-2 sm:w-40', guest.column ? '' : 'pr-4 sm:pr-5')}
                   >
                     Fri and Sat
                   </th>
-                  {guest.visible ? (
+                  {guest.column ? (
                     <th scope="col" className="px-3 py-2 pr-4 text-right max-md:hidden sm:pr-5">
                       Guest pays per night
                     </th>
@@ -133,7 +134,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                         }
                       />
                     </td>
-                    <td className={cn('px-3 py-3', guest.visible ? '' : 'pr-4 sm:pr-5')}>
+                    <td className={cn('px-3 py-3', guest.column ? '' : 'pr-4 sm:pr-5')}>
                       <Field
                         label={`${type.name}, Friday and Saturday price`}
                         hideLabel
@@ -152,7 +153,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                         }
                       />
                     </td>
-                    {guest.visible ? (
+                    {guest.column ? (
                       <td className="num px-3 py-3 pt-5 pr-4 text-right whitespace-nowrap max-md:hidden sm:pr-5">
                         <GuestPays guest={guest} price={rows[type.id]?.weekday ?? ''} />
                       </td>
