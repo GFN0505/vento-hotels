@@ -32,7 +32,7 @@ export const auditEvents = pgTable(
     actorMemberId: uuid(),
     actorName: text(),
     approverMemberId: uuid(),
-    // Arrive with devices (brick 9) and night audit; null until then.
+    // Arrive with devices (brick 10) and night audit; null until then.
     deviceId: uuid(),
     businessDate: calendarDate(),
     action: text().notNull(),
@@ -67,4 +67,21 @@ export const permissionOverrides = pgTable(
     ...timestamps,
   },
   (t) => [uniqueIndex().on(t.organizationId, t.role, t.permission)],
+)
+
+// A group's own feature switches (decision 0021). Absent row = the catalog in @vento/shared decides.
+// Set only by the Vento team with `pnpm features`; every change is in the group's audit log.
+export const organizationFeatures = pgTable(
+  'organization_features',
+  {
+    id: id(),
+    organizationId: uuid()
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    feature: text().notNull(),
+    enabled: boolean().notNull(),
+    reason: text().notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex().on(t.organizationId, t.feature)],
 )

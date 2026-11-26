@@ -1,5 +1,5 @@
 // Change one rule (design #26, the side panel): allowed or not, the limit, and a reason. Saved as
-// the group's own rule and recorded in the audit log. Approvers above the limit arrive in brick 9.
+// the group's own rule and recorded in the audit log. Approvers above the limit arrive in brick 10.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { defaultRule, type PermissionRuleView, ROLE_INFO } from '@vento/shared'

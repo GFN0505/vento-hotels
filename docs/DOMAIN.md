@@ -52,6 +52,7 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 |---|---|---|
 | **Device** | A registered phone, tablet or PC used at a property (front desk PC, POS tablet, housekeeping phone). | Registered by a manager, bound to a property, revocable. Offline data and the outbox live on it. |
 | **Shared device** | A device used by many staff (POS, housekeeping). | Staff sign in with a personal **PIN**, auto sign-out after inactivity; full password + 2FA only on personal devices and for managers. |
+| **Feature switch** | Whether a module (front desk, restaurant & bar…) is on for a hotel group. | Set by the Vento team, never the hotel (decision 0021). Off means the module isn't shown and its actions are refused; its data is kept. |
 | **Audit event** | Append-only record of an action. | Actor, device, property, business date, action, entity, before/after, reason, approver. |
 
 ## Rooms, rates and inventory

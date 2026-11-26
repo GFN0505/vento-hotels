@@ -81,7 +81,7 @@ export function createAuth(deps: { db: Database; settings: AuthSettings; email: 
     advanced: { database: { generateId: () => newId() } },
     // Slows down password guessing. Counted per network address: a whole hotel often shares one,
     // so the sign-in limit is generous enough for a busy front desk (15 tries per 10 minutes).
-    // Per-account lockout comes with device and PIN sign-in (brick 9). Memory storage resets when
+    // Per-account lockout comes with device and PIN sign-in (brick 10). Memory storage resets when
     // the API restarts; move to database storage when running more than one API instance.
     rateLimit: {
       enabled: settings.rateLimit ?? true,

@@ -63,6 +63,7 @@ export async function currentOrganization(db: Database, access: Access) {
     organization: org,
     member: { id: access.memberId, role: access.role, allProperties: access.allProperties },
     permissions: PERMISSION_KEYS.filter((key) => access.rules[key].allowed),
+    features: access.features,
   }
 }
 

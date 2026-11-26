@@ -13,7 +13,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=../../.env src/db/migrate.ts",
     "db:migrate:test": "node --env-file-if-exists=../../.env src/db/migrate.ts --test",
-    "db:studio": "drizzle-kit studio --port 4984"
+    "db:studio": "drizzle-kit studio --port 4984",
+    "features": "node --env-file-if-exists=../../.env src/features/cli.ts"
   },
   "dependencies": {
     "@hono/node-server": "2.1.6",

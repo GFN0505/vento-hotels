@@ -25,3 +25,4 @@ A spec that is dropped is deleted, with the reason in the commit message.
 | [Sign-in, organizations, properties and entities](stage-0-auth-and-tenancy.md) | 0 | Platform | going-live, front-desk-morning | built |
 | [Permissions, limits and the audit log](stage-0-permissions-and-audit.md) | 0 | Platform | front-desk-morning, owner-morning, going-live | built |
 | [Team: invites, members and roles, permissions and limits](stage-0-team-and-roles.md) | 0 | Platform | going-live, front-desk-morning | built (in review) |
+| [Feature switches: build ahead, release per group](stage-0-feature-switches.md) | 0 | Platform | going-live | built (in review) |

@@ -23,7 +23,8 @@
     "db:down": "docker compose down",
     "db:reset": "docker compose down --volumes && docker compose up -d --wait",
     "db:status": "pnpm --filter @vento/api infra:check",
-    "db:studio": "pnpm --filter @vento/api db:studio"
+    "db:studio": "pnpm --filter @vento/api db:studio",
+    "features": "node --env-file-if-exists=.env apps/api/src/features/cli.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.6",

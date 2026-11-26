@@ -47,6 +47,8 @@ export default defineConfig({
         BETTER_AUTH_URL: WEB_URL,
         WEB_ORIGIN: WEB_URL,
         EMAIL_OUTBOX_DIR: OUTBOX,
+        // Browser tests cover unreleased modules too (decision 0021).
+        VENTO_ALL_FEATURES: 'true',
       },
     },
     {
