@@ -19,7 +19,7 @@
     "db:up": "docker compose up -d --wait",
     "db:generate": "pnpm --filter @vento/api db:generate",
     "db:migrate": "pnpm --filter @vento/api db:migrate && pnpm --filter @vento/api db:migrate:test",
-    "db:seed": "echo \"db:seed: the demo seed arrives in Stage 0, brick 10\" && exit 1",
+    "db:seed": "pnpm --filter @vento/api db:seed",
     "db:down": "docker compose down",
     "db:reset": "docker compose down --volumes && docker compose up -d --wait",
     "db:status": "pnpm --filter @vento/api infra:check",

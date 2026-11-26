@@ -60,7 +60,7 @@ A restaurant tablet, a front desk PC or a housekeeping phone is used by many peo
 - PIN sessions make every later exception (void, discount, comp) attributable to a person and device. Reports come in Stage 1.
 
 ### Offline behaviour
-- Not in this brick: the lock screen needs a connection. Signing in with PINs saved on the device while offline comes with the offline shell (brick 13).
+- Not in this brick: the lock screen needs a connection. Signing in with PINs saved on the device while offline comes with the offline shell (brick 15).
 
 ### Business date, tax lines, foreign currency, availability locking
 Not relevant.
@@ -79,7 +79,7 @@ Not relevant.
 "Tap your name", "Enter your PIN", "Musa was signed out", "Register this device", "Lock this device", "Set staff PIN", "Reset PIN".
 
 ## Out of scope
-Manager approval by PIN and the approvals inbox (Stage 1), two-step codes (brick 12), offline PIN sign-in (brick 13), PIN-only staff without an email (HR, Stage 5), kitchen display screens, and showing open checks on the lock screen (Stage 3).
+Manager approval by PIN and the approvals inbox (Stage 1), two-step codes (brick 12), offline PIN sign-in (brick 15), PIN-only staff without an email (HR, Stage 5), kitchen display screens, and showing open checks on the lock screen (Stage 3).
 
 ## Open questions
 None.

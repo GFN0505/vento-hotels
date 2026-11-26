@@ -1,0 +1,275 @@
+// The demo world from docs/journeys/README.md: Kora Hotels Group, Kora Hospitality Ltd, four hotels
+// and the people in the walkthroughs, each with a role, hotels, a sign-in and a staff PIN; devices
+// at Kora Victoria Island; a pending invite; and one permission change with its reason. Used for
+// local development, browser tests and sales demos. Everything here is made up.
+import { createHash, randomBytes } from 'node:crypto'
+import { calendarDateIn, type DeviceKind, type MemberRole, newId } from '@vento/shared'
+import { hashPassword } from 'better-auth/crypto'
+import { eq } from 'drizzle-orm'
+import { type Actor, recordAudit } from '../audit/record.ts'
+import type { Database } from '../db/client.ts'
+import { accounts, invitations, members, organizations, users } from '../db/schema/auth.ts'
+import { permissionOverrides } from '../db/schema/governance.ts'
+import {
+  devices,
+  entities,
+  invitationProperties,
+  memberPins,
+  memberProperties,
+  properties,
+} from '../db/schema/tenancy.ts'
+
+type HotelKey = 'vi' | 'ikeja' | 'abuja' | 'ph'
+
+const HOTELS: Record<
+  HotelKey,
+  { name: string; area: string; lga: string; state: string; rooms: number }
+> = {
+  vi: {
+    name: 'Kora Victoria Island',
+    area: 'Victoria Island',
+    lga: 'Eti-Osa',
+    state: 'Lagos',
+    rooms: 120,
+  },
+  ikeja: { name: 'Kora Ikeja GRA', area: 'Ikeja GRA', lga: 'Ikeja', state: 'Lagos', rooms: 86 },
+  abuja: {
+    name: 'Kora Abuja',
+    area: 'Wuse 2',
+    lga: 'Abuja Municipal',
+    state: 'FCT (Abuja)',
+    rooms: 104,
+  },
+  ph: {
+    name: 'Kora Port Harcourt',
+    area: 'GRA Phase 2',
+    lga: 'Obio-Akpor',
+    state: 'Rivers',
+    rooms: 72,
+  },
+}
+
+// Who's who (docs/journeys/README.md). `hotels: 'all'` sees the whole group.
+const PEOPLE: {
+  name: string
+  email: string
+  role: MemberRole
+  hotels: 'all' | HotelKey[]
+  pin: string
+}[] = [
+  { name: 'Adaeze Okafor', email: 'adaeze', role: 'owner', hotels: 'all', pin: '8391' },
+  { name: 'Tunde Bello', email: 'tunde', role: 'general_manager', hotels: ['vi'], pin: '5072' },
+  { name: 'Chiamaka Eze', email: 'chiamaka', role: 'front_desk', hotels: ['vi'], pin: '2948' },
+  { name: 'Ibrahim Musa', email: 'ibrahim', role: 'front_desk', hotels: ['vi'], pin: '6153' },
+  { name: 'Blessing Udo', email: 'blessing', role: 'room_attendant', hotels: ['vi'], pin: '3807' },
+  {
+    name: 'Grace Akpan',
+    email: 'grace',
+    role: 'housekeeping_supervisor',
+    hotels: ['vi'],
+    pin: '4719',
+  },
+  { name: 'Emeka Nwosu', email: 'emeka', role: 'waiter', hotels: ['vi'], pin: '1586' },
+  { name: 'Halima Yusuf', email: 'halima', role: 'cashier', hotels: ['vi'], pin: '9264' },
+  { name: 'Femi Adeyemi', email: 'femi', role: 'fnb_manager', hotels: ['vi'], pin: '7430' },
+  { name: 'Kunle Ade', email: 'kunle', role: 'finance', hotels: 'all', pin: '2671' },
+]
+
+const DEVICES: { name: string; kind: DeviceKind }[] = [
+  { name: 'FD-VI-01', kind: 'front_desk' },
+  { name: 'POS-VI-03', kind: 'pos' },
+  { name: 'HK-VI-07', kind: 'housekeeping' },
+]
+
+export type SeedOptions = {
+  password: string
+  // Tests use their own slug and email domain so they never collide with a seeded dev database.
+  slug?: string
+  emailDomain?: string
+}
+
+export type SeedResult =
+  | {
+      status: 'seeded'
+      organizationId: string
+      people: { name: string; email: string; role: MemberRole; pin: string }[]
+    }
+  | { status: 'exists'; organizationId: string }
+
+const sha256 = (value: string) => createHash('sha256').update(value).digest('hex')
+
+export async function seedDemo(db: Database, options: SeedOptions): Promise<SeedResult> {
+  const slug = options.slug ?? 'kora-hotels-group'
+  const domain = options.emailDomain ?? 'kora.example'
+  const [existing] = await db
+    .select({ id: organizations.id })
+    .from(organizations)
+    .where(eq(organizations.slug, slug))
+  if (existing) return { status: 'exists', organizationId: existing.id }
+
+  const passwordHash = await hashPassword(options.password)
+  const pinHashes = await Promise.all(PEOPLE.map((person) => hashPassword(person.pin)))
+
+  return db.transaction(async (tx) => {
+    const organizationId = newId()
+    await tx.insert(organizations).values({ id: organizationId, name: 'Kora Hotels Group', slug })
+
+    const entityId = newId()
+    await tx.insert(entities).values({
+      id: entityId,
+      organizationId,
+      name: 'Kora Hospitality Ltd',
+      rcNumber: '1184402',
+      tin: '21847390-0001',
+      vatRegistered: true,
+    })
+
+    const hotelIds = {} as Record<HotelKey, string>
+    for (const [key, hotel] of Object.entries(HOTELS) as [HotelKey, (typeof HOTELS)[HotelKey]][]) {
+      hotelIds[key] = newId()
+      await tx.insert(properties).values({
+        id: hotelIds[key],
+        organizationId,
+        entityId,
+        name: hotel.name,
+        area: hotel.area,
+        lga: hotel.lga,
+        state: hotel.state,
+        businessDate: calendarDateIn('Africa/Lagos'),
+      })
+    }
+
+    const seeded: {
+      name: string
+      email: string
+      role: MemberRole
+      pin: string
+      memberId: string
+      userId: string
+    }[] = []
+    for (const [index, person] of PEOPLE.entries()) {
+      const userId = newId()
+      const memberId = newId()
+      const email = `${person.email}@${domain}`
+      await tx.insert(users).values({ id: userId, name: person.name, email, emailVerified: true })
+      await tx.insert(accounts).values({
+        id: newId(),
+        userId,
+        providerId: 'credential',
+        accountId: userId,
+        password: passwordHash,
+      })
+      await tx.insert(members).values({
+        id: memberId,
+        organizationId,
+        userId,
+        role: person.role,
+        allProperties: person.hotels === 'all',
+      })
+      if (person.hotels !== 'all') {
+        await tx
+          .insert(memberProperties)
+          .values(
+            person.hotels.map((key) => ({ organizationId, memberId, propertyId: hotelIds[key] })),
+          )
+      }
+      await tx
+        .insert(memberPins)
+        .values({ organizationId, memberId, pinHash: pinHashes[index] ?? '' })
+      seeded.push({ ...person, email, memberId, userId })
+    }
+
+    const owner = seeded[0]
+    if (!owner) throw new Error('The demo needs an owner')
+    const actor: Actor = {
+      organizationId,
+      userId: owner.userId,
+      memberId: owner.memberId,
+      userName: owner.name,
+    }
+
+    // Shared devices at Kora Victoria Island. Their secrets are random and thrown away: to use
+    // one, register a real browser from Settings › Devices.
+    for (const device of DEVICES) {
+      const deviceId = newId()
+      await tx.insert(devices).values({
+        id: deviceId,
+        organizationId,
+        propertyId: hotelIds.vi,
+        name: device.name,
+        kind: device.kind,
+        tokenHash: sha256(randomBytes(32).toString('base64url')),
+        lastSeenAt: new Date(),
+      })
+      await recordAudit(tx, actor, {
+        action: 'device.registered',
+        entityType: 'device',
+        entityId: deviceId,
+        propertyId: hotelIds.vi,
+        after: { name: device.name, kind: device.kind, propertyName: HOTELS.vi.name },
+      })
+    }
+
+    // A GM for Kora Abuja, invited and not yet joined.
+    const invitationId = newId()
+    await tx.insert(invitations).values({
+      id: invitationId,
+      organizationId,
+      email: `ngozi@${domain}`,
+      role: 'general_manager',
+      status: 'pending',
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      inviterId: owner.userId,
+      tokenHash: sha256(randomBytes(32).toString('base64url')),
+      allProperties: false,
+    })
+    await tx.insert(invitationProperties).values({
+      organizationId,
+      invitationId,
+      propertyId: hotelIds.abuja,
+    })
+    await recordAudit(tx, actor, {
+      action: 'member.invited',
+      entityType: 'invitation',
+      entityId: invitationId,
+      after: {
+        email: `ngozi@${domain}`,
+        role: 'general_manager',
+        allProperties: false,
+        propertyIds: [hotelIds.abuja],
+      },
+    })
+
+    // The owner gave front desk a little more room on discounts, with a reason.
+    await tx.insert(permissionOverrides).values({
+      organizationId,
+      role: 'front_desk',
+      permission: 'stay.rate_override',
+      allowed: true,
+      limitValue: '12.00',
+    })
+    await recordAudit(tx, actor, {
+      action: 'permission.changed',
+      entityType: 'permission',
+      before: {
+        role: 'front_desk',
+        permission: 'stay.rate_override',
+        allowed: true,
+        limit: '10.00',
+      },
+      after: {
+        role: 'front_desk',
+        permission: 'stay.rate_override',
+        allowed: true,
+        limit: '12.00',
+      },
+      reason: 'Weekend corporate guests ask for a little more',
+    })
+
+    return {
+      status: 'seeded' as const,
+      organizationId,
+      people: seeded.map(({ name, email, role, pin }) => ({ name, email, role, pin })),
+    }
+  })
+}
