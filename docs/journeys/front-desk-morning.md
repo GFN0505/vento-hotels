@@ -40,6 +40,11 @@
    - *Sees:* "Moved to 501." Then maintenance puts 503 out of order 25–27 Nov from the work order; 503 shows rose on the board.
    - *Behind the scenes:* move recorded on the stay; folios and routing follow the stay. Putting 503 OOO locks the Executive King inventory rows for 25 and 26 Nov and removes one room; Vento refused OOO while the guest was still in 503. Audit events `stay.room_moved` (before 503, after 501, reason), `room.status_changed` (`out_of_order`, work order linked).
 
+6a. **10:32 Phone booking.**
+   - *Does:* Ms Sarah Collins calls for 9–12 Dec. Chiamaka opens New reservation, picks the dates and 1 adult, sees Deluxe King "7 · 5 · 3" and Junior Suite "Sold out 11 Dec", picks Bed & breakfast, finds no match for Collins, adds her (British, phone), and books.
+   - *Sees:* ₦617,400.00* for 3 nights, deposit due ₦205,800.00* by 27 Nov, ≈ £316.62 at ₦1,950/£; reservation VI-2611-0483; she copies the confirmation into WhatsApp with Zenith Bank 0123454471 and the reference.
+   - *Behind the scenes:* one transaction locks Deluxe King for 9, 10 and 11 Dec, checks the overbooking limit (0), adds one booked room per night, stores the plan price and terms; audit events `guest.created`, `reservation.created`. About 75 seconds.
+
 7. **10:40 Walk-in: the Okoro family.**
    - *Does:* ⌘K → "Walk-in". Mr and Mrs Okoro with two children, 25–27 Nov · 2 nights. Picks Standard Queen → BAR → room 302 (inspected) → Mr Okoro (Nigerian, NIN masked, phone `+234…`) → payment.
    - *Sees:* one screen (#6 walk-in). Standard Queen BAR ₦120,000.00 × 2 nights with tax lines listed separately; the total updates as she types. "Standard Queen · 2 left on 25 Nov".
@@ -74,6 +79,8 @@
 - **No shift open:** Take payment and Check out say "Open a shift to take payments", with the button beside it.
 - **Early arrival, room not ready:** check-in offers ready rooms of the same type first, or "Check in, room pending" so the guest can leave bags; the row stays amber until a room is assigned.
 - **Walk-in for a sold-out type:** the type shows "0 left" and can't be picked. If two agents take the last Standard Queen at the same moment, the second sees "Standard Queen was just sold for 25 Nov. Pick another type." Nothing is saved for the second.
+- **Booking for a sold-out night:** the type shows 0 and "Sold out 11 Dec"; if two agents book the last room at once, the second sees "Deluxe King was just sold for 11 Dec" with what is still free, and nothing is saved.
+- **Discount above her limit while booking:** refused with the limit ("15% is over your 12% discount limit…") until approvals (brick 5).
 - **Internet down:** walk-ins and new bookings are disabled with "Needs a connection to check live availability". Check-in of an already assigned arrival and cash or POS-terminal payments still work and show "Saved on this device" until synced.
 - **Transfer not yet in the bank:** the payment stays "awaiting bank match" and ages in the matching queue (whether the key can be issued first is an open question).
 - **Approver not at the desk:** the discount goes to the approvals inbox (#29); the stay stays at BAR until approved, or she lowers it to 10%.
@@ -97,6 +104,7 @@
 - Take payment is disabled until a shift is open; the opening float is stored.
 - Check-out of 502 splits across POS terminal (reference required) and city ledger; settlement checks Acme's credit limit and creates an invoice; over-limit needs approval.
 - Room move records reason and before/after; 503 can't go OOO while occupied; once OOO it is removed from Executive King availability for 25–26 Nov with the work order linked.
+- A phone booking locks and decrements Deluxe King for each night and stores plan price and terms; the last-room race books once; a discount over the limit is refused on the server (`apps/api/src/reservations/*.test.ts`, `apps/web/e2e/reservations.spec.ts`).
 - Walk-in decrements Standard Queen availability for both nights in one transaction; a concurrent walk-in for the last Standard Queen fails cleanly.
 - A 15% discount is refused for front desk alone and succeeds with Tunde's PIN; the audit event carries reason, actor and approver; Tunde can't approve his own.
 - Transfer payment requires a reference and appears in the matching queue.

@@ -212,7 +212,7 @@ Key assertions:
 - Every hop writes its audit events with actor, device, property and business date.
 
 ## Open questions
-- **Booking hop in the spec:** in the seed, Mr Mensah's booking arrives by import (going-live, step 9). Should the spec start from the seeded reservation, or book it through #4 so the new reservation flow is on the thread?
+- **Booking hop in the spec:** in the seed, Mr Mensah's booking arrives by import (going-live, step 9). Should the spec start from the seeded reservation, or book it through #4 so the new reservation flow is on the thread? *Answered (brick 4):* seeded through the booking service in Stage 1 (VI-2611-0482 on Acme Energy, given by the seed while corporate bookings wait for brick 12), booked through #4 from brick 12.
 - **Routing source:** does routing (room → company, extras → guest) come from Acme's account as a default, from the rate plan, or per reservation? Does the future reservations import carry it?
 - **Guest app and the company folio:** may Mr Mensah see Folio B and Acme's negotiated rate in the guest app? Corporates often don't want guests to see the rate.
 - **Pre-arrival for corporate guests:** sent to the guest, the travel desk, or both? Whose phone and consent count?

@@ -1,6 +1,6 @@
 # Availability and new reservations
 
-- **Status:** approved (owner, 2026-11-26, see Decisions)
+- **Status:** built (Stage 1 brick 4, 2026-11-27); approved by the owner 2026-11-26 (see Decisions)
 - **Stage:** 1 (brick 4 of the plan in [stage-1-plan.md](stage-1-plan.md)). Depends on brick 1 (room types and rooms), brick 1b (hotel switch), brick 2 (rate plans: `quoteStay`, `listBookablePlans`) and brick 3 (taxes: `rulesInForceFor`, `taxLines`; FX: `fxRateFor`, `fxEquivalent`; the guest transfer account). Feeds brick 5 (approvals for over-limit discounts), brick 6 (modify, cancel, no-show re-lock the same inventory rows and read the stored terms), brick 7 (tape chart reads stays; out-of-order rooms reduce the same rows), brick 8 (arrivals, check-in and walk-in reuse the booking service), brick 10 (deposits are collected against the deposit due recorded here), brick 13 (night audit posts each stay's stored nightly price), brick 15 (reports), brick 16 (discount exceptions), brick 17 (future reservations import through the same service and locks).
 - **Module:** Reservations & Front Desk (`docs/PRODUCT.md` module 1: reservations, availability, deposits and guarantees)
 - **Walkthroughs:** `front-desk-morning.md` new step 6a and "What can go wrong" (changed, listed under "Changes needed in walkthroughs"); `guest-stay.md` step 1 (a Stage 1 note); `journeys/README.md` demo world (seeded reservations). Read later by `front-desk-morning.md` steps 3, 7–8, `night-audit.md` steps 3–5 and golden-thread hops 1, 4 and 8.
