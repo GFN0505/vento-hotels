@@ -55,7 +55,10 @@ function Shell() {
   const showSettings =
     organization.can('setup.manage') ||
     organization.can('permissions.manage') ||
-    organization.can('property.operating_times')
+    organization.can('property.operating_times') ||
+    organization.can('finance.setup') ||
+    organization.can('fx.enter') ||
+    organization.can('rates.edit')
   const groups = organization.role
     ? visibleGroups(organization.role, organization.has, organization.can)
     : []

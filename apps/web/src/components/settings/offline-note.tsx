@@ -9,7 +9,8 @@ function clock(at: number): string {
   return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(at)
 }
 
-export function SettingsOffline() {
+// `note` replaces the usual line, e.g. the taxes pages' "Bills keep using the rules saved on each device."
+export function SettingsOffline({ note }: { note?: string } = {}) {
   const online = useOnline()
   if (online) return null
   const since = offlineSince()
@@ -23,7 +24,8 @@ export function SettingsOffline() {
         <span className="font-semibold">
           {since ? `Offline since ${clock(since)}.` : 'Offline.'}
         </span>{' '}
-        Settings are read-only while offline. Changes need a connection so every device gets them.
+        {note ??
+          'Settings are read-only while offline. Changes need a connection so every device gets them.'}
       </p>
     </div>
   )

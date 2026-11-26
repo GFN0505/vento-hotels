@@ -19,6 +19,21 @@ const SECTIONS = [
   { to: '/settings/members', label: 'Members and roles', needs: ['setup.manage'] },
   { to: '/settings/devices', label: 'Devices', needs: ['setup.manage'] },
   {
+    to: '/settings/taxes',
+    label: 'Taxes and charges',
+    needs: ['finance.setup', 'rates.edit', 'rooms.setup'],
+  },
+  {
+    to: '/settings/payments',
+    label: 'Payments',
+    needs: ['finance.setup', 'rooms.setup', 'fx.enter'],
+  },
+  {
+    to: '/settings/fx-rates',
+    label: 'FX rates',
+    needs: ['finance.setup', 'rooms.setup', 'fx.enter'],
+  },
+  {
     to: '/settings/permissions',
     label: 'Permissions and limits',
     needs: ['setup.manage', 'permissions.manage'],
