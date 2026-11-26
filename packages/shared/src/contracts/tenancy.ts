@@ -207,16 +207,16 @@ export type ArchivePreview = z.infer<typeof archivePreviewSchema>
 
 // --- Hotel logo ------------------------------------------------------------------------------------
 
-export const LOGO_CONTENT_TYPES = ['image/png', 'image/jpeg'] as const
-export const LOGO_MAX_BYTES = 2 * 1024 * 1024
-// The shorter side, in pixels.
-export const LOGO_MIN_PIXELS = 200
-const logoProblem = 'Use a PNG or JPEG up to 2 MB.'
+// No SVG: it can carry scripts. No minimum pixel size (owner, 2026-11-26): any real image will do.
+export const LOGO_CONTENT_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const
+export type LogoContentType = (typeof LOGO_CONTENT_TYPES)[number]
+export const LOGO_MAX_BYTES = 10 * 1024 * 1024
+export const LOGO_WRONG_FILE = 'Use a PNG, JPEG or WebP up to 10 MB.'
 
 export const logoUploadRequestSchema = z.object({
   propertyId: idSchema,
-  contentType: z.enum(LOGO_CONTENT_TYPES, logoProblem),
-  size: z.number().int().min(1, logoProblem).max(LOGO_MAX_BYTES, logoProblem),
+  contentType: z.enum(LOGO_CONTENT_TYPES, LOGO_WRONG_FILE),
+  size: z.number().int().min(1, LOGO_WRONG_FILE).max(LOGO_MAX_BYTES, LOGO_WRONG_FILE),
 })
 
 // Send the file with `method` to `url` with exactly these headers, before `expiresAt`, then call

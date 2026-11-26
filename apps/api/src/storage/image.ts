@@ -1,13 +1,25 @@
 // What an uploaded image really is, from its own bytes: never trust the name or the declared type.
-// PNG and JPEG only (spec: no SVG, which PDFs can't embed and which can carry scripts).
-export type ImageInfo = { type: 'image/png' | 'image/jpeg'; width: number; height: number }
+// PNG, JPEG and WebP only. No SVG (it can carry scripts) and nothing else. Dimensions are recorded
+// when they can be read cheaply but no rule depends on them, so a WebP whose size we can't read is
+// still accepted. React-pdf can't embed WebP: when PDFs arrive, WebP logos are converted to PNG on
+// the server.
+export type ImageInfo = {
+  type: 'image/png' | 'image/jpeg' | 'image/webp'
+  width: number | null
+  height: number | null
+}
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 
 export function inspectImage(bytes: Uint8Array): ImageInfo | null {
   if (startsWith(bytes, PNG_SIGNATURE)) return pngSize(bytes)
   if (startsWith(bytes, [0xff, 0xd8, 0xff])) return jpegSize(bytes)
+  if (ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 12) === 'WEBP') return webp(bytes)
   return null
+}
+
+function ascii(bytes: Uint8Array, from: number, to: number): string {
+  return String.fromCharCode(...bytes.subarray(from, to))
 }
 
 function startsWith(bytes: Uint8Array, prefix: readonly number[]): boolean {
@@ -54,6 +66,34 @@ function jpegSize(bytes: Uint8Array): ImageInfo | null {
       return width > 0 && height > 0 ? { type: 'image/jpeg', width, height } : null
     }
     offset += 2 + length
+  }
+  return null
+}
+
+// The first chunk after the RIFF header says which WebP it is; anything else isn't a WebP.
+// Sizes: VP8X stores width − 1 and height − 1 as 24-bit little-endian; VP8L packs them as 14-bit
+// fields after its 0x2f signature; VP8 (lossy) keeps them after the 9d 01 2a start code.
+function webp(bytes: Uint8Array): ImageInfo | null {
+  const chunk = ascii(bytes, 12, 16)
+  if (chunk !== 'VP8X' && chunk !== 'VP8L' && chunk !== 'VP8 ') return null
+  return { type: 'image/webp', ...(webpSize(bytes, chunk) ?? { width: null, height: null }) }
+}
+
+function webpSize(bytes: Uint8Array, chunk: string): { width: number; height: number } | null {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  const u24 = (at: number) => view.getUint16(at, true) + ((bytes[at + 2] ?? 0) << 16)
+  if (chunk === 'VP8X' && bytes.length >= 30) {
+    return { width: u24(24) + 1, height: u24(27) + 1 }
+  }
+  if (chunk === 'VP8L' && bytes.length >= 25 && bytes[20] === 0x2f) {
+    const bits = view.getUint32(21, true)
+    return { width: (bits & 0x3fff) + 1, height: ((bits >>> 14) & 0x3fff) + 1 }
+  }
+  const startCode = bytes[23] === 0x9d && bytes[24] === 0x01 && bytes[25] === 0x2a
+  if (chunk === 'VP8 ' && bytes.length >= 30 && startCode) {
+    const width = view.getUint16(26, true) & 0x3fff
+    const height = view.getUint16(28, true) & 0x3fff
+    return width > 0 && height > 0 ? { width, height } : null
   }
   return null
 }
