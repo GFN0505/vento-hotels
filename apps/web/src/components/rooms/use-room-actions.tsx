@@ -4,11 +4,11 @@ import { useMutation } from '@tanstack/react-query'
 import type { Property } from '@vento/shared'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { ReasonDialog } from '@/components/ui/reason-dialog'
 import { api } from '@/lib/api'
 import { problemMessage } from '@/lib/errors'
 import { plural, roomNames } from './format'
 import { useRoomsRefresh } from './queries'
-import { ReasonDialog } from './reason-dialog'
 
 type RoomRef = { id: string; number: string }
 type Kind = 'remove' | 'restore'

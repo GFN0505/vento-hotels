@@ -33,9 +33,17 @@ A journey's e2e test grows with the stages: steps that need a later stage are sk
 All walkthroughs use the demo seed, so names and numbers match across documents, tests and the designs in `docs/design/export/`. Everything here is made up. The demo world follows the Claude Design export; when the two disagree, change the walkthroughs, not the designs.
 
 - **Organization:** Kora Hotels Group (4 properties, 382 rooms).
-- **Entity:** Kora Hospitality Ltd (owns all four properties).
+- **Companies (entities)**, as in the designs (Settings › Companies), all VAT registered:
+
+  | Company | RC number | TIN | Owns |
+  |---|---|---|---|
+  | Kora Hospitality Ltd | RC 1184402 | 21847390-0001 | Kora Victoria Island, Kora Ikeja GRA |
+  | Kora Hotels Abuja Ltd | RC 1290517 | 22910455-0001 | Kora Abuja |
+  | Kora PH Ltd | RC 1377281 | 23308817-0001 | Kora Port Harcourt |
+
+  The walkthroughs only need Kora Victoria Island under Kora Hospitality Ltd. Kora Lekki is not seeded: it is the hotel the owner adds in review ("Later: opening Kora Lekki" in `going-live.md`).
 - **Properties:**
-  - **Kora Victoria Island**, Victoria Island, Eti-Osa, Lagos. 120 rooms: 14 on each of floors 3–10, 8 suites on floor 11. The walkthroughs happen here. Room types (code), guests, BAR rate (room only, per night, excl. taxes) and rooms:
+  - **Kora Victoria Island**, Plot 1412 Ahmadu Bello Way, Victoria Island, Eti-Osa, Lagos, with a placeholder Kora logo. 120 rooms: 14 on each of floors 3–10, 8 suites on floor 11. The walkthroughs happen here. Room types (code), guests, BAR rate (room only, per night, excl. taxes) and rooms:
 
     | Room type | Code | Bed · guests | Size | BAR | Rooms |
     |---|---|---|---|---|---|
@@ -45,9 +53,10 @@ All walkthroughs use the demo seed, so names and numbers match across documents,
     | Junior Suite | `JRS` | King + sofa bed · 3 adults + 1 child | 58 m² | ₦320,000 | 8: 1101–1108 |
 
     Floors 3–6 are one type each; floors 7–10 are mixed (7 Standard Queen, 8 Standard Queen 801–808 and Deluxe King 809–814, 9 and 10 Deluxe King). Features: 401 City view, connecting to 402; 406 City view; 407 Roll-in shower; 412 Near lift; 502 Quiet side (Mr Mensah's "quiet room"); 1102 Ocean view, Bathtub. Accessible: 307, 407, 507, 901. Tunde set the rooms up himself (`going-live.md` step 3). In the seed so far every room is `vacant` + `inspected`; stays, the 503 out-of-order and the 25 Nov room statuses are added by later Stage 1 bricks. Outlets: **Calabash restaurant** (06:30–23:00; main hall, terrace, private room), **Pool bar** (10:00–00:00), **Room service** (24 hours). Kitchen printers KITCHEN-1 and GRILL-1, bar printer BAR-2.
-  - **Kora Ikeja GRA**, Ikeja GRA, Ikeja, Lagos. 86 rooms.
-  - **Kora Abuja**, Wuse 2, Abuja Municipal, FCT. 104 rooms.
-  - **Kora Port Harcourt**, GRA Phase 2, Obio-Akpor, Rivers. 72 rooms.
+  - **Kora Ikeja GRA**, Ikeja GRA, Ikeja, Lagos, with no street yet (so completing a hotel's address can be tried on it). 86 rooms.
+  - **Kora Abuja**, Plot 12 Aminu Kano Crescent, Wuse 2, Abuja Municipal, FCT. 104 rooms.
+  - **Kora Port Harcourt**, 15 Tombia Street, GRA Phase 2, Obio-Akpor, Rivers. 72 rooms.
+  - Every hotel: check-in from 14:00, check-out by 12:00, time zone Africa/Lagos.
   - The other three hotels use the same four room types and codes in simple blocks of 14 rooms per floor from floor 1, with the Junior Suites on the top floor: Ikeja GRA 28 / 28 / 28 / 2, Abuja 28 / 42 / 28 / 6, Port Harcourt 28 / 28 / 14 / 2 (Standard Queen / Deluxe King / Executive King / Junior Suite).
 - **Rate plans:** BAR (rates above, room only), BAR Bed & Breakfast, Non-refundable (BAR − 10%), Corporate (negotiated per company).
 - **Corporate rate:** Acme Energy, Executive King ₦180,000 per night at Kora Victoria Island (as in the tape chart design); Deluxe King ₦130,000 with breakfast.

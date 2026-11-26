@@ -20,11 +20,19 @@ type InviteDialogProps = {
   onClose: () => void
   myRole: MemberRole | undefined
   canGrantWholeGroup: boolean
+  // Limits the invite to one hotel, e.g. from a new hotel's "Invite the team".
+  hotelId?: string | undefined
 }
 
 const MAX_INVITES = 20
 
-export function InviteDialog({ open, onClose, myRole, canGrantWholeGroup }: InviteDialogProps) {
+export function InviteDialog({
+  open,
+  onClose,
+  myRole,
+  canGrantWholeGroup,
+  hotelId,
+}: InviteDialogProps) {
   const queryClient = useQueryClient()
   const formId = useId()
   const emailsId = useId()
@@ -32,7 +40,11 @@ export function InviteDialog({ open, onClose, myRole, canGrantWholeGroup }: Invi
   const [emailsText, setEmailsText] = useState('')
   const [role, setRole] = useState<MemberRole>('front_desk')
   const [access, setAccess] = useState<AccessChoice>(
-    canGrantWholeGroup ? { allProperties: true } : { allProperties: false, propertyIds: [] },
+    hotelId
+      ? { allProperties: false, propertyIds: [hotelId] }
+      : canGrantWholeGroup
+        ? { allProperties: true }
+        : { allProperties: false, propertyIds: [] },
   )
   const [problems, setProblems] = useState<{
     emails?: string | undefined

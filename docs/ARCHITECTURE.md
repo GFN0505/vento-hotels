@@ -23,7 +23,14 @@ apps/
       db/migrate.ts          applies migrations as a release step, never on app start (brick 4)
       auth/auth.ts           Better Auth: email + password, organizations, two-step, /api/auth/* (bricks 5, 12)
       tenancy/access.ts      loadAccess, scopeToProperties, requirePermission, requireWithinLimit (bricks 5–6)
-      tenancy/service.ts     entities, properties, member property access, Home figures (bricks 5, 15)
+      tenancy/service.ts     the member's organization, Home figures                  (bricks 5, 15)
+      tenancy/properties.ts  hotels: list, read, add, edit, scheduled company change (Stage 1); property-views.ts
+                             reads a hotel with its company, logo link and room count in one query
+      tenancy/property-archive.ts  archive (revokes devices, cancels invites for it alone) and restore;
+                             archive-blockers.ts is the hook later bricks add their checks to (Stage 1)
+      tenancy/entities.ts    companies: list, read, add, edit, archive, restore      (Stage 1)
+      tenancy/logo.ts        hotel logos: signed upload URL, checks, set/remove, daily purge (Stage 1)
+      tenancy/scheduled-entity.ts  applies a live hotel's scheduled company change; night audit calls it (Stage 1)
       audit/record.ts        recordAudit / recordAuditMany(tx, access, …), same transaction (brick 6)
       governance/service.ts  audit log, permissions matrix list/set                  (brick 6)
       team/                  members list/update/remove, invitations, join from link   (brick 8)
@@ -33,12 +40,14 @@ apps/
                              connecting rooms, "Add rooms by floor" with new types (room-batch.ts),
                              Mark inspected, the roomCountChanged hook (Stage 1)
       seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14); rooms.ts: 382 rooms (Stage 1)
-      jobs/                  pg-boss queue, email retries, heartbeat                   (brick 17); business jobs from Stage 1
+      jobs/                  pg-boss queue, email retries, heartbeat                   (brick 17); daily purge of unconfirmed uploads (Stage 1)
       observability/         pino logs with request ids, Sentry error reports          (brick 17)
-      providers/email.ts     EmailProvider and its console, file and memory versions   (brick 5); SMS, WhatsApp, payments, channel manager, storage as each stage needs them
+      providers/email.ts     EmailProvider and its console, file and memory versions   (brick 5); SMS, WhatsApp, payments, channel manager as each stage needs them
+      providers/storage.ts   StorageProvider: S3 API (RustFS locally, R2 in production) and an in-memory version (Stage 1)
+      storage/               what an uploaded image really is (PNG/JPEG from its bytes); PNGs for the seed and tests (Stage 1)
       test/harness.ts        signs real people in for tests through Better Auth        (brick 5)
       pdf/                   @react-pdf/renderer documents                            (Stage 1)
-    drizzle/                 generated SQL migrations, committed (0000–0007)          (bricks 4–12)
+    drizzle/                 generated SQL migrations, committed (0000–0011)          (bricks 4–12, Stage 1)
   web/                       Vite + React 19 SPA
     src/
       routes/                sign-in, get-started, setup, forgot/reset password, join, lock, _app (shell): Home, module pages, settings (bricks 7–12)
@@ -64,7 +73,9 @@ packages/
       ids.ts                 newId() UUID v7, idSchema                                 (brick 3)
       dates.ts               calendar dates, nights, property-time-zone date           (brick 3)
       pagination.ts          page query and { items, page, pageSize, total }           (brick 3)
-      locale.ts              NGN default, supported currencies, Africa/Lagos           (brick 1)
+      locale.ts              NGN default, supported currencies, Africa/Lagos, states    (brick 1)
+      lgas.ts                the 774 LGAs by state                                     (Stage 1)
+      company-ids.ts         RC number and TIN rules                                   (Stage 1)
       roles.ts, password.ts  the 16 hotel roles; the password rule                     (bricks 5, 7)
       permissions.ts         permission keys, limit kinds, default matrix            (brick 6)
       rooms.ts               room fields, numbering, "Add rooms by floor" expansion   (Stage 1)
@@ -114,19 +125,22 @@ New modules from Stage 1 add their own folder in `apps/api/src/` (service, route
 - **Business date** is a `date` per property that only moves forward at night audit. Charges, revenue and reports use it, not the wall clock.
 - **Availability locking:** booking, modifying, cancelling and channel ingest lock the room-type inventory rows for the dates (`SELECT … FOR UPDATE`) in one transaction. Overbooking only up to a configured limit.
 - **Rooms** (migration 0008, Stage 1 brick 1): `room_types`, `rooms` and `room_connections` per property, and `properties.live_since` (go-live). All three reference their hotel by a composite foreign key `(organization_id, property_id) → properties(organization_id, id)` (migration 0009), so a row can't name another group's hotel. A room's type is a composite foreign key `(property_id, room_type_id)`, so a room can't use another hotel's type even by a hand-written query; connecting rooms are one row per pair. Room numbers are unique per hotel including archived rooms (a database constraint), so concurrent bulk adds can't create the same room twice. **The number of rooms in a type is never stored**: it is counted from active rooms. Every change to it (create, bulk create, archive, restore, delete, change type, archive a type) calls `roomCountChanged(tx, …)` in `apps/api/src/rooms/room-count.ts` inside its transaction; it does nothing yet, and brick 4 makes it lock and adjust the room-type inventory rows from the business date on. Room writes hold their types `FOR SHARE` and archiving a type takes it `FOR UPDATE`, so a type can't be archived while rooms are being added to it.
+- **Hotels and companies** (migration 0010, Stage 1): `properties` and `entities` gain a `version` (each save sends the version it started from, so nobody overwrites someone else's change) and case-insensitive unique names per group, archived included; a company's RC number and TIN (compared by digits) are unique per group. A live hotel's change of owning company is stored as `pending_entity_id` + `pending_entity_from` (the next business date) and applied by night audit, so a business date is never split between two companies' books; a composite key `(organization_id, pending_entity_id) → entities(organization_id, id)` keeps it in the group. `file_uploads` records every file sent to storage (`pending → confirmed | rejected | expired`), with a composite key to its hotel; `properties.logo_upload_id` points at the current logo. Migration 0011 makes a hotel's company (`entity_id`) and logo composite keys with `organization_id` too, adds the uploader's member key, and stores a live company's scheduled VAT registration change (`pending_vat_registered` + `pending_vat_from`, applied by night audit like the company change). Writes that attach something to a hotel (devices, invitations and access grants, rooms and room types) hold the hotel row `FOR SHARE` in their transaction, and archiving takes it `FOR UPDATE`, so nothing new lands on a hotel while it is archived.
 - Statutory rates (VAT, consumption tax, service charge, payroll deductions) are versioned configuration with effective dates.
 
 ## Background jobs
 *Built in brick 17: the queue, email retries and the heartbeat (decision 0025). Stage 1 adds the first business jobs.*
-pg-boss on the same Postgres, no Redis. `apps/api/src/jobs/queue.ts` holds each job's zod schema, queue options and handler; the API process starts the workers when `JOBS_ENABLED` is true, and `/health` reports `jobs` from a heartbeat every minute. Email already goes through the `email.send` queue. Used for night audit steps, ARI pushes to the channel manager, payment and channel webhooks, guest messages, the owner's daily report, scheduled checks (room discrepancy, deposits due) and large imports. Every job is idempotent and retried with backoff; failures are visible to devops.
+pg-boss on the same Postgres, no Redis. `apps/api/src/jobs/queue.ts` holds each job's zod schema, queue options and handler; the API process starts the workers when `JOBS_ENABLED` is true, and `/health` reports `jobs` from a heartbeat every minute. Email already goes through the `email.send` queue. `storage.purgeUnconfirmed` runs daily at 03:30 UTC and deletes uploads given a signed URL but never confirmed within 24 hours. Used for night audit steps, ARI pushes to the channel manager, payment and channel webhooks, guest messages, the owner's daily report, scheduled checks (room discrepancy, deposits due) and large imports. Every job is idempotent and retried with backoff; failures are visible to devops.
 
 ## Files and PDFs
-*Local storage service built in brick 2; file handling and PDFs planned (Stage 1).*
-- **Files** go to S3-compatible storage: RustFS locally (brick 2, decision 0016), Cloudflare R2 in production. Access through signed URLs. Guest ID images sit in a private bucket with short-lived links.
+*Local storage service built in brick 2; uploads built with hotel logos (Stage 1); PDFs planned (Stage 1).*
+- **Files** go to S3-compatible storage: RustFS locally (brick 2, decision 0016), Cloudflare R2 in production, through `StorageProvider` (`apps/api/src/providers/storage.ts`, S3 API only, path-style URLs, signed with `aws4fetch`). Nothing is public: files are read through signed GET links (an hour for logos). Guest ID images will sit in a separate private bucket with short-lived links.
+- **Uploads** never pass through the API. The API records a `file_uploads` row and returns a signed PUT URL (5 minutes) whose content type, length and `If-None-Match: *` are part of the signature, so storage refuses any other file and any second file under the same link (412). The browser PUTs the file to its upload key (`logos/{organizationId}/{propertyId}/uploads/{uploadId}.png`), then calls the confirm procedure. The API copies it server-side to its checked key (the same without `uploads/`), which no signed URL ever pointed at, deletes the upload key, and checks the copy: its real type from its first bytes (PNG or JPEG), its size and its dimensions. Only the checked key is ever shown, so nothing sent later can change a checked file. A file that fails is deleted. Uploads must be confirmed within an hour; the daily purge deletes unconfirmed and rejected uploads' files after a day (`purged_at`). Every upload has its own keys, so nothing is overwritten and documents already issued keep what they showed. Storage calls time out after 15 seconds.
+- **Settings:** `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`. Without the last three the API runs with uploads switched off. Locally (`DEPLOY_ENV=local`) the API creates the bucket on start and allows uploads from any `http://localhost:*` origin; R2's bucket CORS is set up with the servers (`docs/ops/deploy.md`).
 - **PDFs** (registration cards, invoices, folios, statements, payslips, board packs) are rendered on the API with `@react-pdf/renderer`. Thermal receipts and kitchen tickets are 80mm browser print layouts (`printing` skill).
 
 ## Providers behind interfaces
-*Built in brick 5: `EmailProvider` (console, file and memory versions; no real provider chosen yet). The others are planned, as each stage needs them.*
+*Built in brick 5: `EmailProvider` (console, file and memory versions; no real provider chosen yet). Built in Stage 1: `StorageProvider` (S3 and memory versions). The others are planned, as each stage needs them.*
 Every outside service sits behind an interface in `apps/api/src/providers/` with a fake for tests and local work: `EmailProvider`, `SmsProvider`, `WhatsAppProvider`, `PaymentProvider` (Paystack), `ChannelProvider` (one certified channel manager), `StorageProvider`. Which provider to use is an open question in `docs/DOMAIN.md` until decided in `docs/decisions/`.
 
 ## Environments

@@ -5,6 +5,7 @@ import { newId } from '@vento/shared'
 import { eq } from 'drizzle-orm'
 import { properties } from '../db/schema/tenancy.ts'
 import { switchFeature } from '../features/switches.ts'
+import { ABUJA_ADDRESS } from '../test/addresses.ts'
 import type { createTestApp } from '../test/harness.ts'
 
 type TestApp = ReturnType<typeof createTestApp>
@@ -18,7 +19,9 @@ export type Problem = {
 }
 
 async function hotel(t: TestApp, owner: Person, entityId: string, name: string) {
-  return (await t.rpc<Property>(owner.cookie, 'properties/create', { entityId, name })).data
+  return (
+    await t.rpc<Property>(owner.cookie, 'properties/create', { entityId, name, ...ABUJA_ADDRESS })
+  ).data
 }
 
 async function member(

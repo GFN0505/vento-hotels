@@ -7,12 +7,12 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Field } from '@/components/ui/field'
+import { REASON_HINT, reasonProblem } from '@/components/ui/reason-dialog'
 import { SelectField } from '@/components/ui/select-field'
 import { api } from '@/lib/api'
 import { problemMessage } from '@/lib/errors'
 import { plural, roomNames } from './format'
 import { useRoomsRefresh } from './queries'
-import { REASON_HINT, reasonProblem } from './reason-dialog'
 
 type Props = {
   hotel: Property

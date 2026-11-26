@@ -1,7 +1,17 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+// Settings opens on its first section the person can use: Hotels for owners, group admins and GMs.
+import { createFileRoute, Navigate } from '@tanstack/react-router'
+import { useMe } from '@/lib/me'
 
 export const Route = createFileRoute('/_app/settings/')({
-  beforeLoad: () => {
-    throw redirect({ to: '/settings/members' })
-  },
+  component: SettingsIndex,
 })
+
+function SettingsIndex() {
+  const me = useMe()
+  if (me.isPending) return null
+  if (me.can('setup.manage') || me.can('property.operating_times')) {
+    return <Navigate to="/settings/hotels" replace />
+  }
+  if (me.can('permissions.manage')) return <Navigate to="/settings/permissions" replace />
+  return <Navigate to="/settings/members" replace />
+}

@@ -25,3 +25,28 @@ export function problemMessage(error: unknown): string {
   }
   return CANT_REACH_VENTO
 }
+
+// The `data` an API error carries for the web app to react to (e.g. `{ code: 'STALE_VERSION' }`).
+export function errorData(error: unknown): Record<string, unknown> {
+  if (error && typeof error === 'object' && 'data' in error) {
+    const data = (error as { data: unknown }).data
+    if (data && typeof data === 'object') return data as Record<string, unknown>
+  }
+  return {}
+}
+
+export function errorCode(error: unknown): string | undefined {
+  const code = errorData(error).code
+  return typeof code === 'string' ? code : undefined
+}
+
+// Like problemMessage, but also trusts the API's words for a known problem it answers with a 5xx
+// status (uploads not set up on this server: STORAGE_OFF).
+export function apiMessage(error: unknown, trusted: readonly string[] = []): string {
+  const code = errorCode(error)
+  if (code && trusted.includes(code) && error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message: unknown }).message
+    if (typeof message === 'string') return message
+  }
+  return problemMessage(error)
+}

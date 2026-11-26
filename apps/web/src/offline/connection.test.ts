@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { isOnline, markReachable, markUnreachable } from './connection'
+import { isOnline, markReachable, markUnreachable, offlineSince } from './connection'
 
 describe('connection', () => {
   afterEach(() => vi.unstubAllGlobals())
@@ -16,5 +16,19 @@ describe('connection', () => {
     markUnreachable()
     markReachable()
     expect(isOnline()).toBe(true)
+  })
+})
+
+describe('offlineSince', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('remembers when the connection dropped, and forgets once it is back', () => {
+    vi.stubGlobal('navigator', { onLine: true })
+    markReachable()
+    expect(offlineSince()).toBeUndefined()
+    markUnreachable()
+    expect(offlineSince()).toBeTypeOf('number')
+    markReachable()
+    expect(offlineSince()).toBeUndefined()
   })
 })

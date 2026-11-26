@@ -164,6 +164,9 @@ export async function registerDevice(
             isNull(properties.archivedAt),
           ),
         )
+        // Held until the device is saved, so a hotel can't be archived meanwhile; archiving waits,
+        // then revokes this device with the others.
+        .for('share')
       if (!property) {
         throw new ORPCError('BAD_REQUEST', { message: 'Choose one of your hotels' })
       }

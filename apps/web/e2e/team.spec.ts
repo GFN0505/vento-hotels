@@ -10,6 +10,11 @@ async function openMembers(page: Page) {
   const menu = page.getByRole('button', { name: 'Open menu' })
   if (await menu.isVisible()) await menu.click()
   await page.getByRole('link', { name: 'Settings' }).click()
+  // Settings opens on Hotels; Members and roles is the next section but one.
+  await page
+    .getByRole('navigation', { name: 'Settings' })
+    .getByRole('link', { name: 'Members and roles' })
+    .click()
   await expect(page.getByRole('heading', { name: 'Members and roles' })).toBeVisible()
 }
 

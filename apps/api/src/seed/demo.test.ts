@@ -1,6 +1,7 @@
 // The demo seed loads a working group: people can sign in and see exactly what their role allows.
 import type {
   AuditEventView,
+  Entity,
   HomeSummary,
   MemberView,
   Property,
@@ -24,6 +25,7 @@ describe.skipIf(!url)('demo seed', () => {
     password: PASSWORD,
     slug: `kora-demo-${run}`,
     emailDomain: `kora-${run}.example`,
+    storage: t.storage,
   }
 
   const signInAs = async (email: string) => {
@@ -69,6 +71,38 @@ describe.skipIf(!url)('demo seed', () => {
     })
     expect(team.data.total).toBe(10)
     expect(team.data.items.every((m) => m.hasPin)).toBe(true)
+  })
+
+  it('gives the group the three companies from the designs, each owning its hotels', async () => {
+    const cookie = await signInAs(`adaeze@${options.emailDomain}`)
+    const companies = await t.rpc<{ items: Entity[] }>(cookie, 'entities/list', {})
+    expect(
+      companies.data.items.map((c) => [c.name, c.rcNumber, c.tin, c.hotels.map((h) => h.name)]),
+    ).toEqual([
+      [
+        'Kora Hospitality Ltd',
+        'RC 1184402',
+        '21847390-0001',
+        ['Kora Ikeja GRA', 'Kora Victoria Island'],
+      ],
+      ['Kora Hotels Abuja Ltd', 'RC 1290517', '22910455-0001', ['Kora Abuja']],
+      ['Kora PH Ltd', 'RC 1377281', '23308817-0001', ['Kora Port Harcourt']],
+    ])
+  })
+
+  it('leaves Ikeja GRA without a street, and gives only Victoria Island a logo', async () => {
+    const cookie = await signInAs(`adaeze@${options.emailDomain}`)
+    const hotels = await t.rpc<{ items: Property[] }>(cookie, 'properties/list', {})
+    const byName = Object.fromEntries(hotels.data.items.map((h) => [h.name, h]))
+    expect(byName['Kora Victoria Island']).toMatchObject({
+      addressLine1: 'Plot 1412 Ahmadu Bello Way',
+      lga: 'Eti-Osa',
+      checkInTime: '14:00',
+      checkOutTime: '12:00',
+      logo: { url: expect.any(String) },
+    })
+    expect(byName['Kora Ikeja GRA']).toMatchObject({ addressLine1: null, logo: null })
+    expect(byName['Kora Port Harcourt']).toMatchObject({ lga: 'Obio-Akpor', state: 'Rivers' })
   })
 
   it('keeps the GM of Victoria Island to Victoria Island', async () => {

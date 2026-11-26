@@ -34,6 +34,14 @@ describe('default permissions matrix (docs/DOMAIN.md)', () => {
     expect(allowed.sort()).toEqual(['general_manager', 'group_admin', 'owner'])
   })
 
+  it("lets owners, group admins and GMs change a hotel's times, and nobody else by default", () => {
+    const allowed = MEMBER_ROLES.filter(
+      (role) => defaultRule(role, 'property.operating_times').allowed,
+    )
+    expect(allowed.sort()).toEqual(['general_manager', 'group_admin', 'owner'])
+    expect(defaultRule('general_manager', 'setup.manage').allowed).toBe(false)
+  })
+
   it('denies what the table leaves blank', () => {
     expect(defaultRule('waiter', 'pos.void_after_send').allowed).toBe(false)
     expect(defaultRule('front_desk', 'refund').allowed).toBe(false)

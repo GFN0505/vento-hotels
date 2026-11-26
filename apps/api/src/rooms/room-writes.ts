@@ -10,7 +10,14 @@ import { isForeignKeyViolation, isUniqueViolation } from '../db/errors.ts'
 import { rooms } from '../db/schema/rooms.ts'
 import type { Access } from '../tenancy/access.ts'
 import { setConnections } from './connections.ts'
-import { auditAt, loadProperty, type RoomsProperty, requireRoomsSetup, type Tx } from './context.ts'
+import {
+  auditAt,
+  holdProperty,
+  loadProperty,
+  type RoomsProperty,
+  requireRoomsSetup,
+  type Tx,
+} from './context.ts'
 import { numbersTaken, roomArchived, roomNotFound } from './errors.ts'
 import { hasHistory } from './history.ts'
 import { isLive, requireReasonIfLive } from './live.ts'
@@ -79,6 +86,7 @@ export async function createRoom(
         await lockRooms(tx, access, input.connectingRoomIds, property.id)
       }
       const names = await lockActiveTypes(tx, access, property.id, [input.roomTypeId])
+      await holdProperty(tx, access, property.id)
       await requireFreeNumbers(tx, property.id, [input.number])
       const [row] = await tx
         .insert(rooms)
@@ -143,7 +151,7 @@ export async function updateRoom(
       if (!room) throw roomNotFound()
       propertyId = room.propertyId
       if (room.archivedAt) throw roomArchived(room.number)
-      const property = await loadProperty(tx, access, room.propertyId)
+      const property = await holdProperty(tx, access, room.propertyId)
       const before: Record<string, unknown> = {}
       const after: Record<string, unknown> = {}
       const set: Partial<typeof rooms.$inferInsert> = {}
@@ -232,7 +240,7 @@ export async function deleteRoom(
         })
       }
       if (await hasHistory(tx, room.id)) throw hasHistoryError(room.number)
-      const property = await loadProperty(tx, access, room.propertyId)
+      const property = await holdProperty(tx, access, room.propertyId)
       await tx.delete(rooms).where(eq(rooms.id, room.id))
       await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [room.roomTypeId] })
       await recordAudit(tx, access, {

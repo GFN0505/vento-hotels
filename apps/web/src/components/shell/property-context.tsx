@@ -2,7 +2,15 @@
 // People who see the whole group can also choose "All hotels": Home then shows the group, and
 // `current` stays the last hotel picked, for pages that always work in one hotel.
 import type { Property } from '@vento/shared'
-import { createContext, type ReactNode, useContext, useMemo, useState } from 'react'
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 const STORAGE_KEY = 'vento.propertyId'
 const ALL = 'all'
@@ -16,7 +24,12 @@ type PropertyState = {
   canSeeAll: boolean
   select: (id: string) => void
   selectAll: () => void
+  // A page with unsaved changes asks before the hotel changes under it (useLeaveGuard).
+  setLeaveGuard: (guard: LeaveGuard | undefined) => void
 }
+
+// Runs `proceed` now, or once the person has agreed to leave.
+export type LeaveGuard = (proceed: () => void) => void
 
 const PropertyContext = createContext<PropertyState | undefined>(undefined)
 
@@ -55,21 +68,30 @@ export function PropertyProvider({
   // Fall back to the first property if the remembered one is gone or not accessible.
   const current = properties.find((p) => p.id === lastHotel) ?? properties[0]
 
+  const guard = useRef<LeaveGuard | undefined>(undefined)
+  const guarded = (change: () => void) => (guard.current ? guard.current(change) : change())
+
   // Saved only when someone chooses, so a role preview never overwrites the owner's choice.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `guarded` only reads a ref.
   const value = useMemo(
     () => ({
       properties,
       current,
       allHotels,
       canSeeAll,
-      select: (id: string) => {
-        setSelectedId(id)
-        write(STORAGE_KEY, id)
-        write(LAST_HOTEL_KEY, id)
-      },
-      selectAll: () => {
-        setSelectedId(ALL)
-        write(STORAGE_KEY, ALL)
+      select: (id: string) =>
+        guarded(() => {
+          setSelectedId(id)
+          write(STORAGE_KEY, id)
+          write(LAST_HOTEL_KEY, id)
+        }),
+      selectAll: () =>
+        guarded(() => {
+          setSelectedId(ALL)
+          write(STORAGE_KEY, ALL)
+        }),
+      setLeaveGuard: (next: LeaveGuard | undefined) => {
+        guard.current = next
       },
     }),
     [properties, current, allHotels, canSeeAll],
@@ -81,4 +103,13 @@ export function useProperty(): PropertyState {
   const value = useContext(PropertyContext)
   if (!value) throw new Error('useProperty must be used inside PropertyProvider')
   return value
+}
+
+// While `guard` is set, choosing another hotel in the top bar asks the page first.
+export function useLeaveGuard(guard: LeaveGuard | undefined) {
+  const { setLeaveGuard } = useProperty()
+  useEffect(() => {
+    setLeaveGuard(guard)
+    return () => setLeaveGuard(undefined)
+  }, [guard, setLeaveGuard])
 }

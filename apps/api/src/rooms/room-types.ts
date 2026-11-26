@@ -10,6 +10,7 @@ import { rooms, roomTypes } from '../db/schema/rooms.ts'
 import { type Access, scopeToProperties } from '../tenancy/access.ts'
 import {
   auditAt,
+  holdProperty,
   loadProperty,
   type Reader,
   type RoomsProperty,
@@ -217,6 +218,7 @@ export async function createRoomType(
   const { propertyId: _, ...fields } = input
   try {
     return await db.transaction(async (tx) => {
+      await holdProperty(tx, access, property.id)
       const id = await insertRoomType(tx, access, property, fields)
       return toView(await findType(tx, access, id))
     })
@@ -256,7 +258,7 @@ export async function updateRoomType(
     return await db.transaction(async (tx) => {
       const current = await lockType(tx, access, id)
       propertyId = current.propertyId
-      const property = await loadProperty(tx, access, current.propertyId)
+      const property = await holdProperty(tx, access, current.propertyId)
       const merged = { ...current, ...next }
       if (merged.baseOccupancy > merged.maxAdults + merged.maxChildren) {
         throw new ORPCError('BAD_REQUEST', {
@@ -318,7 +320,7 @@ export async function archiveRoomType(
   return db.transaction(async (tx) => {
     const type = await lockType(tx, access, input.id)
     if (type.archivedAt) return toView(type)
-    const property = await loadProperty(tx, access, type.propertyId)
+    const property = await holdProperty(tx, access, type.propertyId)
     // Counted after the lock, so rooms added by a transaction that held it are seen.
     const [active] = await tx
       .select({ value: count() })
@@ -355,7 +357,7 @@ export async function restoreRoomType(
       if (!type.archivedAt) return toView(type)
       propertyId = type.propertyId
       name = type.name
-      const property = await loadProperty(tx, access, type.propertyId)
+      const property = await holdProperty(tx, access, type.propertyId)
       await requireNoClash(tx, property.id, { name: type.name }, type.id)
       await tx
         .update(roomTypes)
@@ -388,7 +390,7 @@ export async function reorderRoomTypes(
 ): Promise<{ ok: true }> {
   requireRoomsSetup(access)
   return db.transaction(async (tx) => {
-    const property = await loadProperty(tx, access, input.propertyId)
+    const property = await holdProperty(tx, access, input.propertyId)
     const current = await tx
       .select({ id: roomTypes.id })
       .from(roomTypes)

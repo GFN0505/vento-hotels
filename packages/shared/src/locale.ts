@@ -52,3 +52,9 @@ export const NIGERIAN_STATES = [
   'Yobe',
   'Zamfara',
 ] as const
+
+export type NigerianState = (typeof NIGERIAN_STATES)[number]
+
+export function isNigerianState(value: string): value is NigerianState {
+  return (NIGERIAN_STATES as readonly string[]).includes(value)
+}

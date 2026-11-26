@@ -1,9 +1,10 @@
-// Asked only once the hotel is live (its first night audit has run): changes that move sellable
-// rooms carry a reason, recorded with the person's name and shown in the owner's daily report.
+// A sensitive action that needs a reason in the same dialog (UX standard: forms), e.g. removing a
+// room from a live hotel or archiving a hotel. The reason is recorded with the person's name and
+// shown in the owner's daily report. `children` sits above the reason (what the action does).
 import { type FormEvent, type ReactNode, useId, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Dialog } from '@/components/ui/dialog'
-import { Field } from '@/components/ui/field'
+import { Button } from './button'
+import { Dialog } from './dialog'
+import { Field } from './field'
 
 export const REASON_HINT = 'Recorded with your name.'
 
@@ -20,6 +21,10 @@ type Props = {
   pending: boolean
   error?: string | undefined
   destructive?: boolean
+  // What the action does, or what's blocking it, above the reason.
+  children?: ReactNode
+  // E.g. while something blocks the action; the reason field goes too.
+  blocked?: boolean
   onConfirm: (reason: string) => void
   onClose: () => void
 }
@@ -33,6 +38,8 @@ export function ReasonDialog({
   pending,
   error,
   destructive,
+  children,
+  blocked,
   onConfirm,
   onClose,
 }: Props) {
@@ -68,6 +75,7 @@ export function ReasonDialog({
             type="submit"
             form={formId}
             variant={destructive ? 'danger' : 'primary'}
+            disabled={blocked}
             loading={pending}
           >
             {confirmLabel}
@@ -81,16 +89,19 @@ export function ReasonDialog({
             {error}
           </p>
         ) : null}
-        <Field
-          label={label}
-          value={reason}
-          maxLength={500}
-          hint={REASON_HINT}
-          error={problem}
-          validate={reasonProblem}
-          onChange={(event) => setReason(event.target.value)}
-          data-autofocus
-        />
+        {children}
+        {blocked ? null : (
+          <Field
+            label={label}
+            value={reason}
+            maxLength={500}
+            hint={REASON_HINT}
+            error={problem}
+            validate={reasonProblem}
+            onChange={(event) => setReason(event.target.value)}
+            data-autofocus
+          />
+        )}
       </form>
     </Dialog>
   )

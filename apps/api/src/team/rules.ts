@@ -8,7 +8,7 @@ import {
   type MemberRole,
   PERMISSION_KEYS,
 } from '@vento/shared'
-import { and, eq, inArray, isNull, notInArray, type SQL, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, notInArray, type SQL, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { members } from '../db/schema/auth.ts'
 import { memberProperties, properties } from '../db/schema/tenancy.ts'
@@ -73,6 +73,10 @@ export async function grantableAccess(
         isNull(properties.archivedAt),
       ),
     )
+    // Held FOR SHARE (in id order) until the caller's transaction ends, so a hotel can't be
+    // archived while access to it is handed out; archiving then sees the new access or invite.
+    .orderBy(asc(properties.id))
+    .for('share')
   if (found.length !== propertyIds.length) {
     throw new ORPCError('BAD_REQUEST', { message: 'Choose hotels from this group' })
   }

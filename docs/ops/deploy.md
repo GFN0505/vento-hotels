@@ -13,7 +13,7 @@ How the servers are set up and how a release reaches them (decision 0026). One C
 
 1. **Order two servers** at Contabo in the **European Union (Germany)** region: Cloud VPS with Ubuntu 24.04, your SSH key added at checkout. Staging can be the smallest plan; production at least 4 vCPU / 8 GB. Consider the Auto Backup add-on for production as a second safety net.
 2. **Domain:** point an A record at each server, e.g. `app.<your-domain>` → production, `staging.<your-domain>` → staging.
-3. **Cloudflare R2:** create three private buckets: `vento-files` (app files; one per environment is better), `vento-backups-staging`, `vento-backups-production`. Create API tokens: one for the app's files bucket, and a separate one for each backups bucket, so the app can never delete its own backups.
+3. **Cloudflare R2:** create three private buckets: `vento-files` (app files; one per environment is better), `vento-backups-staging`, `vento-backups-production`. Create API tokens: one for the app's files bucket, and a separate one for each backups bucket, so the app can never delete its own backups. On the files bucket, add a CORS rule allowing `PUT` and `GET` from the web app's origin (e.g. `https://app.<your-domain>`) with any header: browsers upload hotel logos straight to it through signed links. The app's settings are `S3_ENDPOINT` (the R2 S3 endpoint), `S3_REGION=auto`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `S3_BUCKET`.
 4. **Deploy key:** on your computer, `ssh-keygen -t ed25519 -f vento-deploy -C github-actions-deploy`. Keep the private key for step 7.
 5. **Prepare each server** (as root): download `deploy/bootstrap.sh`, read it, then run `sh bootstrap.sh "$(cat vento-deploy.pub)"`. It installs Docker, creates the `deploy` user with that key, turns on the firewall (SSH, HTTP, HTTPS), automatic security updates and fail2ban, and turns off SSH password sign-in.
 6. **Settings on each server:** copy `deploy/server.env.example` to `/opt/vento/.env`, fill every value (`DEPLOY_ENV=staging` or `production`), then `chmod 600 /opt/vento/.env && chown deploy /opt/vento/.env`.
@@ -27,6 +27,28 @@ How the servers are set up and how a release reaches them (decision 0026). One C
 - **Staging:** automatic on every merge to `main`: images are built, copied files updated, migrations run, containers restarted, then `/health` must say `ok`.
 - **Production:** Actions › Deploy › Run workflow › `production`, optionally with the commit SHA that's been checked on staging. Same steps, after a reviewer approves.
 - **Roll back:** run the workflow again with the previous good SHA. Migrations only ever move forward, so a rollback across a migration needs a fix-forward instead; check `apps/api/drizzle` in the diff first.
+
+### Preflight before migrations 0010 and 0011 (hotels and companies)
+These migrations add unique indexes that existing data could break: hotel and company names that differ only in capitals, the same RC number twice, the same TIN written with and without its hyphen, and (0011) RC numbers that become the same once written as `RC 1184402`. Run this on staging and production **before** deploying them (`ssh deploy@<ip> 'cd /opt/vento && docker compose exec -T postgres psql -U vento vento'`, then paste). Every query must return no rows; fix any it finds by hand (rename, or clear the duplicate number) and run it again.
+
+```sql
+-- Names that differ only in capitals, per group.
+select organization_id, lower(name), array_agg(name) from properties group by 1, 2 having count(*) > 1;
+select organization_id, lower(name), array_agg(name) from entities group by 1, 2 having count(*) > 1;
+-- The same RC number twice in a group, after 0011 writes it as "RC 1184402".
+select organization_id, k, array_agg(rc_number) from (
+  select organization_id, rc_number,
+    case when rc_number ~* '^\s*(LLP|RC|BN|IT|LP)?[\s.-]*[0-9]{1,8}\s*$'
+      then coalesce(substring(upper(rc_number) from '^\s*(LLP|RC|BN|IT|LP)'), 'RC') || ' ' || substring(rc_number from '([0-9]{1,8})\s*$')
+      else rc_number end as k
+  from entities where rc_number is not null) x group by 1, 2 having count(*) > 1;
+-- The same TIN twice in a group, compared by its digits (free text like "TIN: 1234-5678" included).
+select organization_id, regexp_replace(tin, '[^0-9]', '', 'g'), array_agg(tin) from entities
+  where tin is not null group by 1, 2 having count(*) > 1;
+-- RC numbers and TINs the app can't read (left as they are; fix them in Settings › Companies).
+select id, name, rc_number from entities where rc_number is not null and rc_number !~* '^\s*(LLP|RC|BN|IT|LP)?[\s.-]*[0-9]{1,8}\s*$';
+select id, name, tin from entities where tin is not null and tin !~ '^\s*[0-9 ]+(-[0-9 ]+)?\s*$';
+```
 
 ## Everyday operations
 

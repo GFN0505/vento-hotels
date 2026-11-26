@@ -4,6 +4,7 @@ import type { AuditEventView, Entity, PermissionRuleView, Property } from '@vent
 import { sql } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ApprovalRequiredError, loadAccess, requireWithinLimit } from '../tenancy/access.ts'
+import { ABUJA_ADDRESS } from '../test/addresses.ts'
 import { createTestApp } from '../test/harness.ts'
 
 const url = process.env.TEST_DATABASE_URL
@@ -44,6 +45,7 @@ describe.skipIf(!url)('permissions, limits and audit', () => {
       await t.rpc<Property>(owner.cookie, 'properties/create', {
         entityId: entity.id,
         name: 'Kora Abuja',
+        ...ABUJA_ADDRESS,
       })
     ).data
 

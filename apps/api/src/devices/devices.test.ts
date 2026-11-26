@@ -5,6 +5,7 @@ import { eq, isNotNull } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { sessions } from '../db/schema/auth.ts'
 import { memberPins } from '../db/schema/tenancy.ts'
+import { ABUJA_ADDRESS } from '../test/addresses.ts'
 import { createTestApp, PASSWORD } from '../test/harness.ts'
 
 const url = process.env.TEST_DATABASE_URL
@@ -57,6 +58,7 @@ describe.skipIf(!url)('shared devices and PIN sign-in', () => {
       await t.rpc<Property>(owner.cookie, 'properties/create', {
         entityId: entity.id,
         name: 'Kora Abuja',
+        ...ABUJA_ADDRESS,
       })
     ).data
     waiter = await t.signUp('Musa Ibrahim')
@@ -149,6 +151,14 @@ describe.skipIf(!url)('shared devices and PIN sign-in', () => {
     // …and can't manage people, permissions or devices from a shared device.
     expect((await rpcRaw(pinCookie, 'members/list')).status).toBe(403)
     expect((await rpcRaw(pinCookie, 'devices/list')).status).toBe(403)
+    // Hotel settings need a password sign-in too, even just the check-in and check-out times.
+    const hotel = await t.rpc<Property>(owner.cookie, 'properties/get', { id: victoriaIsland.id })
+    const times = await rpcRaw(pinCookie, 'properties/update', {
+      id: victoriaIsland.id,
+      version: hotel.data.version,
+      checkInTime: '13:00',
+    })
+    expect(times.status).toBe(403)
     expect((await rpcRaw(pinCookie, 'pins/set', { pin: '3816', password: PASSWORD })).status).toBe(
       403,
     )

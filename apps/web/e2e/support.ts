@@ -1,9 +1,12 @@
 // Shared helpers for browser tests: reading emails from the local outbox, signing in, setting up a
 // hotel group, and the accessibility check every page must pass (docs/UX-STANDARD.md, section 5).
+import { execFileSync } from 'node:child_process'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { crc32, deflateSync } from 'node:zlib'
 import AxeBuilder from '@axe-core/playwright'
-import { expect, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { OUTBOX } from '../playwright.config'
 
 export const PASSWORD = 'Correct-horse-42!'
@@ -131,4 +134,54 @@ export async function buildRooms(page: Page) {
   await page.getByRole('button', { name: 'Done' }).click()
   await page.getByRole('button', { name: 'Create 28 rooms' }).click()
   await expect(page.getByText('28 rooms created at Kora Victoria Island')).toBeVisible()
+}
+
+// A plain square PNG of one colour, e.g. a hotel logo to upload.
+export function solidPng(size: number): Buffer {
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type, 'ascii'), data])
+    const out = Buffer.alloc(12 + data.length)
+    out.writeUInt32BE(data.length, 0)
+    body.copy(out, 4)
+    out.writeUInt32BE(crc32(body), 8 + data.length)
+    return out
+  }
+  const header = Buffer.alloc(13)
+  header.writeUInt32BE(size, 0)
+  header.writeUInt32BE(size, 4)
+  header.set([8, 2, 0, 0, 0], 8) // 8-bit RGB
+  const row = Buffer.concat([Buffer.from([0]), Buffer.alloc(size * 3, 0x3c)])
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(Buffer.concat(Array.from({ length: size }, () => row)))),
+    chunk('IEND', Buffer.alloc(0)),
+  ])
+}
+
+// Loads the demo group (docs/journeys/README.md) under its own name and email domain, so specs
+// can share the test database. Returns the domain people sign in with.
+export function seedDemoGroup(tag: string, password: string): string {
+  const run = `${tag}-${Date.now().toString(36)}`
+  const domain = `kora-${run}.example`
+  execFileSync('node', [fileURLToPath(new URL('../../api/src/seed/cli.ts', import.meta.url))], {
+    env: {
+      ...process.env,
+      NODE_ENV: 'test',
+      DATABASE_URL: process.env.TEST_DATABASE_URL,
+      DEMO_PASSWORD: password,
+      DEMO_SLUG: `kora-${run}`,
+      DEMO_EMAIL_DOMAIN: domain,
+    },
+    stdio: 'pipe',
+  })
+  return domain
+}
+
+// Picks an option in a Combobox (components/ui/combobox.tsx) by typing part of it, as people do.
+export async function choose(scope: Page | Locator, label: string, option: string) {
+  const box = scope.getByRole('combobox', { name: label, exact: true })
+  await box.fill(option)
+  await scope.getByRole('option', { name: option, exact: true }).click()
+  await expect(box).toHaveValue(option)
 }

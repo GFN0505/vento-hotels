@@ -8,5 +8,5 @@ export function focusFirstProblem(
   const first = order.find((name) => errors[name])
   if (!first) return
   const element = form.elements.namedItem(first)
-  if (element instanceof HTMLInputElement) element.focus()
+  if (element instanceof HTMLInputElement || element instanceof HTMLSelectElement) element.focus()
 }

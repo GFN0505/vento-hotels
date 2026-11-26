@@ -25,6 +25,8 @@ type MembersSearch = {
   q?: string | undefined
   filter?: RoleFilter | undefined
   page?: number | undefined
+  // Opens the invite limited to this hotel (a new hotel's "Invite the team").
+  invite?: string | undefined
 }
 
 // Reads ?q=&filter=&page= and drops anything malformed. Hand-written rather than zod: route options
@@ -37,6 +39,7 @@ function readSearch(search: Record<string, unknown>): MembersSearch {
   }
   const page = Number(search.page)
   if (Number.isInteger(page) && page > 1) result.page = page
+  if (typeof search.invite === 'string' && search.invite) result.invite = search.invite.slice(0, 40)
   return result
 }
 
@@ -55,7 +58,9 @@ const FILTERS: { value: RoleFilter | undefined; label: string }[] = [
 function MembersPage() {
   usePageTitle('Members and roles')
   const me = useMe()
-  const [inviting, setInviting] = useState(false)
+  const search = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const [inviting, setInviting] = useState(Boolean(search.invite))
   const [editing, setEditing] = useState<MemberView>()
 
   if (me.isPending) return <PageSkeleton />
@@ -92,9 +97,13 @@ function MembersPage() {
 
       <InviteDialog
         open={inviting}
-        onClose={() => setInviting(false)}
+        onClose={() => {
+          setInviting(false)
+          if (search.invite) void navigate({ search: (prev) => ({ ...prev, invite: undefined }) })
+        }}
         myRole={myRole}
         canGrantWholeGroup={canGrantWholeGroup}
+        hotelId={search.invite}
       />
       {editing ? (
         <EditMemberDialog

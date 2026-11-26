@@ -5,6 +5,7 @@ import { createApp } from '../app.ts'
 import { createAuth } from '../auth/auth.ts'
 import { createDatabase } from '../db/client.ts'
 import { MemoryEmailProvider } from '../providers/email.ts'
+import { MemoryStorageProvider } from '../providers/storage.ts'
 import { RateLimiter } from '../rate-limit.ts'
 import type { HealthCheck } from '../system/health.ts'
 
@@ -21,6 +22,8 @@ export function createTestApp(databaseUrl: string, options: { rateLimit?: boolea
   const database = createDatabase(databaseUrl, { max: 4 })
   const email = new MemoryEmailProvider()
   const limiter = new RateLimiter(options.rateLimit ?? false)
+  // Files live in memory; `storage.put(key, bytes)` stands in for the browser's upload.
+  const storage = new MemoryStorageProvider()
   const auth = createAuth({
     db: database.db,
     settings: {
@@ -37,6 +40,7 @@ export function createTestApp(databaseUrl: string, options: { rateLimit?: boolea
     auth,
     checkHealth: healthy,
     email,
+    storage,
     webOrigin: WEB_ORIGIN,
     limiter,
   })
@@ -124,6 +128,7 @@ export function createTestApp(databaseUrl: string, options: { rateLimit?: boolea
     app,
     auth,
     email,
+    storage,
     db: database.db,
     close: database.close,
     call,

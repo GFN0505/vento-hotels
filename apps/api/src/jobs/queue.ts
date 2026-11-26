@@ -1,18 +1,23 @@
 // Background jobs on pg-boss, in the same Postgres (no Redis; see ARCHITECTURE.md). Each job type has
 // a zod schema for its data, its own queue and retry policy, and an idempotent handler. Stage 0 runs
-// two: sending email with retries, and a heartbeat that /health watches. Night audit steps, ARI
+// two: sending email with retries, and a heartbeat that /health watches; Stage 1 adds the daily
+// clean-up of unconfirmed uploads. Night audit steps, ARI
 // pushes, webhooks, messages and reports join from Stage 1.
 import { PgBoss } from 'pg-boss'
 import { z } from 'zod'
+import type { Database } from '../db/client.ts'
 import { reportError } from '../observability/errors.ts'
 import { logger } from '../observability/log.ts'
 import type { EmailMessage, EmailProvider } from '../providers/email.ts'
+import type { StorageProvider } from '../providers/storage.ts'
+import { purgeUnconfirmedUploads } from '../tenancy/logo.ts'
 
 const emailSchema = z.object({ to: z.string(), subject: z.string(), text: z.string() })
 
 export const JOB_DATA = {
   'email.send': emailSchema,
   'system.heartbeat': z.object({}),
+  'storage.purgeUnconfirmed': z.object({}),
 } as const
 
 export type JobName = keyof typeof JOB_DATA
@@ -33,9 +38,19 @@ const QUEUES: Record<JobName, Parameters<PgBoss['createQueue']>[1]> = {
     deleteAfterSeconds: 60 * 60,
   },
   'system.heartbeat': { retryLimit: 0, expireInSeconds: 30, deleteAfterSeconds: 60 * 60 },
+  // Once a day; a missed run just leaves the files for the next one.
+  'storage.purgeUnconfirmed': {
+    retryLimit: 3,
+    retryDelay: 60,
+    retryBackoff: true,
+    expireInSeconds: 15 * 60,
+    deleteAfterSeconds: 7 * 24 * 60 * 60,
+  },
 }
 
 const HEARTBEAT_EVERY = '* * * * *'
+// 03:30 UTC (04:30 in Lagos), clear of the night audit window.
+const PURGE_UPLOADS_AT = '30 3 * * *'
 // The heartbeat runs every minute; three missed means the workers aren't running.
 const HEARTBEAT_STALE_MS = 3 * 60 * 1000
 
@@ -49,6 +64,9 @@ export type Jobs = {
 export async function startJobs(options: {
   databaseUrl: string
   email: EmailProvider
+  // For the daily clean-up of uploads that were never confirmed.
+  db?: Database
+  storage?: StorageProvider | undefined
   // A separate schema lets tests run their own pg-boss without touching anyone else's.
   schema?: string
 }): Promise<Jobs> {
@@ -85,6 +103,13 @@ export async function startJobs(options: {
     lastBeat = Date.now()
   })
   await boss.schedule('system.heartbeat', HEARTBEAT_EVERY)
+  const { db, storage } = options
+  if (db && storage) {
+    await boss.work('storage.purgeUnconfirmed', async () => {
+      await purgeUnconfirmedUploads(db, storage)
+    })
+    await boss.schedule('storage.purgeUnconfirmed', PURGE_UPLOADS_AT)
+  }
 
   const queue: JobQueue = {
     async send(name, data) {

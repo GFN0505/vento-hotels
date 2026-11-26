@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { CANT_REACH_VENTO, isConnectionProblem, problemMessage } from './errors'
+import {
+  apiMessage,
+  CANT_REACH_VENTO,
+  errorCode,
+  isConnectionProblem,
+  problemMessage,
+} from './errors'
 
 describe('isConnectionProblem', () => {
   it('is not a problem when the request worked', () => {
@@ -31,5 +37,26 @@ describe('problemMessage', () => {
   it('shows the connection message for anything else', () => {
     expect(problemMessage(new TypeError('Failed to fetch'))).toBe(CANT_REACH_VENTO)
     expect(problemMessage({ status: 500, message: 'Internal server error' })).toBe(CANT_REACH_VENTO)
+  })
+})
+
+describe('errorCode and apiMessage', () => {
+  const storageOff = {
+    status: 503,
+    message: "Uploads aren't set up on this server yet.",
+    data: { code: 'STORAGE_OFF' },
+  }
+
+  it('reads the code an API error carries', () => {
+    expect(errorCode(storageOff)).toBe('STORAGE_OFF')
+    expect(errorCode(new Error('x'))).toBeUndefined()
+    expect(errorCode({ data: { code: 4 } })).toBeUndefined()
+  })
+
+  it("trusts the API's words for a known 5xx answer only when asked", () => {
+    expect(apiMessage(storageOff)).toBe(CANT_REACH_VENTO)
+    expect(apiMessage(storageOff, ['STORAGE_OFF'])).toBe(
+      "Uploads aren't set up on this server yet.",
+    )
   })
 })

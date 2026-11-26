@@ -42,6 +42,12 @@ export function SetupChecklist({ className }: { className?: string }) {
   function action(step: SetupStep): ReactNode {
     const cls = step.key === next ? primaryButton : outlineButton
     switch (step.key) {
+      case 'details':
+        return (
+          <Link to="/settings/hotels" className={cls}>
+            Complete
+          </Link>
+        )
       case 'rooms':
         return (
           <Link to="/rates/rooms" className={cls}>
