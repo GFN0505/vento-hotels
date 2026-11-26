@@ -14,6 +14,15 @@ const envSchema = infraEnvSchema.extend({
   // Local development and browser tests only: save emails as files here instead of printing them.
   EMAIL_OUTBOX_DIR: z.string().optional(),
   // Development and browser tests only: every module on, released or not (decision 0021).
+  // Background jobs (pg-boss) in this process. Off for processes that only serve requests.
+  JOBS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  // Error tracking (Sentry). Unset means off; logs still record every error.
+  SENTRY_DSN: z.url().optional(),
+  // debug, info (default), warn or error.
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error', 'silent']).optional(),
   VENTO_ALL_FEATURES: z
     .enum(['true', 'false'])
     .default('false')

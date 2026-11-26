@@ -28,7 +28,8 @@ apps/
       features/              feature switches per group, `pnpm features` command       (brick 9)
       devices/               shared devices, staff PINs, PIN sign-in checks            (brick 10)
       seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14)
-      jobs/                  pg-boss workers and schedules                            (brick 17 / Stage 1)
+      jobs/                  pg-boss queue, email retries, heartbeat                   (brick 17); business jobs from Stage 1
+      observability/         pino logs with request ids, Sentry error reports          (brick 17)
       providers/             email, SMS, WhatsApp, payments, channel manager, storage (as needed)
       pdf/                   @react-pdf/renderer documents                            (Stage 1)
       modules/<module>/      <module>.service.ts, <module>.router.ts, tests next to them
@@ -101,8 +102,8 @@ packages/
 - Statutory rates (VAT, consumption tax, service charge, payroll deductions) are versioned configuration with effective dates.
 
 ## Background jobs
-*Planned (brick 17, used from Stage 1).*
-pg-boss on the same Postgres, no Redis. Used for night audit steps, ARI pushes to the channel manager, payment and channel webhooks, guest messages, the owner's daily report, scheduled checks (room discrepancy, deposits due) and large imports. Every job is idempotent and retried with backoff; failures are visible to devops.
+*In review (brick 17): the queue, email retries and the heartbeat (decision 0025). Stage 1 adds the first business jobs.*
+pg-boss on the same Postgres, no Redis. `apps/api/src/jobs/queue.ts` holds each job's zod schema, queue options and handler; the API process starts the workers when `JOBS_ENABLED` is true, and `/health` reports `jobs` from a heartbeat every minute. Email already goes through the `email.send` queue. Used for night audit steps, ARI pushes to the channel manager, payment and channel webhooks, guest messages, the owner's daily report, scheduled checks (room discrepancy, deposits due) and large imports. Every job is idempotent and retried with backoff; failures are visible to devops.
 
 ## Files and PDFs
 *Local storage service built in brick 2; file handling and PDFs planned (Stage 1).*
@@ -114,7 +115,7 @@ pg-boss on the same Postgres, no Redis. Used for night audit steps, ARI pushes t
 Every outside service sits behind an interface in `apps/api/src/providers/` with a fake for tests and local work: `EmailProvider`, `SmsProvider`, `WhatsAppProvider`, `PaymentProvider` (Paystack), `ChannelProvider` (one certified channel manager), `StorageProvider`. Which provider to use is an open question in `docs/DOMAIN.md` until decided in `docs/decisions/`.
 
 ## Environments
-*Planned (brick 17). Hosting is undecided.*
+*Hosting is undecided (brick 18, needs the owner's choice). Logs and error tracking are ready for it (decision 0025).*
 | Environment | Purpose | Data |
 |---|---|---|
 | local | Development on a laptop: Docker Postgres (5433) and RustFS storage (9100, console 9101) | demo seed |

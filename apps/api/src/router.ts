@@ -7,6 +7,7 @@ import type { Database } from './db/client.ts'
 import * as devices from './devices/service.ts'
 import { guardDeviceSession } from './devices/session-guard.ts'
 import * as governance from './governance/service.ts'
+import { noteOrganization } from './observability/request-context.ts'
 import type { EmailProvider } from './providers/email.ts'
 import { clientAddress, type RateLimiter } from './rate-limit.ts'
 import type { HealthCheck } from './system/health.ts'
@@ -55,6 +56,7 @@ const inOrganization = authed.use(async ({ context, next }) => {
     deviceId: (context.session as { deviceId?: string | null }).deviceId ?? null,
   })
   if (!access) throw new ORPCError('FORBIDDEN', { message: "You don't have access to this" })
+  noteOrganization(organizationId)
   return next({ context: { access } })
 })
 

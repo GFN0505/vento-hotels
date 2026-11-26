@@ -1,9 +1,11 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { AuthCard } from '@/components/auth-card'
 import { authClient } from '@/lib/auth'
 import { usePageTitle } from '@/lib/title'
+import { reportError } from '@/observability/errors'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: () => (
@@ -18,8 +20,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 // Anything unexpected: say it plainly and offer the one thing that usually fixes it. Most often it's
 // the connection, so say that first.
-function Failed() {
+function Failed({ error }: { error: unknown }) {
   usePageTitle('Something went wrong')
+  useEffect(() => reportError(error), [error])
   return (
     <AuthCard
       title="Something went wrong"

@@ -12,6 +12,8 @@ export const healthSchema = z.object({
   checks: z.object({
     database: serviceCheckSchema,
     storage: serviceCheckSchema,
+    // Background jobs: absent where workers don't run (e.g. tests).
+    jobs: serviceCheckSchema.optional(),
   }),
   checkedAt: z.iso.datetime(),
 })
