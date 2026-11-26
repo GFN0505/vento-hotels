@@ -1,17 +1,21 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router'
-import { useEffect } from 'react'
-import { Toaster } from 'sonner'
+import { lazy, Suspense, useEffect } from 'react'
 import { AuthCard } from '@/components/auth-card'
 import { authClient } from '@/lib/auth'
 import { usePageTitle } from '@/lib/title'
 import { reportError } from '@/observability/errors'
 
+// Loaded after the first page: toasts only follow something the person did, by which time it's here.
+const Toaster = lazy(() => import('sonner').then((m) => ({ default: m.Toaster })))
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   component: () => (
     <>
       <Outlet />
-      <Toaster position="bottom-right" closeButton />
+      <Suspense fallback={null}>
+        <Toaster position="bottom-right" closeButton />
+      </Suspense>
     </>
   ),
   notFoundComponent: NotFound,

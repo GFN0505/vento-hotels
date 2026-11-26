@@ -20,7 +20,7 @@ export function QuickActions({
   const me = useMe()
   const usable = actions.filter((action) => {
     const module = findModule(action.to)
-    return module ? me.has(module.feature) && roleSees(role, module) : false
+    return module ? me.has(module.feature) && roleSees(role, module, me.can) : false
   })
   if (usable.length === 0 && !children) return null
   return (

@@ -19,17 +19,20 @@ apps/
       infra/                 settings reader (zod) and database/storage checks        (bricks 2–3)
       db/columns.ts          id (uuidv7), timestamps, archivedAt, amount, currency    (brick 4)
       db/client.ts           pg pool + Drizzle, snake_case columns                    (brick 4)
-      db/schema/             auth.ts (Better Auth), tenancy.ts, governance.ts          (bricks 5–12)
+      db/schema/             auth.ts (Better Auth), tenancy.ts, governance.ts          (bricks 5–12); rooms.ts (Stage 1)
       db/migrate.ts          applies migrations as a release step, never on app start (brick 4)
       auth/auth.ts           Better Auth: email + password, organizations, two-step, /api/auth/* (bricks 5, 12)
       tenancy/access.ts      loadAccess, scopeToProperties, requirePermission, requireWithinLimit (bricks 5–6)
       tenancy/service.ts     entities, properties, member property access, Home figures (bricks 5, 15)
-      audit/record.ts        recordAudit(tx, access, event), same transaction          (brick 6)
+      audit/record.ts        recordAudit / recordAuditMany(tx, access, …), same transaction (brick 6)
       governance/service.ts  audit log, permissions matrix list/set                  (brick 6)
       team/                  members list/update/remove, invitations, join from link   (brick 8)
       features/              feature switches per group, `pnpm features` command       (brick 9)
       devices/               shared devices, staff PINs, PIN sign-in, PIN session rules (brick 10)
-      seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14)
+      rooms/                 room types and rooms per property: reads, writes, bulk, locks,
+                             connecting rooms, "Add rooms by floor" with new types (room-batch.ts),
+                             Mark inspected, the roomCountChanged hook (Stage 1)
+      seed/                  the demo group for development and sales demos (`pnpm db:seed`) (brick 14); rooms.ts: 382 rooms (Stage 1)
       jobs/                  pg-boss queue, email retries, heartbeat                   (brick 17); business jobs from Stage 1
       observability/         pino logs with request ids, Sentry error reports          (brick 17)
       providers/email.ts     EmailProvider and its console, file and memory versions   (brick 5); SMS, WhatsApp, payments, channel manager, storage as each stage needs them
@@ -64,9 +67,10 @@ packages/
       locale.ts              NGN default, supported currencies, Africa/Lagos           (brick 1)
       roles.ts, password.ts  the 16 hotel roles; the password rule                     (bricks 5, 7)
       permissions.ts         permission keys, limit kinds, default matrix            (brick 6)
+      rooms.ts               room fields, numbering, "Add rooms by floor" expansion   (Stage 1)
       features.ts            the feature catalog (decision 0021)                       (brick 9)
       devices.ts, pin.ts     device kinds and idle times; the PIN rule                 (brick 10)
-      contracts/             the oRPC contract: system, tenancy, governance, team, devices (bricks 4–10)
+      contracts/             the oRPC contract: system, tenancy, governance, team, devices (bricks 4–10), rooms (Stage 1)
 deploy/                      images, compose.yml, Caddyfile, backups, server bootstrap (brick 18)
 ```
 New modules from Stage 1 add their own folder in `apps/api/src/` (service, router, tests next to them) and their schemas and contract in `packages/shared/src/`, following the `add-module` skill.
@@ -109,6 +113,7 @@ New modules from Stage 1 add their own folder in `apps/api/src/` (service, route
 - **Folio postings and ledger entries are append-only.** Corrections are reversals with a reason. The ledger balances per entity.
 - **Business date** is a `date` per property that only moves forward at night audit. Charges, revenue and reports use it, not the wall clock.
 - **Availability locking:** booking, modifying, cancelling and channel ingest lock the room-type inventory rows for the dates (`SELECT … FOR UPDATE`) in one transaction. Overbooking only up to a configured limit.
+- **Rooms** (migration 0008, Stage 1 brick 1): `room_types`, `rooms` and `room_connections` per property, and `properties.live_since` (go-live). All three reference their hotel by a composite foreign key `(organization_id, property_id) → properties(organization_id, id)` (migration 0009), so a row can't name another group's hotel. A room's type is a composite foreign key `(property_id, room_type_id)`, so a room can't use another hotel's type even by a hand-written query; connecting rooms are one row per pair. Room numbers are unique per hotel including archived rooms (a database constraint), so concurrent bulk adds can't create the same room twice. **The number of rooms in a type is never stored**: it is counted from active rooms. Every change to it (create, bulk create, archive, restore, delete, change type, archive a type) calls `roomCountChanged(tx, …)` in `apps/api/src/rooms/room-count.ts` inside its transaction; it does nothing yet, and brick 4 makes it lock and adjust the room-type inventory rows from the business date on. Room writes hold their types `FOR SHARE` and archiving a type takes it `FOR UPDATE`, so a type can't be archived while rooms are being added to it.
 - Statutory rates (VAT, consumption tax, service charge, payroll deductions) are versioned configuration with effective dates.
 
 ## Background jobs

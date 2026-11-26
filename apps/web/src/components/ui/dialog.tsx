@@ -1,8 +1,9 @@
-// Dialog on the native <dialog> element: the browser traps focus, closes on Esc, makes the page
-// behind inert and returns focus to the button that opened it. No library, nothing extra to load.
+// Dialog on the native <dialog> element (see use-modal.ts): focus trapped, Esc closes, focus goes
+// back to the opener. No library, nothing extra to load.
 import { X } from 'lucide-react'
-import { type ReactNode, useEffect, useId, useRef } from 'react'
+import { type ReactNode, useId } from 'react'
 import { cn } from '@/lib/cn'
+import { useModal } from './use-modal'
 
 type DialogProps = {
   open: boolean
@@ -23,53 +24,19 @@ export function Dialog({
   footer,
   className,
 }: DialogProps) {
-  const ref = useRef<HTMLDialogElement>(null)
-  // Set when the dialog closes because it's leaving the page (or React re-runs effects in
-  // development), so that close isn't mistaken for the person dismissing it.
-  const silentClose = useRef(false)
+  const modal = useModal(open, onClose)
   const titleId = useId()
   const descriptionId = useId()
-
-  useEffect(() => {
-    const dialog = ref.current
-    if (!dialog || !open) return
-    // Remember what opened it, so focus goes back there however the dialog ends: closed, or
-    // removed from the page by its parent.
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    if (!dialog.open) dialog.showModal()
-    // Opening focuses the first control (Close). A field marked data-autofocus takes it instead,
-    // so people can start working straight away.
-    dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus()
-    return () => {
-      if (dialog.open) {
-        silentClose.current = true
-        dialog.close()
-      }
-      if (opener?.isConnected) opener.focus()
-    }
-  }, [open])
 
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: Esc closes it natively; the click is only for the backdrop.
     <dialog
-      ref={ref}
+      ref={modal.ref}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
-      onClose={() => {
-        if (silentClose.current) {
-          silentClose.current = false
-          return
-        }
-        onClose()
-      }}
-      onCancel={(event) => {
-        event.preventDefault()
-        onClose()
-      }}
-      // A click on the dimmed backdrop lands on the <dialog> itself, never on its contents.
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose()
-      }}
+      onClose={modal.onClose}
+      onCancel={modal.onCancel}
+      onClick={modal.onClick}
       className={cn(
         // The dialog is the column: header and footer stay put, only the middle scrolls.
         'm-auto max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-[520px] flex-col overflow-hidden rounded-md border border-border bg-surface p-0 text-text shadow-[var(--shadow-lg)] open:flex',

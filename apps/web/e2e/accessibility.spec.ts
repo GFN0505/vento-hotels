@@ -2,6 +2,7 @@
 // phone (docs/UX-STANDARD.md, section 5). New pages get a line here when they're built.
 import { test } from '@playwright/test'
 import {
+  buildRooms,
   expectAccessible,
   linkFromEmail,
   signUpOwner,
@@ -64,6 +65,45 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
       await rule.click()
       await page.getByLabel('Reason').waitFor()
+      await expectAccessible(page)
+    })
+
+    test('rooms: the builder, the page, a room, its audit trail, a room type and the builder sheet have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      await signUpOwnerWithGroup(page, `a11y-rooms-${theme}-${testInfo.project.name}`)
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.goto('/rates/rooms')
+      await page.getByRole('button', { name: 'Add type' }).waitFor()
+      await expectAccessible(page)
+      await buildRooms(page)
+      await page.getByRole('button', { name: 'Edit room 401' }).waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Edit room 401' }).click()
+      await page.getByRole('dialog', { name: 'Room 401' }).waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Audit trail' }).click()
+      await page.getByRole('dialog', { name: 'Audit trail' }).getByText('Room added').waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+      await page.keyboard.press('Escape')
+      // Phones fold the room types away until asked.
+      const showTypes = page.getByRole('button', { name: 'Show 2 types' })
+      if (await showTypes.isVisible()) await showTypes.click()
+      await page.getByRole('button', { name: 'Edit Deluxe King' }).click()
+      await page.getByRole('dialog', { name: 'Deluxe King' }).waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+      // Phones keep it in the header's More menu.
+      const more = page.getByRole('button', { name: 'More actions' })
+      if (await more.isVisible()) {
+        await more.click()
+        await expectAccessible(page)
+        await page.getByRole('menuitem', { name: 'Add rooms by floor' }).click()
+      } else {
+        await page.getByRole('button', { name: 'Add rooms by floor' }).click()
+      }
+      await page.getByRole('dialog', { name: 'Add rooms by floor' }).waitFor()
       await expectAccessible(page)
     })
 

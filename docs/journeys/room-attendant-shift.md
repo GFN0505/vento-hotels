@@ -54,7 +54,7 @@
 
 7. **10:00 room check: the skipper in 406.**
    - *Does:* at 10:00 the phone shows "Room check due · floor 4". She opens it (screen 39) and walks the floor, tapping **Occupied** or **Vacant** for every room, including rooms not assigned to her. At 406 the bed has been slept in and two towels are used. She taps **Occupied** and adds a photo.
-   - *Sees:* "Room check sent · 12 rooms · 1 difference".
+   - *Sees:* "Room check sent · 14 rooms · 1 difference".
    - *Behind the scenes:* the server compares her marks with front office status. Room 406 is `vacant` + `inspected` in the system, found used: a **skipper**. An alert goes to Tunde (GM) at once on the Leakage screen (screen 20) and as a notification: "Room 406 · shown vacant, found used at 10:00 (attendant: Blessing). Resolve with a reason." Blessing's view does not say "skipper" or accuse anyone. The alert stays open until Tunde resolves it with a reason, and appears in tomorrow's owner's daily report either way.
 
 8. **Lost and found (10:40, room 403).**

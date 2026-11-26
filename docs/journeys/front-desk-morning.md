@@ -106,6 +106,7 @@
 - Offline: check-in of an assigned arrival queues and syncs; walk-in is disabled with its reason.
 
 ## Open questions
+- **The Okoro family in a Standard Queen (step 7):** four guests (2 adults, 2 children), but Standard Queen in the demo seed sleeps 2 adults and no children (`STQ`, Queen bed). Step 7 is left as written until the walk-in brick (Stage 1 brick 8) settles it: a larger type (e.g. Deluxe King allows 1 child, Junior Suite 3 adults + 1 child), two rooms (e.g. connecting 401/402), or an over-capacity warning the agent can override.
 - **Is the front desk PC a shared device** (PIN sign-in) or a personal device (password + 2FA)? (Settled: front desk PCs are one of the three shared-device kinds, with PIN sign-in. Decision 0022.)
 - The demo world gives Acme's **Executive King rate** (₦180,000.00) without saying whether breakfast is included. This assumes room only, with breakfast on the guest folio; confirm with the design.
 - How is a rate that includes breakfast (Acme's Deluxe King ₦130,000.00) split between rooms and food revenue at night audit?

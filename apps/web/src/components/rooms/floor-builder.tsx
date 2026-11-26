@@ -1,0 +1,178 @@
+// "Add rooms by floor" (design: OnbRooms): new room types, then lines of "type · floors · numbers",
+// a live preview, and one button that creates every room in one go (all or nothing on the API).
+// New room types travel with the rooms in one request, so it's all created or nothing is.
+// On the page (a new hotel) the action bar sticks to the window; in a sheet it's the sheet's footer.
+import { useMutation } from '@tanstack/react-query'
+import { MAX_ROOMS_PER_BATCH, newId, type Property, type RoomTypeView } from '@vento/shared'
+import { type ReactNode, useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { api } from '@/lib/api'
+import { problemMessage } from '@/lib/errors'
+import { useOnline } from '@/offline/connection'
+import { BuilderLines } from './builder-lines'
+import { BuilderPreview } from './builder-preview'
+import { BuilderTypes } from './builder-types'
+import { errorCode, errorKey, NEEDS_CONNECTION, plural } from './format'
+import { useRoomsRefresh } from './queries'
+import { type FloorBuilderState, useFloorBuilder } from './use-floor-builder'
+
+export type BuilderProps = {
+  hotel: Property
+  types: readonly RoomTypeView[]
+  hotelHasRooms: boolean
+  startFloor?: number
+  onCreated?: () => void
+  // Told when the person has typed anything, so a sheet can warn before closing.
+  onDirtyChange?: (dirty: boolean) => void
+}
+
+function statusOf(b: FloorBuilderState, online: boolean): string {
+  const p = b.preview
+  const count = p.toCreate.length
+  if (!online) return NEEDS_CONNECTION
+  if (b.blocker) return b.blocker
+  if (b.checkingNumbers) return 'Checking room numbers…'
+  if (p.tooMany) return `Up to ${MAX_ROOMS_PER_BATCH} rooms in one go. Split them into two.`
+  if (p.duplicates.length)
+    return `${plural(p.duplicates.length, 'room')} in two lines. Change one of them.`
+  const floors = plural(new Set(p.toCreate.map((c) => c.floor)).size, 'floor')
+  const skipped = p.takenCount ? ` · ${p.takenCount} already exist, skipped` : ''
+  return count ? `${plural(count, 'room')} on ${floors}${skipped}` : 'Add a line to see your rooms.'
+}
+
+// The builder's content and its action bar, for the page or a sheet to place.
+export function useBuilderView(props: BuilderProps): { content: ReactNode; actions: ReactNode } {
+  const { hotel, types, hotelHasRooms, startFloor = 1, onCreated, onDirtyChange } = props
+  const online = useOnline()
+  const refresh = useRoomsRefresh()
+  const b = useFloorBuilder({ propertyId: hotel.id, types, hotelHasRooms, startFloor })
+  const [problem, setProblem] = useState<string>()
+  // One id per go: a retry after a timeout replays the same batch instead of creating it twice.
+  const [batchId, setBatchId] = useState(newId)
+  const count = b.preview.toCreate.length
+  useEffect(() => onDirtyChange?.(b.touched), [b.touched, onDirtyChange])
+
+  const create = useMutation({
+    // New types and rooms in one request: all of it is created, or none of it.
+    mutationFn: () =>
+      api.rooms.createMany({
+        propertyId: hotel.id,
+        batchId,
+        newTypes: b.drafts
+          .filter((draft) => draft.name.trim())
+          .map((draft) => {
+            const guests = Number(draft.guests)
+            return {
+              key: draft.key,
+              name: draft.name.trim(),
+              code: draft.code.trim().toUpperCase(),
+              bed: draft.bed,
+              sofaBed: draft.sofaBed,
+              baseOccupancy: Math.min(2, guests),
+              maxAdults: guests,
+              maxChildren: 0,
+            }
+          }),
+        rooms: b.preview.toCreate.map((chip) => {
+          const key = chip.typeKey ?? ''
+          const isNew = b.drafts.some((draft) => draft.key === key)
+          return {
+            number: chip.number,
+            floor: chip.floor,
+            ...(isNew ? { roomTypeKey: key } : { roomTypeId: key }),
+          }
+        }),
+      }),
+    onSuccess: async (result) => {
+      setBatchId(newId())
+      await refresh()
+      toast.success(`${plural(result.created, 'room')} created at ${hotel.name}`)
+      onCreated?.()
+    },
+    onError: async (error) => {
+      await refresh()
+      const code = errorCode(error)
+      const key = errorKey(error)
+      if (key && (code === 'TYPE_NAME_TAKEN' || code === 'TYPE_CODE_TAKEN')) {
+        b.setServerProblem(
+          key,
+          code === 'TYPE_NAME_TAKEN'
+            ? { name: problemMessage(error) }
+            : { code: problemMessage(error) },
+        )
+        setProblem('Fix the room types above.')
+      } else setProblem(problemMessage(error))
+    },
+  })
+
+  const content = (
+    <div className="flex flex-col gap-4">
+      <BuilderTypes
+        saved={types.filter((t) => !t.archivedAt)}
+        tones={b.options}
+        drafts={b.drafts}
+        checks={b.draftChecks}
+        onAdd={b.addDraft}
+        onChange={b.updateDraft}
+        onRemove={b.removeDraft}
+      />
+      <BuilderLines
+        lines={b.lines}
+        options={b.options}
+        checks={b.lineChecks}
+        notes={b.notes}
+        onAdd={b.addLine}
+        onChange={b.updateLine}
+        onRemove={b.removeLine}
+      />
+      <BuilderPreview
+        chips={b.preview.chips}
+        options={b.options}
+        takenCount={b.preview.takenCount}
+        leftOut={b.preview.leftOut}
+        onChip={b.setChip}
+      />
+    </div>
+  )
+  const actions = (
+    <div className="flex w-full flex-wrap items-center gap-3">
+      <p className="num min-w-0 grow text-sm text-text-2" aria-live="polite">
+        {problem ? (
+          <span role="alert" className="text-ro">
+            {problem}
+          </span>
+        ) : (
+          statusOf(b, online)
+        )}
+      </p>
+      <Button
+        variant="primary"
+        size="lg"
+        className="max-lg:h-12 max-sm:w-full"
+        disabled={!online || !b.ready}
+        loading={create.isPending}
+        onClick={() => {
+          setProblem(undefined)
+          create.mutate()
+        }}
+      >
+        {count ? `Create ${plural(count, 'room')}` : 'Create rooms'}
+      </Button>
+    </div>
+  )
+  return { content, actions }
+}
+
+// The empty Rooms page of a new hotel.
+export function FloorBuilder(props: BuilderProps) {
+  const { content, actions } = useBuilderView(props)
+  return (
+    <div className="flex flex-col gap-4">
+      {content}
+      <div className="sticky bottom-0 z-10 -mx-1 rounded-lg border border-border bg-surface/95 px-4 py-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-[var(--shadow-lg)] backdrop-blur-sm">
+        {actions}
+      </div>
+    </div>
+  )
+}

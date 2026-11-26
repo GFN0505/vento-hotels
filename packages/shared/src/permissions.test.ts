@@ -29,6 +29,11 @@ describe('default permissions matrix (docs/DOMAIN.md)', () => {
     expect(defaultRule('fnb_manager', 'pos.discount').limit).toBe('20')
   })
 
+  it('lets owners, group admins and GMs set up rooms, and nobody else by default', () => {
+    const allowed = MEMBER_ROLES.filter((role) => defaultRule(role, 'rooms.setup').allowed)
+    expect(allowed.sort()).toEqual(['general_manager', 'group_admin', 'owner'])
+  })
+
   it('denies what the table leaves blank', () => {
     expect(defaultRule('waiter', 'pos.void_after_send').allowed).toBe(false)
     expect(defaultRule('front_desk', 'refund').allowed).toBe(false)

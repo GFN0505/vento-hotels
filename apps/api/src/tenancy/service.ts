@@ -16,6 +16,7 @@ import { recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { invitations, members, organizations, users } from '../db/schema/auth.ts'
+import { rooms } from '../db/schema/rooms.ts'
 import {
   devices,
   entities,
@@ -24,7 +25,7 @@ import {
   properties,
 } from '../db/schema/tenancy.ts'
 import { idleSecondsFor } from '../devices/service.ts'
-import { type Access, can, propertyScope, requirePermission } from './access.ts'
+import { type Access, can, propertyScope, requirePermission, scopeToProperties } from './access.ts'
 
 const entityColumns = {
   id: entities.id,
@@ -48,6 +49,7 @@ const propertyColumns = {
   checkInTime: properties.checkInTime,
   checkOutTime: properties.checkOutTime,
   businessDate: properties.businessDate,
+  liveSince: properties.liveSince,
 }
 
 // Postgres returns `time` as HH:MM:SS; the API speaks HH:MM.
@@ -234,11 +236,11 @@ export async function createProperty(
   }
 }
 
-// Home's figures: the hotels you can see, and for people who manage the team, how many people,
-// pending invites and live shared devices there are.
+// Home's figures: the hotels you can see with their active rooms, and for people who manage the
+// team, how many people, pending invites and live shared devices there are.
 export async function homeSummary(db: Database, access: Access) {
   const org = access.organizationId
-  const [hotelRows, [groupWide], assigned, deviceRows, team] = await Promise.all([
+  const [hotelRows, [groupWide], assigned, deviceRows, roomRows, team] = await Promise.all([
     db
       .select({ id: properties.id })
       .from(properties)
@@ -258,6 +260,17 @@ export async function homeSummary(db: Database, access: Access) {
       .from(devices)
       .where(and(eq(devices.organizationId, org), isNull(devices.revokedAt)))
       .groupBy(devices.propertyId),
+    db
+      .select({ propertyId: rooms.propertyId, value: count() })
+      .from(rooms)
+      .where(
+        and(
+          eq(rooms.organizationId, org),
+          scopeToProperties(access, rooms.propertyId),
+          isNull(rooms.archivedAt),
+        ),
+      )
+      .groupBy(rooms.propertyId),
     can(access, 'setup.manage')
       ? Promise.all([
           db
@@ -285,13 +298,17 @@ export async function homeSummary(db: Database, access: Access) {
   ])
   const assignedBy = new Map(assigned.map((row) => [row.propertyId, row.value]))
   const devicesBy = new Map(deviceRows.map((row) => [row.propertyId, row.value]))
+  const roomsBy = new Map(roomRows.map((row) => [row.propertyId, row.value]))
+  const byHotel = hotelRows.map(({ id }) => ({
+    propertyId: id,
+    people: (groupWide?.value ?? 0) + (assignedBy.get(id) ?? 0),
+    devices: devicesBy.get(id) ?? 0,
+    rooms: roomsBy.get(id) ?? 0,
+  }))
   return {
     hotels: hotelRows.length,
-    byHotel: hotelRows.map(({ id }) => ({
-      propertyId: id,
-      people: (groupWide?.value ?? 0) + (assignedBy.get(id) ?? 0),
-      devices: devicesBy.get(id) ?? 0,
-    })),
+    rooms: byHotel.reduce((sum, hotel) => sum + hotel.rooms, 0),
+    byHotel,
     members: team?.[0][0]?.value ?? null,
     pendingInvites: team?.[1][0]?.value ?? null,
     devices: team?.[2][0]?.value ?? null,

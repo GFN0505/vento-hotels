@@ -13,19 +13,37 @@
 
 1. **Thu 12 Nov, 10:00 · Create the group.**
    - *Does:* Mrs Okafor signs up, sets up 2FA, and follows onboarding (#19): organization "Kora Hotels Group" → entity "Kora Hospitality Ltd" (RC number, TIN, VAT registered, base currency NGN) → property "Kora Victoria Island", Victoria Island, Eti-Osa, Lagos, time zone Africa/Lagos, owned by Kora Hospitality Ltd.
-   - *Sees:* a setup checklist on home: room types and rooms, rates, taxes, payment methods, staff, devices, imports, go-live date.
+   - *Sees:* a setup checklist on Home: **Set up rooms** ("Room types and rooms, so you can sell them"), rates, taxes, payment methods, staff, devices, imports, go-live date.
    - *Behind the scenes:* one transaction creates organization, entity and property; she becomes `owner`. Audit events for each. Taxes (#27) come pre-filled from Vento's versioned rules for Lagos: VAT, Lagos consumption tax, and a 10% service charge she confirms. She doesn't type any rates.
 
 1a. *Behind the scenes:* the Vento team switches on the modules Kora has bought (front desk first for the pilot) with `pnpm features on`, recorded in Kora's audit log. Mrs Okafor never sees a switch: modules that are off simply aren't in Vento.
 2. **10:20 · Invite Tunde and grant support access.**
    - *Does:* Settings → Members → invites Tunde Bello as `general_manager`, limited to Kora Victoria Island. Then Account and support (#46) → "Give Vento support access" for 7 days.
    - *Sees:* "Support can view and help set up this account until 19 Nov 2026, 10:21. Revoke anytime."
-   - *Behind the scenes:* consent recorded with who, scope and expiry; every support action is an audit event naming the specialist.
+   - *Behind the scenes:* consent recorded with who, scope and expiry; every support action is an audit event naming the specialist. The `general_manager` role includes **Set up room types and rooms** (`rooms.setup`), so Tunde can do step 3 without being able to invite or change staff (that stays with `setup.manage`).
 
-3. **Fri 13 Nov, 09:30 · Rooms.**
-   - *Does:* Tunde and the specialist (on a call) download the room types and rooms templates (#23), paste from the old PMS export, upload.
-   - *Sees:* preview: 4 room types (Standard Queen, Deluxe King, Executive King, Junior Suite), 120 rooms (Standard Queen on floor 3, Deluxe King on 4, Executive King on 5 and 6, Junior Suite on 11, and the floors between). Two errors: "Row 41: room 412 appears twice" and "Row 58: room type `EXEC` doesn't exist. Did you mean `EXK`?" He fixes in Excel and re-uploads.
-   - *Behind the scenes:* job `uploaded → validated → previewed → applied`; rooms created through the same service as the UI.
+3. **Fri 13 Nov, 09:30 · Rooms, floor by floor.**
+   - *Does:* Tunde, with the specialist on a call, clicks **Set up** beside **Set up rooms** on Home. Rooms (#33, under Rates & channels) is empty, so the page is the builder (#19 layout): "Describe the pattern once; Vento numbers every room." Under **Room types** he types four lines, each with name, bed and max guests: Standard Queen (Queen, 2), Deluxe King (King, 2), Executive King (King, 2), Junior Suite (King, sofa bed, 3). Vento suggests the codes `STQ`, `DLK`, `EXK` and `JNS`; he changes the last to `JRS`, the code the old PMS uses. Under **Rooms** he adds one line per block, "room type · floors · numbers on each floor":
+     - Standard Queen · 3 to 3 · 01 to 14
+     - Deluxe King · 4 to 4 · 01 to 14
+     - Executive King · 5 to 6 · 01 to 14
+     - Standard Queen · 7 to 7 · 01 to 14
+     - Standard Queen · 8 to 8 · 01 to 08
+     - Deluxe King · 8 to 8 · 09 to 14
+     - Deluxe King · 9 to 10 · 01 to 14
+     - Junior Suite · 11 to 11 · 01 to 08
+   - *Sees:* the **Preview** fills in as he types, floor by floor, one chip per room coloured by its type, with "Standard Queen 36 · Deluxe King 48 · Executive King 28 · Junior Suite 8". He first typed the second floor-8 line as 08 to 14; room 808 was flagged in the preview and the bar read "1 room in two lines. Change one of them.", with **Create** disabled until he fixed it. Then the bar reads "120 rooms on 9 floors". He clicks **Create 120 rooms**. Toast: "120 rooms created at Kora Victoria Island." The page becomes "Rooms · Setting up · Kora Victoria Island · 120 rooms · 4 types" with the room types table and the rooms table. Main path: 2 clicks after typing.
+   - *Behind the scenes:* the four room types are saved first, then all 120 rooms in one transaction: all or none. Room numbers are unique in the hotel by a database constraint, archived rooms included. New rooms start `vacant` + `dirty`. Each type's room count comes from its rooms, never typed. Audit events `room_type.created` (4) and `room.created` (120, sharing one batch id, so the audit log shows "120 rooms created" as one line), all marked as before go-live.
+
+3a. **10:00 · Room details.**
+   - *Does:* in the rooms table he clicks **Edit** on 407: ticks **Accessible**, adds the feature "Roll-in shower", **Save room**. He ticks **Accessible** on 307, 507 and 901 too, and adds the features the old PMS kept in a notes column: 401 City view with **Connecting room** 402; 406 City view; 412 Near lift; 502 Quiet side (the "quiet room" Acme's travel desk always asks for); 1102 Ocean view and Bathtub. Then **Edit** on each room type: sizes 24, 32, 40 and 58 m², 1 child allowed in Deluxe King, Executive King and Junior Suite, and the amenities (AC, Wi-Fi, smart TV, work desk, kettle, safe, minibar, and so on).
+   - *Sees:* "Room 407 saved", "Deluxe King saved". 402 shows "connecting 401" without being touched. No reason is asked: the hotel isn't live yet.
+   - *Behind the scenes:* `room.changed` and `room_type.changed` with before and after. The connection is stored once and shown on both rooms.
+
+3b. **10:20 · Mark the rooms inspected.**
+   - *Sees:* an amber banner above the tables: "All 120 rooms are dirty until someone checks them. Mark them inspected if they're ready."
+   - *Does:* the hotel is trading and Grace's team keeps the rooms ready, so Tunde clicks **Mark 120 inspected** (1 click). Toast: "120 rooms marked inspected · Undo".
+   - *Behind the scenes:* one `room.status_changed` per room, `dirty` → `inspected`, reason "Set up". The banner shows only while every room is dirty and none has had a stay; from then on room status belongs to the front desk and housekeeping. Before go-live, nothing in rooms setup raises an exception. After go-live (17 Nov), removing a room, restoring one or changing its type asks for a reason ("Recorded with your name.") and appears in the owner's daily report as "Room count changed".
 
 4. **10:15 · Rate plans (by hand).**
    - *Does:* there is no rate plan import, so the specialist creates them in #33 with Tunde: BAR (Standard Queen ₦120,000.00, Deluxe King ₦150,000.00, Executive King ₦210,000.00, Junior Suite ₦320,000.00 per night, room only), BAR Bed & Breakfast, Non-refundable (BAR − 10%, derived), Corporate.
@@ -52,7 +70,7 @@
 
 9. **Sat 14 Nov · Future reservations with deposits.**
    - *Does:* Tunde imports 418 future reservations (arrivals 16 Nov 2026 to 28 Feb 2027) with deposits, including Mr Mensah's Acme booking for 25–28 Nov.
-   - *Sees:* 417 applied, 1 conflict: "Row 147 · Junior Suite · 4–6 Dec 2026 · Junior Suite is full on 4 Dec (2 of 2). Not imported." Deposits held: ₦24,780,000.00 across 188 reservations.
+   - *Sees:* 417 applied, 1 conflict: "Row 147 · Junior Suite · 4–6 Dec 2026 · Junior Suite is full on 4 Dec (8 of 8). Not imported." Deposits held: ₦24,780,000.00 across 188 reservations.
    - *Behind the scenes:* each row goes through the booking service with the inventory lock per room type and date; the overbooking limit is 0, so the old PMS's double booking is refused, never moved to another type. Deposits are recorded as deposits held with method, reference and original date, marked opening. One ARI push after the job.
    - *Does:* Tunde calls the guest on row 147, who accepts an Executive King for 4–6 Dec. He changes the room type in the file and re-uploads; the other 417 rows report "already exists" and only row 147 is applied.
 
@@ -83,6 +101,10 @@
     - Day 7: deposits held report matches the old PMS's last list; Tunde ticks the last item on the setup checklist.
 
 ## What can go wrong
+- **Two people adding rooms at once:** if the specialist and Tunde both create 412, the second sees "Room 412 already exists." and nothing from that batch is saved. In the builder, numbers that already exist show struck through ("Room 412 already exists, so it's skipped.") and are never overwritten.
+- **Someone else tries to set up rooms:** a front desk agent who opens Rooms sees "Only a GM or the owner can set up rooms. Ask your GM." The server refuses the request whatever the screen shows.
+- **Connection drops mid-setup:** the page shows the rooms already saved, the buttons say "Needs a connection", and nothing is queued. A **Create** that didn't reach the server created nothing.
+- **Rooms from the old PMS file instead of by hand** (the room import, a later Stage 1 brick): the same rules by row, e.g. "Row 41: room 412 appears twice" and "Row 58: room type `EXEC` doesn't exist. Did you mean `EXK`?". Numbering the builder can't express (`A101`) comes in this way or one room at a time with **Add room**.
 - **Wrong scope in the file:** a column naming Kora Abuja is an error, not a switch of property.
 - **Ambiguous dates:** "03/04/2026" is rejected with "Use 25/11/2026 or 2026-11-25", never guessed.
 - **Money with float noise:** "125000.0000001" from Excel is an error; amounts are read from the cell text.
@@ -95,6 +117,7 @@
 
 ## Targets
 - Organization, entity and property created: under 10 minutes.
+- 4 room types and 120 rooms by hand: under 10 minutes; one block of rooms on a floor in under 1 minute and 2 clicks after typing.
 - Each import: template download to preview in under 3 minutes for a 3,000-row file; progress shown for large files.
 - Every error points to a row and a column in plain words.
 - Whole setup to parallel run: within 3 working days with Vento's help.
@@ -103,7 +126,9 @@
 ## Becomes tests
 `apps/web/e2e/journeys/going-live.spec.ts`
 - Onboarding creates organization, entity and property in one go; the creator is `owner`; audit events exist.
-- Room import reports duplicate room numbers and unknown room type codes by row; corrected file applies 120 rooms.
+- Tunde (GM, `rooms.setup`) creates the 4 room types (`STQ`, `DLK`, `EXK`, `JRS`) and 120 rooms with the builder in one transaction; the per-type counts are 36 / 48 / 28 / 8; a room in two lines keeps **Create** disabled; a front desk member is refused by the server.
+- **Mark 120 inspected** writes one `room.status_changed` per room with reason "Set up" and can be undone; before go-live no reason is asked and no exception is raised.
+- Room import (later Stage 1 brick) reports duplicate room numbers and unknown room type codes by row; corrected file applies 120 rooms.
 - Guest import skips invalid rows, flags duplicates on phone without merging; merge on #41 combines history and is undoable.
 - City ledger opening balances require owner or finance; undo within 24 hours creates reversals; a second job is refused until the first is undone; ageing uses original invoice dates.
 - Future reservation import with one over-capacity row reports a conflict with room type and date, applies the rest, and never exceeds the overbooking limit; re-import is idempotent by source reference.
@@ -114,7 +139,8 @@
 
 ## Open questions
 - **Rate plans aren't an import kind** in the data-import rules, yet corporate account rows need rate plans to exist. Add a rate plan import, or keep them manual?
-- **First business date:** what is the property's business date between setup (12 Nov) and go-live (16 Nov), and what date do deposits imported on 14 Nov post on?
+- **First business date:** what is the property's business date between setup (12 Nov) and go-live (16 Nov), and what date do deposits imported on 14 Nov post on? (The rooms spec walks step 3 on business date 13 Nov, while step 12 calls 16 Nov Vento's first business date.)
+- **Room status at the start of the parallel run:** step 3b marks all 120 rooms inspected on 13 Nov, but on 16 Nov about 75 rooms are occupied in the old PMS and some are dirty. How do in-house stays and real room statuses reach Vento before the first check-out? Linked to the folio history question below.
 - **Opening balances as-of date** when they're imported days before go-live and change during the parallel run: re-import the difference, or post adjustments?
 - **Can Ibrahim's night limit be set at invite?** (Settled: staff set their own PIN from the account menu after joining; a manager can reset it. Decision 0022.)
 - Is there a **parallel-run comparison** screen, or does Tunde compare reports by hand?

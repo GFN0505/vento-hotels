@@ -2,7 +2,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { isStrongPassword } from '@vento/shared'
 import { type FormEvent, useState } from 'react'
-import { z } from 'zod'
 import { AuthCard } from '@/components/auth-card'
 import { PasswordRules } from '@/components/password-rules'
 import { Button } from '@/components/ui/button'
@@ -13,7 +12,11 @@ import { checkNewPassword, type PasswordErrors } from '@/lib/password'
 import { usePageTitle } from '@/lib/title'
 
 export const Route = createFileRoute('/reset-password')({
-  validateSearch: z.object({ token: z.string().optional(), error: z.string().optional() }),
+  // Hand-written rather than zod: route options load with the first page (bundle-budget.json).
+  validateSearch: (search: Record<string, unknown>): { token?: string; error?: string } => ({
+    ...(typeof search.token === 'string' ? { token: search.token } : {}),
+    ...(typeof search.error === 'string' ? { error: search.error } : {}),
+  }),
   component: ResetPassword,
 })
 

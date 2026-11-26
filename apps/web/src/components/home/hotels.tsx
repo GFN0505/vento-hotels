@@ -50,7 +50,7 @@ function DateBadge({ hotel }: { hotel: Property }) {
   )
 }
 
-const FUTURE_NOTE = 'Rooms, occupancy, ADR and revenue join here once front office is running.'
+const FUTURE_NOTE = 'Occupancy, ADR and revenue join here once front office is running.'
 
 function FutureNote() {
   return (
@@ -75,6 +75,11 @@ export function HotelsBoard({
   summary: HomeSummary | undefined
   onOpen: (id: string) => void
 }) {
+  // The Rooms column appears once any hotel has rooms (spec: room types and rooms).
+  const rooms = (summary?.rooms ?? 0) > 0
+  const columns = rooms
+    ? 'md:grid-cols-[minmax(0,1fr)_120px_80px_90px_90px_20px]'
+    : 'md:grid-cols-[minmax(0,1fr)_120px_90px_90px_20px]'
   return (
     <section
       aria-labelledby="hotels-heading"
@@ -92,10 +97,14 @@ export function HotelsBoard({
       {/* Column names for wide screens; on phones each row reads on its own. */}
       <div
         aria-hidden="true"
-        className="hidden grid-cols-[minmax(0,1fr)_120px_90px_90px_20px] gap-4 border-b border-border bg-surface-2/60 px-5 py-2 text-xs font-medium text-text-3 md:grid"
+        className={cn(
+          'hidden gap-4 border-b border-border bg-surface-2/60 px-5 py-2 text-xs font-medium text-text-3 md:grid',
+          columns,
+        )}
       >
         <span>Hotel</span>
         <span>Business date</span>
+        {rooms ? <span>Rooms</span> : null}
         <span>People</span>
         <span>Devices</span>
         <span />
@@ -108,7 +117,10 @@ export function HotelsBoard({
               <button
                 type="button"
                 onClick={() => onOpen(hotel.id)}
-                className="group grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-4 text-left transition-colors hover:bg-surface-2/60 md:grid-cols-[minmax(0,1fr)_120px_90px_90px_20px]"
+                className={cn(
+                  'group grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-4 text-left transition-colors hover:bg-surface-2/60',
+                  columns,
+                )}
               >
                 <span className="flex min-w-0 items-center gap-4 max-md:contents">
                   <Monogram name={hotel.name} />
@@ -130,6 +142,7 @@ export function HotelsBoard({
                   <span>
                     <DateBadge hotel={hotel} />
                   </span>
+                  {rooms ? <Count icon={BedDouble} value={counts?.rooms} label="rooms" /> : null}
                   <Count icon={Users} value={counts?.people} label="people" />
                   <Count icon={MonitorSmartphone} value={counts?.devices} label="devices" />
                 </span>
@@ -175,11 +188,14 @@ export function HotelCard({
   hotel,
   summary,
   managesTeam,
+  canSetUpRooms = false,
   compact,
 }: {
   hotel: Property
   summary: HomeSummary | undefined
   managesTeam: boolean
+  // Rooms links to the hotel's rooms page for people who set them up.
+  canSetUpRooms?: boolean
   // For roles that don't run the hotel: its name and business date, no setup facts.
   compact?: boolean
 }) {
@@ -215,21 +231,19 @@ export function HotelCard({
           <p className="text-sm text-text-2">{where(hotel)}</p>
         </div>
       </header>
-      <dl className="grid grid-cols-2 gap-px bg-border sm:grid-cols-3 xl:grid-cols-5">
+      <dl className="grid grid-cols-2 gap-px bg-border sm:grid-cols-3 xl:grid-cols-6">
         <Fact label="Business date">
           <DateBadge hotel={hotel} />
         </Fact>
         <Fact label="Check-in">{hotel.checkInTime}</Fact>
         <Fact label="Check-out">{hotel.checkOutTime}</Fact>
+        <Fact label="Rooms" to={canSetUpRooms ? '/rates/rooms' : undefined}>
+          {counts?.rooms}
+        </Fact>
         <Fact label="People" to={managesTeam ? '/settings/members' : undefined}>
           {counts?.people}
         </Fact>
-        <Fact
-          label="Shared devices"
-          to={managesTeam ? '/settings/devices' : undefined}
-          // Fills the row, so no empty cell shows the grid's lines.
-          className="col-span-2 xl:col-span-1"
-        >
+        <Fact label="Shared devices" to={managesTeam ? '/settings/devices' : undefined}>
           {counts?.devices}
         </Fact>
       </dl>
@@ -246,7 +260,7 @@ function Fact({
 }: {
   label: string
   children: ReactNode
-  to?: '/settings/members' | '/settings/devices' | undefined
+  to?: '/settings/members' | '/settings/devices' | '/rates/rooms' | undefined
   className?: string
 }) {
   const value =

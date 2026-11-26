@@ -14,13 +14,13 @@ Covered by round 4 of the design prompt (screens 24–29).
 |---|---|---|---|
 | Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7); accept invite built (brick 8); two-step code at sign-in built (brick 12)** | 0 | Includes "no property assigned" and "device not registered" states. Both built: "device not registered" on the lock screen (brick 10), "no property assigned" on Home (brick 7) |
 | Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** | 0 | Approval prompt in Stage 1 (with the first action that needs it); offline PIN sign-in ships with the outbox (decision 0024) |
-| Onboarding and setup checklist | designed #19 · **first steps and Home checklist built (bricks 7, 13)** | 0 | Built: create account, confirm email, group + company + first hotel; Home's "Finish setting up" with the Stage 0 steps. Rooms, rates and first booking steps come with Stage 1 |
+| Onboarding and setup checklist | designed #19 · **first steps and Home checklist built (bricks 7, 13)** | 0 | Built: create account, confirm email, group + company + first hotel; Home's "Finish setting up" with the Stage 0 steps and **Set up rooms** (Stage 1 brick 1). Rates and first booking steps come with their bricks |
 | Properties list and property settings | designed #25 | 0 | Logo, address, time zone, check-in/out times, business date, owning entity |
 | Entities and departments | designed #25 | 0 | RC number, TIN, VAT status |
 | Members and roles | designed #25 · **built (brick 8)** | 0 | Invite, assign roles, limit to properties. PIN-only staff, 2FA and entity limits still to build |
 | **Permissions matrix and limits editor** | designed #26 · **built (brick 8)** | 0 | Roles × actions grid with limits; owner only; every change audited. Effective dates, approvers and export still to build |
 | Devices | designed #25 · **built (brick 10)** | 0 | Register, name, bind to property, revoke |
-| **Audit log viewer** | designed #28 | 0 | Filter by staff, action, property, date; before/after diff; also a drawer on every record |
+| **Audit log viewer** | designed #28 | 0 | Filter by staff, action, property, date; before/after diff; also a drawer on every record. **Drawer on a room built (Stage 1 brick 1)** |
 | Notifications centre | designed #29 | 0 | Bell menu + full list; what each role is alerted about |
 | My profile and preferences | pattern · **account menu built (bricks 10–12)** | 0 | Password, 2FA, PIN reset, theme. Built in the account menu: set your staff PIN, two-step sign-in, Appearance (light, dark or system). A profile page (name, password) still to build |
 | Global search results (beyond ⌘K) | pattern | 0 | |
@@ -46,7 +46,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Deposits held | designed #34 | 1 | List of deposits not yet applied, with ageing |
 | Cashier shift open and close (blind count) | designed #34 | 1 | Open shift and blind count need their own design |
 | Night audit wizard | designed #15 | 1 | |
-| Room types and rooms (ongoing management) | designed #33 | 1 | Onboarding covers creation only |
+| Room types and rooms (ongoing management) | designed #33 · **built (Stage 1 brick 1)** | 1 | Rates & channels › Rooms: room types (reorder, edit, remove, restore), rooms table with search, quick views, type and floor filters and bulk change type / remove, room and room type sheets, "Add rooms by floor" builder (OnbRooms) as the empty page and a sheet, reason dialog after go-live. Base rate, Sold on and out-of-order dates come with their bricks. Audit trail on a room (`AuditOnRoom`) built as a sheet from the room; ⌘K entries come with the search brick |
 | **Rate plans list and editor** | designed #33 | 1 | Meal plan, cancellation policy, deposit rule, derived plans; #8 is only the grid |
 | Guest register export | designed #35 | 1 | For authorities; foreign nationals section |
 

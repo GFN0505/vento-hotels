@@ -42,5 +42,6 @@ docs/help/
 | [Turn on two-step sign-in](getting-started/turn-on-two-step-sign-in.md) | going-live, owner-morning | written |
 | [Switch between your hotels and the whole group](getting-started/switch-between-hotels.md) | owner-morning | written |
 | [When the internet or power drops](getting-started/when-the-internet-drops.md) | waiter-dinner-service | written |
+| [Set up your rooms](getting-started/set-up-rooms.md) | `going-live.md` step 3 | written |
 
 Status: `todo` · `written` · `published`

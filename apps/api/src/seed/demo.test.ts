@@ -1,9 +1,17 @@
 // The demo seed loads a working group: people can sign in and see exactly what their role allows.
-import type { HomeSummary, MemberView, Property } from '@vento/shared'
-import { newId } from '@vento/shared'
+import type {
+  AuditEventView,
+  HomeSummary,
+  MemberView,
+  Property,
+  RoomTypeView,
+  RoomView,
+} from '@vento/shared'
+import { addDays, calendarDateIn, newId } from '@vento/shared'
 import { afterAll, describe, expect, it } from 'vitest'
+import { switchFeature } from '../features/switches.ts'
 import { createTestApp } from '../test/harness.ts'
-import { seedDemo } from './demo.ts'
+import { LIVE_DAYS_AGO, seedDemo } from './demo.ts'
 
 const url = process.env.TEST_DATABASE_URL
 const PASSWORD = 'Demo-pass-42!'
@@ -78,20 +86,69 @@ describe.skipIf(!url)('demo seed', () => {
       return Object.fromEntries(
         home.data.byHotel.map((row) => [
           hotels.data.items.find((h) => h.id === row.propertyId)?.name,
-          { people: row.people, devices: row.devices },
+          { people: row.people, devices: row.devices, rooms: row.rooms },
         ]),
       )
     }
     // Two people see every hotel (owner and finance); eight more work at Victoria Island.
     expect(await byName(await signInAs(`adaeze@${options.emailDomain}`))).toEqual({
-      'Kora Victoria Island': { people: 10, devices: 3 },
-      'Kora Ikeja GRA': { people: 2, devices: 0 },
-      'Kora Abuja': { people: 2, devices: 0 },
-      'Kora Port Harcourt': { people: 2, devices: 0 },
+      'Kora Victoria Island': { people: 10, devices: 3, rooms: 120 },
+      'Kora Ikeja GRA': { people: 2, devices: 0, rooms: 86 },
+      'Kora Abuja': { people: 2, devices: 0, rooms: 104 },
+      'Kora Port Harcourt': { people: 2, devices: 0, rooms: 72 },
     })
     const frontDesk = await signInAs(`chiamaka@${options.emailDomain}`)
-    expect(await byName(frontDesk)).toEqual({ 'Kora Victoria Island': { people: 10, devices: 3 } })
+    expect(await byName(frontDesk)).toEqual({
+      'Kora Victoria Island': { people: 10, devices: 3, rooms: 120 },
+    })
     const home = await t.rpc<HomeSummary>(frontDesk, 'organization/home', {})
     expect(home.data.members).toBeNull()
+  })
+
+  it('sets up Kora Victoria Island’s rooms exactly as the designs show', async () => {
+    const owner = await signInAs(`adaeze@${options.emailDomain}`)
+    const home = await t.rpc<HomeSummary>(owner, 'organization/home', {})
+    expect(home.data.rooms).toBe(382)
+
+    const seeded = await seedDemo(t.db, options)
+    await switchFeature(t.db, seeded.organizationId, {
+      feature: 'front_desk',
+      to: 'on',
+      reason: 'Seed test',
+    })
+    const gm = await signInAs(`tunde@${options.emailDomain}`)
+    const [vi] = (await t.rpc<{ items: Property[] }>(gm, 'properties/list', {})).data.items
+    // Go-live 10 days before the seed date, in Lagos (going-live.md: 16 Nov for a 26 Nov seed).
+    expect(vi?.liveSince).toBe(addDays(calendarDateIn('Africa/Lagos'), -LIVE_DAYS_AGO))
+    const types = await t.rpc<{ items: RoomTypeView[] }>(gm, 'roomTypes/list', {
+      propertyId: vi?.id,
+    })
+    expect(types.data.items.map((type) => [type.code, type.roomCount])).toEqual([
+      ['STQ', 36],
+      ['DLK', 48],
+      ['EXK', 28],
+      ['JRS', 8],
+    ])
+    const find = async (q: string) =>
+      (
+        await t.rpc<{ items: RoomView[] }>(gm, 'rooms/list', { propertyId: vi?.id, q })
+      ).data.items.find((room) => room.number === q)
+    expect(await find('401')).toMatchObject({
+      features: ['City view'],
+      connectingRooms: [{ number: '402' }],
+      housekeepingStatus: 'inspected',
+    })
+    expect(await find('407')).toMatchObject({ accessible: true, features: ['Roll-in shower'] })
+    expect((await find('808'))?.roomTypeCode).toBe('STQ')
+    expect((await find('809'))?.roomTypeCode).toBe('DLK')
+    // Set up before go-live, so the setup raises no "room count changed" exception.
+    const history = await t.rpc<{ items: AuditEventView[] }>(owner, 'audit/list', {
+      entityType: 'room',
+      entityId: (await find('401'))?.id,
+    })
+    expect(history.data.items[0]).toMatchObject({
+      action: 'room.created',
+      after: { liveProperty: false },
+    })
   })
 })

@@ -1,8 +1,8 @@
 // The app's menu, as in the approved design (Shell components · Sidebar): every module, grouped,
 // with the feature switch it ships behind (decision 0021) and the roles that use it day to day.
-// Owners and group admins see everything. When a module's own permissions arrive, its entry moves
-// from `roles` to its permission keys; the API is what enforces access, not this list.
-import type { Feature, MemberRole } from '@vento/shared'
+// Owners and group admins see everything. When a module's own permissions arrive, its entry lists
+// them in `needs`; the API is what enforces access, not this list.
+import type { Feature, MemberRole, Permission } from '@vento/shared'
 import {
   BedDouble,
   CalendarDays,
@@ -45,6 +45,8 @@ export type ModuleEntry = {
   feature: Feature
   // Roles besides owner and group admin who use it.
   roles: readonly MemberRole[]
+  // Once built: visible to anyone whose role has ANY of these permissions (instead of `roles`).
+  needs?: readonly Permission[]
   // Release-plan stage that builds it (docs/PRODUCT.md), shown until it ships.
   stage: number
   // One line on what it's for, shown on the page until it ships.
@@ -106,13 +108,16 @@ export const MODULES: readonly NavGroup[] = [
     entries: [
       {
         to: '/rates',
-        tagline: 'Rates, booking engine and OTAs',
+        tagline: 'Rooms, rates, booking engine and OTAs',
         label: 'Rates & channels',
         icon: Tag,
-        feature: 'booking_engine',
+        // Rooms ship first (Stage 1, front desk); rates.edit joins `needs` with rate plans (brick 2),
+        // and channels get their own booking_engine gate.
+        feature: 'front_desk',
         roles: ['general_manager', 'revenue_manager'],
-        stage: 4,
-        about: 'Rate plans, restrictions, your booking engine and the OTAs, in one place.',
+        needs: ['rooms.setup'],
+        stage: 1,
+        about: 'Rooms, rate plans, restrictions, your booking engine and the OTAs, in one place.',
       },
     ],
   },
@@ -216,9 +221,14 @@ export function findModule(path: string): ModuleEntry | undefined {
   return ALL_MODULES.find((entry) => entry.to === path)
 }
 
-// Whether this role uses the entry. Owners and group admins see every module.
-export function roleSees(role: MemberRole, entry: ModuleEntry): boolean {
-  return role === 'owner' || role === 'group_admin' || entry.roles.includes(role)
+type Can = (permission: Permission) => boolean
+
+// Whether this role uses the entry. Owners and group admins see every module. Built modules go by
+// permission (`can` answers for the role shown, previews included), the rest by role.
+export function roleSees(role: MemberRole, entry: ModuleEntry, can?: Can): boolean {
+  if (role === 'owner' || role === 'group_admin') return true
+  if (entry.needs && can) return entry.needs.some(can)
+  return entry.roles.includes(role)
 }
 
 // Roles whose job can span the group, so their Home has an "All hotels" view (design: ExecHome).
@@ -230,9 +240,13 @@ export function spansGroup(role: MemberRole): boolean {
 }
 
 // The menu for a role and the modules switched on for the group.
-export function visibleGroups(role: MemberRole, has: (feature: Feature) => boolean): NavGroup[] {
+export function visibleGroups(
+  role: MemberRole,
+  has: (feature: Feature) => boolean,
+  can?: Can,
+): NavGroup[] {
   return MODULES.map((group) => ({
     ...group,
-    entries: group.entries.filter((entry) => has(entry.feature) && roleSees(role, entry)),
+    entries: group.entries.filter((entry) => has(entry.feature) && roleSees(role, entry, can)),
   })).filter((group) => group.entries.length > 0)
 }
