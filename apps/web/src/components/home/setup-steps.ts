@@ -1,16 +1,27 @@
 // The setup steps for a new group (design: OnbHome), from Home's summary and the member's own
 // state. Shared by the checklist and Home's "Setup" tile so they always agree.
 import { useQuery } from '@tanstack/react-query'
+import { useProperty } from '@/components/shell/property-context'
 import { orpc } from '@/lib/api'
 import { useMe } from '@/lib/me'
 
-export type SetupStepKey = 'group' | 'hotel' | 'rooms' | 'team' | 'pin' | 'devices' | 'two-step'
+export type SetupStepKey =
+  | 'group'
+  | 'hotel'
+  | 'details'
+  | 'rooms'
+  | 'team'
+  | 'pin'
+  | 'devices'
+  | 'two-step'
 
 export type SetupStep = { key: SetupStepKey; label: string; why: string; done: boolean }
 
 export function useSetupSteps(): { steps: SetupStep[]; done: number; ready: boolean } {
   const me = useMe()
   const summary = useQuery(orpc.organization.home.queryOptions())
+  // The hotel chosen in the top bar (or the last one picked, with All hotels).
+  const { current } = useProperty()
   const s = summary.data
   if (!s || !me.data) return { steps: [], done: 0, ready: false }
   const steps: SetupStep[] = [
@@ -25,6 +36,14 @@ export function useSetupSteps(): { steps: SetupStep[]; done: number; ready: bool
       label: 'Add your first hotel',
       why: 'Where rooms, staff and money live',
       done: s.hotels > 0,
+    },
+    {
+      key: 'details',
+      label: 'Complete hotel and company details',
+      why: 'Address, RC number, TIN and VAT, for invoices and the guest register',
+      done: Boolean(
+        current?.addressLine1 && current.area && current.lga && !current.entityDetailsMissing,
+      ),
     },
     // Only when front desk is switched on for the group (decision 0021).
     ...(me.has('front_desk')

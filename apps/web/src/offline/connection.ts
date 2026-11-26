@@ -4,11 +4,13 @@
 import { useSyncExternalStore } from 'react'
 
 let reachable = typeof navigator === 'undefined' ? true : navigator.onLine
+let since: number | undefined = reachable ? undefined : Date.now()
 const listeners = new Set<() => void>()
 
 function set(value: boolean) {
   if (value === reachable) return
   reachable = value
+  since = value ? undefined : Date.now()
   for (const listener of listeners) listener()
 }
 
@@ -35,3 +37,6 @@ export function useOnline(): boolean {
 }
 
 export const isOnline = () => reachable
+
+// When Vento stopped being reachable, for "Offline since 17:32".
+export const offlineSince = () => since

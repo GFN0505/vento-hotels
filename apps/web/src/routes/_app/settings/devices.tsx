@@ -2,7 +2,7 @@
 // on with a PIN. Register this one, rename, or revoke a lost one.
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { DEVICE_KINDS, type DeviceKind, type DeviceView } from '@vento/shared'
 import { Lock, MonitorSmartphone, Plus } from 'lucide-react'
 import { type FormEvent, useId, useState } from 'react'
@@ -22,7 +22,12 @@ import { problemMessage } from '@/lib/errors'
 import { useMe } from '@/lib/me'
 import { usePageTitle } from '@/lib/title'
 
+// ?register=<hotel id> opens "Register this device" bound to that hotel (a new hotel's next steps).
 export const Route = createFileRoute('/_app/settings/devices')({
+  validateSearch: (search: Record<string, unknown>): { register?: string | undefined } =>
+    typeof search.register === 'string' && search.register
+      ? { register: search.register.slice(0, 40) }
+      : {},
   component: DevicesPage,
 })
 
@@ -48,7 +53,9 @@ function lastSeen(iso: string | null): string {
 function DevicesPage() {
   usePageTitle('Devices')
   const me = useMe()
-  const [registering, setRegistering] = useState(false)
+  const search = Route.useSearch()
+  const navigate = useNavigate({ from: Route.fullPath })
+  const [registering, setRegistering] = useState(Boolean(search.register))
   const [renaming, setRenaming] = useState<DeviceView>()
   const [revoking, setRevoking] = useState<DeviceView>()
   const [confirmingLock, setConfirmingLock] = useState(false)
@@ -177,7 +184,14 @@ function DevicesPage() {
         </Card>
       )}
 
-      <RegisterDialog open={registering} onClose={() => setRegistering(false)} />
+      <RegisterDialog
+        open={registering}
+        hotelId={search.register}
+        onClose={() => {
+          setRegistering(false)
+          if (search.register) void navigate({ search: {} })
+        }}
+      />
       <Dialog
         open={confirmingLock}
         onClose={() => setConfirmingLock(false)}
@@ -204,13 +218,23 @@ function DevicesPage() {
   )
 }
 
-function RegisterDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function RegisterDialog({
+  open,
+  hotelId,
+  onClose,
+}: {
+  open: boolean
+  hotelId?: string | undefined
+  onClose: () => void
+}) {
   const queryClient = useQueryClient()
   const { properties, current } = useProperty()
   const formId = useId()
   const [name, setName] = useState('')
   const [kind, setKind] = useState<DeviceKind>('pos')
-  const [propertyId, setPropertyId] = useState(current?.id ?? properties[0]?.id ?? '')
+  const [propertyId, setPropertyId] = useState(
+    properties.find((p) => p.id === hotelId)?.id ?? current?.id ?? properties[0]?.id ?? '',
+  )
   const [problem, setProblem] = useState<{ name?: string | undefined; form?: string | undefined }>(
     {},
   )

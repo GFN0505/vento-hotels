@@ -134,7 +134,14 @@ function Home() {
         <Columns
           // The hotels come first on phones: picking one is the group view's main job.
           mainFirst
-          main={<HotelsBoard hotels={properties} summary={summary.data} onOpen={openHotel} />}
+          main={
+            <HotelsBoard
+              hotels={properties}
+              summary={summary.data}
+              onOpen={openHotel}
+              canManage={me.can('setup.manage')}
+            />
+          }
           side={
             <>
               <SetupChecklist />

@@ -12,9 +12,14 @@
 ## The walkthrough
 
 1. **Thu 12 Nov, 10:00 · Create the group.**
-   - *Does:* Mrs Okafor signs up, sets up 2FA, and follows onboarding (#19): organization "Kora Hotels Group" → entity "Kora Hospitality Ltd" (RC number, TIN, VAT registered, base currency NGN) → property "Kora Victoria Island", Victoria Island, Eti-Osa, Lagos, time zone Africa/Lagos, owned by Kora Hospitality Ltd.
-   - *Sees:* a setup checklist on Home: **Set up rooms** ("Room types and rooms, so you can sell them"), rates, taxes, payment methods, staff, devices, imports, go-live date.
-   - *Behind the scenes:* one transaction creates organization, entity and property; she becomes `owner`. Audit events for each. Taxes (#27) come pre-filled from Vento's versioned rules for Lagos: VAT, Lagos consumption tax, and a 10% service charge she confirms. She doesn't type any rates.
+   - *Does:* Mrs Okafor signs up, sets up 2FA, and follows onboarding (#19), which asks only for names and the state: organization "Kora Hotels Group" → company "Kora Hospitality Ltd" → hotel "Kora Victoria Island", Lagos.
+   - *Sees:* a setup checklist on Home: **Complete hotel and company details** ("Address, RC number, TIN and VAT, for invoices and the guest register"), **Set up rooms** ("Room types and rooms, so you can sell them"), rates, taxes, payment methods, staff, devices, imports, go-live date.
+   - *Behind the scenes:* one transaction creates organization, company and hotel (time zone Africa/Lagos, owned by Kora Hospitality Ltd); she becomes `owner`. Audit events for each. Taxes (#27) come pre-filled from Vento's versioned rules for Lagos: VAT, Lagos consumption tax, and a 10% service charge she confirms. She doesn't type any rates.
+
+1b. **10:10 · Complete the hotel and company.**
+   - *Does:* she clicks **Complete** on the checklist. Kora Victoria Island is her only hotel, so **Settings › Hotels** (#25) opens its settings with "Add Kora Victoria Island's address. Registration cards, invoices and guest messages use it." She types Plot 1412 Ahmadu Bello Way and Victoria Island, picks Lagos then Eti-Osa, and clicks **Save changes**. She clicks **Upload** under the logo and picks `kora-logo.png`. Under Owning company it says "Kora Hospitality Ltd · RC number and TIN missing"; **Edit company** opens a side sheet where she types RC 1184402 and TIN 21847390-0001, sets VAT registered to Yes and clicks **Save company**.
+   - *Sees:* "Kora Victoria Island saved", "Logo saved", "Kora Hospitality Ltd saved". The checklist step ticks.
+   - *Behind the scenes:* each save sends the version it started from, so it never overwrites someone else's. The logo goes straight to object storage through a 5-minute signed link and the API checks the real file before using it. Audit events `property.changed`, `property.logo_changed` and `entity.changed`. The hotel isn't live yet, so nothing reaches the owner's daily report.
 
 1a. *Behind the scenes:* the Vento team switches on the modules Kora has bought (front desk first for the pilot) with `pnpm features on`, recorded in Kora's audit log. Mrs Okafor never sees a switch: modules that are off simply aren't in Vento.
 2. **10:20 · Invite Tunde and grant support access.**
@@ -115,6 +120,18 @@
 - **Device stolen during the week:** Tunde revokes it; its queued commands are rejected and listed for him.
 - **Support access expires mid-task:** the specialist's session ends; nothing they started is half-applied, because each batch is one transaction.
 
+- **Hotel name already taken:** "Kora Lekki is already a hotel in this group." If the name belongs to an archived hotel: "Kora Port Harcourt is archived. Restore it, or use another name."
+- **Company archived while the hotel sheet was open:** "Kora PH Ltd was archived. Choose another company."
+- **Two people editing the same hotel:** the second save says "Tunde changed Kora Victoria Island at 14:02. Reload to see the change, then save again." Nothing is overwritten.
+
+## Later: opening Kora Lekki
+The group now has four hotels and "All hotels" is selected in the top bar.
+1. *Does:* Mrs Okafor opens **Settings › Hotels**, which lists the 4 hotels, and clicks **Add a hotel**. In the side sheet: Name `Kora Lekki`; Owning company (Kora Hospitality Ltd, already chosen as the company that owns the most hotels); Street `Plot 7 Admiralty Way`; Area `Lekki Phase 1`; State `Lagos`; LGA `Eti-Osa`; check-in 14:00 and check-out 12:00 already filled. She clicks **Add hotel**.
+2. *Sees:* the sheet closes, the top bar switches to Kora Lekki, and its settings open with "Kora Lekki added" and **Next steps for Kora Lekki**: **Set up rooms**, **Invite the team**, **Register devices**. **Invite the team** opens Members with the invite already limited to Kora Lekki.
+3. *Behind the scenes:* one transaction creates the hotel and its audit event; its business date is the calendar date in Lagos. Everyone with whole-group access sees it in their hotel switch; people limited to other hotels don't until someone gives them access.
+
+If a hotel later closes, **Archive hotel** at the foot of its settings shows what happens ("Its 72 rooms, history and reports are kept. 3 devices are signed out and revoked.") and asks for a reason; the hotel leaves the switch and waits under **Archived** with **Restore**.
+
 ## Targets
 - Organization, entity and property created: under 10 minutes.
 - 4 room types and 120 rooms by hand: under 10 minutes; one block of rooms on a floor in under 1 minute and 2 clicks after typing.
@@ -126,6 +143,7 @@
 ## Becomes tests
 `apps/web/e2e/journeys/going-live.spec.ts`
 - Onboarding creates organization, entity and property in one go; the creator is `owner`; audit events exist.
+- Completing the hotel's address and the company's RC number and TIN ticks the checklist step; an added hotel appears in the hotel switch and the switch moves to it; archiving a hotel revokes its devices; a GM edits only the check-in and check-out times (`apps/web/e2e/hotels.spec.ts`).
 - Tunde (GM, `rooms.setup`) creates the 4 room types (`STQ`, `DLK`, `EXK`, `JRS`) and 120 rooms with the builder in one transaction; the per-type counts are 36 / 48 / 28 / 8; a room in two lines keeps **Create** disabled; a front desk member is refused by the server.
 - **Mark 120 inspected** writes one `room.status_changed` per room with reason "Set up" and can be undone; before go-live no reason is asked and no exception is raised.
 - Room import (later Stage 1 brick) reports duplicate room numbers and unknown room type codes by row; corrected file applies 120 rooms.

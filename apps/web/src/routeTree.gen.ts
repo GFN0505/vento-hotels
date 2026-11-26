@@ -24,7 +24,9 @@ import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AppRatesIndexRouteImport } from './routes/_app/rates/index'
 import { Route as AppRatesRoomsRouteImport } from './routes/_app/rates/rooms'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
+import { Route as AppSettingsCompaniesRouteImport } from './routes/_app/settings/companies'
 import { Route as AppSettingsDevicesRouteImport } from './routes/_app/settings/devices'
+import { Route as AppSettingsHotelsRouteImport } from './routes/_app/settings/hotels'
 import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/members'
 import { Route as AppSettingsPermissionsRouteImport } from './routes/_app/settings/permissions'
 
@@ -102,9 +104,19 @@ const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsCompaniesRoute = AppSettingsCompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsDevicesRoute = AppSettingsDevicesRouteImport.update({
   id: '/devices',
   path: '/devices',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsHotelsRoute = AppSettingsHotelsRouteImport.update({
+  id: '/hotels',
+  path: '/hotels',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSettingsMembersRoute = AppSettingsMembersRouteImport.update({
@@ -131,7 +143,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRouteWithChildren
   '/join/$token': typeof JoinTokenRoute
   '/rates/rooms': typeof AppRatesRoomsRoute
+  '/settings/companies': typeof AppSettingsCompaniesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
+  '/settings/hotels': typeof AppSettingsHotelsRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
   '/rates/': typeof AppRatesIndexRoute
@@ -148,7 +162,9 @@ export interface FileRoutesByTo {
   '/join/$token': typeof JoinTokenRoute
   '/': typeof AppIndexRoute
   '/rates/rooms': typeof AppRatesRoomsRoute
+  '/settings/companies': typeof AppSettingsCompaniesRoute
   '/settings/devices': typeof AppSettingsDevicesRoute
+  '/settings/hotels': typeof AppSettingsHotelsRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
   '/rates': typeof AppRatesIndexRoute
@@ -169,7 +185,9 @@ export interface FileRoutesById {
   '/join/$token': typeof JoinTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/rates/rooms': typeof AppRatesRoomsRoute
+  '/_app/settings/companies': typeof AppSettingsCompaniesRoute
   '/_app/settings/devices': typeof AppSettingsDevicesRoute
+  '/_app/settings/hotels': typeof AppSettingsHotelsRoute
   '/_app/settings/members': typeof AppSettingsMembersRoute
   '/_app/settings/permissions': typeof AppSettingsPermissionsRoute
   '/_app/rates/': typeof AppRatesIndexRoute
@@ -190,7 +208,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/join/$token'
     | '/rates/rooms'
+    | '/settings/companies'
     | '/settings/devices'
+    | '/settings/hotels'
     | '/settings/members'
     | '/settings/permissions'
     | '/rates/'
@@ -207,7 +227,9 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/'
     | '/rates/rooms'
+    | '/settings/companies'
     | '/settings/devices'
+    | '/settings/hotels'
     | '/settings/members'
     | '/settings/permissions'
     | '/rates'
@@ -227,7 +249,9 @@ export interface FileRouteTypes {
     | '/join/$token'
     | '/_app/'
     | '/_app/rates/rooms'
+    | '/_app/settings/companies'
     | '/_app/settings/devices'
+    | '/_app/settings/hotels'
     | '/_app/settings/members'
     | '/_app/settings/permissions'
     | '/_app/rates/'
@@ -352,11 +376,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsIndexRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/companies': {
+      id: '/_app/settings/companies'
+      path: '/companies'
+      fullPath: '/settings/companies'
+      preLoaderRoute: typeof AppSettingsCompaniesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/devices': {
       id: '/_app/settings/devices'
       path: '/devices'
       fullPath: '/settings/devices'
       preLoaderRoute: typeof AppSettingsDevicesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/hotels': {
+      id: '/_app/settings/hotels'
+      path: '/hotels'
+      fullPath: '/settings/hotels'
+      preLoaderRoute: typeof AppSettingsHotelsRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/settings/members': {
@@ -391,14 +429,18 @@ const AppRatesRouteWithChildren = AppRatesRoute._addFileChildren(
 )
 
 interface AppSettingsRouteChildren {
+  AppSettingsCompaniesRoute: typeof AppSettingsCompaniesRoute
   AppSettingsDevicesRoute: typeof AppSettingsDevicesRoute
+  AppSettingsHotelsRoute: typeof AppSettingsHotelsRoute
   AppSettingsMembersRoute: typeof AppSettingsMembersRoute
   AppSettingsPermissionsRoute: typeof AppSettingsPermissionsRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsCompaniesRoute: AppSettingsCompaniesRoute,
   AppSettingsDevicesRoute: AppSettingsDevicesRoute,
+  AppSettingsHotelsRoute: AppSettingsHotelsRoute,
   AppSettingsMembersRoute: AppSettingsMembersRoute,
   AppSettingsPermissionsRoute: AppSettingsPermissionsRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,

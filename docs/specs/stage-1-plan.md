@@ -6,6 +6,7 @@
 
 | # | Brick | Afterwards a person can… | Designs | Main risks | Lead |
 |---|---|---|---|---|---|
+| 0 | Hotels and companies ([spec](stage-1-hotels-and-companies.md)) | complete the hotel and company onboarding left bare, add, archive and restore hotels and companies, and let a GM change check-in and check-out times; finishes Stage 0's "set up a group and its hotels" | #25 SetProperty, SetEntities | first upload to object storage; no hotel without a company, no company archived while it owns one | backend + frontend |
 | 1 | Room types and rooms ([spec](stage-1-room-types-and-rooms.md)) | set up 120 rooms in minutes with "Add rooms by floor" | #33, #19 rooms step, OnbHome | room count must never be typed; GM needs a new permission ⚑ | backend |
 | 2 | Rate plans and rates (manual) | create BAR, B&B, Non-refundable (BAR − 10%) and Corporate with seasons, meal plan, cancellation and deposit rules | #33 plan editor, #19 first rate | derived-plan maths in decimals; breakfast split between rooms and food ⚑ | distribution |
 | 3 | Taxes, service charge, payment methods, FX rates | see VAT, Lagos consumption tax and service charge from versioned rules, set payment methods and today's CBN rate | #27, FX pattern | seed rates must be verified against the 2025 tax acts ⚑; foreign-currency settlement ⚑ | finance |

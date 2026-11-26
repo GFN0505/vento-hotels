@@ -45,7 +45,10 @@ function Shell() {
   const { user } = Route.useRouteContext()
   const [menuOpen, setMenuOpen] = useState(false)
   const organization = useMe()
-  const showSettings = organization.can('setup.manage') || organization.can('permissions.manage')
+  const showSettings =
+    organization.can('setup.manage') ||
+    organization.can('permissions.manage') ||
+    organization.can('property.operating_times')
   const groups = organization.role
     ? visibleGroups(organization.role, organization.has, organization.can)
     : []

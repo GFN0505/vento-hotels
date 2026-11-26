@@ -107,6 +107,45 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
+    test('hotels and companies: settings, add a hotel, the list, archive, companies and a company have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      await signUpOwnerWithGroup(page, `a11y-hotels-${theme}-${testInfo.project.name}`)
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.goto('/settings/hotels')
+      await page.getByRole('heading', { name: 'Kora Victoria Island', level: 1 }).waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Add a hotel' }).click()
+      const add = page.getByRole('dialog', { name: 'Add a hotel' })
+      await add.getByRole('button', { name: 'More options' }).click()
+      await add.getByRole('button', { name: 'Add hotel' }).click()
+      await add.getByText('Enter the street').waitFor()
+      // Measured at rest, not under the pointer that just pressed Add hotel.
+      await page.mouse.move(0, 0)
+      await expectAccessible(page)
+      await add.getByLabel('Hotel name').fill('Kora Lekki')
+      await add.getByLabel('Street').fill('Plot 7 Admiralty Way')
+      await add.getByLabel('Area').fill('Lekki Phase 1')
+      await add.getByLabel('State').selectOption('Lagos')
+      await add.getByLabel('LGA').selectOption('Eti-Osa')
+      await add.getByRole('button', { name: 'Add hotel' }).click()
+      await page.getByRole('heading', { name: 'Next steps for Kora Lekki' }).waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Archive hotel' }).click()
+      await page.getByText(/history and reports are kept/).waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+      await page.getByRole('button', { name: 'All hotels' }).click()
+      await page.getByText('Kora Hotels Group · 2 hotels').waitFor()
+      await expectAccessible(page)
+      await page.goto('/settings/companies')
+      await page.getByText('Kora Hotels Group · 1 company').waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Kora Hospitality Ltd' }).click()
+      await page.getByRole('dialog', { name: 'Kora Hospitality Ltd' }).waitFor()
+      await expectAccessible(page)
+    })
+
     test('the join page for a new person has no accessibility problems', async ({
       page,
       browser,

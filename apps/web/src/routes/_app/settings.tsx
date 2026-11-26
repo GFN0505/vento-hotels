@@ -9,6 +9,12 @@ export const Route = createFileRoute('/_app/settings')({
 })
 
 const SECTIONS = [
+  {
+    to: '/settings/hotels',
+    label: 'Hotels',
+    needs: ['setup.manage', 'property.operating_times'],
+  },
+  { to: '/settings/companies', label: 'Companies', needs: ['setup.manage'] },
   { to: '/settings/members', label: 'Members and roles', needs: ['setup.manage'] },
   { to: '/settings/devices', label: 'Devices', needs: ['setup.manage'] },
   {

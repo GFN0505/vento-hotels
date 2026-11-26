@@ -5,11 +5,11 @@
 
 import { Link } from '@tanstack/react-router'
 import { calendarDateIn, type HomeSummary, type Property } from '@vento/shared'
-import { BedDouble, ChevronRight, MonitorSmartphone, Users } from 'lucide-react'
+import { BedDouble, ChevronRight, MonitorSmartphone, Settings2, Users } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { HotelMark } from '@/components/hotels/hotel-mark'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { cn } from '@/lib/cn'
-import { initials } from '@/lib/team'
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
@@ -23,20 +23,6 @@ function shortDate(date: string): string {
 
 function where(hotel: Property): string {
   return [hotel.area, hotel.lga, hotel.state].filter(Boolean).join(', ') || 'Address not set yet'
-}
-
-function Monogram({ name, large }: { name: string; large?: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'grid flex-none place-items-center rounded-lg bg-linear-to-br from-pri-soft to-surface-2 font-semibold text-pri-ink ring-1 ring-pri-line/60',
-        large ? 'size-14 text-base' : 'size-11 text-sm',
-      )}
-    >
-      {initials(name)}
-    </span>
-  )
 }
 
 function DateBadge({ hotel }: { hotel: Property }) {
@@ -70,10 +56,13 @@ export function HotelsBoard({
   hotels,
   summary,
   onOpen,
+  canManage = false,
 }: {
   hotels: Property[]
   summary: HomeSummary | undefined
   onOpen: (id: string) => void
+  // People who manage setup get a link to each hotel's settings at the end of its row.
+  canManage?: boolean
 }) {
   // The Rooms column appears once any hotel has rooms (spec: room types and rooms).
   const rooms = (summary?.rooms ?? 0) > 0
@@ -99,6 +88,7 @@ export function HotelsBoard({
         aria-hidden="true"
         className={cn(
           'hidden gap-4 border-b border-border bg-surface-2/60 px-5 py-2 text-xs font-medium text-text-3 md:grid',
+          canManage && 'md:pr-[76px]',
           columns,
         )}
       >
@@ -113,17 +103,17 @@ export function HotelsBoard({
         {hotels.map((hotel) => {
           const counts = summary?.byHotel.find((row) => row.propertyId === hotel.id)
           return (
-            <li key={hotel.id}>
+            <li key={hotel.id} className="flex items-center">
               <button
                 type="button"
                 onClick={() => onOpen(hotel.id)}
                 className={cn(
-                  'group grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-4 text-left transition-colors hover:bg-surface-2/60',
+                  'group grid min-w-0 grow grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-4 text-left transition-colors hover:bg-surface-2/60',
                   columns,
                 )}
               >
                 <span className="flex min-w-0 items-center gap-4 max-md:contents">
-                  <Monogram name={hotel.name} />
+                  <HotelMark hotel={hotel} />
                   <span className="flex min-w-0 flex-col">
                     <span className="font-semibold break-words">
                       <span className="sr-only">Open </span>
@@ -151,6 +141,17 @@ export function HotelsBoard({
                   aria-hidden="true"
                 />
               </button>
+              {canManage ? (
+                <Link
+                  to="/settings/hotels"
+                  search={{ hotel: hotel.id }}
+                  aria-label={`${hotel.name} settings`}
+                  title="Hotel settings"
+                  className="mr-3 grid size-11 flex-none place-items-center rounded-sm text-text-3 hover:bg-surface-2 hover:text-pri-ink"
+                >
+                  <Settings2 className="size-4" aria-hidden="true" />
+                </Link>
+              ) : null}
             </li>
           )
         })}
@@ -205,7 +206,7 @@ export function HotelCard({
         aria-labelledby="hotel-heading"
         className="flex items-center gap-4 rounded-lg border border-border bg-surface px-5 py-4 shadow-card"
       >
-        <Monogram name={hotel.name} />
+        <HotelMark hotel={hotel} />
         <div className="flex min-w-0 grow flex-col">
           <h2 id="hotel-heading" className="font-semibold break-words">
             {hotel.name}
@@ -223,7 +224,7 @@ export function HotelCard({
       className="overflow-hidden rounded-lg border border-border bg-surface shadow-card"
     >
       <header className="flex items-center gap-4 border-b border-border px-5 py-4">
-        <Monogram name={hotel.name} large />
+        <HotelMark hotel={hotel} size="lg" />
         <div className="flex min-w-0 flex-col">
           <h2 id="hotel-heading" className="text-base font-semibold break-words">
             {hotel.name}
