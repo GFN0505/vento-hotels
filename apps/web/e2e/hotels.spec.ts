@@ -11,10 +11,17 @@ const selectedHotel = (page: Page) =>
     return select.selectedOptions[0]?.text
   })
 
-async function upload(page: Page, name: string, size: number) {
+// A real 1 × 1 lossless WebP.
+const tinyWebp = Buffer.from('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==', 'base64')
+
+async function upload(
+  page: Page,
+  button: 'Upload' | 'Replace',
+  file: { name: string; mimeType: string; buffer: Buffer },
+) {
   const chooser = page.waitForEvent('filechooser')
-  await page.getByRole('button', { name: 'Upload', exact: true }).click()
-  await (await chooser).setFiles({ name, mimeType: 'image/png', buffer: solidPng(size) })
+  await page.getByRole('button', { name: button, exact: true }).click()
+  await (await chooser).setFiles(file)
 }
 
 test('the owner completes the first hotel, uploads a logo and adds a hotel', async ({
@@ -32,18 +39,26 @@ test('the owner completes the first hotel, uploads a logo and adds a hotel', asy
   await expect(page.getByText('Kora Victoria Island saved')).toBeVisible()
   await expect(page.getByText("Add Kora Victoria Island's address.")).toHaveCount(0)
 
-  // Logo: too small is refused on the device; a real one goes to storage; remove, then undo.
-  await upload(page, 'tiny.png', 120)
-  await expect(
-    page.getByText('This logo is 120 px wide. Use one at least 200 px on each side.'),
-  ).toBeVisible()
-  await upload(page, 'kora-logo.png', 256)
+  // Logo: any size goes to storage; remove, then undo; a WebP replaces it.
+  const logo = page.getByRole('img', { name: 'Kora Victoria Island logo' })
+  await expect(page.getByText('PNG, JPEG or WebP, up to 10 MB')).toBeVisible()
+  await upload(page, 'Upload', {
+    name: 'kora-logo.png',
+    mimeType: 'image/png',
+    buffer: solidPng(48),
+  })
   await expect(page.getByText('Logo saved')).toBeVisible()
-  await expect(page.getByRole('img', { name: 'Kora Victoria Island logo' })).toBeVisible()
+  await expect(logo).toHaveAttribute('src', /\.png/)
   await page.getByRole('button', { name: 'Remove Kora Victoria Island logo' }).click()
-  await expect(page.getByRole('img', { name: 'Kora Victoria Island logo' })).toHaveCount(0)
+  await expect(logo).toHaveCount(0)
   await page.getByRole('button', { name: 'Undo' }).click()
-  await expect(page.getByRole('img', { name: 'Kora Victoria Island logo' })).toBeVisible()
+  await expect(logo).toBeVisible()
+  await upload(page, 'Replace', {
+    name: 'kora-logo.webp',
+    mimeType: 'image/webp',
+    buffer: tinyWebp,
+  })
+  await expect(logo).toHaveAttribute('src', /\.webp/)
 
   // The company onboarding left bare.
   await expect(page.getByText('Kora Hospitality Ltd · RC number and TIN missing')).toBeVisible()

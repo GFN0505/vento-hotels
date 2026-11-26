@@ -5,6 +5,7 @@
 - **Module:** Platform (tenancy and settings).
 - **Walkthroughs:** `going-live.md` step 1 (changed: onboarding only asks for names, so the company's RC number, TIN and VAT registration and the hotel's address are completed here) and a new step 1b, plus a new closing section "Later: opening Kora Lekki" (user flow B below). The changes are listed at the end, for the product-manager to make in the same change as the build.
 - **Screens:** Properties list and property settings (#25: `Settings.dc.html` section `property`, `SetProperty.dc.html`, `SetPropertyM.dc.html`, with the loading, error and offline states in `SetLoading*`, `SetError*`, `SetOffline*`). Entities and departments (#25: `Settings.dc.html` section `entities`, `SetEntities.dc.html`; departments are not built). The hotels list and the archive dialog have no board of their own and follow the design system (`pattern`), using the devices table and the revoke dialog (`SetRevoke.dc.html`) as the model.
+- **Changed after approval (owner, 2026-11-26):** the logo rule is now minimal: PNG, JPEG or WebP, up to 10 MB, no minimum pixel size (was PNG or JPEG, up to 2 MB, at least 200 px). SVG and every other type are still refused, checked from the file's own bytes. For later: invoice and receipt PDFs (`@react-pdf/renderer`) can't embed WebP, so when PDFs arrive, WebP logos will be converted to PNG on the server.
 - **Decisions:** `0003-organization-property-entity.md`, `0006-business-date-and-night-audit.md`, `0016-local-object-storage.md` (first upload in the product), `0022-shared-devices-and-pin.md` (what revoking a device does). No new decision record needed.
 
 ## Problem
@@ -81,8 +82,8 @@ Kora Hotels Group signed up with one company name and one hotel name. Now Mrs Ok
   - Saving the page with the address still empty is allowed, so other fields can be fixed first. The banner stays.
 
 **Logo**
-- PNG or JPEG, up to 2 MB, at least 200 px on the shorter side. The design's SVG isn't accepted: PDFs (`@react-pdf/renderer`) can't embed it, and SVG files can carry scripts (logged in `CHANGES.md`).
-- The upload goes straight to object storage through a short-lived signed URL (5 minutes), limited to that size and type. The API then checks the stored file's real type from its first bytes, and its size and dimensions, before saving it on the hotel. A file that fails is deleted and the hotel keeps its old logo.
+- PNG, JPEG or WebP, up to 10 MB, any pixel size. The design's SVG isn't accepted: PDFs (`@react-pdf/renderer`) can't embed it, and SVG files can carry scripts (logged in `CHANGES.md`). PDFs can't embed WebP either; when PDFs arrive, WebP logos are converted to PNG on the server.
+- The upload goes straight to object storage through a short-lived signed URL (5 minutes), limited to that size and type. The API then checks the stored file's real type from its first bytes, and its size, before saving it on the hotel (dimensions are recorded when readable, but nothing depends on them). A file that fails is deleted and the hotel keeps its old logo.
 - Every upload gets a new storage key. Replacing or removing a logo never overwrites the old file, so documents already issued keep what they showed.
 - Shown in settings and the hotels list. Used later on invoices, receipts, the booking engine and the guest app (in their bricks); not in the app's own shell, as the design says.
 - **Remove** clears it, with an undo toast. Logos aren't personal data and live outside the private guest-ID bucket.
@@ -237,8 +238,7 @@ Not relevant in this brick. Archiving is refused while a hotel has future reserv
 - **Someone else saved first** (each save sends the version it started from): "Tunde changed Kora Victoria Island at 14:02. Reload to see the change, then save again." Nothing is overwritten.
 - **Company archived while the sheet was open:** "Kora PH Ltd was archived. Choose another company."
 - **Logo problems:**
-  - Too big or wrong type: "Use a PNG or JPEG up to 2 MB."
-  - Too small: "This logo is 120 px wide. Use one at least 200 px on each side."
+  - Too big or wrong type: "Use a PNG, JPEG or WebP up to 10 MB."
   - Upload interrupted: "The logo didn't upload. Try again." The old logo stays.
 - **Archiving the hotel selected in your own top bar:** the switch moves to All hotels (or the remaining hotel), with the normal toast.
 - **Archiving the hotel a GM is looking at:** their next request answers "This hotel was archived." with a link to Home.
@@ -292,7 +292,7 @@ The design shows three companies; the seed has one. Align the seed with the desi
 - Sign in as `tunde@kora.example`: change the check-out time, and check that everything else is read-only and Companies isn't there.
 
 ### Changes needed in `docs/DOMAIN.md`
-1. **Property** row: "Shown in the app as **hotel**. Name (unique in the group, archived included), logo (PNG or JPEG), address (street, area, LGA, state; Nigeria only), time zone (default `Africa/Lagos`, fixed once live), check-in and check-out times, current business date, owning entity. Status **setting up** until its first night audit, then **live**. Archived, never deleted: devices revoked, access kept for a restore."
+1. **Property** row: "Shown in the app as **hotel**. Name (unique in the group, archived included), logo (PNG, JPEG or WebP), address (street, area, LGA, state; Nigeria only), time zone (default `Africa/Lagos`, fixed once live), check-in and check-out times, current business date, owning entity. Status **setting up** until its first night audit, then **live**. Archived, never deleted: devices revoked, access kept for a restore."
 2. **Entity** row: "Shown in the app as **company** (Settings › Companies, 'Owning company'). Legal name, RC number (CAC prefix RC, BN, IT, LP or LLP), TIN, VAT registered, base currency NGN. Archived only when it owns no active hotel. A change of owning company or VAT registration on a live hotel applies from the next business date."
 3. **Company (corporate account)** row: add "Shown in the app as **corporate account** (or 'corporate'), never 'company' alone, so it isn't confused with the group's own companies." The matrix label "Exceed a company's credit limit" becomes "Exceed a corporate account's credit limit" (same in `packages/shared/src/permissions.ts`).
 4. **Permissions matrix:** new row "Edit a hotel's check-in and check-out times" (`property.operating_times`): general_manager ✓, owner / group_admin ✓, others –. Same row in `packages/shared/src/permissions.ts` (Setup group). Note under the matrix: "Archiving or restoring a hotel or company needs a reason."
@@ -328,7 +328,7 @@ The design shows three companies; the seed has one. Align the seed with the desi
   - "TIN" — "e.g. 21847390-0001"
   - "VAT registered" — "Turns VAT on for this company's hotels' charges once taxes are set up"
   - "Base currency · NGN (₦)"
-- **Logo:** "Hotel logo · PNG or JPEG, up to 2 MB" · "Used on invoices, receipts, the booking engine and the guest app. Not on Vento screens."
+- **Logo:** "Hotel logo · PNG, JPEG or WebP, up to 10 MB" · "Used on invoices, receipts, the booking engine and the guest app. Not on Vento screens."
 - **Banners:**
   - "Add Kora Victoria Island's address. Registration cards, invoices and guest messages use it."
   - "Kora Hospitality Ltd · RC number and TIN missing"
@@ -352,8 +352,7 @@ The design shows three companies; the seed has one. Align the seed with the desi
   - "Kora Hospitality Ltd owns 3 hotels. Move them to another company first."
   - "Tunde changed Kora Victoria Island at 14:02. Reload to see the change, then save again."
   - "Kora PH Ltd was archived. Choose another company."
-  - "Use a PNG or JPEG up to 2 MB."
-  - "This logo is 120 px wide. Use one at least 200 px on each side."
+  - "Use a PNG, JPEG or WebP up to 10 MB."
   - "The logo didn't upload. Try again."
   - "The time zone is fixed once a hotel is live."
   - "This hotel was archived."

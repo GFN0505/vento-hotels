@@ -1,6 +1,6 @@
 // The hotel's logo in settings (design #25 SetProperty, Identity): a preview, what it's used for,
 // Upload and Remove. The new file shows at once while it uploads.
-import type { Property } from '@vento/shared'
+import { LOGO_CONTENT_TYPES, type Property } from '@vento/shared'
 import { ImageIcon, Loader2 } from 'lucide-react'
 import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
@@ -50,15 +50,13 @@ export function LogoField({ hotel, canChange, online, onChange }: Props) {
         <span className="text-sm text-text-2">
           Used on invoices, receipts, the booking engine and the guest app. Not on Vento screens.
         </span>
-        <span className="text-sm text-text-3">
-          PNG or JPEG, up to 2 MB, at least 200 px each side
-        </span>
+        <span className="text-sm text-text-3">PNG, JPEG or WebP, up to 10 MB</span>
         {canChange ? (
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <input
               ref={input}
               type="file"
-              accept="image/png,image/jpeg"
+              accept={LOGO_CONTENT_TYPES.join(',')}
               hidden
               onChange={(event) => {
                 const file = event.target.files?.[0]

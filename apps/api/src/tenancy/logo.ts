@@ -1,12 +1,13 @@
 // A hotel's logo: the first upload in the product (decision 0016). The browser sends the file
 // straight to object storage through a short-lived signed URL bound to its type and size, which
 // can't replace a file once written. The API then copies it to a key no signed URL ever pointed
-// at, and checks that copy (its real type, size and dimensions) before the hotel uses it, so
+// at, and checks that copy (its real type and size) before the hotel uses it, so
 // nothing sent later under the upload URL can change a checked logo. Every upload has its own
 // keys and old files are kept, so documents already issued keep the logo they showed.
 import {
   LOGO_MAX_BYTES,
-  LOGO_MIN_PIXELS,
+  LOGO_WRONG_FILE,
+  type LogoContentType,
   type LogoUpload,
   newId,
   type Property,
@@ -27,7 +28,6 @@ const UPLOAD_SECONDS = 5 * 60
 // An upload not confirmed within the hour is refused; the daily purge deletes it.
 const CONFIRM_WITHIN_MS = 60 * 60 * 1000
 const PURPOSE = 'property_logo'
-const WRONG_FILE = 'Use a PNG or JPEG up to 2 MB.'
 const NOT_UPLOADED = "The logo didn't upload. Try again."
 
 function requireStorage(deps: HotelDeps): StorageProvider {
@@ -48,13 +48,13 @@ async function activeHotel(db: Pick<Database, 'select'>, access: Access, id: str
 export async function logoUploadUrl(
   deps: HotelDeps,
   access: Access,
-  input: { propertyId: string; contentType: 'image/png' | 'image/jpeg'; size: number },
+  input: { propertyId: string; contentType: LogoContentType; size: number },
 ): Promise<LogoUpload> {
   requirePermission(access, 'setup.manage', SETUP_ONLY)
   const storage = requireStorage(deps)
   const property = await activeHotel(deps.db, access, input.propertyId)
   const id = newId()
-  const extension = input.contentType === 'image/png' ? 'png' : 'jpg'
+  const extension = EXTENSIONS[input.contentType]
   // The key names the group and hotel, so a file can never be confused with another group's.
   // `storageKey` is where the browser uploads; a confirmed logo moves to its checked key.
   const storageKey = uploadKey(access.organizationId, property.id, id, extension)
@@ -82,6 +82,12 @@ export async function logoUploadUrl(
     headers: signed.headers,
     expiresAt: new Date(Date.now() + UPLOAD_SECONDS * 1000).toISOString(),
   }
+}
+
+const EXTENSIONS: Record<LogoContentType, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
 }
 
 type Upload = typeof fileUploads.$inferSelect
@@ -112,9 +118,16 @@ async function findUpload(db: Pick<Database, 'select'>, access: Access, input: S
   return upload
 }
 
-type Checked = { contentType: string; width: number; height: number; storageKey: string }
+// Dimensions are recorded when readable (not always for WebP); no rule depends on them.
+type Checked = {
+  contentType: string
+  width: number | null
+  height: number | null
+  storageKey: string
+}
 
-// Copies the upload to its checked key, then checks that copy: its real type, size and dimensions.
+// Copies the upload to its checked key, then checks that copy: its real type, from its first
+// bytes, and its size (the read stops at the limit).
 // A file that fails is deleted (both keys) and its upload marked rejected; the hotel keeps its old
 // logo. The upload key is deleted either way.
 async function checkStoredFile(
@@ -130,18 +143,10 @@ async function checkStoredFile(
   const stored = await storage.read(finalKey, LOGO_MAX_BYTES)
   if (stored.status === 'missing') throw logoProblem('LOGO_NOT_UPLOADED', NOT_UPLOADED)
   const image = stored.status === 'found' ? inspectImage(stored.bytes) : null
-  const reject = async (code: 'LOGO_INVALID' | 'LOGO_TOO_SMALL', message: string) => {
+  if (!image) {
     await storage.delete(finalKey)
     await db.update(fileUploads).set({ status: 'rejected' }).where(eq(fileUploads.id, upload.id))
-    return logoProblem(code, message)
-  }
-  if (!image) throw await reject('LOGO_INVALID', WRONG_FILE)
-  if (Math.min(image.width, image.height) < LOGO_MIN_PIXELS) {
-    const side = image.width <= image.height ? `${image.width} px wide` : `${image.height} px tall`
-    throw await reject(
-      'LOGO_TOO_SMALL',
-      `This logo is ${side}. Use one at least ${LOGO_MIN_PIXELS} px on each side.`,
-    )
+    throw logoProblem('LOGO_INVALID', LOGO_WRONG_FILE)
   }
   return {
     contentType: image.type,

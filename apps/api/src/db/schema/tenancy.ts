@@ -234,7 +234,7 @@ export const fileUploadStatusEnum = pgEnum('file_upload_status', [
 ])
 
 // A file sent straight to object storage through a short-lived signed URL. `pending` until the API
-// has checked the stored file (type from its first bytes, size, dimensions) and confirmed it;
+// has checked the stored file (type from its first bytes, and size) and confirmed it;
 // pending uploads older than a day are deleted by the storage.purgeUnconfirmed job. Every upload
 // has its own key, so a file is never overwritten.
 export const fileUploads = pgTable(

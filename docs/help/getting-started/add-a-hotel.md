@@ -8,7 +8,7 @@ Onboarding only asks for your hotel's name and state. Registration cards, invoic
 2. Type the **Street** and **Area**, choose the **State**, then the **LGA** (the LGA list follows the state you choose).
 3. Click **Save changes**.
 
-To add a logo, click **Upload** under **Hotel logo** (**Replace** once it has one) and choose a PNG or JPEG of up to 2 MB, at least 200 px on each side. It's used on invoices, receipts, the booking engine and the guest app, not on Vento's own screens. **Remove** takes it off, with **Undo** for a few seconds.
+To add a logo, click **Upload** under **Hotel logo** (**Replace** once it has one) and choose a PNG, JPEG or WebP of up to 10 MB. Any size works. It's used on invoices, receipts, the booking engine and the guest app, not on Vento's own screens. **Remove** takes it off, with **Undo** for a few seconds.
 
 ## Add a hotel
 1. Go to **Settings** › **Hotels** and click **Add a hotel**.

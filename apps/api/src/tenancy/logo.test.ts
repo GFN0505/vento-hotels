@@ -4,7 +4,7 @@ import type { LogoUpload, Property } from '@vento/shared'
 import { eq, inArray } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { fileUploads } from '../db/schema/tenancy.ts'
-import { solidPng } from '../storage/png.ts'
+import { solidPng, tinyWebp } from '../storage/png.ts'
 import { createTestApp } from '../test/harness.ts'
 import { checkedKey, purgeUnconfirmedUploads } from './logo.ts'
 import { type Kora, koraGroup, lastEvent, type Problem } from './testing.ts'
@@ -17,10 +17,14 @@ describe.skipIf(!url)('hotel logos', () => {
   let kora: Kora
 
   // Asks for an upload URL and, unless told not to, "uploads" the bytes as the browser would.
-  const upload = async (bytes: Uint8Array | null, propertyId = kora.abuja.id) => {
+  const upload = async (
+    bytes: Uint8Array | null,
+    propertyId = kora.abuja.id,
+    contentType = 'image/png',
+  ) => {
     const asked = await t.rpc<LogoUpload>(kora.owner.cookie, 'properties/logoUploadUrl', {
       propertyId,
-      contentType: 'image/png',
+      contentType,
       size: bytes?.length ?? 1000,
     })
     expect(asked.status).toBe(200)
@@ -52,11 +56,17 @@ describe.skipIf(!url)('hotel logos', () => {
     expect(minutes).toBeLessThanOrEqual(5)
   })
 
-  it('refuses files over 2 MB and types other than PNG and JPEG before any upload', async () => {
+  it('refuses files over 10 MB and types other than PNG, JPEG and WebP before any upload', async () => {
+    const limit = await t.rpc(kora.owner.cookie, 'properties/logoUploadUrl', {
+      propertyId: kora.abuja.id,
+      contentType: 'image/png',
+      size: 10 * 1024 * 1024,
+    })
+    expect(limit.status).toBe(200)
     const big = await t.rpc<Problem>(kora.owner.cookie, 'properties/logoUploadUrl', {
       propertyId: kora.abuja.id,
       contentType: 'image/png',
-      size: 2 * 1024 * 1024 + 1,
+      size: 10 * 1024 * 1024 + 1,
     })
     expect(big.status).toBe(400)
     const svg = await t.rpc(kora.owner.cookie, 'properties/logoUploadUrl', {
@@ -82,35 +92,44 @@ describe.skipIf(!url)('hotel logos', () => {
     })
   })
 
-  it('refuses a logo under 200 px on a side, deletes it and keeps the old one', async () => {
-    const good = await upload(solidPng(300, 300, [0, 0, 0]))
-    await setLogo(good.uploadId)
-    const small = await upload(solidPng(120, 400, [0, 0, 0]))
-    const refused = await setLogo(small.uploadId)
-    expect(refused.status).toBe(400)
-    expect(refused.data.message).toBe(
-      'This logo is 120 px wide. Use one at least 200 px on each side.',
-    )
-    expect(t.storage.files.has(small.key)).toBe(false)
-    expect(t.storage.files.has(checkedKey(small.key))).toBe(false)
-    const property = await t.rpc<Property>(kora.owner.cookie, 'properties/get', {
-      id: kora.abuja.id,
-    })
-    expect(property.data.logo?.uploadId).toBe(good.uploadId)
+  it('accepts a small logo: there is no minimum size', async () => {
+    const small = await upload(solidPng(40, 16, [0, 0, 0]))
+    const saved = await setLogo(small.uploadId)
+    expect(saved.status).toBe(200)
+    expect(saved.data.logo?.uploadId).toBe(small.uploadId)
   })
 
-  it('refuses a file that only claims to be a PNG', async () => {
+  it('accepts a WebP, checked from its bytes, under a .webp key', async () => {
+    const sent = await upload(tinyWebp(), kora.abuja.id, 'image/webp')
+    expect(sent.key).toMatch(/\.webp$/)
+    const saved = await setLogo(sent.uploadId)
+    expect(saved.status).toBe(200)
+    expect(await lastEvent(t, kora.owner, 'property', kora.abuja.id)).toMatchObject({
+      action: 'property.logo_changed',
+      after: expect.objectContaining({ contentType: 'image/webp', width: 1, height: 1 }),
+    })
+  })
+
+  it('refuses a file that only claims to be a PNG, deletes it and keeps the old logo', async () => {
+    const good = await upload(solidPng(300, 300, [0, 0, 0]))
+    await setLogo(good.uploadId)
     const fake = await upload(new TextEncoder().encode('<svg onload="alert(1)"></svg>'))
     const refused = await setLogo(fake.uploadId)
     expect(refused.data).toMatchObject({
-      message: 'Use a PNG or JPEG up to 2 MB.',
+      message: 'Use a PNG, JPEG or WebP up to 10 MB.',
       data: { code: 'LOGO_INVALID' },
     })
+    expect(t.storage.files.has(fake.key)).toBe(false)
+    expect(t.storage.files.has(checkedKey(fake.key))).toBe(false)
     const [row] = await t.db
       .select({ status: fileUploads.status })
       .from(fileUploads)
       .where(eq(fileUploads.id, fake.uploadId))
     expect(row?.status).toBe('rejected')
+    const property = await t.rpc<Property>(kora.owner.cookie, 'properties/get', {
+      id: kora.abuja.id,
+    })
+    expect(property.data.logo?.uploadId).toBe(good.uploadId)
   })
 
   it('never lets a second upload under the same link change a checked logo', async () => {
@@ -184,7 +203,7 @@ describe.skipIf(!url)('hotel logos', () => {
 
   it('deletes uploads never confirmed, and rejected ones sent again, after a day', async () => {
     const stale = await upload(solidPng(300, 300, [9, 9, 9]))
-    const rejected = await upload(solidPng(100, 100, [9, 9, 9]))
+    const rejected = await upload(new TextEncoder().encode('not an image'))
     await setLogo(rejected.uploadId)
     // Sent again under its link after the rejection.
     await t.storage.put(rejected.key, solidPng(100, 100, [9, 9, 9]))
