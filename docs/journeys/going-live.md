@@ -16,7 +16,7 @@
    - *Sees:* a setup checklist on home: room types and rooms, rates, taxes, payment methods, staff, devices, imports, go-live date.
    - *Behind the scenes:* one transaction creates organization, entity and property; she becomes `owner`. Audit events for each. Taxes (#27) come pre-filled from Vento's versioned rules for Lagos: VAT, Lagos consumption tax, and a 10% service charge she confirms. She doesn't type any rates.
 
-1a. *Behind the scenes:* the Vento team switches on the modules Kora has bought (front desk first for the pilot) with `pnpm features on`, recorded in Kora's audit log. Folake never sees a switch: modules that are off simply aren't in Vento.
+1a. *Behind the scenes:* the Vento team switches on the modules Kora has bought (front desk first for the pilot) with `pnpm features on`, recorded in Kora's audit log. Mrs Okafor never sees a switch: modules that are off simply aren't in Vento.
 2. **10:20 · Invite Tunde and grant support access.**
    - *Does:* Settings → Members → invites Tunde Bello as `general_manager`, limited to Kora Victoria Island. Then Account and support (#46) → "Give Vento support access" for 7 days.
    - *Sees:* "Support can view and help set up this account until 19 Nov 2026, 10:21. Revoke anytime."

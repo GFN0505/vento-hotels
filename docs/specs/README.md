@@ -24,11 +24,11 @@ A spec that is dropped is deleted, with the reason in the commit message.
 |---|---|---|---|---|
 | [Sign-in, organizations, properties and entities](stage-0-auth-and-tenancy.md) | 0 | Platform | going-live, front-desk-morning | built |
 | [Permissions, limits and the audit log](stage-0-permissions-and-audit.md) | 0 | Platform | front-desk-morning, owner-morning, going-live | built |
-| [Team: invites, members and roles, permissions and limits](stage-0-team-and-roles.md) | 0 | Platform | going-live, front-desk-morning | built (in review) |
-| [Feature switches: build ahead, release per group](stage-0-feature-switches.md) | 0 | Platform | going-live | built (in review) |
-| [Shared devices and staff PIN sign-in](stage-0-devices-and-pin.md) | 0 | Platform | going-live, restaurant-power-cut, room-attendant-shift | built (in review) |
-| [Two-step sign-in](stage-0-two-step-sign-in.md) | 0 | Platform | going-live, owner-morning | built (in review) |
+| [Team: invites, members and roles, permissions and limits](stage-0-team-and-roles.md) | 0 | Platform | going-live, front-desk-morning | built |
+| [Feature switches: build ahead, release per group](stage-0-feature-switches.md) | 0 | Platform | going-live | built |
+| [Shared devices and staff PIN sign-in](stage-0-devices-and-pin.md) | 0 | Platform | going-live, waiter-dinner-service, room-attendant-shift | built |
+| [Two-step sign-in](stage-0-two-step-sign-in.md) | 0 | Platform | going-live, owner-morning | built |
 | [Role-shaped Home and All hotels](stage-0-role-homes.md) | 0 | Platform | owner-morning, front-desk-morning, room-attendant-shift | built |
-| [Offline shell](stage-0-offline-shell.md) | 0 | Platform | waiter-dinner-service, front-desk-morning | built (in review) |
+| [Offline shell](stage-0-offline-shell.md) | 0 | Platform | waiter-dinner-service, front-desk-morning | built |
 | [Stage 1 plan: front office bricks](stage-1-plan.md) | 1 | Reservations & Front Desk, Finance | all Stage 1 journeys | approved |
 | [Room types and rooms](stage-1-room-types-and-rooms.md) | 1 | Reservations & Front Desk | going-live | approved |

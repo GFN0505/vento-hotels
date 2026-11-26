@@ -1,6 +1,6 @@
 # Feature switches: build ahead, release per group
 
-- **Status:** built (brick 9, in review)
+- **Status:** built (brick 9)
 - **Stage:** 0
 - **Module:** Platform
 - **Walkthroughs:** `going-live.md` (a pilot group gets front desk switched on first)

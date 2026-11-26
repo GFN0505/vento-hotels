@@ -33,5 +33,14 @@ docs/help/
 ## Articles
 | Article | Journey | Status |
 |---|---|---|
+| [Join your hotel group](getting-started/join-your-hotel-group.md) | going-live | written |
+| [Invite your team](getting-started/invite-your-team.md) | going-live | written |
+| [Change what a role can do](getting-started/change-what-a-role-can-do.md) | going-live | written |
+| [Preview what each role sees](getting-started/preview-what-each-role-sees.md) | going-live | written |
+| [Register a shared device](getting-started/register-a-shared-device.md) | going-live | written |
+| [Sign in on a shared device with your PIN](getting-started/sign-in-on-a-shared-device.md) | going-live, front-desk-morning, room-attendant-shift | written |
+| [Turn on two-step sign-in](getting-started/turn-on-two-step-sign-in.md) | going-live, owner-morning | written |
+| [Switch between your hotels and the whole group](getting-started/switch-between-hotels.md) | owner-morning | written |
+| [When the internet or power drops](getting-started/when-the-internet-drops.md) | waiter-dinner-service | written |
 
 Status: `todo` · `written` · `published`

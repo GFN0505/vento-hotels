@@ -1,6 +1,6 @@
 # Sign-in, organizations, properties and entities
 
-- **Status:** built (brick 5, in review)
+- **Status:** built (brick 5)
 - **Stage:** 0
 - **Module:** Platform
 - **Walkthroughs:** `going-live.md` steps 1–3 (owner creates the organization, entity and property), `front-desk-morning.md` step 1 (property-limited member)

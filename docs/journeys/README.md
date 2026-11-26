@@ -42,7 +42,7 @@ All walkthroughs use the demo seed, so names and numbers match across documents,
 - **Rate plans:** BAR (rates above, room only), BAR Bed & Breakfast, Non-refundable (BAR − 10%), Corporate (negotiated per company).
 - **Corporate rate:** Acme Energy, Executive King ₦180,000 per night at Kora Victoria Island (as in the tape chart design); Deluxe King ₦130,000 with breakfast.
 - **Taxes and charges:** VAT, Lagos consumption tax and a 10% service charge, all from configuration. Amounts marked * in the walkthroughs use **illustrative** rates (VAT 7.5%, Lagos consumption tax 5%), the same as the designs — verify against current law before they go into the seed.
-- **Other illustrative values:** Deluxe King Bed & Breakfast ₦165,000; deposit of the first night; free cancellation until 48 hours before arrival; FX ₦1,950 = £1 (rate source shown); POS lock after 90 seconds idle, housekeeping phones after 2 minutes.
+- **Other illustrative values:** Deluxe King Bed & Breakfast ₦165,000; deposit of the first night; free cancellation until 48 hours before arrival; FX ₦1,950 = £1 (rate source shown); shared devices sign out after 90 seconds idle on restaurant tablets and 5 minutes on front desk PCs and housekeeping phones (as built, decision 0022).
 - **Corporate account:** Acme Energy Ltd (credit limit ₦15,000,000, 30-day terms).
 - **People:**
   - Mrs Adaeze Okafor (owner)
