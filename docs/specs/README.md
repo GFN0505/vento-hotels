@@ -34,4 +34,4 @@ A spec that is dropped is deleted, with the reason in the commit message.
 | [Room types and rooms](stage-1-room-types-and-rooms.md) | 1 | Reservations & Front Desk | going-live | approved |
 | [Hotels and companies](stage-1-hotels-and-companies.md) | 1 | Platform | going-live | approved |
 | [The hotel switch scopes every page](stage-1-hotel-switch-scope.md) | 1 | Platform | owner-morning, going-live | approved (owner, 2026-11-26, for the agreed rule) |
-| [Taxes, service charge, payment methods and FX rates](stage-1-taxes-and-payment-methods.md) | 1 | Finance | going-live, front-desk-morning, night-audit | approved |
+| [Taxes, service charge, payment methods and FX rates](stage-1-taxes-and-payment-methods.md) | 1 | Finance | going-live, front-desk-morning, night-audit | built |

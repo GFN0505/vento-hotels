@@ -14,7 +14,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 |---|---|---|---|
 | Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7); accept invite built (brick 8); two-step code at sign-in built (brick 12)** | 0 | Includes "no property assigned" and "device not registered" states. Both built: "device not registered" on the lock screen (brick 10), "no property assigned" on Home (brick 7) |
 | Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** | 0 | Approval prompt in Stage 1 (with the first action that needs it); offline PIN sign-in ships with the outbox (decision 0024) |
-| Onboarding and setup checklist | designed #19 · **first steps and Home checklist built (bricks 7, 13)** | 0 | Built: create account, confirm email, group + company + first hotel; Home's "Finish setting up" with the Stage 0 steps and **Set up rooms** (Stage 1 brick 1). Rates and first booking steps come with their bricks |
+| Onboarding and setup checklist | designed #19 · **first steps and Home checklist built (bricks 7, 13)** | 0 | Built: create account, confirm email, group + company + first hotel; Home's "Finish setting up" with the Stage 0 steps, **Set up rooms** (Stage 1 brick 1) and **Set up taxes and payments** (Stage 1 brick 3). Rates and first booking steps come with their bricks |
 | Properties list and property settings | designed #25 · **built (hotels and companies)** | 0 | Settings › Hotels: list (All hotels), hotel settings, add, archive and restore; logo, address, time zone, check-in/out times, business date, owning company. Night audit time still to build (brick 13) |
 | Entities and departments | designed #25 · **built (hotels and companies)** as Companies | 0 | RC number, TIN, VAT status, hotels owned, archive and restore. Departments and the Ledger column wait for Stage 5 |
 | Members and roles | designed #25 · **built (brick 8)** | 0 | Invite, assign roles, limit to properties. Follows the hotel switch (one hotel: its people, whole-group people marked; All hotels: everyone). PIN-only staff, 2FA and entity limits still to build |
@@ -108,10 +108,10 @@ Covered by round 4 of the design prompt (screens 24–29).
 | City ledger invoices and credit notes | designed #45 | 5 | May need an e-invoice reference and QR code |
 | Chart of accounts and manual journal | pattern | 5 | |
 | Expenses, supplier bills and payments | designed #45 | 5 | |
-| FX rates | pattern | 1 | Daily CBN rate, manual rates with source |
+| FX rates | pattern · **built (Stage 1 brick 3)** | 1 | Daily CBN rate with the typo check and replace-with-reason; market rates with brick 10 |
 | Budgets | designed #45 | 6 | By property, department and month |
-| Tax and charges configuration | designed #27 | 0 | VAT, consumption tax by state, service charge, effective dates |
-| Payment methods, bank accounts, POS terminals | designed #27 | 1 | |
+| Tax and charges configuration | designed #27 · **built (Stage 1 brick 3)** | 0 | VAT, consumption tax by state, service charge, effective dates, To verify and Mark verified, How a bill adds up |
+| Payment methods, bank accounts, POS terminals | designed #27 · **built (Stage 1 brick 3)** | 1 | On/off methods, foreign cash, guest transfer account, terminals; ledger columns in Stage 5 |
 | Tax remittances | pattern | 5 | |
 | Period close | pattern | 5 | |
 | **Approvals inbox** | designed #29 | 1 | One place for over-limit requests, refunds, POs, payroll |

@@ -1,6 +1,6 @@
 # Taxes, service charge, payment methods and FX rates
 
-- **Status:** approved (owner, 2026-11-26; see Decisions)
+- **Status:** built (Stage 1 brick 3, 2026-11-26; approved by the owner 2026-11-26, see Decisions)
 - **Stage:** 1 (brick 3 of the plan in [stage-1-plan.md](stage-1-plan.md)). Depends on hotels and companies (owning company, VAT registered, state, business date, go-live) and brick 1b (hotel switch). Branched from `main`, so it doesn't touch rate plan code or screens (brick 2 is in an open pull request). Feeds brick 4 (quotes with taxes, the **Guest pays per night** column and editor preview on rate plans, FX equivalents for foreign guests), brick 10 (tax lines on postings, payments by method, foreign cash), brick 11 (matching transfers and terminal settlements), brick 13 (room and tax charges at night audit) and Stage 3 (POS bills).
 - **Module:** Finance (taxes, payment methods and FX rates, `docs/PRODUCT.md` module 7)
 - **Walkthroughs:** `going-live.md` step 1 (changed) and a new step 4a, listed under "Changes needed in walkthroughs". Read later by `front-desk-morning.md` steps 4–5, 7, 9 and 11, `night-audit.md` step 9 and the starred amounts in `00-golden-thread.md`.
