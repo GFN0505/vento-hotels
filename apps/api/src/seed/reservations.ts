@@ -110,7 +110,11 @@ export type ReservationSeedContext = {
   people: { chiamaka: Person; sade: Person; tunde: Person }
 }
 
-async function accessFor(tx: Tx, context: ReservationSeedContext, person: Person): Promise<Access> {
+export async function accessFor(
+  tx: Tx,
+  context: Pick<ReservationSeedContext, 'organizationId' | 'hotels'>,
+  person: Person,
+): Promise<Access> {
   return {
     organizationId: context.organizationId,
     userId: person.userId,

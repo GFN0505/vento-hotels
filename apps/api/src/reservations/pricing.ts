@@ -7,6 +7,7 @@ import {
   applyDiscount,
   type CancellationTerms,
   cancellationTerms,
+  type createReservationSchema,
   type Decimal,
   type DiscountInput,
   type DiscountProblem,
@@ -23,10 +24,16 @@ import {
   stayTotals,
   type TaxRuleInForce,
 } from '@vento/shared'
+import type { z } from 'zod'
+import { approvalNotMatching } from '../approvals/errors.ts'
+import { STAY_DISCOUNT, stayBinding } from '../approvals/kinds/stay-discount-rule.ts'
+import { type UsedApproval, useApproval } from '../approvals/use.ts'
 import type { StayQuote } from '../rates/quote.ts'
 import { type Access, ApprovalRequiredError, can, requireWithinLimit } from '../tenancy/access.ts'
-import type { BookingHotel } from './context.ts'
+import type { BookingHotel, Tx } from './context.ts'
 import { discountOverLimit, discountProblem, noPermission } from './errors.ts'
+
+type StayInput = z.output<typeof createReservationSchema>['stays'][number]
 
 export type PricedNight = {
   date: string
@@ -138,11 +145,35 @@ export function priceStay(
 export const discountLimitOf = (access: Access) => access.rules['stay.rate_override'].limit
 
 // Inside the booking: the discount must be within the member's limit, measured per night against
-// the plan price. Over it is refused here (brick 5 adds approval).
-export function requireDiscountAllowed(access: Access, priced: PricedStay): void {
-  if (!priced.discount) return
+// the plan price, or carry an approval (brick 5), which is checked and locked here (lock step 5,
+// after inventory and before the reservation counter) and returned for the audit event. A sent
+// approval is always checked and used, even if the member's own limit has since risen to cover
+// it, so the record says what happened.
+export async function requireDiscountAllowed(
+  tx: Tx,
+  access: Access,
+  priced: PricedStay,
+  stay: StayInput,
+  at: { propertyId: string; businessDate: string; timeZone: string; now: Date },
+): Promise<UsedApproval | null> {
+  if (!priced.discount) {
+    if (stay.approvalId) throw approvalNotMatching('the manager')
+    return null
+  }
   if (!can(access, 'stay.rate_override')) {
     throw noPermission("You can't give discounts. Ask a manager to make this booking.")
+  }
+  if (stay.approvalId) {
+    return useApproval(tx, access, {
+      approvalId: stay.approvalId,
+      kind: STAY_DISCOUNT.kind,
+      permission: STAY_DISCOUNT.permission,
+      propertyId: at.propertyId,
+      bindingHash: stayBinding(at.propertyId, stay, priced.hash),
+      businessDate: at.businessDate,
+      timeZone: at.timeZone,
+      now: at.now,
+    })
   }
   try {
     requireWithinLimit(access, 'stay.rate_override', priced.discount.percent.toString())
@@ -152,6 +183,7 @@ export function requireDiscountAllowed(access: Access, priced: PricedStay): void
     }
     throw error
   }
+  return null
 }
 
 export function discountCheck(access: Access, priced: PricedStay): StayQuoteView['discount'] {

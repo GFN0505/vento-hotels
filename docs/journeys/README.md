@@ -76,7 +76,7 @@ All walkthroughs use the demo seed, so names and numbers match across documents,
   - Femi Adeyemi (F&B manager)
   - Kunle Ade (finance, group)
   - Sade Bakare (revenue manager, Kora Victoria Island and Kora Ikeja GRA)
-- **Signing in to the demo:** after `pnpm db:seed`, each person signs in as `firstname@kora.example` (e.g. `adaeze@kora.example`) with `DEMO_PASSWORD` from `.env.example`; the seed prints everyone's role and staff PIN. It also adds shared devices FD-VI-01, POS-VI-03 and HK-VI-07 at Kora Victoria Island and FD-IKJ-01 at Kora Ikeja GRA (none at Kora Abuja or Kora Port Harcourt), a pending invite for a Kora Abuja GM (`ngozi@kora.example`), and front desk's rate-override limit raised to 12% with a reason.
+- **Signing in to the demo:** after `pnpm db:seed`, each person signs in as `firstname@kora.example` (e.g. `adaeze@kora.example`) with `DEMO_PASSWORD` from `.env.example`; the seed prints everyone's role and staff PIN. It also adds shared devices FD-VI-01, POS-VI-03 and HK-VI-07 at Kora Victoria Island and FD-IKJ-01 at Kora Ikeja GRA (none at Kora Abuja or Kora Port Harcourt), a pending invite for a Kora Abuja GM (`ngozi@kora.example`), and front desk's rate-override limit raised to 12% with a reason. Approvals (brick 5): Chiamaka's 15% at Kora Victoria Island approved by Tunde's PIN on FD-VI-01 and used, Ibrahim's 18% declined by Tunde ("Max 12% this week"), Chiamaka's 14% expired, and Sade's 30% at Kora Ikeja GRA approved by Adaeze in the inbox; all closed, so nothing is waiting after seeding.
 - **Guests:** Mr Daniel Mensah (Ghanaian, business traveller from Acme Energy), Ms Sarah Collins (British, books direct), the Okoro family (walk-in).
 
 ## How each walkthrough is written

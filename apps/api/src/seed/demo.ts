@@ -24,10 +24,11 @@ import {
   properties,
 } from '../db/schema/tenancy.ts'
 import type { StorageProvider } from '../providers/storage.ts'
+import { seedApprovals } from './approvals.ts'
 import { seedFinance } from './finance.ts'
 import { seedLogo } from './logo.ts'
 import { seedRates } from './rates.ts'
-import { seedReservations } from './reservations.ts'
+import { accessFor, seedReservations } from './reservations.ts'
 import { seedRooms } from './rooms.ts'
 
 // The demo hotels went live on Vento this many business days before the seed was loaded.
@@ -290,8 +291,10 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
 
     // Shared devices. Their secrets are random and thrown away: to use one, register a real
     // browser from Settings › Devices.
+    const deviceIds = new Map<string, string>()
     for (const device of DEVICES) {
       const deviceId = newId()
+      deviceIds.set(device.name, deviceId)
       await tx.insert(devices).values({
         id: deviceId,
         organizationId,
@@ -372,11 +375,36 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
       if (!found) throw new Error(`The demo needs ${email}`)
       return { userId: found.userId, memberId: found.memberId, name: found.name, role: found.role }
     }
+    const booking = { organizationId, hotels: { vi: hotelIds.vi, ikeja: hotelIds.ikeja } }
     await seedReservations(tx, {
+      ...booking,
+      businessDate,
+      people: { chiamaka: who('chiamaka'), sade: who('sade'), tunde: who('tunde') },
+    })
+
+    // Approvals: over-limit discounts approved, declined and expired (stage-1-approvals.md).
+    const actorOf = (email: string): Actor => {
+      const person = who(email)
+      return {
+        organizationId,
+        userId: person.userId,
+        memberId: person.memberId,
+        userName: person.name,
+      }
+    }
+    await seedApprovals(tx, {
       organizationId,
       businessDate,
-      hotels: { vi: hotelIds.vi, ikeja: hotelIds.ikeja },
-      people: { chiamaka: who('chiamaka'), sade: who('sade'), tunde: who('tunde') },
+      hotels: booking.hotels,
+      deviceId: deviceIds.get('FD-VI-01') ?? '',
+      deviceName: 'FD-VI-01',
+      access: {
+        chiamaka: await accessFor(tx, booking, who('chiamaka')),
+        ibrahim: await accessFor(tx, booking, who('ibrahim')),
+        sade: await accessFor(tx, booking, who('sade')),
+      },
+      approvers: { tunde: actorOf('tunde'), adaeze: actorOf('adaeze') },
+      limits: { tunde: '50.00', adaeze: null },
     })
 
     return {

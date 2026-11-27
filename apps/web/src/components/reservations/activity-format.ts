@@ -44,6 +44,13 @@ export function describeReservationEvent(event: AuditEventView): AuditLine {
       `${formatPercent(String(after.percent ?? '0'))}%${first ? ` · ${naira(first.planPrice)} → ${naira(first.soldPrice)} a night` : ''}`,
     )
     if (after.limit) changes.push(`Limit at the time: ${formatPercent(String(after.limit))}%`)
+    if (typeof after.approverName === 'string') {
+      const how =
+        after.approvalMethod === 'pin_here'
+          ? `PIN${typeof after.approvalDevice === 'string' ? ` on ${after.approvalDevice}` : ''}`
+          : 'inbox'
+      changes.push(`Approved by ${after.approverName} (${how})`)
+    }
   } else if (event.action === 'stay.restriction_overridden' && typeof after.message === 'string') {
     changes.push(after.message)
   }

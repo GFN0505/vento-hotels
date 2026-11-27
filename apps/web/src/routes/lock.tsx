@@ -4,10 +4,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { DEVICE_KINDS, type LockScreen, PIN_LENGTH, roleLabel } from '@vento/shared'
-import { Delete, Lock, MonitorSmartphone } from 'lucide-react'
+import { Lock, MonitorSmartphone } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Logo } from '@/components/logo'
 import { Button } from '@/components/ui/button'
+import { PinPad } from '@/components/ui/pin-pad'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { CANT_REACH_VENTO } from '@/lib/errors'
@@ -85,7 +86,7 @@ function ReadyScreen({ screen }: { screen: Ready }) {
   return (
     <main className="flex grow flex-col items-center px-4 py-8 sm:py-12">
       {person ? (
-        <PinPad person={person} onCancel={() => setPerson(undefined)} />
+        <PinSignIn person={person} onCancel={() => setPerson(undefined)} />
       ) : (
         <div className="flex w-full max-w-3xl flex-col gap-6">
           {signedOut ? (
@@ -132,7 +133,7 @@ function ReadyScreen({ screen }: { screen: Ready }) {
 
 type PinError = { message: string; locked?: boolean }
 
-function PinPad({ person, onCancel }: { person: Person; onCancel: () => void }) {
+function PinSignIn({ person, onCancel }: { person: Person; onCancel: () => void }) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState<PinError>()
   const [checking, setChecking] = useState(false)
@@ -194,17 +195,6 @@ function PinPad({ person, onCancel }: { person: Person; onCancel: () => void }) 
     setPin(entered.current)
   }, [])
 
-  // Front desk PCs have keyboards: digits, Backspace and Escape work too.
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (/^\d$/.test(event.key)) press(event.key)
-      else if (event.key === 'Backspace') erase()
-      else if (event.key === 'Escape') onCancel()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [press, erase, onCancel])
-
   return (
     <div className="flex w-full max-w-xs flex-col items-center gap-5">
       <span
@@ -214,45 +204,19 @@ function PinPad({ person, onCancel }: { person: Person; onCancel: () => void }) 
         {initials(person.displayName)}
       </span>
       <h1 className="text-xl font-semibold">{person.displayName}, enter your PIN</h1>
-      <div key={shake} className={cn('flex gap-3', shake > 0 && 'pin-shake')} aria-hidden="true">
-        {Array.from({ length: PIN_LENGTH }, (_, i) => (
-          <span
-            // biome-ignore lint/suspicious/noArrayIndexKey: fixed positions, never reordered
-            key={i}
-            className={cn(
-              'size-4 rounded-full border-2',
-              i < pin.length ? 'border-pri bg-pri' : 'border-border-strong',
-              error && 'border-ro-dot',
-              error?.locked && 'opacity-40',
-            )}
-          />
-        ))}
-      </div>
-      <p className="sr-only" aria-live="polite">
-        {pin.length} of {PIN_LENGTH} digits entered
-      </p>
       <p role="alert" className={cn('min-h-10 text-center', error ? 'text-ro' : 'text-text-3')}>
         {error?.message ?? (slow ? 'Checking…' : '')}
       </p>
-      <div className="grid w-full grid-cols-3 gap-3">
-        {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-          <Key
-            key={digit}
-            label={digit}
-            onPress={() => press(digit)}
-            disabled={checking || Boolean(error?.locked)}
-          />
-        ))}
-        {/* Bottom-left stays empty, so a thumb aiming for 0 can't go back by mistake. */}
-        <span aria-hidden="true" />
-        <Key label="0" onPress={() => press('0')} disabled={checking || Boolean(error?.locked)} />
-        <Key
-          label={<Delete className="size-5" aria-hidden="true" />}
-          ariaLabel="Delete last digit"
-          onPress={erase}
-          disabled={checking || pin.length === 0}
-        />
-      </div>
+      {/* Front desk PCs have keyboards: digits, Backspace and Escape work too. */}
+      <PinPad
+        length={pin.length}
+        onDigit={press}
+        onErase={erase}
+        onEscape={onCancel}
+        shake={shake}
+        error={Boolean(error)}
+        disabled={checking || Boolean(error?.locked)}
+      />
       <button
         type="button"
         onClick={onCancel}
@@ -296,33 +260,6 @@ function pinError(
     window.location.reload()
   }
   return { message: CANT_REACH_VENTO }
-}
-
-function Key({
-  label,
-  ariaLabel,
-  onPress,
-  disabled,
-}: {
-  label: React.ReactNode
-  ariaLabel?: string
-  onPress: () => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      onClick={onPress}
-      disabled={disabled}
-      className={cn(
-        'grid h-16 place-items-center rounded-md border border-border bg-surface font-medium text-text hover:bg-surface-2 active:bg-pri-soft disabled:opacity-45',
-        'num text-2xl',
-      )}
-    >
-      {label}
-    </button>
-  )
 }
 
 function Clock() {

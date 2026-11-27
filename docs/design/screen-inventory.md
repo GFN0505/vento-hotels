@@ -13,7 +13,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Screen | Status | Stage | Notes |
 |---|---|---|---|
 | Sign in, 2FA, forgot password, accept invite | designed #24 · **sign in, forgot and reset password built (brick 7); accept invite built (brick 8); two-step code at sign-in built (brick 12)** | 0 | Includes "no property assigned" and "device not registered" states. Both built: "device not registered" on the lock screen (brick 10), "no property assigned" on Home (brick 7) |
-| Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** | 0 | Approval prompt in Stage 1 (with the first action that needs it); offline PIN sign-in ships with the outbox (decision 0024) |
+| Shared-device PIN sign-in, approval prompt | designed #22 · **PIN sign-in and lock screen built (brick 10)** · **approval prompt built (Stage 1 brick 5, over-limit discounts on New reservation)** | 0 | Offline PIN sign-in ships with the outbox (decision 0024); approvals need a connection |
 | Onboarding and setup checklist | designed #19 · **first steps and Home checklist built (bricks 7, 13)** | 0 | Built: create account, confirm email, group + company + first hotel; Home's "Finish setting up" with the Stage 0 steps, **Set up rooms** (Stage 1 brick 1) and **Set up taxes and payments** (Stage 1 brick 3). **Set rates** (Stage 1 brick 2) opens the hotel's Rate plans; #19's first-rate step is the empty Rate plans page. The first booking step comes with its brick |
 | Properties list and property settings | designed #25 · **built (hotels and companies)** | 0 | Settings › Hotels: list (All hotels), hotel settings, add, archive and restore; logo, address, time zone, check-in/out times, business date, owning company. Night audit time still to build (brick 13) |
 | Entities and departments | designed #25 · **built (hotels and companies)** as Companies | 0 | RC number, TIN, VAT status, hotels owned, archive and restore. Departments and the Ledger column wait for Stage 5 |
@@ -21,7 +21,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | **Permissions matrix and limits editor** | designed #26 · **built (brick 8)** | 0 | Roles × actions grid with limits; owner only; every change audited. Group-wide: the same with any hotel chosen, marked "Whole group". Effective dates, approvers and export still to build |
 | Devices | designed #25 · **built (brick 10)** | 0 | Register, name, bind to property, revoke. Follows the hotel switch (one hotel: its devices; All hotels: every device with its hotel) |
 | **Audit log viewer** | designed #28 | 0 | Filter by staff, action, property, date; before/after diff; also a drawer on every record. **Drawer on a room built (Stage 1 brick 1)** |
-| Notifications centre | designed #29 | 0 | Bell menu + full list; what each role is alerted about |
+| Notifications centre | designed #29 · **bell built for approvals only (Stage 1 brick 5)** | 0 | Bell menu + full list; other alerts and what each role is alerted about come with their bricks |
 | My profile and preferences | pattern · **account menu built (bricks 10–12)** | 0 | Password, 2FA, PIN reset, theme. Built in the account menu: set your staff PIN, two-step sign-in, Appearance (light, dark or system). A profile page (name, password) still to build |
 | Global search results (beyond ⌘K) | pattern | 0 | |
 | Error pages: 404, no access, offline first load, session expired | designed #24 · **offline banner and offline reopen built (brick 16)** | 0 | Built: the app reopens offline with what was saved and an offline banner; 404 built earlier. A first visit with no connection still shows the browser's own page |
@@ -33,7 +33,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 |---|---|---|---|
 | Property GM home | designed #2 · **shape built (brick 15)** | 1 | Built: Home for one hotel, shaped by role (GM, front desk, housekeeping, restaurant, finance and the rest): figures that say which module brings them, quick actions, the hotel, Needs attention. Arrivals list, house status, VIPs and staff on duty come with Stage 1 data |
 | Tape chart | designed #3 | 1 | |
-| New reservation | designed #4 · **built (Stage 1 brick 4, one room)** | 1 | Four steps (Dates & guests · Room & rate · Guest · Review & book) in a side sheet with the summary beside them; rooms left per night, plans with excl./incl. taxes, Change rate with a reason, guest search, Copy confirmation on the result. Approvals (brick 5), Add another room (brick 14) and the corporate row (brick 12) come later |
+| New reservation | designed #4 · **built (Stage 1 brick 4, one room)** | 1 | Four steps (Dates & guests · Room & rate · Guest · Review & book) in a side sheet with the summary beside them; rooms left per night, plans with excl./incl. taxes, Change rate with a reason, guest search, Copy confirmation on the result. Approvals built (brick 5: Ask for approval on Review, PIN here or the inbox, Continue booking), Add another room (brick 14) and the corporate row (brick 12) come later |
 | Reservation detail | designed #5 · **built read-only (Stage 1 brick 4)** | 1 | Summary, rate per night with tax lines in force each night, guest, guarantee and deposit, activity, Copy confirmation and the audit trail (`AuditOnReservation`). Modify, cancel, room move, check-in, folios and messages come with bricks 5–10 and Stage 4 |
 | Check-in and walk-in | designed #6 | 1 | |
 | Folio and check-out | designed #7 | 1 | |
@@ -114,7 +114,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Payment methods, bank accounts, POS terminals | designed #27 · **built (Stage 1 brick 3)** | 1 | On/off methods, foreign cash, guest transfer account, terminals; ledger columns in Stage 5 |
 | Tax remittances | pattern | 5 | |
 | Period close | pattern | 5 | |
-| **Approvals inbox** | designed #29 | 1 | One place for over-limit requests, refunds, POs, payroll |
+| **Approvals inbox** | designed #29 · **built (Stage 1 brick 5: discounts, `/approvals`)** | 1 | One place for over-limit requests; refunds, POs and payroll with their bricks |
 
 ## 8. HR & payroll
 | Screen | Status | Stage | Notes |

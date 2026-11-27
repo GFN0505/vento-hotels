@@ -197,7 +197,10 @@ export function ReservationsPage({ search, onSearch }: Props) {
       ) : null}
       {search.sheet === 'new' && showNew ? (
         <Suspense fallback={null}>
-          <BookingSheet onClose={() => onSearch({ sheet: undefined })} />
+          <BookingSheet
+            resume={search.approval}
+            onClose={() => onSearch({ sheet: undefined, approval: undefined })}
+          />
         </Suspense>
       ) : null}
       {search.sheet === 'new' && !canBook ? (

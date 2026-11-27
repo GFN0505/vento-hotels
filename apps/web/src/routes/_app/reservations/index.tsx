@@ -47,6 +47,12 @@ function readSearch(search: Record<string, unknown>): ReservationsSearch {
     depositDue: search.depositDue === true || search.depositDue === 'true' ? true : undefined,
     page: Number.isInteger(page) && page > 1 ? page : undefined,
     sheet: search.sheet === 'new' ? 'new' : undefined,
+    approval:
+      search.sheet === 'new' &&
+      typeof search.approval === 'string' &&
+      /^[0-9a-f-]{36}$/.test(search.approval)
+        ? search.approval
+        : undefined,
   }
 }
 

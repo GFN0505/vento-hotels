@@ -115,7 +115,7 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
 
 ## Open questions
 - **Night auditor role:** settled in `docs/DOMAIN.md`: the night auditor is a `front_desk` member on the night shift with the run-night-audit permission. Still open: is "night shift" a roster shift, a time window, or a flag on the member?
-- **Remote approval:** DOMAIN says the approver signs in or enters their PIN on the same device; screen 29 allows approving from a phone. Is remote approval allowed for waivers at night?
+- **Remote approval:** DOMAIN says the approver signs in or enters their PIN on the same device; screen 29 allows approving from a phone. Is remote approval allowed for waivers at night? *Answer:* yes: the inbox is the same mechanism for any kind (Stage 1 brick 5); waivers use it from brick 6.
 - Should an open POS bill be allowed to **carry over** to the next business date when an outlet trades past audit, or must every bill close first?
 - Can someone close **another person's cashier shift** (e.g. a cashier who went home)? Who, and with what witness?
 - Is a **waived no-show penalty** an exception in the owner's daily report? It isn't in DOMAIN's exception list.

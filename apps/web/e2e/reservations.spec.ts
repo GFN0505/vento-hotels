@@ -67,13 +67,12 @@ test('front desk takes a phone booking with a discount within her limit, and fin
   await sheet.getByRole('button', { name: 'Change rate' }).click()
   await sheet.getByLabel('Discount', { exact: true }).fill('15')
   await sheet.getByText('Repeat guest').click()
+  // Over the limit is no dead end any more: a manager can approve it at Book (brick 5).
   await expect(
-    sheet.getByText('15% is over your 12% discount limit.', { exact: false }),
+    sheet.getByText(
+      '15% is over your 12% discount limit. A manager with a higher limit can approve it when you book.',
+    ),
   ).toBeVisible()
-  // Continue says why it can't go on.
-  await sheet.getByRole('button', { name: /^Continue to guest/ }).click()
-  await expect(sheet.getByRole('alert').filter({ hasText: 'discount limit' }).first()).toBeVisible()
-  await expect(sheet.getByLabel('Find a guest')).toHaveCount(0)
   await sheet.getByLabel('Discount', { exact: true }).fill('10')
   await expect(
     sheet.getByText(/₦168,000\.00 → ₦151,200\.00 a night · 10% off Bed & breakfast/),

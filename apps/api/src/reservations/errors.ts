@@ -49,8 +49,8 @@ export const priceChanged = (stayIndex: number, message: string) =>
 
 export const discountOverLimit = (requested: string, limit: string) =>
   new ORPCError('FORBIDDEN', {
-    message: `${formatPercent(requested)}% is over your ${formatPercent(limit)}% discount limit. Use up to ${formatPercent(limit)}%, or ask a manager with a higher limit to make this booking.`,
-    data: { code: 'DISCOUNT_OVER_LIMIT', requested: formatPercent(requested), limit },
+    message: `${formatPercent(requested)}% is over your ${formatPercent(limit)}% discount limit. A manager with a higher limit can approve it when you book.`,
+    data: { code: 'DISCOUNT_OVER_LIMIT', requested: formatPercent(requested), limit, canAsk: true },
   })
 
 export const discountProblem = (

@@ -372,4 +372,53 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
       where organization_id = ${org?.id} and action = 'stay.discount_applied'`)
     expect(discounts.rows.map((row) => row.actor_name)).toContain('Chiamaka Eze')
   })
+
+  it('has four closed approvals with their events, and the approver on the two discounts used', async () => {
+    const [org] = await t.db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.slug, options.slug))
+    const rows = await t.db.execute<{
+      requester_name: string
+      approver_name: string
+      status: string
+      method: string | null
+      value: string
+      used: boolean
+      draft: unknown
+    }>(sql`
+      select requester_name, approver_name, status, method, value::float::text as value,
+             used_at is not null as used, draft
+      from approvals where organization_id = ${org?.id} order by requested_at`)
+    expect(
+      rows.rows.map((r) => [
+        r.requester_name,
+        r.value,
+        r.status,
+        r.method,
+        r.approver_name,
+        r.used,
+      ]),
+    ).toEqual([
+      ['Chiamaka Eze', '15', 'approved', 'pin_here', 'Tunde Bello', true],
+      ['Sade Bakare', '30', 'approved', 'inbox', 'Adaeze Okafor', true],
+      ['Ibrahim Musa', '18', 'declined', 'inbox', 'Tunde Bello', false],
+      ['Chiamaka Eze', '14', 'expired', null, 'Tunde Bello', false],
+    ])
+    expect(rows.rows.every((r) => r.draft === null)).toBe(true)
+    const events = await t.db.execute<{ action: string; n: number }>(sql`
+      select action, count(*)::int as n from audit_events
+      where organization_id = ${org?.id} and action like 'approval.%' group by action order by action`)
+    expect(events.rows).toEqual([
+      { action: 'approval.declined', n: 1 },
+      { action: 'approval.expired', n: 1 },
+      { action: 'approval.granted', n: 2 },
+      { action: 'approval.requested', n: 3 },
+    ])
+    const approved = await t.db.execute<{ approver: string | null }>(sql`
+      select approver_member_id as approver from audit_events
+      where organization_id = ${org?.id} and action = 'stay.discount_applied'
+        and approver_member_id is not null`)
+    expect(approved.rows).toHaveLength(2)
+  })
 })

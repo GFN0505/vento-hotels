@@ -1,5 +1,6 @@
 // The API contract: one object per module. The API implements it and the web app calls it through
 // the typed oRPC client, so request and response types are defined once, here (non-negotiable 7).
+import { approvalsContract } from './approvals.ts'
 import { devicesContract } from './devices.ts'
 import { financeContract } from './finance.ts'
 import { governanceContract } from './governance.ts'
@@ -21,9 +22,11 @@ export const contract = {
   ...financeContract,
   ...ratesContract,
   ...reservationsContract,
+  ...approvalsContract,
 }
 export type Contract = typeof contract
 
+export * from './approvals.ts'
 export * from './devices.ts'
 export * from './finance.ts'
 export * from './governance.ts'

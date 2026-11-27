@@ -2,10 +2,11 @@
 // organization (from the session, never from input), then which properties they may see.
 import { implement, ORPCError } from '@orpc/server'
 import { contract } from '@vento/shared'
+import * as approvals from './approvals/service.ts'
 import type { Auth } from './auth/auth.ts'
 import type { Database } from './db/client.ts'
 import * as devices from './devices/service.ts'
-import { guardDeviceSession } from './devices/session-guard.ts'
+import { BACKGROUND_PROCEDURES, guardDeviceSession } from './devices/session-guard.ts'
 import * as bankAccounts from './finance/bank-accounts.ts'
 import * as fx from './finance/fx-rates.ts'
 import * as paymentMethods from './finance/payment-methods.ts'
@@ -62,7 +63,7 @@ export type RequestContext = AppDeps & { headers: Headers; resHeaders?: Headers 
 
 const base = implement(contract).$context<RequestContext>()
 
-const authed = base.use(async ({ context, next }) => {
+const authed = base.use(async ({ context, next, path }) => {
   const result = await context.auth.api.getSession({ headers: context.headers })
   if (!result) throw new ORPCError('UNAUTHORIZED', { message: 'Sign in to continue' })
   // PIN sessions on shared devices: idle time, shift length and device cookie, checked here.
@@ -72,6 +73,7 @@ const authed = base.use(async ({ context, next }) => {
       context.db,
       { id: result.session.id, createdAt: new Date(result.session.createdAt), deviceId },
       context.headers,
+      { background: BACKGROUND_PROCEDURES.has(path.join('.')) },
     )
   }
   return next({ context: { user: result.user, session: result.session } })
@@ -378,6 +380,55 @@ export const router = base.router({
     ),
     get: inOrganization.reservations.get.handler(({ context, input }) =>
       getReservation(context.db, context.access, input.id),
+    ),
+  },
+  approvals: {
+    approvers: inOrganization.approvals.approvers.handler(async ({ context, input }) =>
+      approvals.listApprovers(
+        context.db,
+        context.access,
+        input,
+        await approvals.thisDevice(context.db, context.access, context.headers),
+      ),
+    ),
+    // The PIN check has its own lockout; this caps guessing across many approvers from one session.
+    approveHere: inOrganization.approvals.approveHere.handler(async ({ context, input }) => {
+      context.limiter.take(`approve-here:${context.access.memberId}`, 30, 600)
+      return approvals.approveHere(
+        context.db,
+        context.access,
+        input,
+        await approvals.thisDevice(context.db, context.access, context.headers),
+      )
+    }),
+    // Each request lands in someone's inbox: 20 per person per 10 minutes is plenty.
+    request: inOrganization.approvals.request.handler(async ({ context, input }) => {
+      context.limiter.take(`approval-request:${context.access.memberId}`, 20, 600)
+      return approvals.requestApproval(
+        context.db,
+        context.access,
+        input,
+        await approvals.thisDevice(context.db, context.access, context.headers),
+      )
+    }),
+    get: inOrganization.approvals.get.handler(({ context, input }) =>
+      approvals.getApproval(context.db, context.access, input.id),
+    ),
+    list: inOrganization.approvals.list.handler(({ context, input }) =>
+      approvals.listApprovals(context.db, context.access, input),
+    ),
+    count: inOrganization.approvals.count.handler(({ context, input }) =>
+      approvals.countWaiting(context.db, context.access, input),
+    ),
+    approve: inOrganization.approvals.approve.handler(({ context, input }) => {
+      context.limiter.take(`approve:${context.access.memberId}`, 30, 600)
+      return approvals.approveRequest(context.db, context.access, input)
+    }),
+    decline: inOrganization.approvals.decline.handler(({ context, input }) =>
+      approvals.declineRequest(context.db, context.access, input),
+    ),
+    cancel: inOrganization.approvals.cancel.handler(({ context, input }) =>
+      approvals.cancelRequest(context.db, context.access, input),
     ),
   },
   guests: {

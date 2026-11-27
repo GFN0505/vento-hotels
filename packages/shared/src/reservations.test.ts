@@ -142,7 +142,7 @@ describe('the discount limit', () => {
     expect(overLimit('12.01', '12.00')).toBe(true)
     expect(overLimit('80', null)).toBe(false)
     expect(overLimitMessage('15', '12.00')).toBe(
-      '15% is over your 12% discount limit. Use up to 12%, or ask a manager with a higher limit to make this booking.',
+      '15% is over your 12% discount limit. A manager with a higher limit can approve it when you book.',
     )
   })
 

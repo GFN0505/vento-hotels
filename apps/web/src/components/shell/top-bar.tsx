@@ -1,8 +1,10 @@
 // Top bar from the designs (Shell components · Top bar): property switcher, business date, connection
-// status and the account menu. Search (⌘K), offline sync and approvals arrive with their bricks.
+// status, the approvals bell and the account menu. Search (⌘K) and offline sync arrive with their
+// bricks.
 
 import { calendarDateIn } from '@vento/shared'
 import { ChevronDown, Lock, Menu } from 'lucide-react'
+import { ApprovalsBell } from '@/components/approvals/approvals-bell'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { lockDevice } from '@/lib/device-session'
@@ -74,6 +76,7 @@ export function TopBar({ user, onOpenMenu }: TopBarProps) {
         />
         <span className="sr-only md:not-sr-only">{online ? 'Online' : 'Offline'}</span>
       </span>
+      <ApprovalsBell />
       {me.data?.device ? (
         <Button
           variant="ghost"

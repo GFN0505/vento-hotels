@@ -33,7 +33,11 @@ export const RESERVATION_ERROR_CODES = [
   'FEATURE_OFF',
   'SOLD_OUT', // data: { roomTypeId, roomTypeName, date, left, alternatives }
   'PRICE_CHANGED', // data: { stayIndex, quote }
-  'DISCOUNT_OVER_LIMIT', // data: { requested, limit }
+  'DISCOUNT_OVER_LIMIT', // data: { requested, limit, canAsk }
+  'APPROVAL_USED',
+  'APPROVAL_EXPIRED',
+  'APPROVAL_NOT_MATCHING',
+  'APPROVAL_NO_LONGER_VALID',
   'DISCOUNT_ABOVE_PLAN',
   'DISCOUNT_ZERO',
   'DISCOUNT_BELOW_MEAL',
@@ -278,11 +282,21 @@ export const createReservationSchema = z.object({
             .min(3, 'Say why, in a few words')
             .max(300)
             .optional(),
+          // An approval for a discount over the member's limit (spec: stage-1-approvals.md).
+          approvalId: idSchema.optional(),
         })
         .refine(afterArrival, departureIssue),
     )
     .min(1)
-    .max(MAX_STAYS),
+    .max(MAX_STAYS)
+    // An approval covers one stay (spec: stage-1-approvals.md).
+    .refine(
+      (list) => {
+        const ids = list.flatMap((stay) => (stay.approvalId ? [stay.approvalId] : []))
+        return new Set(ids).size === ids.length
+      },
+      { message: 'An approval covers one stay. Ask for each stay.' },
+    ),
 })
 export type CreateReservationInput = z.input<typeof createReservationSchema>
 
@@ -382,6 +396,8 @@ export const reservationDetailSchema = z.object({
           reasonText: z.string().nullable(),
           note: z.string().nullable(),
           byName: z.string(),
+          // Who approved a discount over the limit (brick 5), with how.
+          approverName: z.string().nullable(),
         })
         .nullable(),
       restrictionOverride: z

@@ -1,10 +1,11 @@
 // Background jobs on pg-boss, in the same Postgres (no Redis; see ARCHITECTURE.md). Each job type has
 // a zod schema for its data, its own queue and retry policy, and an idempotent handler. Stage 0 runs
 // two: sending email with retries, and a heartbeat that /health watches; Stage 1 adds the daily
-// clean-up of unconfirmed uploads. Night audit steps, ARI
+// clean-up of unconfirmed uploads and, with approvals, their expiry every minute. Night audit steps, ARI
 // pushes, webhooks, messages and reports join from Stage 1.
 import { PgBoss } from 'pg-boss'
 import { z } from 'zod'
+import { expireApprovals } from '../approvals/expire.ts'
 import type { Database } from '../db/client.ts'
 import { reportError } from '../observability/errors.ts'
 import { logger } from '../observability/log.ts'
@@ -18,6 +19,7 @@ export const JOB_DATA = {
   'email.send': emailSchema,
   'system.heartbeat': z.object({}),
   'storage.purgeUnconfirmed': z.object({}),
+  'approvals.expire': z.object({}),
 } as const
 
 export type JobName = keyof typeof JOB_DATA
@@ -46,9 +48,12 @@ const QUEUES: Record<JobName, Parameters<PgBoss['createQueue']>[1]> = {
     expireInSeconds: 15 * 60,
     deleteAfterSeconds: 7 * 24 * 60 * 60,
   },
+  // Every minute; a missed run changes nothing people see (reads compare the time themselves).
+  'approvals.expire': { retryLimit: 0, expireInSeconds: 60, deleteAfterSeconds: 60 * 60 },
 }
 
 const HEARTBEAT_EVERY = '* * * * *'
+const EXPIRE_APPROVALS_EVERY = '* * * * *'
 // 03:30 UTC (04:30 in Lagos), clear of the night audit window.
 const PURGE_UPLOADS_AT = '30 3 * * *'
 // The heartbeat runs every minute; three missed means the workers aren't running.
@@ -104,6 +109,13 @@ export async function startJobs(options: {
   })
   await boss.schedule('system.heartbeat', HEARTBEAT_EVERY)
   const { db, storage } = options
+  if (db) {
+    await boss.work('approvals.expire', async () => {
+      const expired = await expireApprovals(db)
+      if (expired > 0) logger.info({ expired }, 'Approvals expired')
+    })
+    await boss.schedule('approvals.expire', EXPIRE_APPROVALS_EVERY)
+  }
   if (db && storage) {
     await boss.work('storage.purgeUnconfirmed', async () => {
       await purgeUnconfirmedUploads(db, storage)
