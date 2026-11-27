@@ -340,11 +340,11 @@ export function dayList(chart: TapeChart, date: string): DaySection[] {
             periods.get(room.id)?.find((p) => p.from <= date && date < p.backInService) ?? null
           const nights = stay ? nightsBetween(stay.arrival, stay.departure) : 0
           const line = period
-            ? `Out of order until ${formatRateDate(period.backInService, false)} · ${oooReason(period)}`
+            ? `Until ${formatRateDate(period.backInService, false)} · ${oooReason(period)}`
             : stay
               ? stay.arrival === date
-                ? `Arriving · ${stay.guestShort} · ${nights === 1 ? '1 night' : `${nights} nights`}`
-                : `Staying · ${stay.guestShort}`
+                ? `${stay.guestShort} · ${nights === 1 ? '1 night' : `${nights} nights`}`
+                : `${stay.guestShort} · until ${formatRateDate(stay.departure, false)}`
               : null
           return {
             room,

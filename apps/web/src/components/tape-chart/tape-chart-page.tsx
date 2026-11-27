@@ -648,10 +648,11 @@ function Toolbar({
               : 'border-border-strong bg-surface',
           )}
         >
-          Unassigned
+          {/* The whole window, said so: the Tonight strip counts tonight only. */}
           <span className="num rounded-full bg-am-bg px-1.5 text-[11px] font-semibold text-am">
             {waiting}
           </span>
+          not in a room · {data.days} days
         </button>
       </div>
       <div className="flex flex-wrap items-center gap-3 text-sm text-text-2">

@@ -184,8 +184,8 @@ describe('chart model', () => {
     const [section] = dayList(chart, '2026-11-25')
     expect(section?.arriving.map((s) => s.guestName)).toEqual(['Daniel Adebayo'])
     expect(section?.rooms.map((r) => [r.room.number, r.status, r.line])).toEqual([
-      ['502', 'inspected', 'Arriving · Mensah D. · 3 nights'],
-      ['503', 'out_of_order', 'Out of order until 27 Nov · AC'],
+      ['502', 'inspected', 'Mensah D. · 3 nights'],
+      ['503', 'out_of_order', 'Until 27 Nov · AC'],
     ])
   })
 })
