@@ -191,7 +191,7 @@ async function setInTx(tx: Tx, access: Access, input: Input): Promise<RoomStatus
 }
 
 export async function setRoomStatus(
-  db: Database,
+  db: Pick<Database, 'transaction' | 'select'>,
   access: Access,
   input: SetRoomStatusInput,
 ): Promise<RoomStatusResult> {

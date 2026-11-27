@@ -258,7 +258,7 @@ async function assignInTx(
 }
 
 export async function assignRoom(
-  db: Database,
+  db: Pick<Database, 'transaction' | 'select'>,
   access: Access,
   input: AssignRoomInput,
 ): Promise<AssignedRoom> {

@@ -288,7 +288,7 @@ async function replayCreate(db: Reader, access: Access, key: string, input: unkn
 }
 
 export async function createOutOfOrder(
-  db: Database,
+  db: Pick<Database, 'transaction' | 'select'>,
   access: Access,
   input: CreateOutOfOrderInput,
 ): Promise<OutOfOrderView> {
@@ -396,7 +396,7 @@ async function lockPeriod(tx: Tx, access: Access, id: string, version: number, k
 }
 
 export async function changeOutOfOrder(
-  db: Database,
+  db: Pick<Database, 'transaction' | 'select'>,
   access: Access,
   input: ChangeOutOfOrderInput,
 ): Promise<OutOfOrderView> {
@@ -489,7 +489,7 @@ export async function changeOutOfOrder(
 // Back in service (a current period ends from the business date, the room dirty or clean) or
 // Remove (an upcoming one, or one starting today, is taken off and kept for history).
 export async function endOutOfOrder(
-  db: Database,
+  db: Pick<Database, 'transaction' | 'select'>,
   access: Access,
   input: EndOutOfOrderInput,
 ): Promise<OutOfOrderView> {

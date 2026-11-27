@@ -4,7 +4,8 @@
 // rate plans (Kora Victoria Island's five with the Festive season, the others' three each);
 // devices at Kora Victoria Island and Kora Ikeja GRA (none at Abuja or Port Harcourt, for the empty
 // state); taxes, payment methods, bank accounts, POS terminals and 30 days of FX rates; about 430
-// reservations at Kora Victoria Island and 20 at Kora Ikeja GRA; a pending
+// reservations at Kora Victoria Island and 20 at Kora Ikeja GRA; rooms assigned for the coming week,
+// room statuses and rooms out of order (brick 7); a pending
 // invite; and one permission change with its reason. Used for local development, browser tests and sales demos. Everything here is
 // made up.
 import { createHash, randomBytes } from 'node:crypto'
@@ -31,6 +32,7 @@ import { seedLogo } from './logo.ts'
 import { seedRates } from './rates.ts'
 import { accessFor, seedReservations } from './reservations.ts'
 import { seedRooms } from './rooms.ts'
+import { seedTapeChart } from './tape-chart.ts'
 
 // The demo hotels went live on Vento this many business days before the seed was loaded.
 export const LIVE_DAYS_AGO = 10
@@ -424,13 +426,27 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
       pins: { tunde: PEOPLE.find((person) => person.email === 'tunde')?.pin ?? '' },
     })
 
+    // Rooms in use: assignments, room statuses and out of order (stage-1-tape-chart.md).
+    const onTheChart = await seedTapeChart(tx, {
+      organizationId,
+      businessDate,
+      hotels: booking.hotels,
+      access: {
+        chiamaka: await accessFor(tx, booking, who('chiamaka')),
+        tunde: await accessFor(tx, booking, who('tunde')),
+        grace: await accessFor(tx, booking, who('grace')),
+        sade: await accessFor(tx, booking, who('sade')),
+        adaeze: await accessFor(tx, booking, who('adaeze')),
+      },
+    })
+
     return {
       status: 'seeded' as const,
       organizationId,
       viId: hotelIds.vi,
       ownerMemberId: owner.memberId,
       people: seeded.map(({ name, email, role, pin }) => ({ name, email, role, pin })),
-      tryToday,
+      tryToday: [...tryToday, ...onTheChart],
     }
   })
   // After the group is saved: storage is outside the database, so it's never written mid-transaction.
