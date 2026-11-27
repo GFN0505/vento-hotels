@@ -55,7 +55,8 @@ export function AddHotelSheet({ onClose }: { onClose: () => void }) {
 
   const add = useMutation({
     mutationFn: () => {
-      const { reason: _, ...fields } = form
+      // The booking prefix is suggested by the server from the name; it's set later in settings.
+      const { reason: _, bookingPrefix: __, ...fields } = form
       return api.properties.create({
         ...fields,
         name: form.name.trim(),
