@@ -239,6 +239,8 @@ for (const theme of ['light', 'dark'] as const) {
     test('members and devices, with All hotels and with one hotel, have no accessibility problems', async ({
       page,
     }, testInfo) => {
+      // Seeds the whole demo group, which grows with every brick, then checks eight pages.
+      test.setTimeout(120_000)
       const domain = seedDemoGroup(`a11y-switch-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
       await signIn(page, `adaeze@${domain}`, 'Demo-pass-42!')
       await page.getByRole('heading', { name: /^Good/ }).waitFor()
