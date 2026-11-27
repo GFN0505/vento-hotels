@@ -57,3 +57,5 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - The out-of-order refusal says "Ask your GM." rather than naming the hotel's GM.
 - Columns beyond the window aren't fetched on horizontal scroll (Previous / Next week instead); fine for 120 rooms × 30 nights.
 - The sync queue's "needs a look" list shows only on the tape chart; a shell-wide queue panel comes with the next offline module (check-in, POS).
+- `reservations/assign/assign.ts`: the exclusion-violation fallback calls `roomTaken(room, '')` with an empty date ("402 was just taken."); look up the first clashing night instead.
+- Migration 0019's check `rooms_housekeeping_status_stored` has no data guard: fine before any hotel is live (nothing stores `out_of_order` or `out_of_service`), but a deploy onto data that does would fail; add an update or a guard first if that ever changes.

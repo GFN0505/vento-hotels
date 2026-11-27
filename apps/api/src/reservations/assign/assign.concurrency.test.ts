@@ -1,7 +1,8 @@
 // Room moves and out of order racing each other and bookings on separate connections (spec:
 // stage-1-tape-chart.md, "Availability locking", "Tests"). A gate holds a room row (or an inventory
 // row) so both requests are queued on it before either can take it; then exactly one may win. Real
-// HTTP through the app, real Postgres. Kora Lekki has Solo (1 room), Pair (4 rooms) and Up (1 room);
+// HTTP through the app, real Postgres. Kora Lekki has Solo (1 room), Pair (4 rooms), Up (1 room),
+// Trio (3) and Duo (2);
 // every race stays within the two years a booking can be made ahead.
 import type { ChartRoom, Property, RatePlanView, RoomTypeView } from '@vento/shared'
 import { addDays, newId } from '@vento/shared'
@@ -9,7 +10,7 @@ import { and, count, eq, inArray, sql } from 'drizzle-orm'
 import pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { roomTypeInventory, stayNights, stays } from '../../db/schema/reservations.ts'
-import { roomOutOfOrder } from '../../db/schema/rooms.ts'
+import { roomOutOfOrder, rooms } from '../../db/schema/rooms.ts'
 import { setHotel } from '../../finance/testing.ts'
 import { createType, floorRooms } from '../../rooms/testing.ts'
 import { assign, outOfOrder, roomsOf } from '../../tape-chart/testing.ts'
@@ -20,6 +21,7 @@ import { DAY, type KoraBooking, koraBooking } from '../testing.ts'
 
 const url = process.env.TEST_DATABASE_URL
 const ROUNDS = Number(process.env.RACE_ROUNDS ?? 200)
+type Key = 'solo' | 'pair' | 'up' | 'trio' | 'duo'
 
 describe.skipIf(!url)('room moves under concurrency', { timeout: 900_000 }, () => {
   const t = createTestApp(url ?? '', { max: 8 })
@@ -30,11 +32,11 @@ describe.skipIf(!url)('room moves under concurrency', { timeout: 900_000 }, () =
   })
   let k: KoraBooking
   let lekki: Property
-  const types = {} as Record<'solo' | 'pair' | 'up', RoomTypeView>
-  const roomsOfType = {} as Record<'solo' | 'pair' | 'up', ChartRoom[]>
+  const types = {} as Record<Key, RoomTypeView>
+  const roomsOfType = {} as Record<Key, ChartRoom[]>
   let bar: RatePlanView
 
-  const room = (type: 'solo' | 'pair' | 'up', index = 0) => {
+  const room = (type: Key, index = 0) => {
     const found = roomsOfType[type][index]
     if (!found) throw new Error(`no ${type} room ${index}`)
     return found
@@ -53,9 +55,9 @@ describe.skipIf(!url)('room moves under concurrency', { timeout: 900_000 }, () =
     ).data
     await setHotel(t, lekki.id, { businessDate: DAY })
     await t.rpc(k.finance.cookie, 'taxes/setUp', { propertyId: lekki.id })
-    const counts = { solo: 1, pair: 4, up: 1 } as const
+    const counts = { solo: 1, pair: 4, up: 1, trio: 3, duo: 2 } as const
     let floor = 1
-    for (const key of ['solo', 'pair', 'up'] as const) {
+    for (const key of ['solo', 'pair', 'up', 'trio', 'duo'] as const) {
       types[key] = await createType(t, k.owner.cookie, lekki.id, {
         name: key[0]?.toUpperCase() + key.slice(1),
         code: key.toUpperCase(),
@@ -72,23 +74,25 @@ describe.skipIf(!url)('room moves under concurrency', { timeout: 900_000 }, () =
         { roomTypeId: types.solo.id, weekday: '90000' },
         { roomTypeId: types.pair.id, weekday: '100000' },
         { roomTypeId: types.up.id, weekday: '150000' },
+        { roomTypeId: types.trio.id, weekday: '110000' },
+        { roomTypeId: types.duo.id, weekday: '120000' },
       ],
     })
     const first = plans.data.plans[0]
     if (!first) throw new Error('no plan at Lekki')
     bar = first
-    for (const key of ['solo', 'pair', 'up'] as const) {
+    for (const key of ['solo', 'pair', 'up', 'trio', 'duo'] as const) {
       roomsOfType[key] = await roomsOf(t, k.owner.cookie, lekki.id, types[key].id)
     }
   })
 
-  const stayOf = (key: 'solo' | 'pair' | 'up', arrival: string, nights = 1) => ({
+  const stayOf = (key: Key, arrival: string, nights = 1) => ({
     roomTypeId: types[key].id,
     ratePlanId: bar.id,
     arrival,
     departure: addDays(arrival, nights),
   })
-  const book = (key: 'solo' | 'pair' | 'up', arrival: string, nights = 1) =>
+  const book = (key: Key, arrival: string, nights = 1) =>
     bookStay(t, k.owner.cookie, lekki.id, stayOf(key, arrival, nights))
 
   async function waitForWaiters(n: number) {
@@ -402,6 +406,128 @@ describe.skipIf(!url)('room moves under concurrency', { timeout: 900_000 }, () =
           (await staysIn(room('pair', index).id, date)) + (index ? off1 : off0),
         ).toBeLessThanOrEqual(1)
       }
+    }
+  })
+
+  // Creates the night's inventory row if needed and returns the gate on it.
+  const createBooking = async (key: Key, night: string) => {
+    const quoted = await t.rpc<{ quoteHash: string }>(k.owner.cookie, 'reservations/quote', {
+      propertyId: lekki.id,
+      adults: 1,
+      children: 0,
+      ...stayOf(key, night),
+    })
+    return () =>
+      rpc(t, k.owner.cookie, 'reservations/create', {
+        idempotencyKey: newId(),
+        propertyId: lekki.id,
+        guest: {
+          kind: 'new',
+          fields: {
+            firstName: 'Ada',
+            lastName: 'Race',
+            phone: '+2348030000000',
+            nationality: 'NG',
+          },
+        },
+        source: 'phone',
+        stays: [
+          { adults: 1, children: 0, ...stayOf(key, night), quoteHash: quoted.data.quoteHash },
+        ],
+      })
+  }
+
+  it(`lets one of two out-of-orders take the type's only spare room, ${ROUNDS} rounds`, async () => {
+    for (let round = 0; round < ROUNDS; round++) {
+      const night = addDays(DAY, 1 + round)
+      await book('trio', night)
+      await book('trio', night)
+      const off = (index: number) => () =>
+        outOfOrder(t, k.owner.cookie, {
+          propertyId: lekki.id,
+          roomId: room('trio', index).id,
+          from: night,
+          backInService: addDays(night, 1),
+        })
+      const results = (await throughGate(await inventoryGate(types.trio.id, night), [
+        off(round % 2),
+        off(1 - (round % 2)),
+      ])) as Result<unknown>[]
+      expect(results.filter((r) => r.status === 200)).toHaveLength(1)
+      expect(results.find((r) => r.status !== 200)?.data.data?.code).toBe('OOO_WOULD_OVERBOOK')
+      expect(
+        (await periodsOn(room('trio', 0).id, night)) + (await periodsOn(room('trio', 1).id, night)),
+      ).toBe(1)
+    }
+  })
+
+  it(`lets one of an out-of-order extension and a booking take the last room, ${ROUNDS} rounds`, async () => {
+    let extended = 0
+    for (let round = 0; round < ROUNDS; round++) {
+      const night = addDays(DAY, 1 + round * 3)
+      const next = addDays(night, 1)
+      await book('duo', next)
+      const made = await outOfOrder(t, k.owner.cookie, {
+        propertyId: lekki.id,
+        roomId: room('duo', 0).id,
+        from: night,
+        backInService: next,
+      })
+      expect(made.status).toBe(200)
+      const extend = () =>
+        rpc(t, k.owner.cookie, 'rooms/outOfOrder/change', {
+          idempotencyKey: newId(),
+          periodId: made.data.id,
+          version: made.data.version,
+          from: night,
+          backInService: addDays(next, 1),
+          changeReason: 'Part delayed',
+        })
+      const create = await createBooking('duo', next)
+      const order = round % 2 === 0 ? [extend, create] : [create, extend]
+      const results = (await throughGate(
+        await inventoryGate(types.duo.id, next),
+        order,
+      )) as Result<unknown>[]
+      expect(results.filter((r) => r.status === 200)).toHaveLength(1)
+      const loser = results.find((r) => r.status !== 200)?.data.data?.code
+      expect(['OOO_WOULD_OVERBOOK', 'SOLD_OUT']).toContain(loser)
+      if (loser === 'SOLD_OUT') extended++
+    }
+    expect(extended).toBeGreaterThan(0)
+  })
+
+  it(`keeps the later device time when two status changes race on one room, ${ROUNDS} rounds`, async () => {
+    const target = room('up')
+    const base = Date.now() - 60 * 60_000
+    for (let round = 0; round < ROUNDS; round++) {
+      const earlier = new Date(base + round * 2_000).toISOString()
+      const later = new Date(base + round * 2_000 + 1_000).toISOString()
+      const finalStatus = round % 2 === 0 ? 'dirty' : 'clean'
+      const other = finalStatus === 'dirty' ? 'clean' : 'dirty'
+      const send = (status: string, occurredAt: string) => () =>
+        rpc<{ outcome: string; status: string }>(t, k.owner.cookie, 'rooms/setStatus', {
+          idempotencyKey: newId(),
+          propertyId: lekki.id,
+          roomId: target.id,
+          status,
+          occurredAt,
+        })
+      const late = send(finalStatus, later)
+      const early = send(other, earlier)
+      const results = (await throughGate(
+        roomGate(target.id),
+        round % 4 < 2 ? [late, early] : [early, late],
+      )) as Result<{
+        outcome: string
+        status: string
+      }>[]
+      for (const r of results) expect(r.status).toBe(200)
+      const [row] = await t.db
+        .select({ status: rooms.housekeepingStatus })
+        .from(rooms)
+        .where(eq(rooms.id, target.id))
+      expect(row?.status).toBe(finalStatus)
     }
   })
 })

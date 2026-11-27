@@ -31,3 +31,16 @@ export function afterAnswer(
       : item,
   )
 }
+
+// What a failed send means for the queue: the connection dropped (wait for it), the session ended
+// (a device locked, a sign-in expired: wait for the person to sign in again), or the server refused
+// the command (a person reads why). Only the last leaves the waiting list.
+export function failureOf(
+  error: unknown,
+  connectionProblem: boolean,
+): 'offline' | 'signed_out' | 'refused' {
+  if (connectionProblem) return 'offline'
+  const failure = error as { status?: number; code?: string } | null
+  if (failure?.status === 401 || failure?.code === 'UNAUTHORIZED') return 'signed_out'
+  return 'refused'
+}

@@ -10,7 +10,13 @@ import { useEffect, useSyncExternalStore } from 'react'
 import { api, orpc } from '@/lib/api'
 import { isConnectionProblem } from '@/lib/errors'
 import { isOnline, markReachable, markUnreachable, onReachabilityChange } from './connection'
-import { afterAnswer, nextToSend, type Queued, type RoomStatusCommand } from './outbox-rules'
+import {
+  afterAnswer,
+  failureOf,
+  nextToSend,
+  type Queued,
+  type RoomStatusCommand,
+} from './outbox-rules'
 import { getOutboxItem, setOutboxItem } from './store'
 
 export type { Queued, RoomStatusCommand }
@@ -75,10 +81,13 @@ export async function flush() {
             : { outcome: 'applied' },
         )
       } catch (error) {
-        if (isConnectionProblem(error as { status?: number })) {
+        const failure = failureOf(error, isConnectionProblem(error as { status?: number }))
+        if (failure === 'offline') {
           markUnreachable()
           break
         }
+        // Left waiting: sent again once someone signs in (startOutbox runs then).
+        if (failure === 'signed_out') break
         const message = error instanceof Error ? error.message : 'Vento refused this change.'
         items = afterAnswer(items, next.input.idempotencyKey, {
           outcome: 'attention',

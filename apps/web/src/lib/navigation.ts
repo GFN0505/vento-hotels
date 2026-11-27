@@ -80,7 +80,13 @@ export const MODULES: readonly NavGroup[] = [
         label: 'Tape chart',
         icon: ChartGantt,
         feature: 'front_desk',
-        roles: [...FRONT_DESK_TEAM, 'revenue_manager', 'housekeeping_supervisor', 'maintenance'],
+        roles: [
+          ...FRONT_DESK_TEAM,
+          'revenue_manager',
+          'housekeeping_supervisor',
+          'room_attendant',
+          'maintenance',
+        ],
         // Reservation readers, and housekeeping and maintenance through their room permissions:
         // TAPE_CHART_READERS in @vento/shared, written out so the menu loads without it.
         needs: [

@@ -25,7 +25,7 @@ import { Field } from '@/components/ui/field'
 import { Segmented } from '@/components/ui/segmented'
 import { api, orpc } from '@/lib/api'
 import { cn } from '@/lib/cn'
-import { problemMessage } from '@/lib/errors'
+import { isConnectionProblem, problemMessage } from '@/lib/errors'
 import { useOnline } from '@/offline/connection'
 
 export const OOO_NEEDS_LIVE = 'Out of order needs a connection.'
@@ -69,6 +69,7 @@ export function OutOfOrderDialog(props: Props) {
   const [comesBack, setComesBack] = useState<'dirty' | 'clean'>('dirty')
   const [failure, setFailure] = useState<string>()
   const [tried, setTried] = useState(false)
+  const [retrying, setRetrying] = useState(false)
   const leaveBar = useDialogLeaveGuard(() => undefined)
 
   const nights = back > from ? nightsBetween(from, back) : 0
@@ -148,6 +149,7 @@ export function OutOfOrderDialog(props: Props) {
     setFailure(undefined)
     try {
       const saved = await save.mutateAsync()
+      setRetrying(false)
       key.current = newId()
       await refresh()
       onClose()
@@ -161,11 +163,22 @@ export function OutOfOrderDialog(props: Props) {
               : `${room.number} back in service`,
       )
     } catch (error) {
+      if (isConnectionProblem(error as { status?: number })) {
+        // The reply may have been lost after it was saved: sent again with the same key when the
+        // connection is back, so it applies once.
+        setRetrying(true)
+        return
+      }
+      setRetrying(false)
       key.current = newId()
       setFailure(problemMessage(error))
       void check.refetch()
     }
   }
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only when the connection returns.
+  useEffect(() => {
+    if (online && retrying) void submit()
+  }, [online])
 
   const title =
     mode === 'create'
@@ -232,6 +245,11 @@ export function OutOfOrderDialog(props: Props) {
           void submit()
         }}
       >
+        {retrying ? (
+          <p role="status" className="rounded-sm bg-bl-bg px-3 py-2 text-sm text-bl">
+            Checking whether it was saved…
+          </p>
+        ) : null}
         {failure ? (
           <p role="alert" className="rounded-sm bg-ro-bg px-3 py-2 text-sm text-ro">
             {failure}

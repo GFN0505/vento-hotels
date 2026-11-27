@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { afterAnswer, nextToSend, type Queued } from './outbox-rules'
+import { afterAnswer, failureOf, nextToSend, type Queued } from './outbox-rules'
 
 const command = (key: string, memberId: string): Queued => ({
   kind: 'rooms.setStatus',
@@ -29,5 +29,12 @@ describe('outbox', () => {
     const kept = afterAnswer(applied, 'b', { outcome: 'attention', message: 'Kept as dirty.' })
     expect(kept[0]).toMatchObject({ state: 'attention', message: 'Kept as dirty.' })
     expect(nextToSend(kept, 'grace')).toBeUndefined()
+  })
+
+  it('keeps a command waiting when the session ended or the connection dropped', () => {
+    expect(failureOf({ status: 401, code: 'UNAUTHORIZED' }, false)).toBe('signed_out')
+    expect(failureOf({ code: 'UNAUTHORIZED' }, false)).toBe('signed_out')
+    expect(failureOf({ status: 0 }, true)).toBe('offline')
+    expect(failureOf({ status: 409, code: 'CONFLICT' }, false)).toBe('refused')
   })
 })
