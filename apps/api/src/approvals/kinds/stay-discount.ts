@@ -34,7 +34,7 @@ export { STAY_DISCOUNT, stayBinding }
 export const NO_DISCOUNTS = "You can't give discounts. Ask a manager to make this booking."
 
 type Reader = Pick<Database, 'select' | 'execute'>
-type Action = z.output<typeof approvalActionSchema>
+type Action = Extract<z.output<typeof approvalActionSchema>, { kind: 'stay_discount' }>
 type Stay = Action['booking']['stays'][number]
 
 // Rounded up, never half: a rate per night that works out at 25.00004% must not pass as 25% for an

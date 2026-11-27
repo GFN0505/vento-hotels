@@ -4,6 +4,7 @@
 // also come with night_audit.run or leakage.view (read-only). No input carries an organizationId.
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
+import { endReasonSchema, penaltyKindSchema, penaltyStatusSchema } from '../changes.ts'
 import { calendarDateSchema } from '../dates.ts'
 import {
   guestCorrectionsSchema,
@@ -53,6 +54,17 @@ export const RESERVATION_ERROR_CODES = [
   'IDEMPOTENCY_CONFLICT', // data: { id, number }
   'ROOMS_BOOKED', // room count changes (brick 1 paths): data: { date, booked, rooms }
   'BOOKING_PREFIX_LOCKED',
+  // Modify, cancel and no-show (brick 6).
+  'RESERVATION_CHANGED', // data: { byName, at }
+  'NOT_CHANGEABLE',
+  'ARRIVAL_PASSED',
+  'NOT_ARRIVED_YET',
+  'NOTHING_CHANGED',
+  'PLAN_DOESNT_SELL_TYPE',
+  'CANCEL_REASON_REQUIRED',
+  'WAIVER_REASON_REQUIRED',
+  'WAIVER_NEEDS_APPROVAL', // data: { canAsk }
+  'PENALTY_NOT_OPEN',
 ] as const
 export type ReservationErrorCode = (typeof RESERVATION_ERROR_CODES)[number]
 
@@ -334,6 +346,8 @@ export const reservationRowSchema = z.object({
   status: reservationStatusSchema,
   depositDue: z.object({ amount: z.string(), dueAt: z.iso.datetime() }).nullable(),
   total: z.string(),
+  // Cancelled and no-show rows: the penalty to charge, waived, or none.
+  penalty: z.object({ amount: z.string(), waived: z.boolean() }).nullable(),
   bookedAt: z.iso.datetime(),
 })
 export type ReservationRow = z.infer<typeof reservationRowSchema>
@@ -348,6 +362,37 @@ export const activityEntrySchema = z.object({
   actorName: z.string().nullable(),
   at: z.iso.datetime(),
 })
+
+// A penalty on the detail's Penalty card (brick 6), with the latest waiver request when one was asked.
+export const penaltyViewSchema = z.object({
+  id: idSchema,
+  kind: penaltyKindSchema,
+  amount: z.string(),
+  basisLabel: z.string(),
+  status: penaltyStatusSchema,
+  businessDate: calendarDateSchema,
+  waived: z
+    .object({
+      byName: z.string(),
+      at: z.iso.datetime(),
+      reason: z.string(),
+      approverName: z.string().nullable(),
+      method: z.enum(['pin_here', 'inbox']).nullable(),
+    })
+    .nullable(),
+  request: z
+    .object({
+      approvalId: idSchema,
+      status: z.enum(['pending', 'approved', 'declined', 'expired', 'cancelled']),
+      approverName: z.string(),
+      expiresAt: z.iso.datetime(),
+      comment: z.string().nullable(),
+      // Asked by the reader (they can ask again or wait).
+      mine: z.boolean(),
+    })
+    .nullable(),
+})
+export type PenaltyView = z.infer<typeof penaltyViewSchema>
 
 export const reservationDetailSchema = z.object({
   id: idSchema,
@@ -379,9 +424,35 @@ export const reservationDetailSchema = z.object({
     email: z.string().nullable(),
     nationality: z.string(),
   }),
+  // Sum of the stays' versions, for cancel and no-show.
+  version: z.number().int(),
+  // Cancelled or marked no-show: when, by whom, why.
+  end: z
+    .object({
+      kind: z.enum(['cancelled', 'no_show']),
+      at: z.iso.datetime(),
+      businessDate: calendarDateSchema,
+      byName: z.string(),
+      reason: endReasonSchema.nullable(),
+      reasonText: z.string().nullable(),
+      note: z.string().nullable(),
+    })
+    .nullable(),
+  penalties: z.array(penaltyViewSchema),
+  // What the reader may do now (the server checks again).
+  actions: z.object({
+    modify: z.boolean(),
+    cancel: z.boolean(),
+    noShow: z.boolean(),
+    blocked: z.enum(['ended', 'arrival_passed', 'not_arrived', 'in_house']).nullable(),
+    canManage: z.boolean(),
+    canWaive: z.boolean(),
+  }),
   stays: z.array(
     z.object({
       id: idSchema,
+      version: z.number().int(),
+      roomTypeId: idSchema,
       roomTypeName: z.string(),
       arrival: calendarDateSchema,
       departure: calendarDateSchema,

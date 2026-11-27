@@ -4,7 +4,7 @@
 // the reservation counter. The approval is checked against what
 // the server just priced and the approver's eligibility now, and marked used in the same
 // transaction, so it is used once.
-import type { Permission } from '@vento/shared'
+import type { ApprovalKind, Permission } from '@vento/shared'
 import { and, asc, eq, inArray } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { approvals } from '../db/schema/approvals.ts'
@@ -38,7 +38,7 @@ export async function useApproval(
   access: Access,
   ask: {
     approvalId: string
-    kind: 'stay_discount'
+    kind: ApprovalKind
     permission: Permission
     propertyId: string
     bindingHash: string
@@ -127,14 +127,22 @@ export async function lockApprovals(tx: Tx, access: Access, ids: readonly string
 export async function markApprovalUsed(
   tx: Tx,
   id: string,
-  used: { stayId: string; at: Date },
+  used: {
+    stayId?: string
+    // A changed stay (brick 6: 'reservation_change') or a waived penalty ('penalty').
+    entity?: { type: 'stay' | 'reservation_change' | 'penalty'; id: string }
+    reference?: string
+    at: Date
+  },
 ): Promise<void> {
+  const entity = used.entity ?? { type: 'stay' as const, id: used.stayId ?? '' }
   await tx
     .update(approvals)
     .set({
       usedAt: used.at,
-      usedEntityType: 'stay',
-      usedEntityId: used.stayId,
+      usedEntityType: entity.type,
+      usedEntityId: entity.id,
+      ...(used.reference ? { usedReference: used.reference } : {}),
       draft: null,
       updatedAt: used.at,
     })

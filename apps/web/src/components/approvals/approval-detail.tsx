@@ -4,7 +4,15 @@
 // pad inline on phones). The requester can cancel a waiting request or continue the booking.
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { type ApprovalDetail, clockAt, firstNameOf, PIN_LENGTH, roleLabel } from '@vento/shared'
+import {
+  type ApprovalDetail,
+  clockAt,
+  firstNameOf,
+  isWaiverSubject,
+  PENALTY_KIND_LABELS,
+  PIN_LENGTH,
+  roleLabel,
+} from '@vento/shared'
 import { ShieldCheck } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { toast } from 'sonner'
@@ -27,6 +35,7 @@ import {
   rowLabel,
   rowTitle,
   statusBadge,
+  whatOf,
 } from './format'
 
 export function ApprovalDetailCard({ view }: { view: ApprovalDetail }) {
@@ -58,7 +67,7 @@ export function ApprovalDetailCard({ view }: { view: ApprovalDetail }) {
     }
     try {
       await decline.mutateAsync({ id: view.id, comment: comment.trim() })
-      toast.success(`Declined ${s.percent}% for ${s.guestName}`)
+      toast.success(`Declined ${whatOf(s)} for ${s.guestName}`)
       void refresh()
     } catch (error) {
       toast.error(problemMessage(error))
@@ -102,26 +111,47 @@ export function ApprovalDetailCard({ view }: { view: ApprovalDetail }) {
               {age(view.requestedAt) === 'just now' ? 'just now' : `${age(view.requestedAt)} ago`}
             </span>
           </Item>
-          <Item label="Booking">
-            {s.roomTypeName} · {s.planName} · {stayRange(s.arrival, s.departure)} ·{' '}
-            {nightsLabel(s.nights)}
-          </Item>
-          <Item label="Limit">
-            {s.requesterLimit}% · {s.requesterRole || roleLabel('front_desk').toLowerCase()}
-          </Item>
-          <Item label="Rate">
-            <span className="num">
-              {naira(s.planPrice)} → {naira(s.newPrice)} {s.varies ? 'first night' : 'a night'}
-            </span>
-          </Item>
-          <Item label="Stay total incl. taxes">
-            <span className="num">
-              {naira(s.totalBefore)} → {naira(s.totalAfter)}
-            </span>
-          </Item>
+          {isWaiverSubject(s) ? (
+            <>
+              <Item label="Booking">
+                {s.reservationNumber} · {s.guestName} · {s.roomTypeName} ·{' '}
+                {stayRange(s.arrival, s.departure)}
+              </Item>
+              <Item label="Penalty">
+                <span className="num">
+                  {PENALTY_KIND_LABELS[s.penalty.kind]} · {s.penalty.basisLabel} ·{' '}
+                  {naira(s.penalty.amount)}
+                </span>
+              </Item>
+              <Item label="Policy">{s.penalty.policy}</Item>
+              <Item label="Asked as">
+                {s.requesterRole || roleLabel('front_desk').toLowerCase()} · can't waive penalties
+              </Item>
+            </>
+          ) : (
+            <>
+              <Item label="Booking">
+                {s.roomTypeName} · {s.planName} · {stayRange(s.arrival, s.departure)} ·{' '}
+                {nightsLabel(s.nights)}
+              </Item>
+              <Item label="Limit">
+                {s.requesterLimit}% · {s.requesterRole || roleLabel('front_desk').toLowerCase()}
+              </Item>
+              <Item label="Rate">
+                <span className="num">
+                  {naira(s.planPrice)} → {naira(s.newPrice)} {s.varies ? 'first night' : 'a night'}
+                </span>
+              </Item>
+              <Item label="Stay total incl. taxes">
+                <span className="num">
+                  {naira(s.totalBefore)} → {naira(s.totalAfter)}
+                </span>
+              </Item>
+            </>
+          )}
         </dl>
         <blockquote className="rounded-sm border-l-2 border-am-dot bg-surface-2 px-3 py-2 break-words">
-          “{reasonLine(s)}”
+          “{isWaiverSubject(s) ? s.waiverReason : reasonLine(s)}”
         </blockquote>
 
         {answerable ? (
@@ -216,7 +246,7 @@ export function ApprovalDetailCard({ view }: { view: ApprovalDetail }) {
                     Cancel request
                   </Button>
                 ) : null}
-                {resumable ? (
+                {resumable && view.kind === 'stay_discount' ? (
                   <Link
                     to="/reservations"
                     search={{ sheet: 'new', approval: view.id, hotel: view.propertyId }}
@@ -234,7 +264,7 @@ export function ApprovalDetailCard({ view }: { view: ApprovalDetail }) {
         <Dialog
           open
           onClose={() => setPinOpen(false)}
-          title={`Approve ${s.percent}% for ${s.guestName}`}
+          title={`Approve ${whatOf(s)} for ${s.guestName}`}
           description="Enter your PIN to approve. Typing digits works too."
           className="max-w-[360px]"
         >
@@ -277,7 +307,7 @@ function PinApprove({
         pin,
         ...(comment.trim() ? { comment: comment.trim() } : {}),
       })
-      toast.success(`Approved ${view.subject.percent}% for ${view.subject.guestName}`)
+      toast.success(`Approved ${whatOf(view.subject)} for ${view.subject.guestName}`)
       onDone()
     } catch (error) {
       const code = errorCode(error)
@@ -322,7 +352,7 @@ function PinApprove({
         loading={approve.isPending}
         onClick={() => void submit()}
       >
-        Approve discount
+        {view.kind === 'penalty_waiver' ? 'Approve waiver' : 'Approve discount'}
       </Button>
     </div>
   )

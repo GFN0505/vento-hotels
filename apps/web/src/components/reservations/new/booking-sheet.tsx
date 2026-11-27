@@ -9,7 +9,7 @@ import { Check } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { ApprovalPrompt } from '@/components/approvals/approval-prompt'
-import { answerLine, NEEDS_CONNECTION } from '@/components/approvals/format'
+import { answerLine, NEEDS_CONNECTION, whatOf } from '@/components/approvals/format'
 import { useLeaveGuard, useProperty } from '@/components/shell/property-context'
 import { Button } from '@/components/ui/button'
 import { Sheet } from '@/components/ui/sheet'
@@ -169,8 +169,8 @@ export function BookingSheet({ onClose, resume }: SheetProps) {
     if (!view || !held || held.id !== view.id || view.status === held.status) return
     updateDraft({ approval: approvalDraftOf(view, held.quoteHash) })
     const name = view.approver?.name ?? 'The manager'
-    if (view.status === 'approved') toast.success(`${name} approved ${view.subject.percent}%`)
-    else if (view.status === 'declined') toast.info(`${name} declined ${view.subject.percent}%`)
+    if (view.status === 'approved') toast.success(`${name} approved ${whatOf(view.subject)}`)
+    else if (view.status === 'declined') toast.info(`${name} declined ${whatOf(view.subject)}`)
   }, [watched.data])
 
   // Anything that changes the price cancels a pending request and drops an approval for it.

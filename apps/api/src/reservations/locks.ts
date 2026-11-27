@@ -4,16 +4,22 @@
 //   1. the hotel's rates advisory lock (shared for quotes and bookings, exclusive for rates writes)
 //   2. the hotel's properties row (FOR SHARE for bookings and room writes; FOR UPDATE for hotel
 //      archive and night audit)
+//   2b. the reservation row FOR UPDATE (modify, cancel, no-show and penalty waivers, brick 6; one
+//      change per reservation at a time). Bookings never lock existing reservations, so no cycle.
 //   3. rooms FOR UPDATE, then room types (room writes only)
 //   4. room_type_inventory rows FOR UPDATE, ordered by room type id, then date
 //   5. approval rows FOR UPDATE, all of the request's at once in id order (approvals/use.ts); the
 //      expiry job skips locked rows, so it never waits on a booking
+//   5b. the penalty row (a waiver of a recorded penalty, brick 6)
 //   6. the guest row (an existing guest being corrected)
 //   7. the reservation counter row (upsert)
 // Code that takes more than one takes them in this order. Room count changes (rooms/room-count.ts)
 // take 2 → 3 → 4 without the rates lock: they never touch prices, and bookings never lock rooms or
 // room types, so there is no cycle. Answering an approval locks its row, then the approver's
-// member_pins row; bookings never lock member_pins, so that is no cycle either.
+// member_pins row; bookings never lock member_pins, so that is no cycle either. Answering a penalty
+// waiver locks the reservation row first (2b, looked up from the approval without a lock), then the
+// approval, then the PIN row, then the penalty (decision 0028). A change locks the inventory rows
+// for the union of its old and new nights in one statement, room type then date.
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { roomTypeInventory } from '../db/schema/reservations.ts'
 import { rooms, roomTypes } from '../db/schema/rooms.ts'

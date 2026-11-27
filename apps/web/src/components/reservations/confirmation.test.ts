@@ -16,6 +16,17 @@ function detail(overrides: Partial<ReservationDetail> = {}): ReservationDetail {
     id: ID,
     number: 'VI-2611-0483',
     status: 'confirmed',
+    version: 1,
+    end: null,
+    penalties: [],
+    actions: {
+      modify: true,
+      cancel: true,
+      noShow: false,
+      blocked: null,
+      canManage: true,
+      canWaive: false,
+    },
     source: 'phone',
     guarantee: 'deposit',
     notes: null,
@@ -45,6 +56,8 @@ function detail(overrides: Partial<ReservationDetail> = {}): ReservationDetail {
     stays: [
       {
         id: ID,
+        version: 1,
+        roomTypeId: ID,
         roomTypeName: 'Deluxe King',
         arrival: '2026-12-09',
         departure: '2026-12-12',

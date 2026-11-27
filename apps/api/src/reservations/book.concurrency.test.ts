@@ -3,7 +3,7 @@
 // exactly one may win. Real HTTP through the app, real Postgres.
 import type { Property, RatePlanView, RoomTypeView } from '@vento/shared'
 import { addDays, newId } from '@vento/shared'
-import { and, count, eq, isNull, ne } from 'drizzle-orm'
+import { and, count, eq, inArray, isNull } from 'drizzle-orm'
 import pg from 'pg'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { roomTypeInventory, stayNights, stays } from '../db/schema/reservations.ts'
@@ -85,7 +85,7 @@ describe.skipIf(!url)('bookings under concurrency', { timeout: 300_000 }, () => 
         and(
           eq(stays.roomTypeId, roomTypeId),
           eq(stayNights.date, date),
-          ne(stays.status, 'cancelled'),
+          inArray(stays.status, ['confirmed', 'checked_in']),
         ),
       )
     return row?.value ?? 0

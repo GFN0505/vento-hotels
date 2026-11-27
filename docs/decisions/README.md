@@ -40,5 +40,6 @@ Things still undecided stay under *Open questions* in `docs/DOMAIN.md` until the
 | [0025](0025-jobs-logs-and-error-tracking.md) | Background jobs on pg-boss, structured logs, and error tracking without personal data | accepted |
 | [0026](0026-hosting-on-contabo.md) | Hosting on Contabo servers we run ourselves, with Docker Compose | accepted |
 | [0027](0027-approvals.md) | Approvals are single-use, bound to the exact action, and confirmed by the approver's PIN | accepted |
+| [0028](0028-penalty-waiver-applies-on-approval.md) | A penalty waiver approved in the inbox applies when it is approved | accepted |
 
 Template: [0000-template.md](0000-template.md)

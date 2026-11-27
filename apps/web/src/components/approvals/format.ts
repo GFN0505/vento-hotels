@@ -1,6 +1,7 @@
 // Words for approvals, as the spec writes them ("UI copy"): the prompt's figures, inbox rows, the
 // waiting line on Review, and PIN errors. Pure, so they are tested without a browser.
 import {
+  type AnyApprovalSubject,
   APPROVAL_KIND_LABELS,
   type ApprovalStatus,
   type ApprovalSubject,
@@ -11,7 +12,10 @@ import {
   firstNameOf,
   formatMoney,
   formatPercent,
+  isWaiverSubject,
+  PENALTY_KIND_LABELS,
   toAmount,
+  type WaiverSubject,
 } from '@vento/shared'
 
 export const naira = (amount: string) => formatMoney({ amount, currency: 'NGN' })
@@ -64,13 +68,49 @@ export function withoutPinLine(names: string[]): string | undefined {
   return `Approvers need a PIN. ${who} set one yet.`
 }
 
-// Inbox rows: "Over limit · Kora Victoria Island", "Discount 15% · Sarah Collins", "− ₦75,600.00".
+// What is asked, as the toasts and lines say it: "15%", or "the waiver".
+export const whatOf = (subject: AnyApprovalSubject) =>
+  isWaiverSubject(subject) ? 'the waiver' : `${subject.percent}%`
+
+// Inbox rows: "Over limit · Kora Victoria Island", "Discount 15% · Sarah Collins", "− ₦75,600.00";
+// a waiver: "Waiver · Kora Victoria Island", "Waive ₦183,750.00 · VI-2611-0405", "₦183,750.00".
 export const rowLabel = (view: Pick<ApprovalView, 'kind' | 'subject'>) =>
   `${APPROVAL_KIND_LABELS[view.kind]} · ${view.subject.hotelName}`
 export const rowTitle = (view: Pick<ApprovalView, 'subject'>) =>
-  `Discount ${view.subject.percent}% · ${view.subject.guestName}`
+  isWaiverSubject(view.subject)
+    ? `Waive ${naira(view.subject.penalty.amount)} · ${view.subject.reservationNumber}`
+    : `Discount ${view.subject.percent}% · ${view.subject.guestName}`
 export const rowAmount = (view: Pick<ApprovalView, 'subject'>) =>
-  `− ${naira(view.subject.discountTotal)}`
+  isWaiverSubject(view.subject)
+    ? naira(view.subject.penalty.amount)
+    : `− ${naira(view.subject.discountTotal)}`
+
+// "Waive penalty ₦257,250.00 on VI-2611-0447 · Kelechi Obi"
+export const waiverTitle = (subject: WaiverSubject) =>
+  `Waive penalty ${naira(subject.penalty.amount)} on ${subject.reservationNumber} · ${subject.guestName}`
+
+// "Chiamaka can't waive penalties. Asked at 11:21 on FD-VI-01."
+export function waiverMeta(subject: WaiverSubject, askedAt: Date, timeZone: string) {
+  const device = subject.deviceName ? ` on ${subject.deviceName}` : ''
+  return `${firstNameOf(subject.requesterName)} can't waive penalties. Asked at ${clockAt(askedAt, timeZone)}${device}.`
+}
+
+// The prompt's figures for a waiver: the penalty, its basis and the policy.
+export function waiverFigures(subject: WaiverSubject) {
+  return [
+    { label: 'Booking', value: `${subject.reservationNumber} · ${subject.roomTypeName}` },
+    { label: 'Policy', value: subject.penalty.policy },
+    {
+      label: PENALTY_KIND_LABELS[subject.penalty.kind],
+      value: subject.penalty.basisLabel,
+    },
+    { label: 'Penalty to waive', value: naira(subject.penalty.amount), strong: true },
+  ]
+}
+
+// "Nobody at Kora Victoria Island can waive penalties right now."
+export const nobodyWaiverLine = (subject: WaiverSubject) =>
+  `Nobody at ${subject.hotelName} can waive penalties right now.`
 
 // "2 min", "1 h", "yesterday": how long ago, as the rows say it.
 export function age(iso: string, now = new Date()): string {
@@ -115,7 +155,7 @@ export function answerLine(
     case 'approved':
       return `Approved by ${name} at ${clockAt(view.answeredAt ?? view.requestedAt, timeZone)}`
     case 'declined':
-      return `${name} declined ${view.subject.percent}%${view.comment ? `: “${view.comment}”` : ''}`
+      return `${name} declined ${whatOf(view.subject)}${view.comment ? `: “${view.comment}”` : ''}`
     case 'expired':
       return view.answeredAt
         ? `${first}'s approval expired at ${clockAt(view.expiresAt, timeZone)}. Ask again.`
@@ -128,7 +168,7 @@ export function answerLine(
 // The bell's "Your requests" line: "Tunde approved 15% for Sarah Collins".
 export function yourRequestLine(view: Pick<ApprovalView, 'status' | 'approver' | 'subject'>) {
   const first = firstNameOf(view.approver?.name ?? 'The manager')
-  const what = `${view.subject.percent}% for ${view.subject.guestName}`
+  const what = `${whatOf(view.subject)} for ${view.subject.guestName}`
   switch (view.status) {
     case 'pending':
       return `Waiting for ${view.approver?.name ?? 'a manager'} · ${what}`

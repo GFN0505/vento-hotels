@@ -24,7 +24,7 @@ export const PERMISSIONS = {
   'permissions.manage': { label: 'Change permissions or limits' },
   'audit.view': { label: 'View the audit log' },
   // Front office
-  'reservation.manage': { label: 'Create / modify reservation' },
+  'reservation.manage': { label: 'Create, modify or cancel a reservation; mark a no-show' },
   'stay.rate_override': { label: 'Rate override / discount on a stay', limit: 'percent' },
   'penalty.waive': { label: 'Waive cancellation / no-show penalty' },
   'room.move': { label: 'Room move (before audit)' },
