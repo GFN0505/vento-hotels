@@ -93,7 +93,11 @@ apps/
       lib/navigation.ts      the menu: modules, their feature switch, which roles use them (brick 11)
       lib/me.ts, view-as.tsx the member's role, permissions and features; role preview  (bricks 9–11)
       observability/         Sentry for the web app, loaded after first paint          (brick 17)
-      offline/               connection state, saved data in IndexedDB, update prompt (brick 16); outbox, sync queue (with the first offline command)
+      offline/               connection state, saved data in IndexedDB, update prompt (brick 16); the outbox
+                             (outbox.ts, its own IndexedDB database) with its first command, Mark clean /
+                             dirty (Stage 1 brick 7)
+      components/tape-chart/ the tape chart grid, bar card, room menu, extend popover, phone day list (brick 7);
+                             components/rooms/ room-move-dialog.tsx and out-of-order-dialog.tsx
     sw/                      the service worker and the build step that emits /sw.js   (brick 16)
     e2e/                     Playwright, desktop + phone: onboarding, team, devices, shell, two-step, home, offline, accessibility (bricks 7–16)
 packages/
@@ -152,7 +156,8 @@ New modules from Stage 1 add their own folder in `apps/api/src/` (service, route
   - `devices.list` without a `propertyId` lists only devices at active hotels (an archived hotel's devices were revoked with it; their history stays in the audit log).
 
 ## Offline path
-*Built in brick 16: the shell. Planned: the outbox, with the first offline command in Stage 1 (decision 0024).*
+*Built in brick 16: the shell. Built in Stage 1 brick 7: the outbox, with its first command (Mark clean / Mark dirty, decision 0024).*
+- **Built (brick 7):** `offline/outbox.ts` keeps commands in their own IndexedDB database (`vento-outbox`), so signing out or locking a shared device never drops one. A command carries the device's key and time and the member who made it, and is sent only while that member is signed in, oldest first, when Vento can be reached again; the server stores the key (`room_status_commands`) and applies it once. Room status is last-writer-wins by device time: an older change comes back `superseded`, stays in the queue's "needs a look" list with the server's sentence, and is kept in history. The tape chart (`tapeChart.get`) is kept with the saved data so it opens read-only offline. Everything else on the chart is disabled offline with its reason.
 - **Built:** the service worker keeps the built app on the device (pages network-first, built files cache-first, never API calls). Before the first render, `offline/saved-data.ts` restores the reference data last seen from IndexedDB (an allow-list of queries), and `lib/session.ts` falls back to the remembered person when Vento can't be reached. `offline/connection.ts` treats a request that never reached Vento as offline; the shell shows `OfflineBanner`. Sign-out and device lock clear it all.
 - Front desk, POS and housekeeping run from a cached app shell and local data in IndexedDB.
 - Each change offline becomes a **command** in an outbox with a client UUID v7 and an idempotency key, the device id and the time it happened.

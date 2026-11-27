@@ -45,8 +45,12 @@ export function subjectFigures(subject: ApprovalSubject) {
 }
 
 // "Discount 15% on Deluxe King · Bed & breakfast"
+// An upgrade at the booked price (brick 7): "Upgrade at the booked price · Deluxe King → Executive
+// King, 26.32% below the Executive King price".
 export const promptTitle = (subject: ApprovalSubject) =>
-  `Discount ${subject.percent}% on ${subject.roomTypeName} · ${subject.planName}`
+  subject.reason === 'upgrade' && subject.fromRoomTypeName
+    ? `Upgrade at the booked price for ${subject.guestName} · ${subject.fromRoomTypeName} → ${subject.roomTypeName}, ${subject.percent}% below the ${subject.roomTypeName} price`
+    : `Discount ${subject.percent}% on ${subject.roomTypeName} · ${subject.planName}`
 
 // "Chiamaka's limit is 12%. Asked at 10:36 on FD-VI-01."
 export function promptMeta(subject: ApprovalSubject, askedAt: Date, timeZone: string) {

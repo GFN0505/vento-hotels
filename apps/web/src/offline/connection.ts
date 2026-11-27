@@ -32,6 +32,9 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener)
 }
 
+// For code outside React (the outbox): told whenever reachability changes.
+export const onReachabilityChange = subscribe
+
 export function useOnline(): boolean {
   return useSyncExternalStore(subscribe, () => reachable)
 }

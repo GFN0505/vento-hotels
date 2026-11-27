@@ -363,3 +363,9 @@ Small calls made while building, for the reviewer and the owner:
 - **"Ask Tunde Bello"** in the out-of-order refusal is "Ask your GM." (the server doesn't know who the hotel's GM is by name).
 - **Room status from an offline device:** a change older than the room's last one on the server is kept as a `superseded` receipt and a `room.status_changed` event with `applied: false`, and the sync queue shows the spec's sentence. A device clock more than 5 minutes ahead is treated as now.
 - **The chart's 30-second refresh** doesn't count as activity on a shared device (`tapeChart.get` is a background read), so a PIN session left on the chart still locks after its idle time.
+- **The tape chart is kept on the device** with the saved data (guests' names only, no contact or ID details), so it opens offline under the banner; it is cleared on sign-out and device lock like the rest. The outbox lives in its own IndexedDB database and is sent only by the person who made each change.
+- **Undo of Mark dirty on an inspected room** puts it back as clean (inspected is set only by inspections and the set-up action).
+- **A drop on another room type** opens the Room move dialog with that room picked (the rate choice, price and approval in one place) rather than a separate popover.
+- **Demo seed:** the seeded booking in 401 starts on D+2 (Mr Uchenna Okeke), so Mrs Okafor can be moved into 401 for 25–27 Nov as the walkthrough does; to see 401's refusal, put it out of order for three nights from today. The demo has 29 arrivals today (26 plus Mrs Okafor, Mrs Adebayo and Mr Kalu).
+- **First-page CSS budget** rises from 15 to 16 KB gzip: the chart's tokens and layout classes land in the one stylesheet (15.6 KB).
+

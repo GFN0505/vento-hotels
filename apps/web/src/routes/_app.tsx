@@ -17,6 +17,7 @@ import { useMe } from '@/lib/me'
 import { spansGroup, visibleGroups } from '@/lib/navigation'
 import { loadSignedIn } from '@/lib/session'
 import { ViewAsProvider } from '@/lib/view-as'
+import { useOutboxRunner } from '@/offline/outbox'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async ({ location }) => {
@@ -68,6 +69,7 @@ function Shell() {
   const loaded = (query: { data?: unknown; isError: boolean }) =>
     query.data !== undefined || query.isError
   useIdleLock(organization.data?.device?.idleSeconds, user.name.split(' ')[0] ?? user.name)
+  useOutboxRunner(organization.data?.member.id)
 
   return (
     <PropertyProvider

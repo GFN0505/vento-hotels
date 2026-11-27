@@ -22,6 +22,7 @@ import { Route as AppApprovalsRouteImport } from './routes/_app/approvals'
 import { Route as AppRatesRouteImport } from './routes/_app/rates'
 import { Route as AppReservationsRouteImport } from './routes/_app/reservations'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppTapeChartRouteImport } from './routes/_app/tape-chart'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AppRatesIndexRouteImport } from './routes/_app/rates/index'
 import { Route as AppRatesCalendarRouteImport } from './routes/_app/rates/calendar'
@@ -103,6 +104,11 @@ const AppReservationsRoute = AppReservationsRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTapeChartRoute = AppTapeChartRouteImport.update({
+  id: '/tape-chart',
+  path: '/tape-chart',
   getParentRoute: () => AppRoute,
 } as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/rates': typeof AppRatesRouteWithChildren
   '/reservations': typeof AppReservationsRouteWithChildren
   '/settings': typeof AppSettingsRouteWithChildren
+  '/tape-chart': typeof AppTapeChartRoute
   '/join/$token': typeof JoinTokenRoute
   '/rates/calendar': typeof AppRatesCalendarRoute
   '/rates/rooms': typeof AppRatesRoomsRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/$section': typeof AppSectionRoute
   '/approvals': typeof AppApprovalsRoute
+  '/tape-chart': typeof AppTapeChartRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof AppIndexRoute
   '/rates/calendar': typeof AppRatesCalendarRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/_app/rates': typeof AppRatesRouteWithChildren
   '/_app/reservations': typeof AppReservationsRouteWithChildren
   '/_app/settings': typeof AppSettingsRouteWithChildren
+  '/_app/tape-chart': typeof AppTapeChartRoute
   '/join/$token': typeof JoinTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/rates/calendar': typeof AppRatesCalendarRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/rates'
     | '/reservations'
     | '/settings'
+    | '/tape-chart'
     | '/join/$token'
     | '/rates/calendar'
     | '/rates/rooms'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/$section'
     | '/approvals'
+    | '/tape-chart'
     | '/join/$token'
     | '/'
     | '/rates/calendar'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/_app/rates'
     | '/_app/reservations'
     | '/_app/settings'
+    | '/_app/tape-chart'
     | '/join/$token'
     | '/_app/'
     | '/_app/rates/calendar'
@@ -491,6 +503,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tape-chart': {
+      id: '/_app/tape-chart'
+      path: '/tape-chart'
+      fullPath: '/tape-chart'
+      preLoaderRoute: typeof AppTapeChartRouteImport
       parentRoute: typeof AppRoute
     }
     '/join/$token': {
@@ -692,6 +711,7 @@ interface AppRouteChildren {
   AppRatesRoute: typeof AppRatesRouteWithChildren
   AppReservationsRoute: typeof AppReservationsRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
+  AppTapeChartRoute: typeof AppTapeChartRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -701,6 +721,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppRatesRoute: AppRatesRouteWithChildren,
   AppReservationsRoute: AppReservationsRouteWithChildren,
   AppSettingsRoute: AppSettingsRouteWithChildren,
+  AppTapeChartRoute: AppTapeChartRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

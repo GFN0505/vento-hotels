@@ -63,6 +63,9 @@ export type Draft = {
   notes: string
   restrictionReason: string
   approval?: ApprovalDraft | undefined
+  // Booked from a tape chart cell (brick 7): the room, assigned in the booking's transaction while
+  // the draft stays on its room type.
+  room?: { id: string; number: string; roomTypeId: string } | undefined
   savedAt: number | undefined
 }
 

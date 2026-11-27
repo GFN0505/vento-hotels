@@ -1,8 +1,10 @@
 // Shown under the top bar while Vento can't be reached (UX standard: offline state). Says what
 // still works and how old the data on screen is; it goes away by itself when the connection is back.
-// Writing changes offline (the outbox) arrives with the first module that needs it.
+// Mark clean and Mark dirty are kept on the device and sync when the connection is back (the
+// outbox); everything else needs a connection.
 import { WifiOff } from 'lucide-react'
 import { useOnline } from '@/offline/connection'
+import { useOutbox } from '@/offline/outbox'
 import { lastSavedAt } from '@/offline/saved-data'
 
 function savedTime(at: number): string {
@@ -16,6 +18,7 @@ function savedTime(at: number): string {
 
 export function OfflineBanner() {
   const online = useOnline()
+  const waiting = useOutbox().filter((item) => item.state === 'waiting').length
   if (online) return null
   const at = lastSavedAt()
   return (
@@ -29,7 +32,9 @@ export function OfflineBanner() {
         {at
           ? `Showing what was saved on this device at ${savedTime(at)}.`
           : 'Showing what was saved on this device.'}{' '}
-        Changes need a connection for now; this clears by itself when you're back.
+        Marking rooms clean or dirty still works and syncs when you're back
+        {waiting ? ` (${waiting === 1 ? '1 change' : `${waiting} changes`} will sync)` : ''}; other
+        changes need a connection. This clears by itself.
       </p>
     </div>
   )

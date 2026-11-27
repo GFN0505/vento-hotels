@@ -319,6 +319,9 @@ export function createInput(
           ? { restrictionReason: draft.restrictionReason.trim() }
           : {}),
         ...(approval ? { approvalId: approval } : {}),
+        ...(draft.room && draft.room.roomTypeId === draft.roomTypeId
+          ? { roomId: draft.room.id }
+          : {}),
       },
     ],
   }

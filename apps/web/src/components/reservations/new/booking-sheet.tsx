@@ -73,14 +73,34 @@ const APPROVAL_REFUSALS = new Set([
   'APPROVAL_NO_LONGER_VALID',
 ])
 
+export type BookingPreset = {
+  roomTypeId: string
+  arrival: string
+  departure: string
+  room: { id: string; number: string; roomTypeId: string }
+}
+
 type SheetProps = {
   onClose: () => void
+  // Booked from a tape chart cell: the room type, the night and the room (brick 7).
+  preset?: BookingPreset | undefined
   // "Continue booking" from the bell: the request whose stored booking reopens at Review.
   resume?: string | undefined
 }
 
-export function BookingSheet({ onClose, resume }: SheetProps) {
+export function BookingSheet({ onClose, resume, preset }: SheetProps) {
   const { scope, properties } = useProperty()
+  // A cell's booking starts a fresh draft for that room and night.
+  const presetKey = preset ? `${preset.room.id}:${preset.arrival}` : undefined
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per cell opened.
+  useEffect(() => {
+    if (!preset || scope?.kind !== 'hotel') return
+    startDraft({
+      ...newDraft(scope.hotel.id, scope.hotel.id, preset.arrival, preset.departure),
+      roomTypeId: preset.roomTypeId,
+      room: preset.room,
+    })
+  }, [presetKey])
   const online = useOnline()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -462,6 +482,23 @@ export function BookingSheet({ onClose, resume }: SheetProps) {
             <p role="alert" className="rounded-sm bg-ro-bg px-3 py-2 text-sm text-ro">
               {refusal.message}
               {refusal.code === 'IDEMPOTENCY_CONFLICT' ? <ExistingLink /> : null}
+              {refusal.code === 'ROOM_TAKEN' ? (
+                <Button
+                  size="sm"
+                  className="ml-2 max-lg:h-11"
+                  onClick={() => {
+                    updateDraft({ room: undefined })
+                    setRefusal(undefined)
+                  }}
+                >
+                  Book without a room
+                </Button>
+              ) : null}
+            </p>
+          ) : null}
+          {draft.room && draft.room.roomTypeId === draft.roomTypeId ? (
+            <p className="rounded-sm bg-pri-soft px-3 py-2 text-sm text-pri-ink">
+              Room {draft.room.number} will be assigned.
             </p>
           ) : null}
           {step === 1 ? (

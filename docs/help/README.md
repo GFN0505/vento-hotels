@@ -50,5 +50,7 @@ docs/help/
 | [Get a discount approved by a manager](reservations/get-a-discount-approved.md) | `front-desk-morning.md` step 6b | written |
 | [Change or cancel a booking](reservations/change-or-cancel-a-booking.md) | `front-desk-morning.md` steps 6c and 6d | written |
 | [Mark a no-show](reservations/mark-a-no-show.md) | `night-audit.md` steps 3 and 4 | written |
+| [Use the tape chart](reservations/use-the-tape-chart.md) | `front-desk-morning.md` steps 3a and 6e | written |
+| [Mark a room clean, or put it out of order](reservations/room-status-and-out-of-order.md) | `front-desk-morning.md` steps 6 and 10a | written |
 
 Status: `todo` · `written` · `published`
