@@ -6,6 +6,7 @@ import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, sql } from 
 import type { Database } from '../db/client.ts'
 import { auditEvents } from '../db/schema/governance.ts'
 import { rateDates, ratePlanRoomTypes, ratePlans } from '../db/schema/rates.ts'
+import { stays } from '../db/schema/reservations.ts'
 import { rooms, roomTypes } from '../db/schema/rooms.ts'
 import { type Access, can, scopeToProperties } from '../tenancy/access.ts'
 import {
@@ -20,10 +21,21 @@ import { planNotFound } from './errors.ts'
 import { loadRoomTypes } from './guards.ts'
 import { type PlanRow, termsOf } from './plan-model.ts'
 
-// Whether a plan has been used on a booking, so it can't be deleted for good. Brick 4 makes this
-// look at stays; their foreign key to rate plans also RESTRICTs as a backstop.
-export async function planHasHistory(_db: Reader, _planId: string): Promise<boolean> {
-  return false
+// Whether a plan has been used on a booking, so it can't be deleted for good. Stays' foreign key to
+// rate plans also RESTRICTs as a backstop.
+export async function planHasHistory(db: Reader, planId: string): Promise<boolean> {
+  return (await plansWithHistory(db, [planId])).has(planId)
+}
+
+// The same for a list of plans, in one query.
+async function plansWithHistory(db: Reader, planIds: readonly string[]): Promise<Set<string>> {
+  if (planIds.length === 0) return new Set()
+  const rows = await db
+    .select({ id: stays.ratePlanId })
+    .from(stays)
+    .where(inArray(stays.ratePlanId, [...planIds]))
+    .groupBy(stays.ratePlanId)
+  return new Set(rows.map((row) => row.id))
 }
 
 export function plansInScope(access: Access) {
@@ -52,7 +64,7 @@ export async function planViews(
   if (rows.length === 0) return []
   const ids = rows.map((row) => row.id)
   const parentIds = rows.flatMap((row) => (row.parentId ? [row.parentId] : []))
-  const [types, parents, children, dated] = await Promise.all([
+  const [types, parents, children, dated, used] = await Promise.all([
     db
       .select({
         ratePlanId: ratePlanRoomTypes.ratePlanId,
@@ -85,38 +97,39 @@ export async function planViews(
       .from(rateDates)
       .where(and(inArray(rateDates.ratePlanId, ids), gte(rateDates.date, property.businessDate)))
       .groupBy(rateDates.ratePlanId),
+    plansWithHistory(
+      db,
+      rows.filter((row) => row.archivedAt !== null).map((row) => row.id),
+    ),
   ])
   const parentBy = new Map(parents.map((p) => [p.id, p]))
   const datedBy = new Map(dated.map((d) => [d.ratePlanId, d.value]))
-  return Promise.all(
-    rows.map(async (row) => {
-      const mine = children.filter((child) => child.parentId === row.id)
-      const { parentId: _, ...terms } = termsOf(row)
-      return {
-        id: row.id,
-        propertyId: row.propertyId,
-        ...terms,
-        parent: (row.parentId && parentBy.get(row.parentId)) || null,
-        roomTypes: types
-          .filter((t) => t.ratePlanId === row.id)
-          .map((t) => ({
-            roomTypeId: t.roomTypeId,
-            weekday: t.weekday && toAmount(t.weekday),
-            weekend: t.weekend && toAmount(t.weekend),
-          })),
-        currency: 'NGN' as const,
-        sortOrder: row.sortOrder,
-        archivedAt: row.archivedAt?.toISOString() ?? null,
-        version: row.version,
-        followers: mine
-          .filter((child) => !child.archivedAt)
-          .map((child) => ({ id: child.id, name: child.name })),
-        datedFromBusinessDate: datedBy.get(row.id) ?? 0,
-        canDelete:
-          row.archivedAt !== null && mine.length === 0 && !(await planHasHistory(db, row.id)),
-      }
-    }),
-  )
+  return rows.map((row) => {
+    const mine = children.filter((child) => child.parentId === row.id)
+    const { parentId: _, ...terms } = termsOf(row)
+    return {
+      id: row.id,
+      propertyId: row.propertyId,
+      ...terms,
+      parent: (row.parentId && parentBy.get(row.parentId)) || null,
+      roomTypes: types
+        .filter((t) => t.ratePlanId === row.id)
+        .map((t) => ({
+          roomTypeId: t.roomTypeId,
+          weekday: t.weekday && toAmount(t.weekday),
+          weekend: t.weekend && toAmount(t.weekend),
+        })),
+      currency: 'NGN' as const,
+      sortOrder: row.sortOrder,
+      archivedAt: row.archivedAt?.toISOString() ?? null,
+      version: row.version,
+      followers: mine
+        .filter((child) => !child.archivedAt)
+        .map((child) => ({ id: child.id, name: child.name })),
+      datedFromBusinessDate: datedBy.get(row.id) ?? 0,
+      canDelete: row.archivedAt !== null && mine.length === 0 && !used.has(row.id),
+    }
+  })
 }
 
 export async function planView(

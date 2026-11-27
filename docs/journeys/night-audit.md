@@ -22,12 +22,12 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
    - *Behind the scenes:* the checks are queries for business date 25 Nov. Audit event `night_audit.started` (Ibrahim, PC 2, 25 Nov).
 
 3. **Arrival not checked in: mark no-show with the policy charge.**
-   - *Does:* opens reservation KVI-2611, Standard Queen, 25–27 Nov, guaranteed by a ₦147,000.00* transfer deposit (first night with tax lines). No call, no message. Clicks "Mark no-show".
+   - *Does:* opens reservation VI-2611-0391, Standard Queen, 25–27 Nov, guaranteed by a ₦147,000.00* transfer deposit (first night with tax lines). No call, no message. Clicks "Mark no-show".
    - *Sees:* the dialog (#31): "Policy: first night charged. No-show charge ₦120,000.00 + tax lines = ₦147,000.00*, paid from deposit held ₦147,000.00. Remaining nights released." He confirms.
    - *Behind the scenes:* one transaction: status `no_show`, penalty charge posted on business date 25 Nov with tax lines, deposit applied, Standard Queen inventory for 26 Nov released (locked row, incremented). Audit event `reservation.no_show` with policy applied.
 
 4. **Arrival not checked in: waive with permission.**
-   - *Does:* opens KVI-2618, Deluxe King, 25–26 Nov, deposit ₦183,750.00*. The reservation note from 21:30 says the guest's Abuja flight was cancelled. Ibrahim can't waive penalties, so he picks "Mark no-show, request waiver", reason "Flight cancelled, guest called 21:30".
+   - *Does:* opens VI-2611-0405, Deluxe King, 25–26 Nov, deposit ₦183,750.00*. The reservation note from 21:30 says the guest's Abuja flight was cancelled. Ibrahim can't waive penalties, so he picks "Mark no-show, request waiver", reason "Flight cancelled, guest called 21:30".
    - *Sees:* "Waiver sent to Tunde Bello for approval." At 00:41 Tunde approves from the approvals inbox (#29) on his phone. The row turns green: "No-show · penalty waived · approved by Tunde".
    - *Behind the scenes:* no penalty posted. Deposit stays as a deposit held on the reservation for the day team to rebook or refund. Audit event `reservation.penalty_waived` with reason, requester Ibrahim, approver Tunde.
 
@@ -68,7 +68,7 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
 
 12. **Reports.**
     - *Does:* waits for the reports step, opens the manager's flash in the report viewer (#35).
-    - *Sees:* manager's flash, revenue by department and payment method, cashier/shift reports (Chiamaka, Halima, Femi, Ibrahim), guest register with foreign nationals section (Mr Mensah), no-shows and cancellations (KVI-2611 charged, KVI-2618 waived), rate override and discount report (Okoro 15%, approved by Tunde), deposits held.
+    - *Sees:* manager's flash, revenue by department and payment method, cashier/shift reports (Chiamaka, Halima, Femi, Ibrahim), guest register with foreign nationals section (Mr Mensah), no-shows and cancellations (VI-2611-0391 charged, VI-2611-0405 waived), rate override and discount report (Okoro 15%, approved by Tunde), deposits held.
     - *Behind the scenes:* reports are frozen as of the close of 25 Nov and stored, so reprints match.
 
 13. **Ledger posting.**

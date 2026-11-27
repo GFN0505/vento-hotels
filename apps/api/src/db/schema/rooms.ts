@@ -64,6 +64,9 @@ export const roomTypes = pgTable(
     sizeSqm: numeric({ precision: 6, scale: 1, mode: 'string' }),
     amenities: text().array().notNull().default(sql`'{}'::text[]`),
     sortOrder: integer().notNull().default(0),
+    // How many rooms past rooms left the desk may sell (decision 0007). 0 for every type in Stage 1,
+    // not editable until channels (Stage 4).
+    overbookingLimit: smallint().notNull().default(0),
     archivedAt: archivedAt(),
     ...timestamps,
   },
@@ -84,6 +87,7 @@ export const roomTypes = pgTable(
       'room_types_occupancy',
       sql`${t.maxAdults} >= 1 and ${t.maxChildren} >= 0 and ${t.baseOccupancy} between 1 and ${t.maxAdults} + ${t.maxChildren}`,
     ),
+    check('room_types_overbooking_limit', sql`${t.overbookingLimit} >= 0`),
     check('room_types_size_positive', sql`${t.sizeSqm} is null or ${t.sizeSqm} > 0`),
   ],
 )

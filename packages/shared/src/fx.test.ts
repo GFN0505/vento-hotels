@@ -2,6 +2,31 @@ import { describe, expect, it } from 'vitest'
 import { formatFxRate, fxCheckMessage, fxEquivalent, fxRateJump, fxRateValueSchema } from './fx.ts'
 
 describe('fxEquivalent', () => {
+  // Moved from the rates helper it replaces (foreignEquivalent, removed in brick 4).
+  it('rounds once to the cent at a whole-naira rate', () => {
+    expect(
+      fxEquivalent('150000.00', {
+        currency: 'USD',
+        rate: '1425',
+        source: 'cbn',
+        date: '2026-11-25',
+      }),
+    ).toEqual({
+      amount: '105.26',
+      currency: 'USD',
+      text: '≈ $105.26 at ₦1,425/$, CBN, 25 Nov 2026',
+    })
+  })
+  it('shows a British guest the pound equivalent of the walkthrough booking', () => {
+    expect(
+      fxEquivalent('617400.00', {
+        currency: 'GBP',
+        rate: '1950',
+        source: 'cbn',
+        date: '2026-11-25',
+      }).text,
+    ).toBe('≈ £316.62 at ₦1,950/£, CBN, 25 Nov 2026')
+  })
   it('shows a naira price in dollars at the CBN rate, as front desk will see it', () => {
     const result = fxEquivalent('183750.00', {
       currency: 'USD',

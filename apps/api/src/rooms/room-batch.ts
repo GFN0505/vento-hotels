@@ -19,7 +19,6 @@ import {
 } from './context.ts'
 import { duplicateNumbers, numbersTaken } from './errors.ts'
 import { lockActiveTypes } from './locks.ts'
-import { roomCountChanged } from './room-count.ts'
 import { takenNumbers } from './room-reads.ts'
 import { insertRoomType, requireNoClash, type TypeFields } from './room-types.ts'
 import { createdEvent, explainNumberClash } from './room-writes.ts'
@@ -157,7 +156,6 @@ async function createTypesAndRooms(
       floor: rooms.floor,
       roomTypeId: rooms.roomTypeId,
     })
-  await roomCountChanged(tx, { propertyId: property.id, roomTypeIds: [...names.keys()] })
   await recordAuditMany(
     tx,
     access,

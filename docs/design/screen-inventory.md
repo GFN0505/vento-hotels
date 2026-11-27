@@ -33,12 +33,12 @@ Covered by round 4 of the design prompt (screens 24–29).
 |---|---|---|---|
 | Property GM home | designed #2 · **shape built (brick 15)** | 1 | Built: Home for one hotel, shaped by role (GM, front desk, housekeeping, restaurant, finance and the rest): figures that say which module brings them, quick actions, the hotel, Needs attention. Arrivals list, house status, VIPs and staff on duty come with Stage 1 data |
 | Tape chart | designed #3 | 1 | |
-| New reservation | designed #4 | 1 | |
-| Reservation detail | designed #5 | 1 | |
+| New reservation | designed #4 · **built (Stage 1 brick 4, one room)** | 1 | Four steps (Dates & guests · Room & rate · Guest · Review & book) in a side sheet with the summary beside them; rooms left per night, plans with excl./incl. taxes, Change rate with a reason, guest search, Copy confirmation on the result. Approvals (brick 5), Add another room (brick 14) and the corporate row (brick 12) come later |
+| Reservation detail | designed #5 · **built read-only (Stage 1 brick 4)** | 1 | Summary, rate per night with tax lines in force each night, guest, guarantee and deposit, activity, Copy confirmation and the audit trail (`AuditOnReservation`). Modify, cancel, room move, check-in, folios and messages come with bricks 5–10 and Stage 4 |
 | Check-in and walk-in | designed #6 | 1 | |
 | Folio and check-out | designed #7 | 1 | |
 | **Front desk working lists**: arrivals, departures, in-house | designed #30 | 1 | The front desk's real home; bulk check-in/out, print |
-| Reservations list and search | pattern | 1 | |
+| Reservations list and search | pattern · **built (Stage 1 brick 4)** | 1 | Upcoming / Booked today / All, search, filter pills, Hotel column under All hotels, cards on phones. Bulk actions, columns and export come later |
 | **Group reservation and rooming list** | designed #32 | 1 | Many rooms, names added later, one master folio |
 | Modify / cancel reservation (with penalty) | designed #31 | 1 | Dialog: shows policy, penalty, refund, reason |
 | Room move | designed #31 | 1 | Dialog: ready rooms, rate change, reason |
@@ -47,7 +47,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Cashier shift open and close (blind count) | designed #34 | 1 | Open shift and blind count need their own design |
 | Night audit wizard | designed #15 | 1 | |
 | Room types and rooms (ongoing management) | designed #33 · **built (Stage 1 brick 1)** | 1 | Rates & channels › Rooms: room types (reorder, edit, remove, restore), rooms table with search, quick views, type and floor filters and bulk change type / remove, room and room type sheets, "Add rooms by floor" builder (OnbRooms) as the empty page and a sheet, reason dialog after go-live. Base rate column built with rate plans (brick 2); Sold on and out-of-order dates come with their bricks. Audit trail on a room (`AuditOnRoom`) built as a sheet from the room; ⌘K entries come with the search brick |
-| **Rate plans list and editor** | designed #33 · **built (Stage 1 brick 2)** | 1 | Rates & channels › Rate plans: the list (reorder, Active / Archived, corporate-only and incl. taxes badges, who follows each plan, "isn't priced on any plan" with Add to Best available), "Your first rate" (#19, OnbRate) as the empty page, and the editor as a page (own or derived prices with live preview, room types with weekday and Fri–Sat prices, meal plan and allocation, cancellation, deposit, min stay, extra adult, who can book it, prices-include-taxes under More options, Duplicate, archive / restore / delete for good, Change history). Read-only for the front desk and offline |
+| **Rate plans list and editor** | designed #33 · **built (Stage 1 brick 2)** | 1 | Rates & channels › Rate plans: the list (reorder, Active / Archived, corporate-only and incl. taxes badges, who follows each plan, "isn't priced on any plan" with Add to Best available), "Your first rate" (#19, OnbRate) as the empty page, and the editor as a page (own or derived prices with live preview, room types with weekday and Fri–Sat prices, meal plan and allocation, cancellation, deposit, min stay, extra adult, who can book it, prices-include-taxes under More options, Duplicate, archive / restore / delete for good, Change history). Read-only for the front desk and offline. **Guest pays per night** (#19 first-rate table and aside, #33 derived-plan preview) built with reservations (brick 4) |
 | Guest register export | designed #35 | 1 | For authorities; foreign nationals section |
 
 ## 2. Booking engine & channel manager

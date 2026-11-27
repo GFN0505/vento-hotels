@@ -7,7 +7,7 @@
 // Decimal, rounded once, half-up, to the whole naira.
 import { z } from 'zod'
 import { addDays, type CalendarDate, nightsBetween } from './dates.ts'
-import { Decimal, dec, type FxRate, toAmount } from './money.ts'
+import { Decimal, dec, toAmount } from './money.ts'
 
 export const MAX_RATE_PRICE = '100000000'
 // One Change dates apply covers at most this many nights.
@@ -503,37 +503,6 @@ export function quoteNights(input: QuoteInput): {
     }
   })
   return { lines, total: toAmount(total), breaks: restrictionBreaks(nights, input.planName) }
-}
-
-// --- Foreign equivalents (the seam for brick 3) ---------------------------------------------------
-
-const FX_SOURCES: Record<FxRate['source'], string> = {
-  cbn: 'CBN',
-  market: 'market rate',
-}
-const SYMBOLS: Record<string, string> = { USD: '$', GBP: '£', EUR: '€' }
-
-// An NGN price shown in a foreign currency for a guest, never stored on rates:
-// "≈ $105.26 at ₦1,425/$, CBN, 25 Nov 2026". `fx.rate` is NGN per 1 unit of `currency`.
-export function foreignEquivalent(
-  ngnAmount: string,
-  currency: 'USD' | 'GBP' | 'EUR',
-  fx: FxRate,
-): { amount: string; currency: 'USD' | 'GBP' | 'EUR'; label: string } {
-  const amount = toAmount(dec(ngnAmount).dividedBy(fx.rate))
-  const symbol = SYMBOLS[currency] ?? ''
-  const shown = new Intl.NumberFormat('en-NG', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount as unknown as number)
-  const rate = new Intl.NumberFormat('en-NG', { maximumFractionDigits: 6 }).format(
-    fx.rate as unknown as number,
-  )
-  return {
-    amount,
-    currency,
-    label: `≈ ${symbol}${shown} at ₦${rate}/${symbol}, ${FX_SOURCES[fx.source]}, ${formatRateDate(fx.date)}`,
-  }
 }
 
 // "₦165,000" for messages about whole-naira prices.

@@ -7,7 +7,6 @@ import {
   derivePrice,
   firstNightBelowAllocation,
   firstNonPositiveNight,
-  foreignEquivalent,
   formatNaira,
   formatRateDate,
   isWeekendNight,
@@ -369,22 +368,6 @@ describe('quoting a stay', () => {
       departure: '2026-12-05',
     })
     expect(longer.breaks.map((b) => [b.kind, b.date])).toEqual([['closed', '2026-12-03']])
-  })
-})
-
-describe('foreign equivalents for guests', () => {
-  it('shows NGN in dollars at a recorded rate, rounded once', () => {
-    expect(
-      foreignEquivalent('150000.00', 'USD', {
-        rate: '1425',
-        source: 'cbn',
-        date: '2026-11-25',
-      }),
-    ).toEqual({
-      amount: '105.26',
-      currency: 'USD',
-      label: '≈ $105.26 at ₦1,425/$, CBN, 25 Nov 2026',
-    })
   })
 })
 

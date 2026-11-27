@@ -20,6 +20,7 @@ export function QuickActions({
   const me = useMe()
   const usable = actions.filter((action) => {
     const module = findModule(action.to)
+    if (action.needs && !me.can(action.needs)) return false
     return module ? me.has(module.feature) && roleSees(role, module, me.can) : false
   })
   if (usable.length === 0 && !children) return null
@@ -30,8 +31,9 @@ export function QuickActions({
         return (
           <Link
             key={action.label}
-            to="/$section"
-            params={{ section: action.to.slice(1) }}
+            {...(action.sheet === 'new' && action.to === '/reservations'
+              ? { to: '/reservations' as const, search: { sheet: 'new' as const } }
+              : { to: '/$section' as const, params: { section: action.to.slice(1) } })}
             className={
               index === 0
                 ? 'inline-flex h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-side shadow-sm transition hover:bg-white/90 lg:h-10'

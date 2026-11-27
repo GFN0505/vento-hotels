@@ -12,15 +12,23 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - Cell aria-labels: add "business date" for today and "price set for this date" for the dot.
 - Pick a hotel under All hotels: show plan count or "from ₦95,000" per hotel.
 - Tab transitions: skeleton instead of a stale frame for ~1s.
-- Code-review minors: undo message names the last actor of any plan event (should be the dates' last editor); percentage message says 1–100% but accepts 0.01; no ₦100,000,000 cap on derived prices; secondary rates queries filter by plan ids only (add organizationId); advisory lock taken before the scope check in create/createFirst/reorder; plan-writes.ts header comment lock order; Number.parseInt on money strings in plan-form-model.ts and preview-model.ts (use dec().toFixed(0)); planHasHistory per row in planViews (batch it when brick 4 fills it in); seed rate dates fixed at Dec 2026.
+- Code-review minors: undo message names the last actor of any plan event (should be the dates' last editor); percentage message says 1–100% but accepts 0.01; no ₦100,000,000 cap on derived prices; secondary rates queries filter by plan ids only (add organizationId); advisory lock taken before the scope check in create/createFirst/reorder; plan-writes.ts header comment lock order; Number.parseInt on money strings in plan-form-model.ts and preview-model.ts (use dec().toFixed(0)); seed rate dates fixed at Dec 2026.
 
 ## Taxes, service charge, payment methods and FX rates (brick 3)
 - FX rates: each currency's 30-day line is a small inline SVG, not Recharts as the spec says (kept inside the speed budget; recorded in `docs/design/CHANGES.md`). Revisit if the polish pass adds axes or hover values.
 - FX rates are stored and entered with up to 4 decimals, but the history and cards show them through the naira formatter at 2 decimals in places (e.g. the check and replace messages); show the full rate wherever a rate (not an amount) is shown.
 - `taxes.set_up` audit event carries `liveProperty` and `exception` but not `liveHotelIds` (the per-tax `tax.created` events do); add it so the owner's daily report can place it without reading the batch.
 - The owners' email when a live hotel's guest transfer account changes is sent after commit through the queued email provider, not as its own idempotent pg-boss job (`notify.transfer_account_changed`, keyed by the audit event id) as the spec says. A crash between commit and queueing loses the email (the change is still audited and in the morning report).
-- Two FX display helpers: `foreignEquivalent` in `packages/shared/src/rates.ts` (brick 2) and `fxEquivalent` in `fx.ts` (brick 3) do the same job; keep `fxEquivalent` and point quotes at it in brick 4.
 
 ## Earlier bricks
 - Hotel switch: the native hotel select can't show options in screenshot tools (consider a custom listbox in the polish pass).
 - Rate plan Change history: before → after details show only for members with audit.view; add before/after to ratePlans.history so revenue managers see them too.
+
+## Reservations (brick 4)
+- Reservations list: "Not assigned" repeated under every row's room (drop it until rooms are assigned, bricks 7–8).
+- Deposit due shown date-only in places ("by 29 Nov"); show the time wherever the due time matters.
+- New reservation, step 1: the summary aside is nearly empty; fill it (hotel, nights, party) or hide it on that step.
+- Demo seed: audit events' `createdAt` is the seed's run time, not the business date each booking was made on.
+- Guest and reservation search: say "Type at least 3 characters" for 1–2 characters instead of showing nothing.
+- New reservation dates use the browser's native date inputs: swap for a design-system date range picker once one exists in `components/ui` (none today; not built here on purpose).
+- New reservation: Continue looks enabled while the quote refreshes (window focus) and only says "Checking the price. One moment." on click, so the person clicks twice; show a busy state on the button while refetching.

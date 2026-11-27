@@ -11,14 +11,18 @@ import {
   type PageQuery,
   type Property,
   pageOffset,
+  suggestBookingPrefix,
   toPage,
 } from '@vento/shared'
 import { and, eq, ne, sql } from 'drizzle-orm'
 import { recordAudit } from '../audit/record.ts'
 import { isUniqueViolation } from '../db/errors.ts'
+import { reservations } from '../db/schema/reservations.ts'
 import { entities, memberProperties, properties } from '../db/schema/tenancy.ts'
 import { type Access, can, propertyScope, requirePermission } from './access.ts'
 import {
+  bookingPrefixLocked,
+  bookingPrefixTaken,
   chooseCompany,
   companyArchived,
   hotelArchived,
@@ -102,6 +106,7 @@ export async function lockActiveEntity(
 type CreateInput = {
   entityId: string
   name: string
+  bookingPrefix?: string | undefined
   addressLine1?: string | undefined
   area?: string | undefined
   lga?: string | undefined
@@ -141,6 +146,7 @@ export async function createProperty(
       await requireAddressUnlessFirst(tx, access, input)
       const id = newId()
       const businessDate = calendarDateIn(input.timeZone)
+      const bookingPrefix = await choosePrefix(tx, access, input)
       const [row] = await tx
         .insert(properties)
         .values({
@@ -148,6 +154,7 @@ export async function createProperty(
           organizationId: access.organizationId,
           entityId: entity.id,
           name: input.name,
+          bookingPrefix,
           addressLine1: input.addressLine1 ?? null,
           area: input.area ?? null,
           lga: input.lga ?? null,
@@ -169,6 +176,7 @@ export async function createProperty(
         businessDate,
         after: {
           name: input.name,
+          bookingPrefix,
           entityId: entity.id,
           entityName: entity.name,
           addressLine1: input.addressLine1 ?? null,
@@ -217,6 +225,23 @@ export async function createProperty(
   }
 }
 
+// The prefix asked for (if free in the group) or one suggested from the name.
+async function choosePrefix(tx: Tx, access: Access, input: CreateInput): Promise<string> {
+  const taken = await tx
+    .select({ prefix: properties.bookingPrefix, name: properties.name })
+    .from(properties)
+    .where(eq(properties.organizationId, access.organizationId))
+  if (!input.bookingPrefix) {
+    return suggestBookingPrefix(
+      input.name,
+      taken.map((row) => row.prefix),
+    )
+  }
+  const clash = taken.find((row) => row.prefix === input.bookingPrefix)
+  if (clash) throw bookingPrefixTaken(input.bookingPrefix, clash.name)
+  return input.bookingPrefix
+}
+
 // The caller's access including a hotel they were just given, for reading it back.
 function withHotel(access: Access, id: string): Access {
   return access.allProperties ? access : { ...access, propertyIds: [...access.propertyIds, id] }
@@ -227,6 +252,7 @@ function withHotel(access: Access, id: string): Access {
 type Locked = {
   id: string
   name: string
+  bookingPrefix: string
   entityId: string
   pendingEntityId: string | null
   addressLine1: string | null
@@ -247,6 +273,7 @@ export async function lockProperty(tx: Tx, access: Access, id: string): Promise<
     .select({
       id: properties.id,
       name: properties.name,
+      bookingPrefix: properties.bookingPrefix,
       entityId: properties.entityId,
       pendingEntityId: properties.pendingEntityId,
       addressLine1: properties.addressLine1,
@@ -297,6 +324,7 @@ const isLive = (property: Pick<Locked, 'liveSince'>) => property.liveSince !== n
 
 type EditableField =
   | 'name'
+  | 'bookingPrefix'
   | 'addressLine1'
   | 'area'
   | 'state'
@@ -306,6 +334,7 @@ type EditableField =
   | 'checkOutTime'
 const EDITABLE: readonly EditableField[] = [
   'name',
+  'bookingPrefix',
   'addressLine1',
   'area',
   'state',
@@ -441,6 +470,28 @@ async function checkFields(
     })
   }
   if (after.name) await requireHotelNameFree(tx, access, after.name, current.id)
+  if (after.bookingPrefix) await requirePrefixFree(tx, access, current, after.bookingPrefix)
+}
+
+// Reservation numbers already given out carry the prefix, so it changes only before the first.
+async function requirePrefixFree(tx: Tx, access: Access, current: Locked, prefix: string) {
+  const [booked] = await tx
+    .select({ id: reservations.id })
+    .from(reservations)
+    .where(eq(reservations.propertyId, current.id))
+    .limit(1)
+  if (booked) throw bookingPrefixLocked(current.name)
+  const [clash] = await tx
+    .select({ name: properties.name })
+    .from(properties)
+    .where(
+      and(
+        eq(properties.organizationId, access.organizationId),
+        eq(properties.bookingPrefix, prefix),
+        ne(properties.id, current.id),
+      ),
+    )
+  if (clash) throw bookingPrefixTaken(prefix, clash.name)
 }
 
 // Before go-live the hotel moves company at once. After it, the move waits for the next business

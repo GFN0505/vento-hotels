@@ -36,3 +36,4 @@ A spec that is dropped is deleted, with the reason in the commit message.
 | [The hotel switch scopes every page](stage-1-hotel-switch-scope.md) | 1 | Platform | owner-morning, going-live | approved (owner, 2026-11-26, for the agreed rule) |
 | [Rate plans and rates (manual)](stage-1-rate-plans.md) | 1 | Reservations & Front Desk | going-live, front-desk-morning, golden thread, guest-stay | approved |
 | [Taxes, service charge, payment methods and FX rates](stage-1-taxes-and-payment-methods.md) | 1 | Finance | going-live, front-desk-morning, night-audit | built |
+| [Availability and new reservations](stage-1-availability-and-reservations.md) | 1 | Reservations & Front Desk | front-desk-morning, guest-stay, night-audit, golden thread | built |

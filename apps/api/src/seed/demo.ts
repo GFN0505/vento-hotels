@@ -3,7 +3,8 @@
 // walkthroughs, each with a role, hotels, a sign-in and a staff PIN; room types and 382 rooms;
 // rate plans (Kora Victoria Island's five with the Festive season, the others' three each);
 // devices at Kora Victoria Island and Kora Ikeja GRA (none at Abuja or Port Harcourt, for the empty
-// state); taxes, payment methods, bank accounts, POS terminals and 30 days of FX rates; a pending
+// state); taxes, payment methods, bank accounts, POS terminals and 30 days of FX rates; about 430
+// reservations at Kora Victoria Island and 20 at Kora Ikeja GRA; a pending
 // invite; and one permission change with its reason. Used for local development, browser tests and sales demos. Everything here is
 // made up.
 import { createHash, randomBytes } from 'node:crypto'
@@ -26,6 +27,7 @@ import type { StorageProvider } from '../providers/storage.ts'
 import { seedFinance } from './finance.ts'
 import { seedLogo } from './logo.ts'
 import { seedRates } from './rates.ts'
+import { seedReservations } from './reservations.ts'
 import { seedRooms } from './rooms.ts'
 
 // The demo hotels went live on Vento this many business days before the seed was loaded.
@@ -47,6 +49,8 @@ const HOTELS: Record<
   HotelKey,
   {
     name: string
+    // Booking prefixes from the reservations spec (Open question 5).
+    prefix: string
     company: CompanyKey
     street: string | null
     area: string
@@ -57,6 +61,7 @@ const HOTELS: Record<
 > = {
   vi: {
     name: 'Kora Victoria Island',
+    prefix: 'VI',
     company: 'hospitality',
     street: 'Plot 1412 Ahmadu Bello Way',
     area: 'Victoria Island',
@@ -66,6 +71,7 @@ const HOTELS: Record<
   },
   ikeja: {
     name: 'Kora Ikeja GRA',
+    prefix: 'IKJ',
     company: 'hospitality',
     street: null,
     area: 'Ikeja GRA',
@@ -75,6 +81,7 @@ const HOTELS: Record<
   },
   abuja: {
     name: 'Kora Abuja',
+    prefix: 'ABJ',
     company: 'abuja',
     street: 'Plot 12 Aminu Kano Crescent',
     area: 'Wuse 2',
@@ -84,6 +91,7 @@ const HOTELS: Record<
   },
   ph: {
     name: 'Kora Port Harcourt',
+    prefix: 'PH',
     company: 'ph',
     street: '15 Tombia Street',
     area: 'GRA Phase 2',
@@ -192,6 +200,7 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
         organizationId,
         entityId: companyIds[hotel.company],
         name: hotel.name,
+        bookingPrefix: hotel.prefix,
         addressLine1: hotel.street,
         area: hotel.area,
         lga: hotel.lga,
@@ -355,6 +364,19 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
         limit: '12.00',
       },
       reason: 'Weekend corporate guests ask for a little more',
+    })
+
+    // Reservations, booked through the booking service by the desk, revenue and the GM.
+    const who = (email: string) => {
+      const found = seeded.find((person) => person.email === `${email}@${domain}`)
+      if (!found) throw new Error(`The demo needs ${email}`)
+      return { userId: found.userId, memberId: found.memberId, name: found.name, role: found.role }
+    }
+    await seedReservations(tx, {
+      organizationId,
+      businessDate,
+      hotels: { vi: hotelIds.vi, ikeja: hotelIds.ikeja },
+      people: { chiamaka: who('chiamaka'), sade: who('sade'), tunde: who('tunde') },
     })
 
     return {

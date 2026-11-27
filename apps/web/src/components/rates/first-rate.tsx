@@ -1,6 +1,7 @@
 // The empty Rate plans page (design #19, OnbRate): one weekday price per room type, an optional Fri
 // and Sat price, and "Also create a Bed & breakfast plan at +₦18,000". One click after typing creates
-// Best available (and Bed & breakfast) with the recommended terms.
+// Best available (and Bed & breakfast) with the recommended terms. Guest pays per night shows each
+// weekday price with the tax lines in force on the business date.
 import { useMutation } from '@tanstack/react-query'
 import { BREAKFAST_SUPPLEMENT, type RatesOverview } from '@vento/shared'
 import { type FormEvent, useState } from 'react'
@@ -17,6 +18,8 @@ import { useOnline } from '@/offline/connection'
 import { FirstRateAside } from './first-rate-aside'
 import * as M from './first-rate-model'
 import { EXCL, formatNaira, NEEDS_CONNECTION, plural } from './format'
+import { TAXES_FIRST, useGuestPays } from './guest-pays'
+import { GuestPays } from './guest-pays-cell'
 import { groupTyped } from './money-input'
 import { useRatesRefresh } from './queries'
 
@@ -24,6 +27,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
   const online = useOnline()
   const refresh = useRatesRefresh()
   const types = overview.roomTypes
+  const guest = useGuestPays(overview.property.id)
   const [rows, setRows] = useState<M.FirstRateRows>({})
   const [breakfast, setBreakfast] = useState(true)
   const [problems, setProblems] = useState<Record<string, string | undefined>>({})
@@ -72,6 +76,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
           <p className="text-text-2">
             Per room per night, {EXCL}. Weekday is Sunday to Thursday nights.
           </p>
+          {guest.notSetUp ? <p className="text-sm text-text-3">{TAXES_FIRST}</p> : null}
           <Card className="overflow-hidden">
             <table className="w-full border-collapse text-left">
               <thead>
@@ -119,6 +124,12 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                           set(type.id, { weekday: groupTyped(event.target.value) })
                         }
                       />
+                      {guest.column && rows[type.id]?.weekday ? (
+                        <span className="num mt-1 block text-sm text-text-3">
+                          Guest pays per night{' '}
+                          <GuestPays guest={guest} price={rows[type.id]?.weekday ?? ''} />
+                        </span>
+                      ) : null}
                     </td>
                     <td className="px-3 py-3 pr-4 sm:pr-5">
                       <Field
@@ -167,7 +178,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
             </Button>
           </div>
         </form>
-        <FirstRateAside breakfast={breakfast} types={types} rows={rows} />
+        <FirstRateAside breakfast={breakfast} types={types} rows={rows} guest={guest} />
       </div>
     </div>
   )

@@ -79,6 +79,9 @@ export const properties = pgTable(
     organizationId: organizationId(),
     entityId: uuid().notNull(),
     name: text().notNull(),
+    // 2–4 capital letters, unique in the group, used in reservation numbers (VI-2611-0483).
+    // Editable until the hotel's first reservation.
+    bookingPrefix: text().notNull(),
     addressLine1: text(),
     area: text(),
     lga: text(),
@@ -113,6 +116,11 @@ export const properties = pgTable(
       t.organizationId,
       sql`lower(${t.name})`,
     ),
+    unique('properties_organization_id_booking_prefix_unique').on(
+      t.organizationId,
+      t.bookingPrefix,
+    ),
+    check('properties_booking_prefix_format', sql`${t.bookingPrefix} ~ '^[A-Z]{2,4}$'`),
     // Composite keys, so a hotel can't name another group's company or file.
     foreignKey({
       name: 'properties_entity_fk',

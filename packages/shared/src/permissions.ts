@@ -105,6 +105,13 @@ export const RATES_READERS: readonly Permission[] = [
   'rooms.setup',
   'reservation.manage',
 ]
+// Reading reservations (list, detail) comes with any of these: read-only for the last two, so
+// finance and the night auditor see bookings and deposits due without making them.
+export const RESERVATION_READERS: readonly Permission[] = [
+  'reservation.manage',
+  'night_audit.run',
+  'leakage.view',
+]
 export const permissionSchema = z.enum(PERMISSION_KEYS as [Permission, ...Permission[]])
 
 export function limitKindOf(permission: Permission): LimitKind | undefined {

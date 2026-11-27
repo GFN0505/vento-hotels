@@ -1,7 +1,7 @@
 // What each role's Home leads with (designs: GMHome for a hotel, ExecHome for the group): the
 // figures that matter to that job and the actions they reach for first. Figures come from the
 // modules that produce them, so until a module ships its tile says which one brings it.
-import type { MemberRole } from '@vento/shared'
+import type { MemberRole, Permission } from '@vento/shared'
 import {
   Ban,
   BedDouble,
@@ -37,7 +37,14 @@ import {
 import type { ModulePath } from '@/lib/navigation'
 
 export type Figure = { label: string; icon: LucideIcon; from: ModulePath }
-export type QuickAction = { label: string; icon: LucideIcon; to: ModulePath }
+export type QuickAction = {
+  label: string
+  icon: LucideIcon
+  to: ModulePath
+  // Opens the module's New sheet (New reservation), for members with this permission.
+  sheet?: 'new'
+  needs?: Permission
+}
 
 export type RoleFocus = {
   // The job, as the banner names it: "Front desk · Kora Victoria Island".
@@ -55,6 +62,8 @@ const NEW_RESERVATION: QuickAction = {
   label: 'New reservation',
   icon: CalendarPlus,
   to: '/reservations',
+  sheet: 'new',
+  needs: 'reservation.manage',
 }
 const WALK_IN: QuickAction = { label: 'Walk-in', icon: DoorOpen, to: '/front-desk' }
 const TAPE_CHART: QuickAction = { label: 'Tape chart', icon: ChartGantt, to: '/tape-chart' }

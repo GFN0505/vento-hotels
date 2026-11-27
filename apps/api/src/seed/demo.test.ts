@@ -8,12 +8,13 @@ import type {
   Property,
   RateCalendar,
   RatePlanView,
+  ReservationRow,
   RoomTypeView,
   RoomView,
   TaxSetup,
 } from '@vento/shared'
 import { addDays, calendarDateIn, newId } from '@vento/shared'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { afterAll, describe, expect, it } from 'vitest'
 import { organizations } from '../db/schema/auth.ts'
 import { switchFeature } from '../features/switches.ts'
@@ -23,7 +24,7 @@ import { LIVE_DAYS_AGO, seedDemo } from './demo.ts'
 const url = process.env.TEST_DATABASE_URL
 const PASSWORD = 'Demo-pass-42!'
 
-describe.skipIf(!url)('demo seed', () => {
+describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
   const t = createTestApp(url ?? '')
   afterAll(() => t.close())
   const run = newId().slice(-8)
@@ -313,5 +314,62 @@ describe.skipIf(!url)('demo seed', () => {
     }
     const home = await t.rpc<HomeSummary>(owner, 'organization/home', {})
     expect(home.data.byHotel.every((hotel) => hotel.ratesSet)).toBe(true)
+  })
+
+  it('books the demo reservations through the booking service, counters equal to the stays', async () => {
+    const cookie = await signInAs(`adaeze@kora-${run}.example`)
+    const today = calendarDateIn('Africa/Lagos')
+    const hotels = await t.rpc<{ items: Property[] }>(cookie, 'properties/list', {})
+    const hotel = (name: string) => hotels.data.items.find((h) => h.name === name)?.id ?? ''
+    const vi = hotel('Kora Victoria Island')
+    const list = (input: Record<string, unknown>) =>
+      t.rpc<{ items: ReservationRow[]; total: number }>(cookie, 'reservations/list', {
+        view: 'all',
+        pageSize: 100,
+        ...input,
+      })
+    const mensah = await list({ propertyId: vi, q: 'mensah' })
+    const daniel = mensah.data.items.find((row) => row.guestName === 'Daniel Mensah')
+    expect(daniel?.number).toMatch(/^VI-\d{4}-0482$/)
+    expect(daniel).toMatchObject({
+      roomTypeName: 'Executive King',
+      arrival: today,
+      source: 'email',
+    })
+    expect((await list({ propertyId: vi, arrivalFrom: today, arrivalTo: today })).data.total).toBe(
+      26,
+    )
+    expect((await list({ propertyId: vi })).data.total).toBeGreaterThanOrEqual(140)
+    const ikeja = (await list({ propertyId: hotel('Kora Ikeja GRA') })).data.total
+    expect(ikeja).toBeGreaterThanOrEqual(15)
+    expect((await list({ propertyId: hotel('Kora Abuja') })).data.total).toBe(0)
+
+    const at = async (code: string, date: string) => {
+      const result = await t.db.execute<{ booked: number }>(sql`
+        select i.booked from room_type_inventory i join room_types rt on rt.id = i.room_type_id
+        where i.property_id = ${vi} and rt.code = ${code} and i.date = ${date}`)
+      return result.rows[0]?.booked ?? 0
+    }
+    expect(await at('JRS', addDays(today, 15))).toBe(7)
+    expect(await at('JRS', addDays(today, 16))).toBe(8)
+    expect(await at('DLK', addDays(today, 16))).toBe(45)
+
+    const [org] = await t.db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.slug, options.slug))
+    const drift = await t.db.execute(sql`
+      select i.room_type_id, i.date, i.booked, count(n.id)::int as nights
+      from room_type_inventory i
+      left join stays s on s.room_type_id = i.room_type_id and s.status <> 'cancelled'
+      left join stay_nights n on n.stay_id = s.id and n.date = i.date
+      where i.organization_id = ${org?.id}
+      group by i.id having i.booked <> count(n.id)`)
+    expect(drift.rows).toEqual([])
+
+    const discounts = await t.db.execute<{ actor_name: string }>(sql`
+      select actor_name from audit_events
+      where organization_id = ${org?.id} and action = 'stay.discount_applied'`)
+    expect(discounts.rows.map((row) => row.actor_name)).toContain('Chiamaka Eze')
   })
 })

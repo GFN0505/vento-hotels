@@ -25,6 +25,7 @@ Cancellation policy and deposit rule (illustrative, set on the rate plan): depos
    - *Does:* opens the Kora Victoria Island booking site from the hotel's Instagram link, picks 9–12 Dec 2026, 1 adult.
    - *Sees:* "9–12 Dec 2026 · 3 nights". Room types with photos, each from its Non-refundable rate: Standard Queen from ₦108,000, Deluxe King from ₦135,000, Executive King from ₦189,000, Junior Suite from ₦288,000, each "per night + taxes and service charge". Under Deluxe King: Non-refundable ₦135,000 room only, BAR ₦150,000 room only, Bed & breakfast ₦168,000. Each shows the 3-night total with taxes and service charge broken out, and the cancellation policy in one line.
    - *Behind the scenes:* availability and prices come from the same rate and inventory data the front desk and channels use. Nothing is held yet.
+   - *Stage 1 note:* until the booking engine (Stage 4), the same booking is taken by phone at the desk (`front-desk-morning.md` step 6a) and the deposit is paid by transfer against the copied confirmation.
 
 2. **Details and deposit by card (21:14).**
    - *Does:* picks Deluxe King Bed & breakfast, enters name, email, phone (+44 7700 900123), ticks WhatsApp for messages, taps **Pay deposit ₦205,800.00**.

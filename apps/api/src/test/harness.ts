@@ -18,8 +18,12 @@ const healthy: HealthCheck = async () => ({
   checkedAt: new Date().toISOString(),
 })
 
-export function createTestApp(databaseUrl: string, options: { rateLimit?: boolean } = {}) {
-  const database = createDatabase(databaseUrl, { max: 4 })
+export function createTestApp(
+  databaseUrl: string,
+  options: { rateLimit?: boolean; max?: number } = {},
+) {
+  // Concurrency tests ask for more connections, so racing requests really run side by side.
+  const database = createDatabase(databaseUrl, { max: options.max ?? 4 })
   const email = new MemoryEmailProvider()
   const limiter = new RateLimiter(options.rateLimit ?? false)
   // Files live in memory; `storage.put(key, bytes)` stands in for the browser's upload.

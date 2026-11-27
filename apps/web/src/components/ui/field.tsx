@@ -11,6 +11,7 @@
 import { Eye, EyeOff } from 'lucide-react'
 import {
   type ChangeEvent,
+  type ComponentProps,
   type FocusEvent,
   type InputHTMLAttributes,
   type KeyboardEvent,
@@ -32,7 +33,7 @@ export function movingToAnotherField(event: FocusEvent<HTMLElement>): boolean {
   )
 }
 
-export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ className, ...props }: ComponentProps<'input'>) {
   return (
     <input
       className={cn(

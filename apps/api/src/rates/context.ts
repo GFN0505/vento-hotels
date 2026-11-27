@@ -106,6 +106,15 @@ export async function lockHotelRates(tx: Tx, propertyId: string): Promise<void> 
   await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`rates:${propertyId}`}, 0))`)
 }
 
+// The same lock in shared mode, for bookings: many quotes and bookings at once, but no rates write
+// until they commit, so the prices a booking stores are the prices in force. Taken first, before
+// any row lock (lock order in reservations/locks.ts).
+export async function lockHotelRatesShared(tx: Pick<Database, 'execute'>, propertyId: string) {
+  await tx.execute(
+    sql`select pg_advisory_xact_lock_shared(hashtextextended(${`rates:${propertyId}`}, 0))`,
+  )
+}
+
 // The hotel rates lock for a plan named by id. A plan the caller can't see is not found.
 export async function lockRatesOfPlan(tx: Tx, access: Access, planId: string): Promise<void> {
   const [plan] = await tx

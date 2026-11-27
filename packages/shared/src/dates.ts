@@ -41,3 +41,30 @@ export function calendarDateIn(timeZone: string, at: Date = new Date()): Calenda
     day: '2-digit',
   }).format(at)
 }
+
+// The UTC offset of a time zone at an instant, in milliseconds (Lagos: +1 hour).
+function offsetMs(timeZone: string, at: number): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(new Date(at))
+  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value)
+  const local = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'))
+  return local - (at - (at % 60_000))
+}
+
+// The instant a wall-clock time happens on a calendar date in a time zone: "the hotel's check-in
+// time on the arrival day" (14:00 on 9 Dec 2026 in Lagos is 13:00 UTC).
+export function instantAt(date: CalendarDate, time: string, timeZone: string): Date {
+  const [hours = 0, minutes = 0] = time.split(':').map(Number)
+  const wall = toUtcMs(date) + hours * 3_600_000 + minutes * 60_000
+  const first = wall - offsetMs(timeZone, wall)
+  // A second pass settles the rare wall time near a daylight-saving change.
+  return new Date(wall - offsetMs(timeZone, first))
+}

@@ -1,6 +1,7 @@
 // The editor's preview (design #33): for a derived plan, the parent's price on the business date
 // next to this plan's, per room type, as typed. For own prices, where seasons and single dates
-// are set. The parent's price that night comes from the calendar, so date prices count too.
+// are set. The parent's price that night comes from the calendar, so date prices count too. Guest
+// pays adds the tax lines in force that night, inclusive or exclusive as the plan says.
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import type { RatePlanView, RatesOverview } from '@vento/shared'
@@ -8,6 +9,8 @@ import { CalendarDays } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
 import { formatNaira, PER_NIGHT_EXCL, shortDate } from './format'
+import { TAXES_FIRST, useGuestPays } from './guest-pays'
+import { GuestPays } from './guest-pays-cell'
 import type { PlanForm } from './plan-form-model'
 import { previewRows } from './preview-model'
 import { calendarQuery } from './queries'
@@ -41,6 +44,7 @@ export function useParentPrices(overview: RatesOverview, parentId: string | unde
 export function EditorPreview({ overview, form, parent }: Props) {
   const date = overview.property.businessDate
   const { prices, pending } = useParentPrices(overview, parent?.id)
+  const guest = useGuestPays(overview.property.id)
   if (form.pricing === 'own') {
     return (
       <Card className="flex flex-col gap-2 p-5">
@@ -87,7 +91,7 @@ export function EditorPreview({ overview, form, parent }: Props) {
               <th scope="col" className="num px-3 py-2 text-right">
                 {parent.code}
               </th>
-              <th scope="col" className="px-5 py-2 text-right">
+              <th scope="col" className={'px-5 py-2 text-right'}>
                 This plan
               </th>
             </tr>
@@ -103,17 +107,32 @@ export function EditorPreview({ overview, form, parent }: Props) {
                 </td>
                 <td
                   className={cn(
-                    'num px-5 py-2.5 text-right font-medium whitespace-nowrap',
+                    'num py-2.5 text-right font-medium whitespace-nowrap',
+                    'px-5',
                     row.notPositive && 'text-ro',
                   )}
                 >
                   {row.price ? formatNaira(row.price) : '—'}
+                  {guest.column && row.price && !row.notPositive ? (
+                    <span className="block text-sm font-normal text-text-3">
+                      Guest pays{' '}
+                      <GuestPays
+                        guest={guest}
+                        price={row.price}
+                        mealAllocation={form.mealPlan === 'room_only' ? '0' : form.mealAllocation}
+                        inclusive={form.pricesIncludeTaxes}
+                      />
+                    </span>
+                  ) : null}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+      {guest.notSetUp ? (
+        <p className="border-t border-border px-5 py-3 text-sm text-text-3">{TAXES_FIRST}</p>
+      ) : null}
     </Card>
   )
 }
