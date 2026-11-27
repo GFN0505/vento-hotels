@@ -121,9 +121,15 @@ describe.skipIf(!url)('changes under concurrency', { timeout: 600_000 }, () => {
     const deadline = Date.now() + 10_000
     for (;;) {
       await gate.query('select pg_stat_clear_snapshot()')
+      // Only backends queued behind the gate count: other test files run at the same time against
+      // the same database and wait on their own inventory rows.
       const waiting = await gate.query(
-        `select count(*)::int as n from pg_stat_activity
-         where wait_event_type = 'Lock' and query like '%room_type_inventory%' and pid <> pg_backend_pid()`,
+        `with recursive queued as (
+           select pid from pg_stat_activity where pg_backend_pid() = any(pg_blocking_pids(pid))
+           union
+           select a.pid from pg_stat_activity a join queued q on q.pid = any(pg_blocking_pids(a.pid))
+         )
+         select count(*)::int as n from queued`,
       )
       if (waiting.rows[0].n >= n) return
       if (Date.now() > deadline) throw new Error('the requests never reached the lock')
