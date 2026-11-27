@@ -38,3 +38,15 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - The waiting poll (every 3 seconds) reads the whole request with `approvals.get`, draft included; add a slim status read (status, approver, times, comment) for it.
 - Bell badge: `text-white` on `bg-ro-dot`; check the contrast against the tokens in light and dark (or use a token for text on a status dot).
 - Bell: move focus into the panel when it opens (first row or See all), and back to the bell on close by click outside.
+
+## Modify, cancel and no-show (brick 6)
+- Modify: a night sold out under the agent's feet answers "Deluxe King was just sold for 12 Dec." without suggesting another type; add brick 4's "N Executive King rooms are free for that night." (needs the alternatives helper shared from `book.ts`).
+- A change, cancel or no-show sent just before the connection dropped isn't retried automatically on reconnect; the dialog keeps its idempotency key, so pressing the button again is safe ("Checking whether VI-2611-0447 was cancelled…" isn't shown).
+- Copy cancellation ends "Questions? Reply to this message." until hotels have a front desk number to quote ("WhatsApp us on …").
+- Demo seed: changes are made on earlier business dates but their timestamps are the seed's run time, so a banner can read "Cancelled 27 Nov 2026, 19:07 (business date 26 Nov)".
+- The Modify dialog lists up to three new nights, then "and N more new nights"; a room type change on a long stay could show the nights in a collapsible list.
+- Discount approvals on a changed stay can't be continued from the inbox ("Continue booking" is for new bookings); closing the dialog withdraws the request.
+- `writeNights` updates every kept night even when its sold price and extra adult are unchanged (`reservations/change/modify.ts`); update only the ones that differ.
+- Add a schema comment on `penalties.waived_by_*`: when an inbox approval applies the waiver, these name the requester (the approver is in `approver_*` and is the audit event's actor).
+- `penalties.approval_id` has no foreign key to `approvals`.
+- An `approvalId` sent with a modify whose discount is within the saver's own limit is still checked and consumed (`reservations/change/modify.ts`, as brick 5 does at Book); decide whether to refuse it instead.

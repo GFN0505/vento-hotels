@@ -363,6 +363,68 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
+    test('modify, cancel and no-show: the Modify dialog with a late change, Cancel (free, with a penalty, with a waiver), Mark no-show and a cancelled reservation with its Penalty card have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      test.setTimeout(120_000)
+      const domain = seedDemoGroup(`a11y-change-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
+      await signIn(page, `chiamaka@${domain}`, 'Demo-pass-42!')
+      await page.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      const open = async (guest: string) => {
+        await page.goto('/reservations?view=all')
+        await page.getByRole('searchbox').fill(guest)
+        await page.getByRole('link', { name: guest }).first().click()
+        await page.getByRole('heading', { name: guest }).waitFor()
+      }
+      // Free cancellation: Nkechi Ude arrives in five days.
+      await open('Nkechi Ude')
+      await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+      const free = page.getByRole('dialog', { name: /^Cancel reservation · / })
+      await free
+        .getByText(/No penalty$/)
+        .first()
+        .waitFor()
+      await expectAccessible(page)
+      await free.getByRole('button', { name: 'Keep booking' }).click()
+      // Inside the penalty window, then with Waive the penalty ticked.
+      await open('Kelechi Obi')
+      await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+      const late = page.getByRole('dialog', { name: /^Cancel reservation · / })
+      await late.getByText(/^First night · ₦/).waitFor()
+      await expectAccessible(page)
+      await late.getByText('Waive the penalty').click()
+      await late.getByLabel('Reason for waiving').fill('Regular guest')
+      await expectAccessible(page)
+      await late.getByRole('button', { name: 'Keep booking' }).click()
+      // Modify with a late change: one night shorter after the deadline.
+      await page.getByRole('button', { name: /^Modify/ }).click()
+      const modify = page.getByRole('dialog', { name: /^Modify reservation · / })
+      const leave = modify.getByLabel('Leave')
+      const departure = await leave.inputValue()
+      const shorter = new Date(Date.parse(`${departure}T00:00:00Z`) - 86_400_000)
+        .toISOString()
+        .slice(0, 10)
+      await leave.fill(shorter)
+      await modify.getByText(/so a penalty of ₦.* applies\.$/).waitFor()
+      await expectAccessible(page)
+      await modify.getByRole('button', { name: /^Cancel/ }).click()
+      // Mark no-show: Grace Eboh arrives today.
+      await open('Grace Eboh')
+      await page.getByRole('button', { name: 'More: no-show' }).click()
+      await page.getByRole('menuitem', { name: 'Mark no-show' }).click()
+      await page
+        .getByRole('dialog', { name: /^Mark no-show · / })
+        .getByText("Mark a no-show only when the guest won't arrive tonight.")
+        .waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+      // A cancelled reservation with its penalty to charge.
+      await open('Folake Ogun')
+      await page.getByRole('heading', { name: 'Penalty' }).waitFor()
+      await expectAccessible(page)
+    })
+
     test('the plan editor preview with Guest pays has no accessibility problems', async ({
       page,
     }, testInfo) => {

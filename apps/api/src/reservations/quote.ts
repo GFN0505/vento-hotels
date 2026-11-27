@@ -55,7 +55,7 @@ async function overlaps(
     .limit(3)
 }
 
-async function foreignEquivalent(
+export async function foreignEquivalent(
   db: Reader,
   access: Access,
   hotel: BookingHotel,

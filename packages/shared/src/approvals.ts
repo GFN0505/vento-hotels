@@ -1,10 +1,11 @@
 // Approvals (spec: docs/specs/stage-1-approvals.md, decision 0027): one member's yes to one exact
 // over-limit action by another member, at one hotel, confirmed with the approver's PIN. Kinds are
-// registered in code; Stage 1 brick 5 registers the over-limit discount on a new reservation.
+// registered in code: brick 5's over-limit discount on a new reservation; brick 6's penalty waiver
+// and over-limit discount on a changed stay.
 import { z } from 'zod'
 import { formatPercent } from './reservations.ts'
 
-export const APPROVAL_KINDS = ['stay_discount'] as const
+export const APPROVAL_KINDS = ['stay_discount', 'penalty_waiver', 'modify_discount'] as const
 export type ApprovalKind = (typeof APPROVAL_KINDS)[number]
 export const approvalKindSchema = z.enum(APPROVAL_KINDS)
 
@@ -41,6 +42,8 @@ export const CANCEL_REASON_LABELS: Record<CancelReason, string> = {
 
 export const APPROVAL_KIND_LABELS: Record<ApprovalKind, string> = {
   stay_discount: 'Over limit',
+  modify_discount: 'Over limit',
+  penalty_waiver: 'Waiver',
 }
 
 export const APPROVAL_STATUS_LABELS: Record<ApprovalStatus, string> = {
@@ -81,8 +84,8 @@ export function effectiveStatus(
 
 // "15% discount waiting for you"
 export function approvalWhat(kind: ApprovalKind, value: string): string {
-  if (kind === 'stay_discount') return `${formatPercent(value)}% discount`
-  return 'Approval'
+  if (kind === 'penalty_waiver') return 'Penalty waiver'
+  return `${formatPercent(value)}% discount`
 }
 
 // Wrong-PIN copy shared by the prompt and the inbox (spec: "UI copy").

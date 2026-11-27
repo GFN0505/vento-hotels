@@ -11,6 +11,11 @@ const TITLES: Record<string, string> = {
   'reservation.created': 'Reservation created',
   'stay.discount_applied': 'Discount',
   'stay.restriction_overridden': 'Booked through a restriction',
+  'reservation.modified': 'Changed',
+  'reservation.cancelled': 'Cancelled',
+  'reservation.no_show': 'Marked no-show',
+  'penalty.recorded': 'Penalty recorded',
+  'reservation.penalty_waived': 'Penalty waived',
 }
 
 const when = new Intl.DateTimeFormat('en-GB', {
@@ -53,6 +58,45 @@ export function describeReservationEvent(event: AuditEventView): AuditLine {
     }
   } else if (event.action === 'stay.restriction_overridden' && typeof after.message === 'string') {
     changes.push(after.message)
+  } else if (event.action === 'reservation.modified') {
+    const before = asFields(event.before)
+    if (before.arrival !== after.arrival || before.departure !== after.departure) {
+      changes.push(
+        `${before.arrival} – ${before.departure} → ${after.arrival} – ${after.departure}`,
+      )
+    }
+    if (before.roomTypeName !== after.roomTypeName) {
+      changes.push(`Room type ${before.roomTypeName} → ${after.roomTypeName}`)
+    }
+    if (before.adults !== after.adults || before.children !== after.children) {
+      changes.push(
+        `Guests ${before.adults} + ${before.children} → ${after.adults} + ${after.children}`,
+      )
+    }
+    if (before.total !== after.total) changes.push(`${naira(before.total)} → ${naira(after.total)}`)
+  } else if (event.action === 'reservation.cancelled' || event.action === 'reservation.no_show') {
+    const penalty = asFields(after.penalty)
+    changes.push(
+      penalty.amount
+        ? `Penalty ${naira(penalty.amount)}${penalty.waived ? ' (waived)' : ''}`
+        : 'No penalty',
+    )
+    if (typeof after.nightsReleased === 'number') {
+      changes.push(
+        `${after.nightsReleased} ${after.nightsReleased === 1 ? 'night' : 'nights'} released`,
+      )
+    }
+  } else if (event.action === 'penalty.recorded') {
+    changes.push(`${naira(after.amount)} · to charge`)
+  } else if (event.action === 'reservation.penalty_waived') {
+    changes.push(naira(after.amount))
+    const asked = asFields(after.requestedBy)
+    if (typeof asked.name === 'string') changes.push(`Asked by ${asked.name}`)
+    if (typeof after.approverName === 'string') {
+      changes.push(
+        `Approved by ${after.approverName} (${after.approvalMethod === 'pin_here' ? 'PIN' : 'inbox'})`,
+      )
+    }
   }
   return {
     id: event.id,

@@ -4,8 +4,10 @@
 // and always commit, so a wrong try sticks even though the answer is refused.
 import type { ORPCError } from '@orpc/server'
 import {
+  type AnyApprovalSubject,
   APPROVAL_MINUTES,
   type ApprovalDetail,
+  type ApprovalKind,
   type ApprovalView,
   type Approvers,
   type approvalActionSchema,
@@ -15,13 +17,16 @@ import {
   createReservationSchema,
   effectiveStatus,
   firstNameOf,
+  formatPercent,
   type listApprovalsSchema,
   newId,
   overLimit,
   type Page,
+  type Permission,
   pageOffset,
   type requestApprovalSchema,
   toPage,
+  type WaiverSubject,
 } from '@vento/shared'
 import {
   and,
@@ -46,15 +51,30 @@ import { members, users } from '../db/schema/auth.ts'
 import { memberPins, properties } from '../db/schema/tenancy.ts'
 import { type PinCheck, pinBlocked, tryPin } from '../devices/pin-counter.ts'
 import { deviceBySecret, deviceSecretFrom } from '../devices/service.ts'
+import {
+  applyWaiver,
+  findPenalty,
+  lockPenalty,
+  lockReservationRow,
+} from '../reservations/change/waive.ts'
+import { type BookingHotel, holdBookingHotel } from '../reservations/context.ts'
 import { discountLimitOf } from '../reservations/pricing.ts'
-import { type Access, propertyScope, requireFeature, scopeToProperties } from '../tenancy/access.ts'
+import {
+  type Access,
+  can,
+  propertyScope,
+  requireFeature,
+  scopeToProperties,
+} from '../tenancy/access.ts'
 import { hotelArchived, hotelNotFound } from '../tenancy/errors.ts'
 import { approversFor, type Candidate, candidate, stillWorksAt } from './eligibility.ts'
 import {
   approvalNotFound,
+  approvalNotMatching,
   approverNotEligible,
   cantCancel,
   commentRequired,
+  inboxNeedsRecordedPenalty,
   needsPin,
   notNeeded,
   notPending,
@@ -65,12 +85,22 @@ import {
   selfApproval,
   tooManyOpenRequests,
   tooManyWrongPins,
+  waiverNotNeeded,
   wrongPin,
 } from './errors.ts'
-import { type EvaluatedStay, evaluateStayDiscount, STAY_DISCOUNT } from './kinds/stay-discount.ts'
+import {
+  evaluateModifyDiscount,
+  evaluateWaiver,
+  MODIFY_DISCOUNT,
+  PENALTY_WAIVER,
+} from './kinds/change-kinds.ts'
+import { waiverBinding } from './kinds/change-rules.ts'
+import { evaluateStayDiscount, STAY_DISCOUNT } from './kinds/stay-discount.ts'
 import { countWrongTry, wrongTriesLeft } from './wrong-tries.ts'
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
+// The database, or a transaction (the demo seed asks and answers inside its own).
+type ServiceDb = Pick<Database, 'transaction' | 'select' | 'execute'>
 type Reader = Pick<Database, 'select'>
 type Action = z.output<typeof approvalActionSchema>
 type Failure = { error: ORPCError<string, unknown> }
@@ -167,37 +197,95 @@ async function lockRow(tx: Tx, access: Access, id: string) {
   return row
 }
 
-function evaluate(
+// Every kind registers its permission, how its value is measured and who is asked first; the
+// action is evaluated with the kind's own functions (the client sends no figures).
+type Evaluated = {
+  kind: ApprovalKind
+  permission: Permission
+  valueKind: 'percent' | 'amount_ngn'
+  hotel: { id: string; name: string; businessDate: string; timeZone: string }
+  value: string
+  bindingHash: string
+  subject: AnyApprovalSubject
+  // One open request per action: the booking's or change's key, or the penalty's id.
+  actionKey: string
+  // The booking to resume it ("Continue booking"); only for a new booking's discount.
+  draft: unknown
+  requesterLimit: string | null
+  order: 'limit' | 'role'
+}
+
+async function evaluate(
   db: Pick<Database, 'select' | 'execute'>,
   access: Access,
   action: Action,
   now: Date,
   deviceName: string | null,
-) {
+): Promise<Evaluated> {
   requireFeature(access, STAY_DISCOUNT.feature)
-  return evaluateStayDiscount(db, access, action, { now, deviceName })
+  const context = { now, deviceName }
+  if (action.kind === 'stay_discount') {
+    const e = await evaluateStayDiscount(db, access, action, context)
+    return {
+      kind: STAY_DISCOUNT.kind,
+      permission: STAY_DISCOUNT.permission,
+      valueKind: STAY_DISCOUNT.valueKind,
+      hotel: e.hotel,
+      value: e.value,
+      bindingHash: e.bindingHash,
+      subject: e.subject,
+      actionKey: action.booking.idempotencyKey,
+      draft: action.booking,
+      requesterLimit: discountLimitOf(access),
+      order: 'limit',
+    }
+  }
+  if (action.kind === 'modify_discount') {
+    const e = await evaluateModifyDiscount(db, access, action, context)
+    return {
+      ...e,
+      kind: MODIFY_DISCOUNT.kind,
+      permission: MODIFY_DISCOUNT.permission,
+      valueKind: MODIFY_DISCOUNT.valueKind,
+      draft: null,
+      requesterLimit: discountLimitOf(access),
+      order: 'limit',
+    }
+  }
+  const e = await evaluateWaiver(db, access, action, context)
+  return {
+    ...e,
+    kind: PENALTY_WAIVER.kind,
+    permission: PENALTY_WAIVER.permission,
+    valueKind: PENALTY_WAIVER.valueKind,
+    draft: null,
+    requesterLimit: null,
+    order: 'role',
+  }
 }
 
-// Asking only makes sense over the requester's own limit.
-function requireOverLimit(access: Access, value: string) {
-  if (!overLimit(value, discountLimitOf(access))) throw notNeeded(value)
+// "15%", or "this waiver": what an approver is asked to approve, as people say it.
+const whatOf = (kind: ApprovalKind, value: string) =>
+  kind === 'penalty_waiver' ? 'this waiver' : `${formatPercent(value)}%`
+
+// Asking only makes sense over the requester's own limit, or without the permission.
+function requireNeeded(access: Access, evaluated: Evaluated) {
+  if (evaluated.kind === 'penalty_waiver') {
+    if (can(access, PENALTY_WAIVER.permission)) throw waiverNotNeeded()
+    return
+  }
+  if (!overLimit(evaluated.value, discountLimitOf(access))) throw notNeeded(evaluated.value)
 }
 
 async function requireApprover(
   db: Reader,
   access: Access,
-  evaluated: EvaluatedStay,
+  evaluated: Evaluated,
   approverMemberId: string,
 ): Promise<Candidate> {
   if (approverMemberId === access.memberId) throw selfApproval()
   const where = { organizationId: access.organizationId, propertyId: evaluated.hotel.id }
-  const found = await candidate(
-    db,
-    where,
-    STAY_DISCOUNT.permission,
-    evaluated.value,
-    approverMemberId,
-  )
+  const found = await candidate(db, where, evaluated.permission, evaluated.value, approverMemberId)
   if (!found) {
     // Never reveals whether the id is a member elsewhere: the same words for anyone not eligible.
     const [named] = await db
@@ -207,7 +295,11 @@ async function requireApprover(
       .where(
         and(eq(members.id, approverMemberId), eq(members.organizationId, access.organizationId)),
       )
-    throw approverNotEligible(named?.name ?? 'That person', evaluated.value, evaluated.hotel.name)
+    throw approverNotEligible(
+      named?.name ?? 'That person',
+      whatOf(evaluated.kind, evaluated.value),
+      evaluated.hotel.name,
+    )
   }
   if (!found.hasPin) throw needsPin(found.name)
   if (found.pinNeedsReset) throw pinNeedsReset(`${firstNameOf(found.name)}'s`)
@@ -319,13 +411,14 @@ export async function listApprovers(
   device: ThisDevice,
 ): Promise<Approvers> {
   const evaluated = await evaluate(db, access, action, new Date(), device?.name ?? null)
-  requireOverLimit(access, evaluated.value)
+  requireNeeded(access, evaluated)
   const found = await approversFor(
     db,
     { organizationId: access.organizationId, propertyId: evaluated.hotel.id },
-    STAY_DISCOUNT.permission,
+    evaluated.permission,
     evaluated.value,
     access.memberId,
+    evaluated.order,
   )
   return {
     approvers: found.approvers.map((c) => ({
@@ -357,7 +450,7 @@ export async function approveHere(
   const evaluated = await evaluate(db, access, input, now, device?.name ?? null)
   if (!device || device.propertyId !== evaluated.hotel.id) throw pinHereNeedsDevice()
   if (wrongTriesLeft(access.memberId) <= 0) throw tooManyWrongPins()
-  requireOverLimit(access, evaluated.value)
+  requireNeeded(access, evaluated)
   const approver = await requireApprover(db, access, evaluated, input.approverMemberId)
   const businessDate = evaluated.hotel.businessDate
   const id = newId()
@@ -379,26 +472,26 @@ export async function approveHere(
         if (!pinBlocked(pin)) countWrongTry(access.memberId)
         return { error: pinFailure(checked, approver.name, evaluated.hotel.timeZone, false) }
       }
-      await cancelOthers(tx, access, input.booking.idempotencyKey, businessDate)
+      await cancelOthers(tx, access, evaluated.actionKey, businessDate)
       await tx.insert(approvals).values({
         id,
         organizationId: access.organizationId,
         propertyId: evaluated.hotel.id,
-        kind: STAY_DISCOUNT.kind,
-        permission: STAY_DISCOUNT.permission,
+        kind: evaluated.kind,
+        permission: evaluated.permission,
         value: evaluated.value,
-        valueKind: STAY_DISCOUNT.valueKind,
+        valueKind: evaluated.valueKind,
         status: 'approved',
         method: 'pin_here',
         requesterMemberId: access.memberId,
         requesterName: access.userName,
-        requesterLimit: discountLimitOf(access),
+        requesterLimit: evaluated.requesterLimit,
         approverMemberId: approver.memberId,
         approverName: approver.name,
         approverLimit: approver.limit,
         bindingHash: evaluated.bindingHash,
         subject: evaluated.subject,
-        actionKey: input.booking.idempotencyKey,
+        actionKey: evaluated.actionKey,
         businessDate,
         requestedAt: now,
         answeredAt: now,
@@ -419,14 +512,14 @@ export async function approveHere(
           approverMemberId: approver.memberId,
           after: {
             approvalId: id,
-            kind: STAY_DISCOUNT.kind,
-            permission: STAY_DISCOUNT.permission,
+            kind: evaluated.kind,
+            permission: evaluated.permission,
             value: evaluated.value,
             method: 'pin_here',
             device: device.name,
             requesterMemberId: access.memberId,
             requesterName: access.userName,
-            requesterLimit: discountLimitOf(access),
+            requesterLimit: evaluated.requesterLimit,
             approverName: approver.name,
             approverLimit: approver.limit,
             subject: evaluated.subject,
@@ -451,7 +544,7 @@ export async function approveHere(
 // Ask in the inbox: a pending request to the one manager the requester picked, with what they see
 // and, for the requester only, the booking to resume it. A double tap or a retry returns it again.
 export async function requestApproval(
-  db: Database,
+  db: ServiceDb,
   access: Access,
   input: z.output<typeof requestApprovalSchema>,
   device: ThisDevice,
@@ -459,33 +552,37 @@ export async function requestApproval(
   const replayed = await replay(db, access, input.idempotencyKey)
   if (replayed) return replayed
   const now = new Date()
+  // A waiver goes to the inbox only for a penalty already recorded: the approver then applies it.
+  if (input.kind === 'penalty_waiver' && input.waiver.target !== 'penalty') {
+    throw inboxNeedsRecordedPenalty()
+  }
   const evaluated = await evaluate(db, access, input, now, device?.name ?? null)
-  requireOverLimit(access, evaluated.value)
+  requireNeeded(access, evaluated)
   const approver = await requireApprover(db, access, evaluated, input.approverMemberId)
-  await requireRoomForAnother(db, access, input.booking.idempotencyKey, now)
+  await requireRoomForAnother(db, access, evaluated.actionKey, now)
   const businessDate = evaluated.hotel.businessDate
   const id = newId()
   try {
     await db.transaction(async (tx) => {
-      await cancelOthers(tx, access, input.booking.idempotencyKey, businessDate)
+      await cancelOthers(tx, access, evaluated.actionKey, businessDate)
       await tx.insert(approvals).values({
         id,
         organizationId: access.organizationId,
         propertyId: evaluated.hotel.id,
-        kind: STAY_DISCOUNT.kind,
-        permission: STAY_DISCOUNT.permission,
+        kind: evaluated.kind,
+        permission: evaluated.permission,
         value: evaluated.value,
-        valueKind: STAY_DISCOUNT.valueKind,
+        valueKind: evaluated.valueKind,
         status: 'pending',
         requesterMemberId: access.memberId,
         requesterName: access.userName,
-        requesterLimit: discountLimitOf(access),
+        requesterLimit: evaluated.requesterLimit,
         approverMemberId: approver.memberId,
         approverName: approver.name,
         bindingHash: evaluated.bindingHash,
         subject: evaluated.subject,
-        draft: input.booking,
-        actionKey: input.booking.idempotencyKey,
+        draft: evaluated.draft,
+        actionKey: evaluated.actionKey,
         businessDate,
         requestedAt: now,
         expiresAt: later(now),
@@ -503,11 +600,11 @@ export async function requestApproval(
           businessDate,
           after: {
             approvalId: id,
-            kind: STAY_DISCOUNT.kind,
-            permission: STAY_DISCOUNT.permission,
+            kind: evaluated.kind,
+            permission: evaluated.permission,
             value: evaluated.value,
             requesterName: access.userName,
-            requesterLimit: discountLimitOf(access),
+            requesterLimit: evaluated.requesterLimit,
             approverMemberId: approver.memberId,
             approverName: approver.name,
             subject: evaluated.subject,
@@ -549,7 +646,7 @@ export async function getApproval(
   const view = toView(row, access)
   const open = view.status === 'pending' || (view.status === 'approved' && !view.usedAt)
   const draft =
-    view.role === 'requester' && open && row.draft
+    view.role === 'requester' && open && row.draft && row.kind === 'stay_discount'
       ? createReservationSchema.safeParse(row.draft)
       : undefined
   return { ...view, draft: draft?.success ? draft.data : null }
@@ -660,13 +757,25 @@ function requireAnswerable(row: Row, access: Access, now: Date) {
 
 // Approve from the inbox: the addressed approver, from any session, with their own PIN.
 export async function approveRequest(
-  db: Database,
+  db: ServiceDb,
   access: Access,
   input: { id: string; pin: string; comment?: string | undefined },
 ): Promise<ApprovalView> {
   requireFeature(access, STAY_DISCOUNT.feature)
   const now = new Date()
+  // A waiver is applied in this transaction (decision 0028), so it locks its reservation first
+  // (lock step 2b, looked up without a lock), then the approval, then the PIN, then the penalty:
+  // the same order as a cancel or a waiver from the Penalty card, so they can't deadlock.
+  const peek = await loadRow(db, access, input.id)
   const outcome = await db.transaction(async (tx): Promise<{ ok: true } | Failure> => {
+    // The hotel FOR SHARE first (lock step 2: the business date can't roll and the hotel can't be
+    // archived while the waiver is stamped), then the reservation (2b): the order cancel takes, and
+    // night audit (hotel FOR UPDATE, then reservations) can't cross it.
+    let waiverHotel: BookingHotel | null = null
+    if (peek.kind === PENALTY_WAIVER.kind) {
+      waiverHotel = await holdBookingHotel(tx, access, peek.propertyId)
+      await lockReservationRow(tx, (peek.subject as WaiverSubject).reservationId)
+    }
     const row = await lockRow(tx, access, input.id)
     requireAnswerable(row, access, now)
     const where = { organizationId: access.organizationId, propertyId: row.propertyId }
@@ -674,8 +783,8 @@ export async function approveRequest(
     if (!(await stillWorksAt(tx, access.organizationId, row.propertyId, row.requesterMemberId))) {
       throw requesterLeft(row.requesterName, hotel)
     }
-    const me = await candidate(tx, where, STAY_DISCOUNT.permission, row.value, access.memberId)
-    if (!me) throw approverNotEligible(access.userName, row.value, hotel)
+    const me = await candidate(tx, where, row.permission as Permission, row.value, access.memberId)
+    if (!me) throw approverNotEligible(access.userName, whatOf(row.kind, row.value), hotel)
     const pin = await lockPin(tx, access.organizationId, access.memberId)
     if (!pin) throw needsPin(access.userName)
     const blocked = pinBlocked(pin, now)
@@ -724,10 +833,54 @@ export async function approveRequest(
         expiresAt: later(now).toISOString(),
       },
     })
+    if (row.kind === PENALTY_WAIVER.kind && waiverHotel) {
+      await applyInboxWaiver(tx, access, row, waiverHotel, now)
+    }
     return { ok: true }
   })
   if ('error' in outcome) throw outcome.error
   return toView(await loadRow(db, access, input.id), access)
+}
+
+// Decision 0028: the penalty a waiver binds to is already recorded and can't change, so the
+// approver's yes applies it at once, in their transaction; the requester needn't come back. The
+// approver acts; the requester is named on the event (`requestedBy`) and as who waived it.
+async function applyInboxWaiver(tx: Tx, access: Access, row: Row, hotel: BookingHotel, now: Date) {
+  const subject = row.subject as WaiverSubject
+  if (!subject.penaltyId) throw inboxNeedsRecordedPenalty()
+  const found = await findPenalty(tx, access, subject.penaltyId)
+  const penalty = await lockPenalty(tx, found.id)
+  const binding = waiverBinding({
+    propertyId: penalty.propertyId,
+    reservationId: penalty.reservationId,
+    target: 'penalty',
+    version: null,
+    penaltyKind: penalty.kind,
+    amount: penalty.amount,
+    changeHash: null,
+    penaltyId: penalty.id,
+    reason: subject.waiverReason,
+  })
+  if (binding !== row.bindingHash) throw approvalNotMatching(access.userName)
+  const requester = { memberId: row.requesterMemberId, name: row.requesterName }
+  await applyWaiver(
+    tx,
+    access,
+    hotel,
+    penalty,
+    {
+      reason: subject.waiverReason,
+      approval: {
+        id: row.id,
+        approverMemberId: access.memberId,
+        approverName: access.userName,
+        approverLimit: null,
+        method: 'inbox',
+        deviceName: null,
+      },
+    },
+    { idempotencyKey: newId(), requestHash: row.id, requestedBy: requester, by: requester, now },
+  )
 }
 
 export async function declineRequest(

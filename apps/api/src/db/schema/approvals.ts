@@ -19,7 +19,11 @@ import { calendarDate, id, timestamps } from '../columns.ts'
 import { organizations } from './auth.ts'
 import { properties } from './tenancy.ts'
 
-export const approvalKindEnum = pgEnum('approval_kind', ['stay_discount'])
+export const approvalKindEnum = pgEnum('approval_kind', [
+  'stay_discount',
+  'penalty_waiver',
+  'modify_discount',
+])
 export const approvalStatusEnum = pgEnum('approval_status', [
   'pending',
   'approved',

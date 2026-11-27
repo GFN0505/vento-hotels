@@ -11,10 +11,12 @@ import {
   approvalStatusSchema,
   CANCEL_REASONS,
 } from '../approvals.ts'
+import { penaltyKindSchema } from '../changes.ts'
 import { calendarDateSchema } from '../dates.ts'
 import { idSchema } from '../ids.ts'
 import { pageQuerySchema, pageSchema } from '../pagination.ts'
 import { discountReasonSchema, MAX_STAYS } from '../reservations.ts'
+import { changeFieldsSchema } from './changes.ts'
 import { createReservationSchema } from './reservations.ts'
 
 // `data.code` on errors from these procedures, so the web app can react.
@@ -71,6 +73,40 @@ export const approvalSubjectSchema = z.object({
 })
 export type ApprovalSubject = z.infer<typeof approvalSubjectSchema>
 
+// What the approver sees for a penalty waiver (brick 6).
+export const waiverSubjectSchema = z.object({
+  reservationId: idSchema,
+  // Set when the waiver is for a penalty already recorded.
+  penaltyId: idSchema.nullable(),
+  hotelName: z.string(),
+  guestName: z.string(),
+  reservationNumber: z.string(),
+  roomTypeName: z.string(),
+  planName: z.string(),
+  arrival: calendarDateSchema,
+  departure: calendarDateSchema,
+  nights: z.number().int(),
+  // What is being waived and on what action.
+  penalty: z.object({
+    kind: penaltyKindSchema,
+    amount: z.string(),
+    basisLabel: z.string(),
+    policy: z.string(),
+  }),
+  action: z.enum(['cancel', 'no_show', 'modify', 'penalty']),
+  waiverReason: z.string(),
+  requesterName: z.string(),
+  requesterRole: z.string(),
+  deviceName: z.string().nullable(),
+})
+export type WaiverSubject = z.infer<typeof waiverSubjectSchema>
+
+export const anySubjectSchema = z.union([approvalSubjectSchema, waiverSubjectSchema])
+export type AnyApprovalSubject = z.infer<typeof anySubjectSchema>
+
+export const isWaiverSubject = (subject: AnyApprovalSubject): subject is WaiverSubject =>
+  'penalty' in subject
+
 const person = z.object({ memberId: idSchema, name: z.string() })
 
 export const approvalViewSchema = z.object({
@@ -81,7 +117,7 @@ export const approvalViewSchema = z.object({
   status: approvalStatusSchema,
   method: approvalMethodSchema.nullable(),
   value: z.string(),
-  subject: approvalSubjectSchema,
+  subject: anySubjectSchema,
   requester: person,
   approver: person.nullable(),
   // The approver's answer, or why the requester cancelled.
@@ -105,17 +141,51 @@ export const approvalDetailSchema = approvalViewSchema.extend({
 })
 export type ApprovalDetail = z.infer<typeof approvalDetailSchema>
 
-// The action: the booking as Review & book would send it, and which stay the discount is on.
-export const approvalActionSchema = z.object({
-  kind: approvalKindSchema,
-  booking: createReservationSchema,
-  stayIndex: z
-    .number()
-    .int()
-    .min(0)
-    .max(MAX_STAYS - 1)
-    .default(0),
-})
+// The action. A discount on a new booking: the booking as Review & book would send it, and which
+// stay the discount is on. A discount on a changed stay: the change as Save would send it. A
+// penalty waiver: on the cancel, no-show or change about to be saved (approved here, used by it),
+// or on a penalty already recorded (approved here or in the inbox, applied when approved).
+const waiverReason = z
+  .string()
+  .trim()
+  .min(1, "Say why you're waiving the penalty.")
+  .max(500, 'Use 500 characters or fewer')
+
+export const waiverTargetSchema = z.discriminatedUnion('target', [
+  z.object({
+    target: z.enum(['cancel', 'no_show']),
+    reservationId: idSchema,
+    version: z.number().int().min(1),
+    // The cancel's or no-show's own idempotency key.
+    actionKey: z.uuidv7(),
+    reason: waiverReason,
+  }),
+  z.object({
+    target: z.literal('modify'),
+    change: changeFieldsSchema.extend({ idempotencyKey: z.uuidv7() }),
+    reason: waiverReason,
+  }),
+  z.object({ target: z.literal('penalty'), penaltyId: idSchema, reason: waiverReason }),
+])
+export type WaiverTarget = z.input<typeof waiverTargetSchema>
+
+export const approvalActionSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('stay_discount'),
+    booking: createReservationSchema,
+    stayIndex: z
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_STAYS - 1)
+      .default(0),
+  }),
+  z.object({
+    kind: z.literal('modify_discount'),
+    change: changeFieldsSchema.extend({ idempotencyKey: z.uuidv7() }),
+  }),
+  z.object({ kind: z.literal('penalty_waiver'), waiver: waiverTargetSchema }),
+])
 export type ApprovalActionInput = z.input<typeof approvalActionSchema>
 
 export const approverSchema = z.object({
@@ -133,7 +203,7 @@ export const approversSchema = z.object({
   withoutPin: z.array(z.string()),
   // This browser is a registered device of the hotel, so an approver can type their PIN here.
   canApproveHere: z.boolean(),
-  subject: approvalSubjectSchema,
+  subject: anySubjectSchema,
   value: z.string(),
 })
 export type Approvers = z.infer<typeof approversSchema>
@@ -142,18 +212,24 @@ export type Approvers = z.infer<typeof approversSchema>
 const enteredPin = z.string().regex(/^\d{4}$/, 'Use 4 digits')
 const comment = z.string().trim().max(500, 'Use 500 characters or fewer')
 
-export const approveHereSchema = approvalActionSchema.extend({
-  // A double submit or a retry returns the same approval.
-  idempotencyKey: z.uuidv7(),
-  approverMemberId: idSchema,
-  pin: enteredPin,
-})
+export const approveHereSchema = z.intersection(
+  approvalActionSchema,
+  z.object({
+    // A double submit or a retry returns the same approval.
+    idempotencyKey: z.uuidv7(),
+    approverMemberId: idSchema,
+    pin: enteredPin,
+  }),
+)
 
-export const requestApprovalSchema = approvalActionSchema.extend({
-  // A double tap or a retry returns the same request.
-  idempotencyKey: z.uuidv7(),
-  approverMemberId: idSchema,
-})
+export const requestApprovalSchema = z.intersection(
+  approvalActionSchema,
+  z.object({
+    // A double tap or a retry returns the same request.
+    idempotencyKey: z.uuidv7(),
+    approverMemberId: idSchema,
+  }),
+)
 
 export const listApprovalsSchema = pageQuerySchema.extend({
   propertyId: idSchema.optional(),

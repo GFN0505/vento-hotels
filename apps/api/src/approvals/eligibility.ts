@@ -103,16 +103,28 @@ function byLimitThenName(a: Candidate, b: Candidate): number {
   return a.name.localeCompare(b.name)
 }
 
+// A permission without a limit (penalty.waive) has nothing to order by, so it goes by role: revenue
+// manager, GM, group admin, owner, then name; the owner still isn't the first ask.
+const ROLE_ORDER: MemberRole[] = ['revenue_manager', 'general_manager', 'group_admin', 'owner']
+const rank = (role: MemberRole) => {
+  const at = ROLE_ORDER.indexOf(role)
+  return at === -1 ? -1 : at
+}
+function byRoleThenName(a: Candidate, b: Candidate): number {
+  return rank(a.role) - rank(b.role) || a.name.localeCompare(b.name)
+}
+
 export async function approversFor(
   db: Reader,
   where: { organizationId: string; propertyId: string },
   permission: Permission,
   value: string,
   requesterMemberId: string,
+  order: 'limit' | 'role' = 'limit',
 ): Promise<{ approvers: Candidate[]; withoutPin: string[] }> {
   const all = (await candidates(db, where.organizationId, where.propertyId, permission, value))
     .filter((c) => c.memberId !== requesterMemberId)
-    .sort(byLimitThenName)
+    .sort(order === 'role' ? byRoleThenName : byLimitThenName)
   return {
     approvers: all.filter((c) => c.hasPin && !c.pinNeedsReset),
     withoutPin: all.filter((c) => !c.hasPin).map((c) => c.name),

@@ -2,7 +2,7 @@
 // booked through the booking service with its locks, by Chiamaka Eze, Sade Bakare and Tunde Bello
 // on earlier business dates. Dates are relative to the seed's business date D:
 // - Mr Daniel Mensah, VI-…-0482, Executive King on Acme Energy, D → D+3 (golden thread hop 1);
-// - 26 arrivals at Kora Victoria Island on D;
+// - 24 arrivals at Kora Victoria Island on D (26 with the changes seed's two);
 // - Junior Suite 7 of 8 booked on D+15 and 8 of 8 on D+16 (the Adeyemi–Nwosu wedding);
 // - Deluxe King 45 of 48 on D+16;
 // - one 10% Repeat guest discount by Chiamaka, one min-stay book-through by Sade;
@@ -381,7 +381,8 @@ export async function seedReservations(tx: Tx, context: ReservationSeedContext) 
     })
   }
 
-  // 26 arrivals on D in all (Mensah's included).
+  // 24 arrivals on D here (Mensah's included); the changes seed adds two named ones to try a no-show
+  // on, so the desk sees 26.
   const fits = (type: { id: string; rooms: number }, arrival: string, nights: number) => {
     for (let i = 0; i < nights; i++) {
       const date = addDays(arrival, i)
@@ -390,7 +391,7 @@ export async function seedReservations(tx: Tx, context: ReservationSeedContext) 
     return true
   }
   let arrivalsToday = 1
-  for (let attempt = 0; arrivalsToday < 26 && attempt < 200; attempt++) {
+  for (let attempt = 0; arrivalsToday < 24 && attempt < 200; attempt++) {
     const type = random.pick(viTypes)
     const nights = random.int(1, 4)
     if (!fits(type, D, nights)) continue

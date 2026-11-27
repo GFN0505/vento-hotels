@@ -82,6 +82,7 @@ Cancellation policy and deposit rule (illustrative, set on the rate plan): depos
     - *Sees:* "Kora Victoria Island: Thank you for staying with us, Sarah. How was your stay? {link}". She gives 5 stars and writes a line; Tunde sees it on his home screen.
 
 ### Alternative path: she cancels inside the penalty window
+*Stage 1 note:* until the guest app (Stage 4), the desk cancels by phone with the same rule (`front-desk-morning.md` step 6d).
 Instead of step 4, on **Tue 8 Dec at 10:00** (28 hours before arrival) she taps **Cancel booking** in the guest app.
 - *Sees:* "Free cancellation ended on 7 Dec 2026 at 14:00. If you cancel now, the first night (₦205,800.00) is charged. You paid ₦205,800.00, so no refund is due." She confirms with a reason from a short list.
 - *Behind the scenes:* in one locked transaction the reservation becomes `cancelled` and the Deluxe King room is returned to inventory for 9, 10 and 11 Dec; ARI push. The penalty posts as a charge using the policy stored at booking; refundable = paid − penalty = ₦0.00. Had she paid more (for example a full prepayment), the difference would be refunded through Paystack with our own reference, needing a member with `refund` permission and a reason (see Open questions). The cancellation shows in the no-shows and cancellations report; WhatsApp and email confirm it.
@@ -120,7 +121,7 @@ Instead of step 4, on **Tue 8 Dec at 10:00** (28 hours before arrival) she taps 
 
 ## Open questions
 - **Foreign-currency settlement** (open in `DOMAIN.md`): do we offer settlement in GBP at all, or only show a GBP indication on an NGN charge? Paystack here is NGN only. Which rate is shown: CBN official, or a market rate flagged as such?
-- **Extra deposit on modification:** when she adds a night, do we ask for more deposit or leave it to the balance?
+- **Extra deposit on modification:** when she adds a night, do we ask for more deposit or leave it to the balance? *Answer (brick 6):* the deposit due is recomputed from the stored rule; a larger amount is due by the rule counted from the change.
 - **Guest self-service limits:** can a guest change dates or cancel in the guest app without staff, and up to what point (e.g. not after arrival day)?
 - **Refunds triggered by the guest:** a refund needs a member with the `refund` permission and a reason. Does a guest cancellation create a refund request for a GM approval, or an automatic refund within policy?
 - **Tax on the cancellation penalty:** does the penalty carry VAT, consumption tax and service charge?

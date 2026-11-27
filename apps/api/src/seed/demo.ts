@@ -25,6 +25,7 @@ import {
 } from '../db/schema/tenancy.ts'
 import type { StorageProvider } from '../providers/storage.ts'
 import { seedApprovals } from './approvals.ts'
+import { seedChanges } from './changes.ts'
 import { seedFinance } from './finance.ts'
 import { seedLogo } from './logo.ts'
 import { seedRates } from './rates.ts'
@@ -157,6 +158,8 @@ export type SeedResult =
       status: 'seeded'
       organizationId: string
       people: { name: string; email: string; role: MemberRole; pin: string }[]
+      // Bookings to try today, with their numbers (brick 6).
+      tryToday: string[]
     }
   | { status: 'exists'; organizationId: string }
 
@@ -407,12 +410,27 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
       limits: { tunde: '50.00', adaeze: null },
     })
 
+    // Changes, cancellations, no-shows and waivers (stage-1-modify-cancel.md).
+    const tryToday = await seedChanges(tx, {
+      organizationId,
+      businessDate,
+      hotels: booking.hotels,
+      access: {
+        chiamaka: await accessFor(tx, booking, who('chiamaka')),
+        ibrahim: await accessFor(tx, booking, who('ibrahim')),
+        sade: await accessFor(tx, booking, who('sade')),
+        tunde: await accessFor(tx, booking, who('tunde')),
+      },
+      pins: { tunde: PEOPLE.find((person) => person.email === 'tunde')?.pin ?? '' },
+    })
+
     return {
       status: 'seeded' as const,
       organizationId,
       viId: hotelIds.vi,
       ownerMemberId: owner.memberId,
       people: seeded.map(({ name, email, role, pin }) => ({ name, email, role, pin })),
+      tryToday,
     }
   })
   // After the group is saved: storage is outside the database, so it's never written mid-transaction.
@@ -423,5 +441,10 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
       memberId: result.ownerMemberId,
     })
   }
-  return { status: result.status, organizationId: result.organizationId, people: result.people }
+  return {
+    status: result.status,
+    organizationId: result.organizationId,
+    people: result.people,
+    tryToday: result.tryToday,
+  }
 }

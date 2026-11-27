@@ -4,9 +4,12 @@
 
 import { ORPCError } from '@orpc/server'
 import {
+  allowedActions,
   type DiscountReason,
+  type EndReason,
   formatMoney,
   formatPercent,
+  formatRateDate,
   nightLines,
   nightTaxes,
   type ReservationDetail,
@@ -14,7 +17,7 @@ import {
   stayTotals,
   type TaxRuleInForce,
 } from '@vento/shared'
-import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, ne, or, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { approvals } from '../db/schema/approvals.ts'
 import { bankAccounts } from '../db/schema/finance.ts'
@@ -25,6 +28,7 @@ import { methodSettings } from '../finance/payment-methods.ts'
 import { rulesByNight } from '../finance/taxes.ts'
 import { type Access, can } from '../tenancy/access.ts'
 import { hotelNotFound } from '../tenancy/errors.ts'
+import { penaltiesOf } from './change/views.ts'
 import {
   type BookingHotel,
   type Reader,
@@ -37,8 +41,68 @@ type StoredTerms = StayTerms & { penaltyAmount: string }
 
 const naira = (amount: unknown) => formatMoney({ amount: String(amount), currency: 'NGN' })
 
+// "9–12 Dec 2026", "28 Nov – 2 Dec 2026", "30 Dec 2026 – 2 Jan 2027".
+export function rangeLabel(arrival: string, departure: string): string {
+  const [ay, am] = arrival.split('-')
+  const [dy, dm] = departure.split('-')
+  if (ay !== dy) return `${formatRateDate(arrival)} – ${formatRateDate(departure)}`
+  if (am !== dm) return `${formatRateDate(arrival, false)} – ${formatRateDate(departure)}`
+  return `${Number(arrival.slice(8))}–${formatRateDate(departure)}`
+}
+
+const guestsLabel = (adults: number, children: number) =>
+  [
+    `${adults} ${adults === 1 ? 'adult' : 'adults'}`,
+    children ? `${children} ${children === 1 ? 'child' : 'children'}` : '',
+  ]
+    .filter(Boolean)
+    .join(', ')
+
+type StayShape = {
+  arrival: string
+  departure: string
+  roomTypeName: string
+  adults: number
+  children: number
+  total: string
+}
+
+// "9–12 Dec → 9–13 Dec 2026 · ₦617,400.00 → ₦823,200.00 · Room type Deluxe King → Executive King".
+function changedLine(before: StayShape, after: StayShape): string {
+  const parts: string[] = []
+  if (before.arrival !== after.arrival || before.departure !== after.departure) {
+    parts.push(
+      `${rangeLabel(before.arrival, before.departure)} → ${rangeLabel(after.arrival, after.departure)}`,
+    )
+  }
+  if (before.total !== after.total) parts.push(`${naira(before.total)} → ${naira(after.total)}`)
+  if (before.roomTypeName !== after.roomTypeName) {
+    parts.push(`Room type ${before.roomTypeName} → ${after.roomTypeName}`)
+  }
+  if (before.adults !== after.adults || before.children !== after.children) {
+    parts.push(
+      `Guests ${guestsLabel(before.adults, before.children)} → ${guestsLabel(after.adults, after.children)}`,
+    )
+  }
+  return parts.join(' · ')
+}
+
+const approvedBy = (after: Record<string, unknown>) =>
+  typeof after.approverName === 'string'
+    ? `Approved by ${after.approverName} (${
+        after.approvalMethod === 'pin_here'
+          ? `PIN${typeof after.approvalDevice === 'string' ? ` on ${after.approvalDevice}` : ''}`
+          : 'inbox'
+      })`
+    : null
+
 // One line per event for the Activity card.
-function activityLine(event: { action: string; reason: string | null; after: unknown }): {
+function activityLine(event: {
+  action: string
+  reason: string | null
+  before?: unknown
+  after: unknown
+}): {
   title: string
   detail: string | null
 } {
@@ -46,6 +110,45 @@ function activityLine(event: { action: string; reason: string | null; after: unk
   switch (event.action) {
     case 'reservation.created':
       return { title: 'Reservation created', detail: null }
+    case 'reservation.modified': {
+      const before = (event.before ?? {}) as StayShape
+      return { title: 'Changed', detail: changedLine(before, after as StayShape) || null }
+    }
+    case 'reservation.cancelled':
+    case 'reservation.no_show': {
+      const penalty = (after.penalty ?? {}) as { amount?: string; waived?: boolean }
+      const cost = penalty.amount ? `Penalty ${naira(penalty.amount)}` : 'No penalty'
+      return {
+        title: event.action === 'reservation.cancelled' ? 'Cancelled' : 'Marked no-show',
+        detail: [
+          typeof after.reasonLabel === 'string' ? after.reasonLabel : null,
+          cost,
+          typeof after.note === 'string' && after.note ? `“${after.note}”` : null,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      }
+    }
+    case 'reservation.penalty_waived':
+      return {
+        title: `Penalty waived · ${naira(after.amount ?? '0')}`,
+        detail:
+          [event.reason ? `“${event.reason}”` : null, approvedBy(after)]
+            .filter(Boolean)
+            .join(' · ') || null,
+      }
+    case 'approval.requested':
+      return {
+        title: `Waiver asked of ${String(after.approverName ?? 'a manager')}`,
+        detail: null,
+      }
+    case 'approval.declined':
+      return {
+        title: `${String(after.approverName ?? 'The manager')} declined the waiver`,
+        detail: event.reason ? `“${event.reason}”` : null,
+      }
+    case 'approval.expired':
+      return { title: 'Waiver request expired', detail: null }
     case 'stay.discount_applied': {
       const nights = (after.nights as { planPrice: string; soldPrice: string }[] | undefined) ?? []
       const first = nights[0]
@@ -62,8 +165,15 @@ function activityLine(event: { action: string; reason: string | null; after: unk
         event.reason ? `“${event.reason}”` : null,
         approver,
       ]
+      const onNew = after.changeId
+        ? after.scope === 'new_nights'
+          ? nights.length === 1
+            ? ' on the new night'
+            : ' on the new nights'
+          : ' on every night'
+        : ''
       return {
-        title: `Discount ${formatPercent(String(after.percent ?? '0'))}%`,
+        title: `Discount ${formatPercent(String(after.percent ?? '0'))}%${onNew}`,
         detail: parts.filter(Boolean).join(' · ') || null,
       }
     }
@@ -98,6 +208,7 @@ async function activity(db: Reader, access: Access, id: string) {
       action: auditEvents.action,
       actorName: auditEvents.actorName,
       reason: auditEvents.reason,
+      before: auditEvents.before,
       after: auditEvents.after,
       at: auditEvents.createdAt,
     })
@@ -105,8 +216,20 @@ async function activity(db: Reader, access: Access, id: string) {
     .where(
       and(
         eq(auditEvents.organizationId, access.organizationId),
+        // The penalty's own record is in the audit trail; the activity names it on the cancel.
+        ne(auditEvents.action, 'penalty.recorded'),
         or(
           and(eq(auditEvents.entityType, 'reservation'), eq(auditEvents.entityId, id)),
+          // Waiver requests for this reservation's penalties (asked, declined, expired).
+          and(
+            eq(auditEvents.entityType, 'approval'),
+            inArray(auditEvents.action, [
+              'approval.requested',
+              'approval.declined',
+              'approval.expired',
+            ]),
+            sql`${auditEvents.entityId} in (select a.id from ${approvals} a where a.organization_id = ${access.organizationId} and a.kind = 'penalty_waiver' and a.subject->>'reservationId' = ${id})`,
+          ),
           and(
             eq(auditEvents.entityType, 'guest'),
             sql`${auditEvents.after}->>'reservationId' = ${id}`,
@@ -225,6 +348,8 @@ export async function getReservation(
     const { penaltyAmount, ...snapshot } = terms
     return {
       id: stay.id,
+      version: stay.version,
+      roomTypeId: stay.roomTypeId,
       roomTypeName,
       arrival: stay.arrival,
       departure: stay.departure,
@@ -277,10 +402,36 @@ export async function getReservation(
       totals: stayTotals(taxes),
     }
   })
+  const allowed = allowedActions(reservation.status, reservation.arrival, hotel.businessDate)
+  const manage = can(access, 'reservation.manage') && !hotel.archived
   return {
     id: reservation.id,
     number: reservation.number,
     status: reservation.status,
+    version: stayRows.reduce((sum, row) => sum + row.stay.version, 0),
+    end:
+      (reservation.status === 'cancelled' || reservation.status === 'no_show') &&
+      reservation.endedAt
+        ? {
+            kind:
+              reservation.status === 'cancelled' ? ('cancelled' as const) : ('no_show' as const),
+            at: reservation.endedAt.toISOString(),
+            businessDate: reservation.endedOnBusinessDate ?? reservation.bookedOnBusinessDate,
+            byName: reservation.endedByName ?? '',
+            reason: (reservation.endReason as EndReason | null) ?? null,
+            reasonText: reservation.endReasonText,
+            note: reservation.endNote,
+          }
+        : null,
+    penalties: await penaltiesOf(db, access, reservation.id),
+    actions: {
+      modify: manage && allowed.modify,
+      cancel: manage && allowed.cancel,
+      noShow: manage && allowed.noShow,
+      blocked: allowed.blocked,
+      canManage: manage,
+      canWaive: manage && can(access, 'penalty.waive'),
+    },
     source: reservation.source,
     guarantee: reservation.guarantee,
     notes: reservation.notes,

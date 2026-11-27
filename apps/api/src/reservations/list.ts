@@ -6,6 +6,7 @@ import {
   type Page,
   pageOffset,
   type ReservationRow,
+  toAmount,
   toPage,
 } from '@vento/shared'
 import {
@@ -25,7 +26,7 @@ import {
 } from 'drizzle-orm'
 import type { z } from 'zod'
 import type { Database } from '../db/client.ts'
-import { guests, reservations, stays } from '../db/schema/reservations.ts'
+import { guests, penalties, reservations, stays } from '../db/schema/reservations.ts'
 import { roomTypes } from '../db/schema/rooms.ts'
 import { properties } from '../db/schema/tenancy.ts'
 import { containsPattern } from '../team/rules.ts'
@@ -69,6 +70,7 @@ export async function listReservations(
       ? and(
           gt(reservations.departure, properties.businessDate),
           ne(reservations.status, 'cancelled'),
+          ne(reservations.status, 'no_show'),
         )
       : query.view === 'booked_today'
         ? eq(reservations.bookedOnBusinessDate, properties.businessDate)
@@ -116,6 +118,11 @@ export async function listReservations(
         depositDueAt: reservations.depositDueAt,
         total: reservations.quotedTotal,
         bookedAt: reservations.bookedAt,
+        // Cancelled and no-show rows: what is to charge, and whether anything was waived.
+        penaltyToCharge: sql<
+          string | null
+        >`(select sum(p.amount)::text from ${penalties} p where p.reservation_id = ${reservations}.id and p.status <> 'waived')`,
+        penaltyWaived: sql<boolean>`exists (select 1 from ${penalties} p where p.reservation_id = ${reservations}.id and p.status = 'waived')`,
       })
       .from(reservations)
       .innerJoin(guests, eq(guests.id, reservations.guestId))
@@ -148,6 +155,14 @@ export async function listReservations(
         ? { amount: row.depositDue, dueAt: row.depositDueAt.toISOString() }
         : null,
     total: row.total,
+    penalty:
+      row.status === 'cancelled' || row.status === 'no_show'
+        ? row.penaltyToCharge
+          ? { amount: toAmount(row.penaltyToCharge), waived: false }
+          : row.penaltyWaived
+            ? { amount: '0.00', waived: true }
+            : null
+        : null,
     bookedAt: row.bookedAt.toISOString(),
   }))
   return toPage(items, total?.value ?? 0, query)

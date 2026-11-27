@@ -16,11 +16,21 @@ export const approvalNotFound = () =>
 export const selfApproval = () =>
   make('FORBIDDEN', 'SELF_APPROVAL', "You can't approve your own discount. Ask another manager.")
 
-export const approverNotEligible = (name: string, value: string, hotel: string) =>
+// `what` as people say it: "15%", or "this waiver".
+export const approverNotEligible = (name: string, what: string, hotel: string) =>
+  make('FORBIDDEN', 'APPROVER_NOT_ELIGIBLE', `${name} can't approve ${what} at ${hotel}.`)
+
+export const waiverNotNeeded = () =>
+  make('BAD_REQUEST', 'APPROVAL_NOT_NEEDED', 'You can waive penalties yourself.')
+
+export const noPenaltyToWaive = () =>
+  make('BAD_REQUEST', 'APPROVAL_NOT_NEEDED', 'There is no penalty to waive.')
+
+export const inboxNeedsRecordedPenalty = () =>
   make(
-    'FORBIDDEN',
-    'APPROVER_NOT_ELIGIBLE',
-    `${name} can't approve ${formatPercent(value)}% at ${hotel}.`,
+    'BAD_REQUEST',
+    'APPROVAL_NOT_NEEDED',
+    'Save it first, then send the waiver to the inbox from the Penalty card.',
   )
 
 export const needsPin = (name: string) =>

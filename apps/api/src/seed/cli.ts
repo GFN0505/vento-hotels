@@ -44,6 +44,10 @@ async function main() {
         `  ${person.name.padEnd(15)} ${roleLabel(person.role).padEnd(24)} ${person.email.padEnd(22)} PIN ${person.pin}`,
       )
     }
+    if (result.tryToday.length) {
+      console.log('\n  To try at Kora Victoria Island today:')
+      for (const line of result.tryToday) console.log(`  · ${line}`)
+    }
   } finally {
     await close()
   }

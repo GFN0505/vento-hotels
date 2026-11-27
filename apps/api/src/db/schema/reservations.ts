@@ -62,6 +62,27 @@ export const discountReasonEnum = pgEnum('discount_reason', [
   'other',
 ])
 export const nightPriceFromEnum = pgEnum('night_price_from', ['date_price', 'standard_price'])
+// Why a reservation was cancelled (null for a no-show). Brick 6.
+export const reservationEndReasonEnum = pgEnum('reservation_end_reason', [
+  'guest_request',
+  'company_request',
+  'deposit_not_paid',
+  'duplicate',
+  'other',
+])
+export const reservationChangeKindEnum = pgEnum('reservation_change_kind', [
+  'modify',
+  'cancel',
+  'no_show',
+  'waive',
+])
+export const penaltyKindEnum = pgEnum('penalty_kind', [
+  'late_cancellation',
+  'late_change',
+  'no_show',
+])
+// `charged` from brick 10, when the penalty is posted to the folio.
+export const penaltyStatusEnum = pgEnum('penalty_status', ['to_charge', 'waived', 'charged'])
 
 const organizationId = () =>
   uuid()
@@ -168,6 +189,14 @@ export const reservations = pgTable(
     idempotencyKey: uuid().notNull(),
     // A hash of the request, so a reused key with a different booking is refused.
     requestHash: text().notNull(),
+    // Cancelled or marked no-show (brick 6): when, by whom, why. Names are snapshots.
+    endedAt: timestamptz(),
+    endedByMemberId: uuid(),
+    endedByName: text(),
+    endedOnBusinessDate: calendarDate(),
+    endReason: reservationEndReasonEnum(),
+    endReasonText: text(),
+    endNote: text(),
     ...timestamps,
   },
   (t) => [
@@ -194,6 +223,14 @@ export const reservations = pgTable(
       sql`(${t.depositDue} is null) = (${t.depositDueAt} is null)`,
     ),
     check('reservations_notes_length', sql`${t.notes} is null or char_length(${t.notes}) <= 500`),
+    check(
+      'reservations_ended',
+      sql`(${t.status} in ('cancelled', 'no_show')) = (${t.endedAt} is not null)`,
+    ),
+    check(
+      'reservations_end_text_length',
+      sql`(${t.endReasonText} is null or char_length(${t.endReasonText}) <= 200) and (${t.endNote} is null or char_length(${t.endNote}) <= 500)`,
+    ),
   ],
 )
 
@@ -232,6 +269,9 @@ export const stays = pgTable(
     discountByName: text(),
     // { kind, date, reason }: a restriction the desk booked through.
     restrictionOverride: jsonb(),
+    // Rises with every change, cancel or no-show (brick 6): a change sent on an older version is
+    // refused ("Sade Bakare changed this booking at 11:08").
+    version: integer().notNull().default(1),
     ...timestamps,
   },
   (t) => [
@@ -330,5 +370,108 @@ export const reservationCounters = pgTable(
     inProperty('reservation_counters_property_fk', t),
     unique('reservation_counters_property_period_unique').on(t.propertyId, t.period),
     index().on(t.organizationId),
+  ],
+)
+
+// Every modify, cancel, no-show and penalty waiver (brick 6), with what it was before and after.
+// The idempotency key makes a retry return the first result; the hash refuses a different change
+// sent with the same key.
+export const reservationChanges = pgTable(
+  'reservation_changes',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    propertyId: propertyId(),
+    reservationId: uuid().notNull(),
+    // Null for a waiver from the Penalty card (the reservation's stays are already ended).
+    stayId: uuid(),
+    kind: reservationChangeKindEnum().notNull(),
+    idempotencyKey: uuid().notNull(),
+    requestHash: text().notNull(),
+    before: jsonb().notNull(),
+    after: jsonb().notNull(),
+    businessDate: calendarDate().notNull(),
+    byMemberId: uuid().notNull(),
+    byName: text().notNull(),
+    deviceId: uuid().references(() => devices.id, { onDelete: 'set null' }),
+    ...timestamps,
+  },
+  (t) => [
+    inProperty('reservation_changes_property_fk', t),
+    foreignKey({
+      name: 'reservation_changes_reservation_fk',
+      columns: [t.propertyId, t.reservationId],
+      foreignColumns: [reservations.propertyId, reservations.id],
+    }).onDelete('restrict'),
+    unique('reservation_changes_organization_id_idempotency_key_unique').on(
+      t.organizationId,
+      t.idempotencyKey,
+    ),
+    unique('reservation_changes_property_id_id_unique').on(t.propertyId, t.id),
+    index().on(t.reservationId),
+    index().on(t.organizationId, t.propertyId, t.businessDate),
+  ],
+)
+
+// What a late cancellation, late change or no-show costs under the stay's terms (brick 6): recorded
+// to charge, or waived with a reason; posted as a folio charge from brick 10. The amount is the
+// gross the guest was told; tax treatment is brick 10's.
+export const penalties = pgTable(
+  'penalties',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    propertyId: propertyId(),
+    reservationId: uuid().notNull(),
+    stayId: uuid().notNull(),
+    changeId: uuid().notNull(),
+    kind: penaltyKindEnum().notNull(),
+    amount: amount().notNull(),
+    currency: currency(),
+    // { policy, nights, deadline, … }: what the amount was worked out from.
+    basis: jsonb().notNull(),
+    businessDate: calendarDate().notNull(),
+    status: penaltyStatusEnum().notNull().default('to_charge'),
+    waivedAt: timestamptz(),
+    waivedByMemberId: uuid(),
+    waivedByName: text(),
+    waiverReason: text(),
+    waiverBusinessDate: calendarDate(),
+    approvalId: uuid(),
+    approverMemberId: uuid(),
+    approverName: text(),
+    ...timestamps,
+  },
+  (t) => [
+    inProperty('penalties_property_fk', t),
+    foreignKey({
+      name: 'penalties_reservation_fk',
+      columns: [t.propertyId, t.reservationId],
+      foreignColumns: [reservations.propertyId, reservations.id],
+    }).onDelete('restrict'),
+    foreignKey({
+      name: 'penalties_stay_fk',
+      columns: [t.propertyId, t.stayId],
+      foreignColumns: [stays.propertyId, stays.id],
+    }).onDelete('restrict'),
+    foreignKey({
+      name: 'penalties_change_fk',
+      columns: [t.propertyId, t.changeId],
+      foreignColumns: [reservationChanges.propertyId, reservationChanges.id],
+    }).onDelete('restrict'),
+    index().on(t.organizationId, t.propertyId, t.status),
+    index().on(t.organizationId, t.propertyId, t.businessDate),
+    index().on(t.reservationId),
+    index().on(t.stayId),
+    index().on(t.changeId),
+    check('penalties_amount', sql`${t.amount} > 0`),
+    check(
+      'penalties_waived',
+      sql`(${t.status} = 'waived') = (${t.waivedAt} is not null and ${t.waivedByName} is not null and ${t.waiverReason} is not null and ${t.waiverBusinessDate} is not null)`,
+    ),
+    check(
+      'penalties_waiver_reason_length',
+      sql`${t.waiverReason} is null or char_length(${t.waiverReason}) <= 500`,
+    ),
   ],
 )

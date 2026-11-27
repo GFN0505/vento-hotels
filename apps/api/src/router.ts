@@ -25,6 +25,10 @@ import * as planWrites from './rates/plan-writes.ts'
 import * as rateDates from './rates/rate-dates.ts'
 import { availability } from './reservations/availability.ts'
 import { createReservation } from './reservations/book.ts'
+import { cancelReservation, endQuote, markNoShow } from './reservations/change/end.ts'
+import { modifyReservation } from './reservations/change/modify.ts'
+import { quoteChange } from './reservations/change/quote-change.ts'
+import { waivePenalty } from './reservations/change/waive.ts'
 import { getReservation } from './reservations/detail.ts'
 import { searchGuests } from './reservations/guests.ts'
 import { listReservations } from './reservations/list.ts'
@@ -380,6 +384,26 @@ export const router = base.router({
     ),
     get: inOrganization.reservations.get.handler(({ context, input }) =>
       getReservation(context.db, context.access, input.id),
+    ),
+    quoteChange: inOrganization.reservations.quoteChange.handler(({ context, input }) =>
+      quoteChange(context.db, context.access, input),
+    ),
+    modify: inOrganization.reservations.modify.handler(({ context, input }) =>
+      modifyReservation(context.db, context.access, input),
+    ),
+    endQuote: inOrganization.reservations.endQuote.handler(({ context, input }) =>
+      endQuote(context.db, context.access, input),
+    ),
+    cancel: inOrganization.reservations.cancel.handler(({ context, input }) =>
+      cancelReservation(context.db, context.access, input),
+    ),
+    markNoShow: inOrganization.reservations.markNoShow.handler(({ context, input }) =>
+      markNoShow(context.db, context.access, input),
+    ),
+  },
+  penalties: {
+    waive: inOrganization.penalties.waive.handler(({ context, input }) =>
+      waivePenalty(context.db, context.access, input),
     ),
   },
   approvals: {

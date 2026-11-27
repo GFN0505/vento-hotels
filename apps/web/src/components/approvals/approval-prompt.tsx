@@ -8,6 +8,7 @@ import {
   type ApprovalView,
   type Approver,
   firstNameOf,
+  isWaiverSubject,
   newId,
   PIN_LENGTH,
 } from '@vento/shared'
@@ -25,10 +26,14 @@ import { useOnline } from '@/offline/connection'
 import {
   NEEDS_CONNECTION,
   nobodyLine,
+  nobodyWaiverLine,
   promptMeta,
   promptTitle,
   reasonLine,
   subjectFigures,
+  waiverFigures,
+  waiverMeta,
+  waiverTitle,
   withoutPinLine,
 } from './format'
 
@@ -40,9 +45,25 @@ type Props = {
   // Sent to the approver's inbox: the sheet waits for the answer.
   onSent: (approval: ApprovalView) => void
   onClose: () => void
+  // The primary button's words ("Approve waiver and cancel"); a kind default otherwise.
+  approveLabel?: string
+  // "Not nearby? Cancel now and send the waiver to Tunde's inbox": the link's words for a name.
+  inboxLabel?: (firstName: string) => string
+  // Runs before sending to the inbox and returns the action to send (a waiver saves the cancel
+  // first, then asks for the penalty it recorded). Throwing shows the error and sends nothing.
+  beforeSend?: () => Promise<ApprovalActionInput>
 }
 
-export function ApprovalPrompt({ action, timeZone, onApproved, onSent, onClose }: Props) {
+export function ApprovalPrompt({
+  action,
+  timeZone,
+  onApproved,
+  onSent,
+  onClose,
+  approveLabel,
+  inboxLabel: inboxWords,
+  beforeSend,
+}: Props) {
   const online = useOnline()
   const askedAt = useRef(new Date())
   // One key per request: a double tap or a retry after a dropped connection returns the same one.
@@ -98,8 +119,9 @@ export function ApprovalPrompt({ action, timeZone, onApproved, onSent, onClose }
     if (!approver || request.isPending || !online) return
     setProblem(undefined)
     try {
+      const asked = beforeSend ? await beforeSend() : action
       const approval = await request.mutateAsync({
-        ...action,
+        ...asked,
         idempotencyKey: requestKey.current,
         approverMemberId: approver.memberId,
       })
@@ -111,15 +133,27 @@ export function ApprovalPrompt({ action, timeZone, onApproved, onSent, onClose }
   }
 
   const subject = data?.subject
+  const waiver = subject && isWaiverSubject(subject) ? subject : undefined
+  const discount = subject && !isWaiverSubject(subject) ? subject : undefined
   const first = subject ? firstNameOf(subject.requesterName) : ''
-  const inboxLabel = approver ? `Send to ${firstNameOf(approver.name)}'s inbox` : 'Send to an inbox'
+  const inboxLabel = approver
+    ? (inboxWords?.(firstNameOf(approver.name)) ?? `Send to ${firstNameOf(approver.name)}'s inbox`)
+    : 'Send to an inbox'
+  const primary =
+    approveLabel ?? (waiver ? 'Approve waiver' : `Approve ${discount?.percent ?? ''}% and book`)
 
   return (
     <Dialog
       open
       onClose={onClose}
       title="Needs a manager"
-      description={subject ? promptTitle(subject) : 'Checking who can approve…'}
+      description={
+        waiver
+          ? waiverTitle(waiver)
+          : discount
+            ? promptTitle(discount)
+            : 'Checking who can approve…'
+      }
       className="max-w-[860px]"
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
@@ -159,26 +193,34 @@ export function ApprovalPrompt({ action, timeZone, onApproved, onSent, onClose }
         <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_280px]">
           <div className="flex min-w-0 flex-col gap-4">
             <p className="num text-sm text-text-2">
-              {promptMeta(subject, askedAt.current, timeZone)}
+              {waiver
+                ? waiverMeta(waiver, askedAt.current, timeZone)
+                : discount
+                  ? promptMeta(discount, askedAt.current, timeZone)
+                  : ''}
             </p>
             <dl className="num flex flex-col gap-1.5 rounded-sm bg-surface-2 p-3.5 ring-1 ring-border">
-              {subjectFigures(subject).map((figure) => (
-                <div
-                  key={figure.label}
-                  className={cn(
-                    'flex flex-wrap justify-between gap-x-3',
-                    figure.strong && 'border-t border-border pt-1.5 font-semibold',
-                  )}
-                >
-                  <dt className={figure.strong ? undefined : 'text-text-2'}>{figure.label}</dt>
-                  <dd>{figure.value}</dd>
-                </div>
-              ))}
+              {(waiver ? waiverFigures(waiver) : discount ? subjectFigures(discount) : []).map(
+                (figure) => (
+                  <div
+                    key={figure.label}
+                    className={cn(
+                      'flex flex-wrap justify-between gap-x-3',
+                      figure.strong && 'border-t border-border pt-1.5 font-semibold',
+                    )}
+                  >
+                    <dt className={figure.strong ? undefined : 'text-text-2'}>{figure.label}</dt>
+                    <dd className="break-words">{figure.value}</dd>
+                  </div>
+                ),
+              )}
             </dl>
             <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-text-2">Reason from {first}</span>
+              <span className="text-sm font-medium text-text-2">
+                {waiver ? 'Reason for waiving' : `Reason from ${first}`}
+              </span>
               <p className="break-words rounded-sm border border-input bg-surface px-3 py-2.5">
-                {reasonLine(subject)}
+                {waiver ? waiver.waiverReason : discount ? reasonLine(discount) : ''}
               </p>
             </div>
             {data.approvers.length === 0 ? (
@@ -186,7 +228,9 @@ export function ApprovalPrompt({ action, timeZone, onApproved, onSent, onClose }
                 role="alert"
                 className="flex flex-col gap-1 rounded-sm bg-am-bg px-3 py-2 text-am"
               >
-                <span>{nobodyLine(subject)}</span>
+                <span>
+                  {waiver ? nobodyWaiverLine(waiver) : discount ? nobodyLine(discount) : ''}
+                </span>
                 {withoutPinLine(data.withoutPin) ? (
                   <span className="text-sm">{withoutPinLine(data.withoutPin)}</span>
                 ) : null}
@@ -252,7 +296,9 @@ export function ApprovalPrompt({ action, timeZone, onApproved, onSent, onClose }
           <div className="flex flex-col items-center gap-3 rounded-sm border border-border bg-surface-2 p-4">
             {data.approvers.length === 0 ? (
               <p className="text-center text-sm text-text-2">
-                Change the discount on Room &amp; rate, or ask the owner to raise a limit.
+                {waiver
+                  ? 'Save it without waiving. A manager can waive it later from the Penalty card.'
+                  : 'Change the discount on Room & rate, or ask the owner to raise a limit.'}
               </p>
             ) : data.canApproveHere ? (
               <>
@@ -284,7 +330,7 @@ export function ApprovalPrompt({ action, timeZone, onApproved, onSent, onClose }
                   onClick={() => void submitPin()}
                 >
                   <ShieldCheck className="size-4" aria-hidden="true" />
-                  Approve {subject.percent}% and book
+                  {primary}
                 </Button>
               </>
             ) : (

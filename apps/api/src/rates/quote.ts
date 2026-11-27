@@ -313,3 +313,19 @@ export async function bookableByType(
   })
   return { property, types: result, anyPlans: pricing.plans.length > 0 }
 }
+
+// The room types a plan sells at its hotel (active types only), for a changed stay's Room type
+// field (brick 6): a stay keeps its plan, so only these can be picked.
+export async function typesOnPlan(
+  db: QuoteReader,
+  access: Access,
+  request: { propertyId: string; ratePlanId: string; from: CalendarDate; to: CalendarDate },
+): Promise<PropertyRoomType[]> {
+  requireRatesRead(access)
+  const scope = { organizationId: access.organizationId, propertyId: request.propertyId }
+  const types = await loadRoomTypes(db, scope)
+  const pricing = await loadPricing(db, scope, { from: request.from, to: request.to })
+  const plan = pricing.byId.get(request.ratePlanId)
+  if (!plan) return []
+  return types.filter((type) => sourceFor(plan, type.id, pricing) !== null)
+}
