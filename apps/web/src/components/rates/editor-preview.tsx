@@ -91,17 +91,9 @@ export function EditorPreview({ overview, form, parent }: Props) {
               <th scope="col" className="num px-3 py-2 text-right">
                 {parent.code}
               </th>
-              <th
-                scope="col"
-                className={cn('py-2 text-right', guest.column ? 'px-3 max-sm:px-5' : 'px-5')}
-              >
+              <th scope="col" className={'px-5 py-2 text-right'}>
                 This plan
               </th>
-              {guest.column ? (
-                <th scope="col" className="px-5 py-2 text-right max-sm:hidden">
-                  Guest pays
-                </th>
-              ) : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -116,26 +108,23 @@ export function EditorPreview({ overview, form, parent }: Props) {
                 <td
                   className={cn(
                     'num py-2.5 text-right font-medium whitespace-nowrap',
-                    guest.column ? 'px-3 max-sm:px-5' : 'px-5',
+                    'px-5',
                     row.notPositive && 'text-ro',
                   )}
                 >
                   {row.price ? formatNaira(row.price) : '—'}
-                </td>
-                {guest.column ? (
-                  <td className="num px-5 py-2.5 text-right whitespace-nowrap text-text-2 max-sm:hidden">
-                    {row.price && !row.notPositive ? (
+                  {guest.column && row.price && !row.notPositive ? (
+                    <span className="block text-sm font-normal text-text-3">
+                      Guest pays{' '}
                       <GuestPays
                         guest={guest}
                         price={row.price}
                         mealAllocation={form.mealPlan === 'room_only' ? '0' : form.mealAllocation}
                         inclusive={form.pricesIncludeTaxes}
                       />
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                ) : null}
+                    </span>
+                  ) : null}
+                </td>
               </tr>
             ))}
           </tbody>

@@ -75,9 +75,18 @@ export function Sheet({
               <X className="size-4" aria-hidden="true" />
             </button>
           </header>
-          <div className={cn('min-h-0 flex-1 overflow-y-auto', !bare && 'px-5 py-5 sm:px-6')}>
+          {/* Focusable, so a long sheet scrolls by keyboard even when nothing in view takes focus. */}
+          <section
+            aria-labelledby={titleId}
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region needs keyboard access.
+            tabIndex={0}
+            className={cn(
+              'min-h-0 flex-1 overflow-y-auto focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
+              !bare && 'px-5 py-5 sm:px-6',
+            )}
+          >
             {children}
-          </div>
+          </section>
           {footer ? (
             <footer className="flex flex-none flex-wrap items-center gap-2 border-t border-border bg-surface px-5 py-3 sm:px-6 max-lg:[&_button]:h-11">
               {footer}

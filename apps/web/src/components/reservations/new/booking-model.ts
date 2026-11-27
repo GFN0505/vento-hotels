@@ -4,10 +4,12 @@
 import {
   type Availability,
   applyDiscount,
+  CONTACT_MESSAGE,
   type CreateReservationInput,
   type DiscountInput,
   dec,
   discountProblemMessage,
+  guestCorrectionsSchema,
   guestFieldsSchema,
   overLimit,
   overLimitMessage,
@@ -124,14 +126,39 @@ export function guestInput(guest: GuestDraft) {
 }
 
 export function guestProblems(guest: GuestDraft): Problems {
-  const result = guestFieldsSchema.safeParse(guestInput(guest))
-  if (result.success) return {}
+  // A picked guest's empty phone or email keeps what the record holds (never sent in full).
+  const schema = guest.picked ? guestCorrectionsSchema : guestFieldsSchema
+  const result = schema.safeParse(guestInput(guest))
   const problems: Problems = {}
-  for (const issue of result.error.issues) {
+  for (const issue of result.success ? [] : result.error.issues) {
     const key = String(issue.path[0] ?? 'form')
     if (!problems[key]) problems[key] = issue.message
   }
+  const picked = guest.picked
+  if (
+    picked &&
+    !guest.phone.trim() &&
+    !guest.email.trim() &&
+    !picked.maskedPhone &&
+    !picked.maskedEmail
+  ) {
+    problems.phone = CONTACT_MESSAGE
+  }
   return problems
+}
+
+// What changed on a picked guest: only fields the agent typed or edited.
+export function guestCorrections(guest: GuestDraft) {
+  const picked = guest.picked
+  if (!picked) return {}
+  const out: Record<string, string> = {}
+  if (guest.title.trim() !== (picked.title ?? '')) out.title = guest.title.trim()
+  if (guest.firstName.trim() !== picked.firstName) out.firstName = guest.firstName.trim()
+  if (guest.lastName.trim() !== picked.lastName) out.lastName = guest.lastName.trim()
+  if (guest.nationality !== picked.nationality) out.nationality = guest.nationality
+  if (guest.phone.trim()) out.phone = guest.phone.trim()
+  if (guest.email.trim()) out.email = guest.email.trim()
+  return out
 }
 
 // The plan chosen in the availability, if it can still be booked.
@@ -152,7 +179,7 @@ export function createInput(
     idempotencyKey: draft.key,
     propertyId,
     guest: draft.guest.picked
-      ? { kind: 'existing', id: draft.guest.picked.id, corrections: guest }
+      ? { kind: 'existing', id: draft.guest.picked.id, corrections: guestCorrections(draft.guest) }
       : { kind: 'new', fields: guest },
     source: draft.source,
     ...(draft.notes.trim() ? { notes: draft.notes.trim() } : {}),

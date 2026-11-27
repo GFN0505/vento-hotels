@@ -24,9 +24,10 @@ type Basis = 'excl' | 'incl'
 
 function readBasis(): Basis {
   try {
-    return localStorage.getItem(BASIS_KEY) === 'incl' ? 'incl' : 'excl'
+    // Incl. taxes unless this device chose otherwise: what the guest hears, as the totals.
+    return localStorage.getItem(BASIS_KEY) === 'excl' ? 'excl' : 'incl'
   } catch {
-    return 'excl'
+    return 'incl'
   }
 }
 
@@ -38,6 +39,8 @@ type Props = {
 
 export function StepRoomRate({ draft, availability, hotelName }: Props) {
   const [basis, setBasis] = useState<Basis>(readBasis)
+  // The room type whose plans are open, when not the chosen one.
+  const [opened, setOpened] = useState<string>()
   const me = useMe()
   const chooseBasis = (next: Basis) => {
     setBasis(next)
@@ -119,7 +122,7 @@ export function StepRoomRate({ draft, availability, hotelName }: Props) {
   }
 
   // The chosen type, or the first that can be sold, starts open.
-  const open = draft.roomTypeId ?? data.roomTypes.find((type) => type.sellable)?.id
+  const open = opened ?? draft.roomTypeId ?? data.roomTypes.find((type) => type.sellable)?.id
   return (
     <section aria-label="Room & rate" className="flex flex-col gap-3">
       {heading}
@@ -141,6 +144,7 @@ export function StepRoomRate({ draft, availability, hotelName }: Props) {
           draft={draft}
           basis={basis}
           expanded={type.id === open}
+          onExpand={() => setOpened(type.id)}
           timeZone={data.property.timeZone}
           checkInTime={data.property.checkInTime}
         />
@@ -214,6 +218,7 @@ function RoomTypeCard({
   draft,
   basis,
   expanded,
+  onExpand,
   timeZone,
   checkInTime,
 }: {
@@ -221,6 +226,8 @@ function RoomTypeCard({
   draft: Draft
   basis: Basis
   expanded: boolean
+  // Opens the card's plans without choosing one.
+  onExpand: () => void
   timeZone: string
   checkInTime: string
 }) {
@@ -229,9 +236,10 @@ function RoomTypeCard({
   return (
     <div
       className={cn(
-        'rounded-lg border border-border bg-surface shadow-card',
+        'rounded-lg border border-border shadow-card',
+        // Muted background only: text keeps its contrast.
+        type.sellable ? 'bg-surface' : 'bg-surface-2',
         selected && 'border-pri-line ring-3 ring-pri-soft',
-        !type.sellable && 'opacity-75',
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
@@ -268,13 +276,8 @@ function RoomTypeCard({
         <button
           type="button"
           className="w-full border-t border-border px-4 py-2 text-left text-sm font-medium text-pri-ink hover:bg-surface-2"
-          onClick={() =>
-            updateDraft({
-              roomTypeId: type.id,
-              ratePlanId: type.plans[0]?.ratePlanId,
-              discount: undefined,
-            })
-          }
+          aria-expanded={false}
+          onClick={onExpand}
         >
           Show {type.plans.length === 1 ? 'the plan' : `${type.plans.length} plans`}
           <span className="sr-only"> for {type.name}</span>
@@ -356,7 +359,9 @@ function PlanOption({
           {naira(price)}
           <span className="text-sm text-text-2"> /night</span>
         </span>
-        <span className="text-sm text-text-2">{naira(plan.totalIncl)} total incl. taxes</span>
+        <span className="text-sm text-text-2">
+          {naira(plan.totalIncl)} total for the stay, incl. taxes
+        </span>
       </span>
     </label>
   )

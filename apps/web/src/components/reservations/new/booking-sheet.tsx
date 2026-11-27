@@ -37,6 +37,7 @@ import {
   STEPS,
   stepFor,
 } from './booking-model'
+import { createRequestKeeper } from './request-keeper'
 import { StepDates } from './step-dates'
 import { StepGuest } from './step-guest'
 import { StepReview } from './step-review'
@@ -71,6 +72,9 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
   const [refusal, setRefusal] = useState<{ step: Draft['step']; message: string; code?: string }>()
   const [leaving, setLeaving] = useState<() => void>()
   const [retrying, setRetrying] = useState(false)
+  // Why Continue can't go on yet, shown when it's pressed.
+  const [blocked, setBlocked] = useState<{ step: Draft['step']; message: string }>()
+  const inFlight = useRef(createRequestKeeper<ReturnType<typeof createInput>>())
 
   // Changing the hotel in the top bar asks first, then drops the draft.
   useLeaveGuard(useCallback((proceed: () => void) => setLeaving(() => proceed), []))
@@ -146,15 +150,42 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
 
   const go = (next: Draft['step']) => {
     setRefusal(undefined)
+    setBlocked(undefined)
     updateDraft({ step: next })
+  }
+
+  // The first thing missing on a step, in words.
+  const missing = (at: Draft['step']): string => {
+    if (at === 1) return Object.values(dates)[0] ?? 'Check the dates and guests.'
+    if (at === 2) {
+      if (!chosen) return 'Pick a room type and plan for the stay.'
+      const discountProblem = Object.values(discountIssues)[0]
+      if (discountProblem) return discountProblem
+      return 'Checking the price. One moment.'
+    }
+    if (at === 3) return Object.values(guestIssues)[0] ?? 'Check the guest details.'
+    if (!online) return NEEDS_LIVE
+    if (needsReason) return 'Give a reason for booking through the restriction.'
+    return 'Checking the price. One moment.'
+  }
+
+  const next = () => {
+    if (canContinue[step]) {
+      if (step < 4) go((step + 1) as Draft['step'])
+      else void book()
+      return
+    }
+    setBlocked({ step, message: missing(step) })
   }
 
   const book = async () => {
     if (!draft || !quote.data || !hotel) return
     setRefusal(undefined)
-    const input = createInput(draft, hotel.id, quote.data)
+    const quoted = quote.data
+    const input = inFlight.current.take(() => createInput(draft, hotel.id, quoted))
     try {
       const booked = await create.mutateAsync(input)
+      inFlight.current.clear()
       setRetrying(false)
       rememberSource(draft.source)
       const name = `${draft.guest.firstName.trim()} ${draft.guest.lastName.trim()}`
@@ -173,6 +204,7 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
         setRetrying(true)
         return
       }
+      inFlight.current.clear()
       setRetrying(false)
       const code = errorCode(error)
       const target = stepFor(code)
@@ -215,12 +247,12 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
     if (target.closest('[role="combobox"], [data-no-enter]')) return
     if (mod && step === 4) {
       event.preventDefault()
-      if (canContinue[4]) void book()
+      next()
       return
     }
-    if (step < 4 && canContinue[step]) {
+    if (step < 4) {
       event.preventDefault()
-      go((step + 1) as Draft['step'])
+      next()
     }
   }
 
@@ -251,58 +283,40 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
       </Button>
     </div>
   ) : (
-    <div className="flex w-full flex-wrap items-center justify-between gap-2">
-      <div className="flex gap-2">
-        {step > 1 ? (
-          <Button
-            size="lg"
-            onClick={() => go((step - 1) as Draft['step'])}
-            aria-keyshortcuts="Meta+ArrowLeft"
-          >
-            Back
-            <kbd className="ml-1 hidden text-xs text-text-3 lg:inline">⌘←</kbd>
-          </Button>
-        ) : null}
+    <div className="flex w-full items-center justify-between gap-2">
+      {step > 1 ? (
         <Button
           size="lg"
-          variant="ghost"
-          onClick={() => {
-            clearDraft()
-            onClose()
-          }}
+          onClick={() => go((step - 1) as Draft['step'])}
+          aria-keyshortcuts="Meta+ArrowLeft"
         >
-          Discard draft
+          Back
+          <kbd className="ml-1 hidden text-xs text-text-3 lg:inline">⌘←</kbd>
         </Button>
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
+      ) : (
+        <span />
+      )}
+      <div className="flex min-w-0 items-center gap-3">
         {footerNote ? (
           <span className="num hidden text-sm text-text-3 md:inline">{footerNote}</span>
         ) : null}
         {step < 4 ? (
-          <Button
-            variant="primary"
-            size="lg"
-            disabled={!canContinue[step]}
-            onClick={() => go((step + 1) as Draft['step'])}
-          >
+          <Button variant="primary" size="lg" onClick={next}>
             {step === 2 ? 'Continue to guest' : step === 3 ? 'Continue to review' : 'Continue'}
             <kbd className="ml-1 hidden text-xs opacity-80 lg:inline">↵</kbd>
           </Button>
         ) : (
-          <span className="flex flex-col items-end gap-1">
-            <Button
-              variant="primary"
-              size="lg"
-              disabled={!canContinue[4] || create.isPending || retrying}
-              loading={create.isPending}
-              aria-keyshortcuts="Meta+Enter"
-              onClick={() => void book()}
-            >
-              Book{total ? ` · ${naira(total)}` : ''}
-              <kbd className="ml-1 hidden text-xs opacity-80 lg:inline">⌘↵</kbd>
-            </Button>
-            {!online ? <span className="text-sm text-text-3">{NEEDS_LIVE}</span> : null}
-          </span>
+          <Button
+            variant="primary"
+            size="lg"
+            disabled={create.isPending || retrying}
+            loading={create.isPending}
+            aria-keyshortcuts="Meta+Enter"
+            onClick={next}
+          >
+            Book{total ? ` · ${naira(total)}` : ''}
+            <kbd className="ml-1 hidden text-xs opacity-80 lg:inline">⌘↵</kbd>
+          </Button>
         )}
       </div>
     </div>
@@ -321,6 +335,16 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
             Step {step} of 4 · {STEPS[step - 1]}
           </span>
           {draft.savedAt ? <span>Draft saved {clock(draft.savedAt)}</span> : null}
+          <button
+            type="button"
+            className="inline-flex min-h-11 items-center font-medium text-pri-ink hover:underline lg:min-h-0"
+            onClick={() => {
+              clearDraft()
+              onClose()
+            }}
+          >
+            Discard draft
+          </button>
         </span>
       }
       footer={footer}
@@ -331,6 +355,16 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
           {retrying ? (
             <p role="status" className="rounded-sm bg-bl-bg px-3 py-2 text-sm text-bl">
               Checking whether the booking went through…
+            </p>
+          ) : null}
+          {!online && step === 4 ? (
+            <p role="status" className="rounded-sm bg-am-bg px-3 py-2 text-sm text-am">
+              {NEEDS_LIVE}
+            </p>
+          ) : null}
+          {blocked && blocked.step === step && !canContinue[step] ? (
+            <p role="alert" className="rounded-sm bg-ro-bg px-3 py-2 text-sm text-ro">
+              {blocked.message}
             </p>
           ) : null}
           {refusal && refusal.step === step ? (
@@ -349,9 +383,14 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
           ) : step === 2 ? (
             <StepRoomRate draft={draft} availability={availability} hotelName={hotel?.name ?? ''} />
           ) : step === 3 ? (
-            <StepGuest draft={draft} problems={guestIssues} />
+            <StepGuest draft={draft} problems={guestIssues} showErrors={blocked?.step === 3} />
           ) : (
-            <StepReview draft={draft} quote={quote.data} hotel={hotel} />
+            <StepReview
+              draft={draft}
+              quote={quote.data}
+              hotel={hotel}
+              showErrors={blocked?.step === 4}
+            />
           )}
         </div>
         {step >= 2 ? (

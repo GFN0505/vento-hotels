@@ -129,10 +129,20 @@ export function cancellationLine(c: Cancellation, timeZone: string): string {
 }
 
 // The detail's line: "Cancelling now is free until 7 Dec 2026, 14:00. After that: first night, ₦205,800.00."
-export function cancellingNowLine(c: Cancellation, timeZone: string): string {
+// Once the deadline has passed, the line says so: "Free cancellation ended 7 Dec 2026, 14:00.
+// Cancelling now charges first night, ₦205,800.00."
+export function cancellingNowLine(c: Cancellation, timeZone: string, now = new Date()): string {
   if (c.kind === 'non_refundable') return 'Non-refundable: the full stay is charged if cancelled.'
-  return `Cancelling now is free until ${instantLabel(c.deadline, timeZone)}. After that: ${penaltyWords(c)}.`
+  const deadline = instantLabel(c.deadline, timeZone)
+  if (Date.parse(c.deadline) <= now.getTime()) {
+    return `Free cancellation ended ${deadline}. Cancelling now charges ${penaltyWords(c)}.`
+  }
+  return `Cancelling now is free until ${deadline}. After that: ${penaltyWords(c)}.`
 }
+
+// A deposit is overdue once its due time has passed (shown in rose with the word, never colour alone).
+export const isOverdue = (deposit: { dueAt: string }, now = new Date()) =>
+  Date.parse(deposit.dueAt) <= now.getTime()
 
 // "First night incl. taxes, by 27 Nov 2026, 10:32", "Paid in full at booking"…
 export function depositBasis(rule: DepositRule, dueAt: string, timeZone: string): string {
@@ -148,10 +158,15 @@ export function depositBasis(rule: DepositRule, dueAt: string, timeZone: string)
 }
 
 // "₦205,800.00 due 27 Nov" for the list.
+// "₦205,800.00 due 27 Nov", or "₦205,800.00 overdue" once the due time has passed.
 export const depositShort = (
   deposit: { amount: string; dueAt: string },
   timeZone = 'Africa/Lagos',
-) => `${naira(deposit.amount)} due ${dateLabel(instantDate(deposit.dueAt, timeZone), false)}`
+  now = new Date(),
+) =>
+  isOverdue(deposit, now)
+    ? `${naira(deposit.amount)} overdue`
+    : `${naira(deposit.amount)} due ${dateLabel(instantDate(deposit.dueAt, timeZone), false)}`
 
 export function statusTone(
   status: ReservationStatus,

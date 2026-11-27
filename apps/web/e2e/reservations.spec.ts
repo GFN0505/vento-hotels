@@ -36,7 +36,7 @@ async function pick(page: Page, type: string, plan: RegExp) {
   const show = sheet.getByRole('button', { name: new RegExp(`plans? for ${type}$`) })
   if (await show.isVisible()) await show.click()
   await sheet.getByRole('radio', { name: plan }).check()
-  await expect(sheet.getByText(/total incl\. taxes/).first()).toBeVisible()
+  await expect(sheet.getByText(/total for the stay/).first()).toBeVisible()
 }
 
 async function guest(page: Page, first: string, last: string, phone: string) {
@@ -65,7 +65,10 @@ test('front desk takes a phone booking with a discount within her limit, and fin
   await expect(
     sheet.getByText('15% is over your 12% discount limit.', { exact: false }),
   ).toBeVisible()
-  await expect(sheet.getByRole('button', { name: 'Continue to guest' })).toBeDisabled()
+  // Continue says why it can't go on.
+  await sheet.getByRole('button', { name: /^Continue to guest/ }).click()
+  await expect(sheet.getByRole('alert').filter({ hasText: 'discount limit' }).first()).toBeVisible()
+  await expect(sheet.getByLabel('Find a guest')).toHaveCount(0)
   await sheet.getByLabel('Discount', { exact: true }).fill('10')
   await expect(
     sheet.getByText(/₦168,000\.00 → ₦151,200\.00 a night · 10% off Bed & breakfast/),
@@ -107,6 +110,8 @@ test('front desk takes a phone booking with a discount within her limit, and fin
 test('two desks race for the last Junior Suite: one books, the other is told it was just sold', async ({
   browser,
 }, testInfo) => {
+  // Two people signing in and walking the sheet side by side takes a while.
+  test.setTimeout(90_000)
   const domain = seedDemoGroup(`res-race-${testInfo.project.name}`, PASSWORD)
   const today = lagosToday()
   // The wedding leaves 1 of 8 Junior Suites on D+15 (seed/reservations.ts).

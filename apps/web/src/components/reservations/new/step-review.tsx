@@ -5,7 +5,6 @@ import { DISCOUNT_REASON_LABELS, type Property, SOURCE_LABELS, type StayQuote } 
 import type { ReactNode } from 'react'
 import { TH } from '@/components/settings/table-styles'
 import { Field } from '@/components/ui/field'
-import { ScrollRegion } from '@/components/ui/scroll-region'
 import { cn } from '@/lib/cn'
 import {
   cancellationLine,
@@ -15,14 +14,18 @@ import {
   naira,
   stayLine,
   stayRange,
-  taxLabel,
 } from '../format'
 import { type Draft, updateDraft } from './booking-draft'
 import { restrictionLabel } from './booking-model'
 
-type Props = { draft: Draft; quote: StayQuote | undefined; hotel: Property | undefined }
+type Props = {
+  draft: Draft
+  quote: StayQuote | undefined
+  hotel: Property | undefined
+  showErrors: boolean
+}
 
-export function StepReview({ draft, quote, hotel }: Props) {
+export function StepReview({ draft, quote, hotel, showErrors }: Props) {
   if (!quote) {
     return <p className="text-text-2">Pick a room and plan first.</p>
   }
@@ -71,55 +74,36 @@ export function StepReview({ draft, quote, hotel }: Props) {
           {stayRange(overlap.arrival, overlap.departure).replace(/ \d{4}$/, '')}.
         </p>
       ))}
-      <ScrollRegion
-        label="Nights and taxes"
-        className="overflow-x-auto rounded-sm border border-border"
-      >
-        <table className="w-full border-separate border-spacing-0 text-left">
-          <thead>
-            <tr>
-              <th scope="col" className={cn(TH, 'pl-3')}>
-                Night
-              </th>
-              <th scope="col" className={cn(TH, 'text-right')}>
-                Price
-              </th>
-              {quote.totals.lines.map((line) => (
-                <th key={line.key} scope="col" className={cn(TH, 'text-right whitespace-nowrap')}>
-                  {taxLabel(line)}
-                </th>
-              ))}
-              <th scope="col" className={cn(TH, 'pr-3 text-right')}>
-                Total
-              </th>
+      {/* Prices and totals only: the summary beside it has each tax line. */}
+      <table className="w-full border-separate border-spacing-0 rounded-sm border border-border text-left">
+        <thead>
+          <tr>
+            <th scope="col" className={cn(TH, 'pl-3')}>
+              Night
+            </th>
+            <th scope="col" className={cn(TH, 'text-right')}>
+              Price
+            </th>
+            <th scope="col" className={cn(TH, 'pr-3 text-right')}>
+              Incl. taxes
+            </th>
+          </tr>
+        </thead>
+        <tbody className="num">
+          {quote.nights.map((night) => (
+            <tr key={night.date} className="[&>td]:border-b [&>td]:border-border">
+              <td className="py-2 pr-2 pl-3 whitespace-nowrap">{dayLabel(night.date)}</td>
+              <td className="px-2 py-2 text-right">{naira(night.soldPrice)}</td>
+              <td className="py-2 pr-3 pl-2 text-right">{naira(night.gross)}</td>
             </tr>
-          </thead>
-          <tbody className="num">
-            {quote.nights.map((night) => (
-              <tr key={night.date} className="[&>td]:border-b [&>td]:border-border">
-                <td className="py-2 pr-2 pl-3 whitespace-nowrap">{dayLabel(night.date)}</td>
-                <td className="px-2 py-2 text-right">{naira(night.net)}</td>
-                {quote.totals.lines.map((line) => (
-                  <td key={line.key} className="px-2 py-2 text-right text-text-2">
-                    {naira(night.lines.find((l) => l.key === line.key)?.amount ?? '0')}
-                  </td>
-                ))}
-                <td className="py-2 pr-3 pl-2 text-right">{naira(night.gross)}</td>
-              </tr>
-            ))}
-            <tr className="font-semibold">
-              <td className="py-2 pr-2 pl-3">Total</td>
-              <td className="px-2 py-2 text-right">{naira(quote.totals.net)}</td>
-              {quote.totals.lines.map((line) => (
-                <td key={line.key} className="px-2 py-2 text-right">
-                  {naira(line.amount)}
-                </td>
-              ))}
-              <td className="py-2 pr-3 pl-2 text-right">{naira(quote.totals.total)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </ScrollRegion>
+          ))}
+          <tr className="font-semibold">
+            <td className="py-2 pr-2 pl-3">Total</td>
+            <td />
+            <td className="py-2 pr-3 pl-2 text-right">{naira(quote.totals.total)}</td>
+          </tr>
+        </tbody>
+      </table>
 
       {discount && quote.discount ? (
         <p className="num rounded-sm bg-am-bg px-3 py-2 text-sm text-am">
@@ -152,6 +136,11 @@ export function StepReview({ draft, quote, hotel }: Props) {
             maxLength={300}
             required
             hint="Required. Recorded with your name."
+            error={
+              showErrors && draft.restrictionReason.trim().length < 3
+                ? 'Give a reason, in a few words.'
+                : undefined
+            }
             validate={(value) =>
               value.trim().length < 3
                 ? `Give a reason for booking through ${broken.kind === 'min_stay' ? 'the min stay' : broken.kind === 'closed' ? 'the closure' : 'the closed-to-arrival day'}.`

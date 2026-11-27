@@ -4,14 +4,13 @@
 import { useQuery } from '@tanstack/react-query'
 import {
   DESK_SOURCES,
-  formatPhone,
   GUEST_TITLES,
   type GuestMatch,
   NOTES_MAX,
   SOURCE_LABELS,
 } from '@vento/shared'
 import { Search, UserRound } from 'lucide-react'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { type KeyboardEvent, useEffect, useId, useMemo, useState } from 'react'
 import { Combobox } from '@/components/ui/combobox'
 import { Field, Input } from '@/components/ui/field'
 import { Segmented } from '@/components/ui/segmented'
@@ -21,14 +20,17 @@ import { useCountries } from '../use-countries'
 import { type Draft, EMPTY_GUEST, updateDraft } from './booking-draft'
 import type { Problems } from './booking-model'
 
-type Props = { draft: Draft; problems: Problems }
+type Props = { draft: Draft; problems: Problems; showErrors: boolean }
 
-export function StepGuest({ draft, problems }: Props) {
+export function StepGuest({ draft, problems, showErrors }: Props) {
   const [text, setText] = useState('')
   const [q, setQ] = useState('')
   const [tried, setTried] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(-1)
   const countries = useCountries()
   const titlesId = useId()
+  const listId = useId()
   const guest = draft.guest
   useEffect(() => {
     const timer = setTimeout(() => setQ(text.trim()), 200)
@@ -39,6 +41,7 @@ export function StepGuest({ draft, problems }: Props) {
     enabled: q.length >= 3,
     placeholderData: (previous) => previous,
   })
+  const matches = q.length >= 3 ? (search.data ?? []) : []
   const options = useMemo(
     () =>
       (countries ?? []).map((country) => ({
@@ -49,26 +52,49 @@ export function StepGuest({ draft, problems }: Props) {
   )
   const setGuest = (patch: Partial<Draft['guest']>) =>
     updateDraft({ guest: { ...guest, ...patch } })
-  const pick = (match: GuestMatch) =>
+  // Contact details come masked; the fields start empty and keep the record's unless typed.
+  const pick = (match: GuestMatch) => {
     updateDraft({
       guest: {
         picked: match,
         title: match.title ?? '',
         firstName: match.firstName,
         lastName: match.lastName,
-        phone: match.phone ? formatPhone(match.phone) : '',
-        email: match.email ?? '',
+        phone: '',
+        email: '',
         nationality: match.nationality,
       },
     })
-  const shown = (field: string) => (tried ? problems[field] : undefined)
+    setOpen(false)
+    setActive(-1)
+  }
+  const shown = (field: string) => (tried || showErrors ? problems[field] : undefined)
+  const optionId = (index: number) => `${listId}-${index}`
+  const expanded = open && q.length >= 3 && search.data !== undefined
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      setOpen(true)
+      if (matches.length === 0) return
+      const step = event.key === 'ArrowDown' ? 1 : -1
+      setActive((current) => (current + step + matches.length) % matches.length)
+    } else if (event.key === 'Enter' && expanded && active >= 0) {
+      event.preventDefault()
+      const match = matches[active]
+      if (match) pick(match)
+    } else if (event.key === 'Escape' && expanded) {
+      event.preventDefault()
+      event.stopPropagation()
+      setOpen(false)
+    }
+  }
 
   return (
     <section aria-labelledby="guest-heading" className="flex flex-col gap-5">
       <h3 id="guest-heading" className="text-[15px] font-semibold">
         Guest
       </h3>
-      <div className="flex flex-col gap-2" data-no-enter>
+      <div className="relative flex flex-col gap-2" data-no-enter>
         <label htmlFor="find-guest" className="text-sm font-medium text-text-2">
           Find a guest
         </label>
@@ -79,55 +105,77 @@ export function StepGuest({ draft, problems }: Props) {
           />
           <Input
             id="find-guest"
-            type="search"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={expanded}
+            aria-controls={listId}
+            aria-activedescendant={expanded && active >= 0 ? optionId(active) : undefined}
             placeholder="Name, phone or email"
             value={text}
             autoComplete="off"
-            onChange={(event) => setText(event.target.value)}
-            className="pl-9"
+            onChange={(event) => {
+              setText(event.target.value)
+              setOpen(true)
+              setActive(-1)
+            }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            onKeyDown={onKeyDown}
+            className="h-11 pl-9 lg:h-9"
           />
         </div>
-        {q.length >= 3 && search.data ? (
-          search.data.length === 0 ? (
-            <p className="text-sm text-text-3">No guest matches “{q}”. Add them below.</p>
-          ) : (
-            <ul
-              className="flex flex-col divide-y divide-border rounded-sm border border-border"
-              aria-label="Guests found"
+        <p role="status" aria-live="polite" className="text-sm text-text-3">
+          {q.length < 3
+            ? ''
+            : search.data === undefined
+              ? ''
+              : matches.length === 0
+                ? `No guest matches “${q}”. Add them below.`
+                : `${matches.length} ${matches.length === 1 ? 'guest' : 'guests'} found`}
+        </p>
+        <div
+          id={listId}
+          role="listbox"
+          aria-label="Guests found"
+          hidden={!expanded || matches.length === 0}
+          className="flex flex-col divide-y divide-border rounded-sm border border-border bg-surface"
+        >
+          {matches.map((match, index) => (
+            <div
+              key={match.id}
+              id={optionId(index)}
+              role="option"
+              tabIndex={-1}
+              aria-selected={index === active}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => pick(match)}
+              onKeyDown={() => undefined}
+              className={cn(
+                'flex min-h-11 w-full cursor-pointer items-center gap-3 px-3 py-2 text-left hover:bg-surface-2',
+                index === active && 'bg-pri-soft',
+              )}
             >
-              {search.data.map((match) => (
-                <li key={match.id}>
-                  <button
-                    type="button"
-                    onClick={() => pick(match)}
-                    className={cn(
-                      'flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left hover:bg-surface-2',
-                      guest.picked?.id === match.id && 'bg-pri-soft',
-                    )}
-                  >
-                    <UserRound className="size-4 flex-none text-text-3" aria-hidden="true" />
-                    <span className="flex min-w-0 grow flex-col">
-                      <span className="truncate font-medium">
-                        {[match.title, match.firstName, match.lastName].filter(Boolean).join(' ')}
-                      </span>
-                      <span className="num truncate text-sm text-text-3">
-                        {[match.nationality, match.maskedPhone, match.email]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )
-        ) : null}
+              <UserRound className="size-4 flex-none text-text-3" aria-hidden="true" />
+              <span className="flex min-w-0 grow flex-col">
+                <span className="truncate font-medium">
+                  {[match.title, match.firstName, match.lastName].filter(Boolean).join(' ')}
+                </span>
+                <span className="num truncate text-sm text-text-2">
+                  {[match.nationality, match.maskedPhone, match.maskedEmail]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
         {guest.picked ? (
-          <p className="flex flex-wrap items-center gap-2 text-sm text-text-2">
-            Booking for a guest already in the group. Changes to their details update their record.
+          <p className="flex flex-wrap items-center gap-x-2 text-sm text-text-2">
+            Booking for {guest.picked.firstName} {guest.picked.lastName}, already a guest of the
+            group. Changes you type update their record.
             <button
               type="button"
-              className="font-medium text-pri-ink hover:underline"
+              className="inline-flex min-h-11 items-center font-medium text-pri-ink hover:underline lg:min-h-0"
               onClick={() => updateDraft({ guest: EMPTY_GUEST })}
             >
               Add a new guest instead
@@ -179,7 +227,11 @@ export function StepGuest({ draft, problems }: Props) {
           value={guest.phone}
           maxLength={30}
           autoComplete="off"
-          hint="With country code for foreign numbers, e.g. +44 7700 900123"
+          hint={
+            guest.picked?.maskedPhone
+              ? `Leave empty to keep ${guest.picked.maskedPhone}, or type a new number`
+              : 'With country code for foreign numbers, e.g. +44 7700 900123'
+          }
           error={shown('phone')}
           onBlur={() => setTried(true)}
           onChange={(event) => setGuest({ phone: event.target.value })}
@@ -188,6 +240,11 @@ export function StepGuest({ draft, problems }: Props) {
         <Field
           label="Email"
           type="email"
+          hint={
+            guest.picked?.maskedEmail
+              ? `Leave empty to keep ${guest.picked.maskedEmail}`
+              : undefined
+          }
           value={guest.email}
           maxLength={254}
           autoComplete="off"

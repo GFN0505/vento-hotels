@@ -22,7 +22,6 @@ import { TH } from '@/components/settings/table-styles'
 import { useScopedTitle } from '@/components/shell/use-scoped-title'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { ScrollRegion } from '@/components/ui/scroll-region'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { orpc } from '@/lib/api'
 import { cn } from '@/lib/cn'
@@ -38,6 +37,7 @@ import {
   initials,
   instantDate,
   instantLabel,
+  isOverdue,
   mealLabel,
   naira,
   nightsBetweenDates,
@@ -81,7 +81,8 @@ export function ReservationDetailPage({ id }: { id: string }) {
       <ReservationsOffline savedAt={detail.dataUpdatedAt} />
       <Crumbs number={data.number} />
       <Header data={data} onAudit={() => setAuditing(true)} />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+      {/* Activity sits beside the nights only on wide screens, so the nights table never clips. */}
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex min-w-0 flex-col gap-4">
           {data.stays.map((stay) => (
             <NightsCard key={stay.id} stay={stay} taxesSetUp={data.taxesSetUp} />
@@ -110,7 +111,10 @@ export function ReservationDetailPage({ id }: { id: string }) {
 function Crumbs({ number }: { number: string | undefined }) {
   return (
     <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-text-2">
-      <Link to="/reservations" className="hover:text-pri-ink hover:underline">
+      <Link
+        to="/reservations"
+        className="inline-flex min-h-11 items-center hover:text-pri-ink hover:underline lg:min-h-0"
+      >
         Reservations
       </Link>
       {number ? (
@@ -215,9 +219,11 @@ function Header({ data, onAudit }: { data: ReservationDetail; onAudit: () => voi
           <Summary
             label="Deposit"
             value={data.depositDue ? naira(data.depositDue.amount) : 'Not required'}
-            tone={data.depositDue ? 'amber' : undefined}
+            tone={data.depositDue ? (isOverdue(data.depositDue) ? 'rose' : 'amber') : undefined}
           >
-            {data.depositDue ? `due by ${instantLabel(data.depositDue.dueAt, tz)}` : null}
+            {data.depositDue
+              ? `${isOverdue(data.depositDue) ? 'overdue, was due' : 'due'} by ${instantLabel(data.depositDue.dueAt, tz)}`
+              : null}
           </Summary>
         </dl>
       ) : null}
@@ -238,7 +244,7 @@ function Summary({
 }: {
   label: string
   value: string
-  tone?: 'amber' | undefined
+  tone?: 'amber' | 'rose' | undefined
   children?: ReactNode
 }) {
   return (
@@ -246,7 +252,13 @@ function Summary({
       <dt className="text-[11px] leading-4 font-semibold tracking-[0.05em] text-text-3 uppercase">
         {label}
       </dt>
-      <dd className={`num truncate font-medium ${tone === 'amber' ? 'text-am' : ''}`} title={value}>
+      <dd
+        className={cn(
+          'num font-medium break-words',
+          tone === 'amber' && 'text-am',
+          tone === 'rose' && 'text-ro',
+        )}
+      >
         {value}
       </dd>
       {children ? <dd className="text-sm text-text-3">{children}</dd> : null}
@@ -278,7 +290,7 @@ function NightsCard({ stay, taxesSetUp }: { stay: Stay; taxesSetUp: boolean }) {
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3.5">
-        <h2 className="text-[15px] font-semibold">Rate per night</h2>
+        <h2 className="text-[15px] font-semibold">Rate per night · {stay.terms.planName}</h2>
         <span className="text-sm text-text-3">
           {taxesSetUp
             ? 'Taxes use the rates in force on each night.'
@@ -294,60 +306,85 @@ function NightsCard({ stay, taxesSetUp }: { stay: Stay; taxesSetUp: boolean }) {
           ({stay.discount?.byName})
         </p>
       ) : null}
-      <ScrollRegion label="Rate per night" className="overflow-x-auto">
-        <table className="w-full border-separate border-spacing-0 text-left">
-          <thead>
-            <tr>
-              <th scope="col" className={cn(TH, 'pl-5')}>
-                Night
-              </th>
-              <th scope="col" className={TH}>
-                Plan
-              </th>
-              <th scope="col" className={cn(TH, 'text-right')}>
-                {roomHeader}
-              </th>
-              {columns.map((line) => (
-                <th key={line.key} scope="col" className={cn(TH, 'text-right whitespace-nowrap')}>
-                  {taxLabel(line)}
-                </th>
-              ))}
-              <th scope="col" className={cn(TH, 'pr-5 text-right')}>
-                Total
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {stay.nights.map((night) => (
-              <tr key={night.date} className="[&>td]:border-b [&>td]:border-border">
-                <td className="num py-2.5 pr-3 pl-5 whitespace-nowrap">{dayLabel(night.date)}</td>
-                <td className="px-3 py-2.5 whitespace-nowrap text-text-2">{stay.terms.planName}</td>
-                <td className="num px-3 py-2.5 text-right">{naira(night.net)}</td>
-                {columns.map((line) => {
-                  const found = night.lines.find((l) => l.key === line.key)
-                  return (
-                    <td key={line.key} className="num px-3 py-2.5 text-right text-text-2">
-                      {found ? naira(found.amount) : '—'}
-                    </td>
-                  )
-                })}
-                <td className="num py-2.5 pr-5 pl-3 text-right">{naira(night.gross)}</td>
-              </tr>
+      {/* Phones: one block per night (ReservationMobile). */}
+      <ol className="divide-y divide-border md:hidden">
+        {stay.nights.map((night) => (
+          <li key={night.date} className="num flex flex-col gap-1 px-5 py-3">
+            <span className="flex justify-between gap-3 font-medium">
+              <span>{dayLabel(night.date)}</span>
+              <span>{naira(night.gross)}</span>
+            </span>
+            <span className="flex justify-between gap-3 text-sm text-text-2">
+              <span>{roomHeader}</span>
+              <span>{naira(night.net)}</span>
+            </span>
+            {night.lines.map((line) => (
+              <span key={line.key} className="flex justify-between gap-3 text-sm text-text-3">
+                <span>{taxLabel(line)}</span>
+                <span>{naira(line.amount)}</span>
+              </span>
             ))}
-            <tr className="font-semibold">
-              <td className="py-2.5 pr-3 pl-5">{nightsLabel(stay.nights.length)}</td>
-              <td />
-              <td className="num px-3 py-2.5 text-right">{naira(net)}</td>
-              {columns.map((line) => (
-                <td key={line.key} className="num px-3 py-2.5 text-right">
-                  {naira(line.amount)}
-                </td>
-              ))}
-              <td className="num py-2.5 pr-5 pl-3 text-right">{naira(stay.totals.total)}</td>
+          </li>
+        ))}
+        <li className="num flex justify-between gap-3 px-5 py-3 font-semibold">
+          <span>{nightsLabel(stay.nights.length)}</span>
+          <span>{naira(stay.totals.total)}</span>
+        </li>
+      </ol>
+      <table className="w-full border-separate border-spacing-0 text-left max-md:hidden">
+        <thead>
+          <tr>
+            <th scope="col" className={cn(TH, 'pl-5')}>
+              Night
+            </th>
+            <th scope="col" className={cn(TH, 'text-right')}>
+              {roomHeader}
+            </th>
+            {columns.map((line) => (
+              <th key={line.key} scope="col" className={cn(TH, 'text-right')}>
+                {taxLabel(line)}
+              </th>
+            ))}
+            <th scope="col" className={cn(TH, 'pr-5 text-right')}>
+              Total
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {stay.nights.map((night) => (
+            <tr key={night.date} className="[&>td]:border-b [&>td]:border-border">
+              <td className="num py-2.5 pr-3 pl-5 whitespace-nowrap">{dayLabel(night.date)}</td>
+              <td className="num px-3 py-2.5 text-right whitespace-nowrap">{naira(night.net)}</td>
+              {columns.map((line) => {
+                const found = night.lines.find((l) => l.key === line.key)
+                return (
+                  <td
+                    key={line.key}
+                    className="num px-3 py-2.5 text-right whitespace-nowrap text-text-2"
+                  >
+                    {found ? naira(found.amount) : '—'}
+                  </td>
+                )
+              })}
+              <td className="num py-2.5 pr-5 pl-3 text-right font-medium whitespace-nowrap">
+                {naira(night.gross)}
+              </td>
             </tr>
-          </tbody>
-        </table>
-      </ScrollRegion>
+          ))}
+          <tr className="font-semibold">
+            <td className="py-2.5 pr-3 pl-5">{nightsLabel(stay.nights.length)}</td>
+            <td className="num px-3 py-2.5 text-right whitespace-nowrap">{naira(net)}</td>
+            {columns.map((line) => (
+              <td key={line.key} className="num px-3 py-2.5 text-right whitespace-nowrap">
+                {naira(line.amount)}
+              </td>
+            ))}
+            <td className="num py-2.5 pr-5 pl-3 text-right whitespace-nowrap">
+              {naira(stay.totals.total)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </Card>
   )
 }
@@ -366,7 +403,9 @@ function GuestCard({ data }: { data: ReservationDetail }) {
         </Line>
         <Line label="Nationality">{nationality}</Line>
         <Line label="Phone">{data.guest.phone ? formatPhone(data.guest.phone) : '—'}</Line>
-        <Line label="Email">{data.guest.email ?? '—'}</Line>
+        <Line label="Email" breakAll>
+          {data.guest.email ?? '—'}
+        </Line>
       </dl>
     </Card>
   )
@@ -382,22 +421,11 @@ function DepositCard({ data }: { data: ReservationDetail }) {
       </h2>
       <dl className="flex flex-col gap-2 px-5 py-4">
         <Line label="Guarantee">{data.guarantee === 'deposit' ? 'Deposit' : 'None'}</Line>
-        <Line label="Deposit">
-          {data.depositDue ? (
-            <span className="text-am">
-              {naira(data.depositDue.amount)} due by {instantLabel(data.depositDue.dueAt, tz)}
-            </span>
-          ) : (
-            'Not required'
-          )}
+        <Line label="Deposit rule">
+          {stay && data.depositDue ? depositRuleWords(stay.terms.deposit) : 'Not required'}
         </Line>
       </dl>
       <div className="flex flex-col gap-2 px-5 pb-4">
-        {stay && data.depositDue ? (
-          <p className="text-sm text-text-3">
-            {depositBasis(stay.terms.deposit, data.depositDue.dueAt, tz)}
-          </p>
-        ) : null}
         {stay ? (
           <p className="num rounded-sm bg-surface-2 px-3 py-2 text-sm text-text-2">
             {cancellingNowLine(stay.cancellation, tz)}
@@ -408,13 +436,29 @@ function DepositCard({ data }: { data: ReservationDetail }) {
   )
 }
 
-function Line({ label, children }: { label: string; children: ReactNode }) {
+// Values wrap rather than cut off; emails break anywhere.
+function Line({
+  label,
+  breakAll,
+  children,
+}: {
+  label: string
+  breakAll?: boolean
+  children: ReactNode
+}) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-text-3">{label}</dt>
-      <dd className="num min-w-0 truncate text-right">{children}</dd>
+      <dt className="flex-none text-text-3">{label}</dt>
+      <dd className={cn('num min-w-0 text-right', breakAll ? 'break-all' : 'break-words')}>
+        {children}
+      </dd>
     </div>
   )
+}
+
+// "First night incl. taxes", "30% of the stay incl. taxes", "Paid in full at booking".
+function depositRuleWords(rule: ReservationDetail['stays'][number]['terms']['deposit']) {
+  return depositBasis(rule, new Date().toISOString(), 'Africa/Lagos').replace(/, by .*$/, '')
 }
 
 function ActivityCard({ data, onAudit }: { data: ReservationDetail; onAudit: () => void }) {

@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Field } from '@/components/ui/field'
 import { PageHeader } from '@/components/ui/page-header'
 import { api } from '@/lib/api'
-import { cn } from '@/lib/cn'
 import { problemMessage } from '@/lib/errors'
 import { focusFirstProblem } from '@/lib/forms'
 import { useOnline } from '@/offline/connection'
@@ -91,17 +90,9 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                   <th scope="col" className="px-3 py-2">
                     Weekday (Sun–Thu)
                   </th>
-                  <th
-                    scope="col"
-                    className={cn('w-[34%] px-3 py-2 sm:w-40', guest.column ? '' : 'pr-4 sm:pr-5')}
-                  >
+                  <th scope="col" className="w-[34%] px-3 py-2 pr-4 sm:w-40 sm:pr-5">
                     Fri and Sat
                   </th>
-                  {guest.column ? (
-                    <th scope="col" className="px-3 py-2 pr-4 text-right max-md:hidden sm:pr-5">
-                      Guest pays per night
-                    </th>
-                  ) : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -133,8 +124,14 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                           set(type.id, { weekday: groupTyped(event.target.value) })
                         }
                       />
+                      {guest.column && rows[type.id]?.weekday ? (
+                        <span className="num mt-1 block text-sm text-text-3">
+                          Guest pays per night{' '}
+                          <GuestPays guest={guest} price={rows[type.id]?.weekday ?? ''} />
+                        </span>
+                      ) : null}
                     </td>
-                    <td className={cn('px-3 py-3', guest.column ? '' : 'pr-4 sm:pr-5')}>
+                    <td className="px-3 py-3 pr-4 sm:pr-5">
                       <Field
                         label={`${type.name}, Friday and Saturday price`}
                         hideLabel
@@ -153,11 +150,6 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                         }
                       />
                     </td>
-                    {guest.column ? (
-                      <td className="num px-3 py-3 pt-5 pr-4 text-right whitespace-nowrap max-md:hidden sm:pr-5">
-                        <GuestPays guest={guest} price={rows[type.id]?.weekday ?? ''} />
-                      </td>
-                    ) : null}
                   </tr>
                 ))}
               </tbody>

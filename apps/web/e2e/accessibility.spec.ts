@@ -301,12 +301,31 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
       await page.goto('/reservations?sheet=new')
       const sheet = page.getByRole('dialog', { name: 'New reservation' })
+      // The wedding's nights (seed): Junior Suite sold out on one of them.
+      const day = (offset: number) =>
+        new Date(
+          Date.parse(
+            `${new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos' }).format(new Date())}T00:00:00Z`,
+          ) +
+            offset * 86_400_000,
+        )
+          .toISOString()
+          .slice(0, 10)
+      await sheet.getByLabel('Arrival').fill(day(15))
+      await sheet.getByLabel('Departure').fill(day(17))
       await sheet.getByLabel('Adults').fill('1')
       await sheet.getByRole('button', { name: /^Continue/ }).click()
       await sheet.getByText('Left per night').first().waitFor()
       const show = sheet.getByRole('button', { name: /^Show .* for / }).first()
       if (await show.isVisible()) await show.click()
-      await sheet.getByRole('radio').first().check()
+      await sheet
+        .getByText(/^Sold out/)
+        .first()
+        .waitFor()
+      await sheet
+        .getByRole('radio', { name: /total for the stay/ })
+        .first()
+        .check()
       await sheet.getByText('Deposit due').or(sheet.getByText('No deposit')).first().waitFor()
       await expectAccessible(page)
       await sheet.getByRole('button', { name: 'Continue to guest' }).click()
@@ -327,7 +346,10 @@ for (const theme of ['light', 'dark'] as const) {
       if (theme === 'dark') await switchToDarkMode(page)
       await page.goto('/rates/plans')
       await page.getByRole('link', { name: 'Bed & breakfast', exact: true }).click()
-      await page.getByRole('columnheader', { name: 'This plan' }).waitFor()
+      await page
+        .getByText(/^Guest pays/)
+        .first()
+        .waitFor()
       await expectAccessible(page)
     })
 

@@ -1,7 +1,13 @@
 import type { ReservationDetail } from '@vento/shared'
 import { describe, expect, it } from 'vitest'
 import { clockWords, confirmationText } from './confirmation'
-import { cancellationLine, datesSummary, depositShort, stayRange } from './format'
+import {
+  cancellationLine,
+  cancellingNowLine,
+  datesSummary,
+  depositShort,
+  stayRange,
+} from './format'
 
 const ID = '019a0000-0000-7000-8000-000000000001'
 
@@ -128,9 +134,21 @@ describe('reservation formats', () => {
     expect(datesSummary('2026-12-09', '2026-12-12', 1, 0)).toBe(
       'Wed 9 Dec → Sat 12 Dec 2026 · 3 nights · 1 adult',
     )
-    expect(depositShort({ amount: '205800.00', dueAt: '2026-11-27T09:32:00.000Z' })).toBe(
-      '₦205,800.00 due 27 Nov',
-    )
+    const before = new Date('2026-11-25T12:00:00Z')
+    expect(
+      depositShort(
+        { amount: '205800.00', dueAt: '2026-11-27T09:32:00.000Z' },
+        'Africa/Lagos',
+        before,
+      ),
+    ).toBe('₦205,800.00 due 27 Nov')
+    expect(
+      depositShort(
+        { amount: '205800.00', dueAt: '2026-11-27T09:32:00.000Z' },
+        'Africa/Lagos',
+        new Date('2026-11-28T00:00:00Z'),
+      ),
+    ).toBe('₦205,800.00 overdue')
     const stay = detail().stays[0]
     if (stay) {
       expect(cancellationLine(stay.cancellation, 'Africa/Lagos')).toBe(
@@ -139,5 +157,25 @@ describe('reservation formats', () => {
     }
     expect(clockWords('14:00')).toBe('2pm')
     expect(clockWords('13:30')).toBe('1:30pm')
+  })
+})
+
+describe('cancelling now', () => {
+  const c = {
+    kind: 'free_until' as const,
+    deadline: '2026-12-07T13:00:00.000Z',
+    penalty: '205800.00',
+    penaltyKind: 'first_night' as const,
+    percent: null,
+  }
+  it('is free until the deadline', () => {
+    expect(cancellingNowLine(c, 'Africa/Lagos', new Date('2026-12-01T00:00:00Z'))).toBe(
+      'Cancelling now is free until 7 Dec 2026, 14:00. After that: first night, ₦205,800.00.',
+    )
+  })
+  it('says the free window ended once it has passed', () => {
+    expect(cancellingNowLine(c, 'Africa/Lagos', new Date('2026-12-07T13:00:00Z'))).toBe(
+      'Free cancellation ended 7 Dec 2026, 14:00. Cancelling now charges first night, ₦205,800.00.',
+    )
   })
 })

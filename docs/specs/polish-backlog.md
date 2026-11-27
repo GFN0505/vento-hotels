@@ -23,3 +23,11 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 ## Earlier bricks
 - Hotel switch: the native hotel select can't show options in screenshot tools (consider a custom listbox in the polish pass).
 - Rate plan Change history: before → after details show only for members with audit.view; add before/after to ratePlans.history so revenue managers see them too.
+
+## Reservations (brick 4)
+- Reservations list: "Not assigned" repeated under every row's room (drop it until rooms are assigned, bricks 7–8).
+- Deposit due shown date-only in places ("by 29 Nov"); show the time wherever the due time matters.
+- New reservation, step 1: the summary aside is nearly empty; fill it (hotel, nights, party) or hide it on that step.
+- Demo seed: audit events' `createdAt` is the seed's run time, not the business date each booking was made on.
+- Guest and reservation search: say "Type at least 3 characters" for 1–2 characters instead of showing nothing.
+- New reservation dates use the browser's native date inputs: swap for a design-system date range picker once one exists in `components/ui` (none today; not built here on purpose).

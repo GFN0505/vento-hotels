@@ -8,13 +8,16 @@ import {
   SOURCE_LABELS,
   STATUS_LABELS,
 } from '@vento/shared'
-import { Search, X } from 'lucide-react'
+import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/field'
 import { Segmented } from '@/components/ui/segmented'
+import { Sheet } from '@/components/ui/sheet'
 import { orpc } from '@/lib/api'
 import { cn } from '@/lib/cn'
-import type { OnReservationsSearch, ReservationsSearch } from './queries'
+import { useMediaQuery } from '@/lib/media'
+import { FILTER_KEYS, type OnReservationsSearch, type ReservationsSearch } from './queries'
 
 const VIEWS = [
   { value: 'upcoming', label: 'Upcoming' },
@@ -65,6 +68,9 @@ function SelectPill({
 
 export function ReservationsToolbar({ search, onSearch, propertyId }: Props) {
   const input = useRef<HTMLInputElement>(null)
+  // Phones keep the filters behind one button, in a sheet.
+  const wide = useMediaQuery('(min-width: 768px)')
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [text, setText] = useState(search.q ?? '')
   const [arrivals, setArrivals] = useState(Boolean(search.arrivalFrom || search.arrivalTo))
   useEffect(() => setText(search.q ?? ''), [search.q])
@@ -96,36 +102,11 @@ export function ReservationsToolbar({ search, onSearch, propertyId }: Props) {
   }, [])
 
   const view = search.view ?? 'upcoming'
-  return (
-    <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:px-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Segmented
-          label="View"
-          hideLabel
-          value={view}
-          options={VIEWS}
-          onChange={(next) => onSearch({ view: next === 'upcoming' ? undefined : next })}
-        />
-        <div className="relative w-full sm:w-80">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-3"
-            aria-hidden="true"
-          />
-          <Input
-            ref={input}
-            type="search"
-            aria-label="Search reservations"
-            aria-keyshortcuts="/"
-            placeholder="Search name, phone, email or booking no."
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            className="pr-9 pl-9"
-          />
-          <kbd className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-[4px] border border-border px-1.5 text-xs text-text-3 lg:block">
-            /
-          </kbd>
-        </div>
-      </div>
+  const active =
+    FILTER_KEYS.filter((key) => search[key] !== undefined && key !== 'arrivalTo').length +
+    (search.arrivalTo && !search.arrivalFrom ? 1 : 0)
+  const filters = (
+    <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <SelectPill
           label="Status"
@@ -191,6 +172,66 @@ export function ReservationsToolbar({ search, onSearch, propertyId }: Props) {
           </label>
         </div>
       ) : null}
+    </div>
+  )
+  return (
+    <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Segmented
+          label="View"
+          hideLabel
+          value={view}
+          options={VIEWS}
+          onChange={(next) => onSearch({ view: next === 'upcoming' ? undefined : next })}
+        />
+        <div className="relative w-full sm:w-80">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-3"
+            aria-hidden="true"
+          />
+          <Input
+            ref={input}
+            type="search"
+            aria-label="Search reservations"
+            aria-keyshortcuts="/"
+            placeholder={
+              wide ? 'Search name, phone, email or booking no.' : 'Search guests or bookings'
+            }
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            className="h-11 pr-9 pl-9 lg:h-9"
+          />
+          <kbd className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-[4px] border border-border px-1.5 text-xs text-text-3 lg:block">
+            /
+          </kbd>
+        </div>
+      </div>
+      {wide ? (
+        filters
+      ) : (
+        <>
+          <Button
+            className="h-11 self-start"
+            aria-haspopup="dialog"
+            onClick={() => setFiltersOpen(true)}
+          >
+            <SlidersHorizontal className="size-4" aria-hidden="true" />
+            Filters{active > 0 ? ` (${active})` : ''}
+          </Button>
+          <Sheet
+            open={filtersOpen}
+            onClose={() => setFiltersOpen(false)}
+            title="Filters"
+            footer={
+              <Button variant="primary" className="w-full" onClick={() => setFiltersOpen(false)}>
+                Show reservations
+              </Button>
+            }
+          >
+            {filters}
+          </Sheet>
+        </>
+      )}
     </div>
   )
 }
