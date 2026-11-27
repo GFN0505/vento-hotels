@@ -1,10 +1,11 @@
 // Using an approval inside the booking transaction (spec: "Using an approval at Book"). Lock order
-// (reservations/locks.ts): the hotel's rates lock, inventory rows by room type then date, then
-// approval rows by id (here), then the reservation counter. The approval is checked against what
+// (reservations/locks.ts): the hotel's rates lock, the hotel row, inventory rows by room type then
+// date, then every approval row of the request in id order (lockApprovals), then the guest, then
+// the reservation counter. The approval is checked against what
 // the server just priced and the approver's eligibility now, and marked used in the same
 // transaction, so it is used once.
 import type { Permission } from '@vento/shared'
-import { and, eq } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
 import { approvals } from '../db/schema/approvals.ts'
 import { devices } from '../db/schema/tenancy.ts'
@@ -104,10 +105,29 @@ export async function useApproval(
   }
 }
 
+// Locks the request's approvals in id order before any is checked, so two bookings (or a booking
+// and the expiry job, which skips locked rows) never wait on each other in a circle.
+export async function lockApprovals(tx: Tx, access: Access, ids: readonly string[]) {
+  if (ids.length === 0) return
+  await tx
+    .select({ id: approvals.id })
+    .from(approvals)
+    .where(
+      and(
+        inArray(approvals.id, [...ids]),
+        eq(approvals.organizationId, access.organizationId),
+        scopeToProperties(access, approvals.propertyId),
+      ),
+    )
+    .orderBy(asc(approvals.id))
+    .for('update')
+}
+
+// Marked used as soon as it is checked, in the same transaction.
 export async function markApprovalUsed(
   tx: Tx,
   id: string,
-  used: { stayId: string; reference: string; at: Date },
+  used: { stayId: string; at: Date },
 ): Promise<void> {
   await tx
     .update(approvals)
@@ -115,9 +135,17 @@ export async function markApprovalUsed(
       usedAt: used.at,
       usedEntityType: 'stay',
       usedEntityId: used.stayId,
-      usedReference: used.reference,
       draft: null,
       updatedAt: used.at,
     })
     .where(eq(approvals.id, id))
+}
+
+// The reservation number, once it is taken ("Approved · used for VI-2611-0484").
+export async function noteApprovalsUsedFor(tx: Tx, ids: readonly string[], reference: string) {
+  if (ids.length === 0) return
+  await tx
+    .update(approvals)
+    .set({ usedReference: reference })
+    .where(inArray(approvals.id, [...ids]))
 }

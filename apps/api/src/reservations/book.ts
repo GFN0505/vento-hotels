@@ -16,7 +16,13 @@ import {
 } from '@vento/shared'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import type { z } from 'zod'
-import { markApprovalUsed, type UsedApproval } from '../approvals/use.ts'
+import { approvalOnOneStay } from '../approvals/errors.ts'
+import {
+  lockApprovals,
+  markApprovalUsed,
+  noteApprovalsUsedFor,
+  type UsedApproval,
+} from '../approvals/use.ts'
 import { type AuditEvent, recordAuditMany } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation, violatedConstraint } from '../db/errors.ts'
@@ -213,6 +219,13 @@ export async function bookInTx(
   const rules = await rulesByNight(tx, access, hotel, allDates)
   const priced: PricedStay[] = []
   const approved: (UsedApproval | null)[] = []
+  // Stay ids are made now, so an approval is marked used the moment it is checked: a second stay
+  // carrying the same approval then finds it used (APPROVAL_USED).
+  const stayIds = input.stays.map(() => newId())
+  // Step 5a: every approval of the request, locked in id order (deadlock safety, locks.ts).
+  const approvalIds = input.stays.flatMap((stay) => (stay.approvalId ? [stay.approvalId] : []))
+  if (new Set(approvalIds).size !== approvalIds.length) throw approvalOnOneStay()
+  await lockApprovals(tx, access, approvalIds)
   for (const [index, stay] of input.stays.entries()) {
     const quote = await quoteStay(tx, access, { propertyId: hotel.id, ...stay })
     if (quote.terms.bookableBy === 'corporate_only' && !options.allowCorporate) {
@@ -222,14 +235,16 @@ export async function bookInTx(
     if (broken && !stay.restrictionReason) throw restrictionReasonRequired(broken.kind, broken.date)
     const result = priceStay(quote, stay.discount, rules, hotel, bookedAt)
     // Step 5b: an approval for a discount over the limit is locked and checked here.
-    approved.push(
-      await requireDiscountAllowed(tx, access, result, stay, {
-        propertyId: hotel.id,
-        businessDate,
-        timeZone: hotel.timeZone,
-        now: bookedAt,
-      }),
-    )
+    const used = await requireDiscountAllowed(tx, access, result, stay, {
+      propertyId: hotel.id,
+      businessDate,
+      timeZone: hotel.timeZone,
+      now: bookedAt,
+    })
+    if (used) {
+      await markApprovalUsed(tx, used.id, { stayId: stayIds[index] ?? '', at: bookedAt })
+    }
+    approved.push(used)
     if (!options.trustQuote && result.hash !== stay.quoteHash) {
       throw priceChanged(index, priceChangedMessage(result))
     }
@@ -244,6 +259,7 @@ export async function bookInTx(
     businessDate,
   })
   const number = await nextNumber(tx, scope, hotel, businessDate)
+  await noteApprovalsUsedFor(tx, approvalIds, number)
 
   // Step 8: the reservation, its stays and nights; the rooms booked.
   const deposits = priced.flatMap((stay) => (stay.deposit ? [stay.deposit] : []))
@@ -288,7 +304,7 @@ export async function bookInTx(
   for (const [index, stay] of input.stays.entries()) {
     const result = priced[index] as PricedStay
     const approval = approved[index] ?? null
-    const stayId = newId()
+    const stayId = stayIds[index] ?? newId()
     const discount = result.discount
     const broken = result.quote.breaks[0]
     await tx.insert(stays).values({
@@ -357,9 +373,6 @@ export async function bookInTx(
       entityId: reservationId,
       propertyId: hotel.id,
       businessDate,
-    }
-    if (approval) {
-      await markApprovalUsed(tx, approval.id, { stayId, reference: number, at: bookedAt })
     }
     if (discount) {
       stayEvents.push({

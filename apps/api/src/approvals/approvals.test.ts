@@ -10,11 +10,13 @@ import type {
 } from '@vento/shared'
 import { addDays, newId } from '@vento/shared'
 import { eq } from 'drizzle-orm'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { approvals } from '../db/schema/approvals.ts'
 import { sessions } from '../db/schema/auth.ts'
 import { memberPins } from '../db/schema/tenancy.ts'
+import { bookInTx } from '../reservations/book.ts'
 import { DAY, type Problem } from '../reservations/testing.ts'
+import { loadAccess } from '../tenancy/access.ts'
 import { limitTo, person } from '../tenancy/testing.ts'
 import { createTestApp } from '../test/harness.ts'
 import { expireApprovals, storedStatus } from './expire.ts'
@@ -28,6 +30,7 @@ import {
   PINS,
   withApproval,
 } from './testing.ts'
+import { resetWrongTries } from './wrong-tries.ts'
 
 const url = process.env.TEST_DATABASE_URL
 
@@ -52,9 +55,15 @@ describe.skipIf(!url)('approvals', () => {
   }
   const action = (booking: unknown) => ({ kind: 'stay_discount', booking, stayIndex: 0 })
   const deskHere = () => at(k.frontDesk, k.deviceCookie)
-  const approveHere = (booking: unknown, approver: { memberId: string }, pin: string) =>
+  const approveHere = (
+    booking: unknown,
+    approver: { memberId: string },
+    pin: string,
+    key: string = newId(),
+  ) =>
     rpc<ApprovalView>(deskHere(), 'approvals/approveHere', {
       ...action(booking),
+      idempotencyKey: key,
       approverMemberId: approver.memberId,
       pin,
     })
@@ -70,6 +79,8 @@ describe.skipIf(!url)('approvals', () => {
   beforeAll(async () => {
     k = await koraApprovals(t)
   })
+  // The per-desk wrong-PIN cap is in memory; each test starts with a clean desk.
+  beforeEach(() => resetWrongTries())
 
   describe('who can approve', () => {
     it('lists managers at the hotel whose limit covers it, lowest limit first, never the requester', async () => {
@@ -161,6 +172,7 @@ describe.skipIf(!url)('approvals', () => {
     it('needs a registered device of the hotel', async () => {
       const result = await rpc(k.frontDesk.cookie, 'approvals/approveHere', {
         ...action(await draft()),
+        idempotencyKey: newId(),
         approverMemberId: k.gm.memberId,
         pin: PINS.tunde,
       })
@@ -246,11 +258,55 @@ describe.skipIf(!url)('approvals', () => {
       expect(fifth.data.message).toMatch(
         /^Too many tries\. Sade's PIN is locked until \d\d:\d\d\. Pick another manager or send it to an inbox\.$/,
       )
+      // The lockout names the desk member whose screen the PINs were typed on.
       const [locked] = await auditFor(t, k.orgId, 'pin.locked', k.sade.memberId)
-      expect(locked?.actorName).toBe('Approvals')
+      expect(locked?.actorMemberId).toBe(k.frontDesk.memberId)
       expect(locked?.deviceId).toBe(k.device.id)
+      expect(locked?.after).toMatchObject({ via: 'Approvals', typedBy: 'Chiamaka Eze' })
       // The right PIN doesn't help while locked.
       expect((await approveHere(booking, k.sade, PINS.sade)).data.data?.code).toBe('PIN_LOCKED')
+    })
+
+    it('returns the same approval for a double submit, and asking again supersedes an unused one', async () => {
+      const booking = await draft()
+      const key = newId()
+      const [first, second] = await Promise.all([
+        approveHere(booking, k.gm, PINS.tunde, key),
+        approveHere(booking, k.gm, PINS.tunde, key),
+      ])
+      expect(first.status).toBe(200)
+      expect(second.data.id).toBe(first.data.id)
+      const again = await approveHere(booking, k.owner, PINS.owner)
+      expect(again.data.id).not.toBe(first.data.id)
+      expect((await storedStatus(t.db, first.data.id))?.status).toBe('cancelled')
+      const [superseded] = await auditFor(t, k.orgId, 'approval.cancelled', first.data.id)
+      expect(superseded).toMatchObject({ reason: 'Asked again', before: { status: 'approved' } })
+      const stale = await create(deskHere(), {
+        ...withApproval(booking, first.data.id),
+        idempotencyKey: newId(),
+      })
+      expect(stale.status).toBe(409)
+      expect((await create(deskHere(), withApproval(booking, again.data.id))).status).toBe(200)
+    })
+
+    it("stops a desk's wrong PINs before it can lock out its managers", async () => {
+      await clearPin(t, k.gm.memberId)
+      await clearPin(t, k.owner.memberId)
+      const booking = await draft()
+      for (const [who, n] of [
+        [k.gm, 2],
+        [k.owner, 2],
+      ] as const) {
+        for (let i = 0; i < n; i++) {
+          expect((await approveHere(booking, who, '0000')).data.data?.code).toBe('WRONG_PIN')
+        }
+      }
+      const fifth = await approveHere(booking, k.gm, PINS.tunde)
+      expect(fifth.data.data?.code).toBe('TOO_MANY_PIN_TRIES')
+      // Neither manager is locked: the cap is below the PIN counter's own five.
+      expect(await auditFor(t, k.orgId, 'pin.locked', k.gm.memberId)).toHaveLength(0)
+      await clearPin(t, k.gm.memberId)
+      await clearPin(t, k.owner.memberId)
     })
 
     it('needs a manager reset after the third lockout', async () => {
@@ -357,6 +413,20 @@ describe.skipIf(!url)('approvals', () => {
       expect(late.data.message).toMatch(/^Chiamaka cancelled this request at \d\d:\d\d\.$/)
     })
 
+    it('caps how many requests one person has waiting', async () => {
+      const asked: string[] = []
+      for (let i = 0; i < 5; i++) {
+        const result = await ask(await draft(), k.owner)
+        expect(result.status).toBe(200)
+        asked.push(result.data.id)
+      }
+      const sixth = await ask(await draft(), k.owner)
+      expect(sixth.data.data?.code).toBe('TOO_MANY_OPEN_REQUESTS')
+      for (const id of asked) {
+        await rpc(k.frontDesk.cookie, 'approvals/cancel', { id, reason: 'by_requester' })
+      }
+    })
+
     it('asking again for the same booking cancels the earlier request', async () => {
       const booking = await draft()
       const first = await ask(booking, k.gm)
@@ -446,6 +516,31 @@ describe.skipIf(!url)('approvals', () => {
       const result = await create(k.frontDesk.cookie, await draft())
       expect(result.status).toBe(403)
       expect(result.data.data).toMatchObject({ code: 'DISCOUNT_OVER_LIMIT', canAsk: true })
+    })
+
+    it('lets one approval cover one stay only, even listed on two identical stays', async () => {
+      const booking = await draft()
+      const granted = await approveHere(booking, k.gm, PINS.tunde)
+      const stay = { ...booking.stays[0], approvalId: granted.data.id }
+      const twice = { ...booking, stays: [stay, stay] }
+      const refused = await create(deskHere(), twice)
+      expect(refused.status).toBe(400)
+      // The booking service refuses it too, whatever reaches it, and saves nothing.
+      const access = await loadAccess(t.db, k.orgId, {
+        id: k.frontDesk.userId,
+        name: 'Chiamaka Eze',
+      })
+      if (!access) throw new Error('no access')
+      await expect(
+        t.db.transaction((tx) => bookInTx(tx, access, twice as never)),
+      ).rejects.toMatchObject({ data: { code: 'APPROVAL_NOT_MATCHING' } })
+      expect(await storedStatus(t.db, granted.data.id)).toMatchObject({ status: 'approved' })
+      const [row] = await t.db
+        .select({ usedAt: approvals.usedAt })
+        .from(approvals)
+        .where(eq(approvals.id, granted.data.id))
+      expect(row?.usedAt).toBeNull()
+      expect((await create(deskHere(), withApproval(booking, granted.data.id))).status).toBe(200)
     })
 
     it('refuses another stay, another requester and another hotel', async () => {

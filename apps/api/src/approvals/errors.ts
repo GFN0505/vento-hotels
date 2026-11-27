@@ -137,3 +137,20 @@ export const approvalNotGiven = (approverName: string | null) =>
     'APPROVAL_NO_LONGER_VALID',
     `${approverName ?? 'The manager'} hasn't approved this. Ask again.`,
   )
+
+export const approvalOnOneStay = () =>
+  make('BAD_REQUEST', 'APPROVAL_NOT_MATCHING', 'An approval covers one stay. Ask for each stay.')
+
+export const tooManyOpenRequests = (max: number) =>
+  make(
+    'CONFLICT',
+    'TOO_MANY_OPEN_REQUESTS',
+    `You have ${max} requests waiting. Cancel one or wait for an answer.`,
+  )
+
+export const tooManyWrongPins = () =>
+  make(
+    'FORBIDDEN',
+    'TOO_MANY_PIN_TRIES',
+    'Too many wrong PINs from this desk. Wait 15 minutes, or send the request to an inbox.',
+  )

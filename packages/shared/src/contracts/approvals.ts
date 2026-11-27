@@ -34,6 +34,8 @@ export const APPROVAL_ERROR_CODES = [
   'APPROVAL_NOT_MATCHING',
   'APPROVAL_NO_LONGER_VALID',
   'REQUESTER_LEFT',
+  'TOO_MANY_OPEN_REQUESTS',
+  'TOO_MANY_PIN_TRIES',
   'PROPERTY_NOT_FOUND',
   'PROPERTY_ARCHIVED',
   'FEATURE_OFF',
@@ -141,6 +143,8 @@ const enteredPin = z.string().regex(/^\d{4}$/, 'Use 4 digits')
 const comment = z.string().trim().max(500, 'Use 500 characters or fewer')
 
 export const approveHereSchema = approvalActionSchema.extend({
+  // A double submit or a retry returns the same approval.
+  idempotencyKey: z.uuidv7(),
   approverMemberId: idSchema,
   pin: enteredPin,
 })

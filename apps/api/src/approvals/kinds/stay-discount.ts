@@ -6,6 +6,7 @@ import { ORPCError } from '@orpc/server'
 import {
   type ApprovalSubject,
   type approvalActionSchema,
+  Decimal,
   dec,
   formatPercent,
   nightsBetween,
@@ -36,8 +37,10 @@ type Reader = Pick<Database, 'select' | 'execute'>
 type Action = z.output<typeof approvalActionSchema>
 type Stay = Action['booking']['stays'][number]
 
+// Rounded up, never half: a rate per night that works out at 25.00004% must not pass as 25% for an
+// approver whose limit is 25 (the value is what eligibility compares with limits).
 export const percentOf = (priced: PricedStay) =>
-  priced.discount ? priced.discount.percent.toDecimalPlaces(4).toString() : '0'
+  priced.discount ? priced.discount.percent.toDecimalPlaces(4, Decimal.ROUND_UP).toString() : '0'
 
 async function guestName(db: Reader, access: Access, guest: Action['booking']['guest']) {
   if (guest.kind === 'new') return `${guest.fields.firstName} ${guest.fields.lastName}`.trim()

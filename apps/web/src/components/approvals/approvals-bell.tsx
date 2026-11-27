@@ -11,7 +11,7 @@ import { useProperty } from '@/components/shell/property-context'
 import { orpc } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { useMe } from '@/lib/me'
-import { keepWithinHotel, scopePropertyId } from '@/lib/scope'
+import { keepWithinHotel, scopeName, scopePropertyId } from '@/lib/scope'
 import { useOnline } from '@/offline/connection'
 import { age, yourRequestLine } from './format'
 
@@ -108,7 +108,32 @@ function BellPanel({
       input: { view: 'asked', propertyId, today: true, pageSize: 5 },
     }),
   )
+  const online = useOnline()
+  const { scope } = useProperty()
+  const where = scope ? scopeName(scope) : ''
   const hotel = (view: ApprovalView) => ({ hotel: view.propertyId })
+  // Never "all caught up" when the list couldn't be read: offline or failed says so.
+  const unread = (query: { data?: unknown; isError: boolean }) =>
+    query.data === undefined && (!online || query.isError)
+  const trouble = !online ? (
+    <p className="px-4 pb-3 text-sm text-am">
+      You're offline. Approvals show again when you're back.
+    </p>
+  ) : (
+    <div className="flex flex-wrap items-center gap-2 px-4 pb-3 text-sm">
+      <span className="text-ro">Couldn't load approvals at {where}.</span>
+      <button
+        type="button"
+        onClick={() => {
+          void waiting.refetch()
+          void mine.refetch()
+        }}
+        className="inline-flex min-h-11 items-center font-medium text-pri-ink hover:underline lg:min-h-0"
+      >
+        Try again
+      </button>
+    </div>
+  )
   return (
     <section
       id={id}
@@ -129,7 +154,9 @@ function BellPanel({
         <h3 className="px-4 pt-3 pb-1 text-[11px] font-semibold tracking-[0.05em] text-text-3 uppercase">
           Waiting for you
         </h3>
-        {waiting.isPending ? (
+        {unread(waiting) ? (
+          trouble
+        ) : waiting.isPending ? (
           <span className="mx-4 my-2 block h-12 animate-pulse rounded-sm bg-surface-2" />
         ) : (waiting.data?.items.length ?? 0) === 0 ? (
           <div className="px-4 pb-3">
@@ -164,6 +191,14 @@ function BellPanel({
             ))}
           </ul>
         )}
+        {unread(mine) && !unread(waiting) ? (
+          <>
+            <h3 className="px-4 pt-3 pb-1 text-[11px] font-semibold tracking-[0.05em] text-text-3 uppercase">
+              Your requests
+            </h3>
+            {trouble}
+          </>
+        ) : null}
         {(mine.data?.items.length ?? 0) > 0 ? (
           <>
             <h3 className="px-4 pt-3 pb-1 text-[11px] font-semibold tracking-[0.05em] text-text-3 uppercase">

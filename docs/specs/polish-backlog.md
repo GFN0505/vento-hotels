@@ -32,3 +32,9 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - Guest and reservation search: say "Type at least 3 characters" for 1–2 characters instead of showing nothing.
 - New reservation dates use the browser's native date inputs: swap for a design-system date range picker once one exists in `components/ui` (none today; not built here on purpose).
 - New reservation: Continue looks enabled while the quote refreshes (window focus) and only says "Checking the price. One moment." on click, so the person clicks twice; show a busy state on the button while refetching.
+
+## Approvals (brick 5)
+- New reservation, Review: `ApprovalStatus` builds a fake approval view with `as never` to reuse `answerLine`; give `answerLine` a narrow input type (status, approver name, times, comment, percent) instead.
+- The waiting poll (every 3 seconds) reads the whole request with `approvals.get`, draft included; add a slim status read (status, approver, times, comment) for it.
+- Bell badge: `text-white` on `bg-ro-dot`; check the contrast against the tokens in light and dark (or use a token for text on a status dot).
+- Bell: move focus into the panel when it opens (first row or See all), and back to the bell on close by click outside.

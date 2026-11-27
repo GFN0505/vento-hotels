@@ -15,7 +15,7 @@ The booking opens with its number, for example VI-2611-0483. Click **Copy confir
 ## Give a discount
 On **Room & rate**, click **Change rate** under the summary. Type a **Discount** in % or a **Rate per night** in naira (each fills in the other), pick a **Reason** and add a note if you like. The discount is on every night of the stay and is recorded with your name; the owner sees it in the next morning's report.
 
-Your role has a limit (front desk 10% by default, revenue managers 25%, GMs 50%; the owner sets them in **Permissions and limits**). Above it, Vento says so and you can't continue: use up to your limit, or ask a manager with a higher limit to make the booking. Approvals by a manager's PIN come later. A rate can't be above the plan's price, ₦0 (a free night is a comp) or below the breakfast part of a breakfast plan.
+Your role has a limit (front desk 10% by default, revenue managers 25%, GMs 50%; the owner sets them in **Permissions and limits**). Above it, Vento says so and a manager with a higher limit can approve it when you book: see [Get a discount approved by a manager](get-a-discount-approved.md). A rate can't be above the plan's price, ₦0 (a free night is a comp) or below the breakfast part of a breakfast plan.
 
 ## Booking through a restriction
 If a plan's dates have a min stay, are closed, or are closed to arrival, the plan says so in amber and you can still pick it. **Review & book** then asks for a reason, which is recorded with your name.
@@ -32,6 +32,7 @@ In **Reservations**, press **/** and type the guest's name, part of their phone 
 New bookings need a connection, because rooms left are only certain on the server. Offline, **New reservation** and **Book** are disabled, and the list shows what was last loaded. If the connection dropped just as you clicked **Book**, keep the window open: Vento checks whether it went through when you're back online, and never books twice.
 
 ## Related
+- [Get a discount approved by a manager](get-a-discount-approved.md)
 - [Set up your rates](../getting-started/set-up-rates.md)
 - [Sign in on a shared device with your PIN](../getting-started/sign-in-on-a-shared-device.md)
 - [When the internet or power drops](../getting-started/when-the-internet-drops.md)

@@ -47,5 +47,6 @@ docs/help/
 | [Add a hotel](getting-started/add-a-hotel.md) | `going-live.md` step 1b, "Later: opening Kora Lekki" | written |
 | [Manage your companies](getting-started/manage-companies.md) | `going-live.md` step 1b | written |
 | [Take a phone booking](reservations/take-a-phone-booking.md) | `front-desk-morning.md` step 6a | written |
+| [Get a discount approved by a manager](reservations/get-a-discount-approved.md) | `front-desk-morning.md` step 6b | written |
 
 Status: `todo` · `written` · `published`

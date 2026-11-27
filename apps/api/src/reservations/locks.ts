@@ -6,7 +6,8 @@
 //      archive and night audit)
 //   3. rooms FOR UPDATE, then room types (room writes only)
 //   4. room_type_inventory rows FOR UPDATE, ordered by room type id, then date
-//   5. approval rows FOR UPDATE, by id (an approved discount being used, approvals/use.ts)
+//   5. approval rows FOR UPDATE, all of the request's at once in id order (approvals/use.ts); the
+//      expiry job skips locked rows, so it never waits on a booking
 //   6. the guest row (an existing guest being corrected)
 //   7. the reservation counter row (upsert)
 // Code that takes more than one takes them in this order. Room count changes (rooms/room-count.ts)

@@ -23,7 +23,20 @@ import {
   type requestApprovalSchema,
   toPage,
 } from '@vento/shared'
-import { and, asc, count, desc, eq, getTableColumns, gt, not, or, type SQL } from 'drizzle-orm'
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  getTableColumns,
+  gt,
+  inArray,
+  isNull,
+  not,
+  or,
+  type SQL,
+} from 'drizzle-orm'
 import type { z } from 'zod'
 import { type AuditEvent, recordAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
@@ -50,9 +63,12 @@ import {
   pinNeedsReset,
   requesterLeft,
   selfApproval,
+  tooManyOpenRequests,
+  tooManyWrongPins,
   wrongPin,
 } from './errors.ts'
 import { type EvaluatedStay, evaluateStayDiscount, STAY_DISCOUNT } from './kinds/stay-discount.ts'
+import { countWrongTry, wrongTriesLeft } from './wrong-tries.ts'
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
 type Reader = Pick<Database, 'select'>
@@ -230,35 +246,66 @@ function pinFailure(
 }
 
 // Earlier open requests for the same booking are cancelled when it is asked again.
+// Asking again for the same booking supersedes what was asked before: a pending request, and an
+// approval given but not used, so one booking never holds two usable approvals.
+const SUPERSEDED = 'Asked again'
+
 async function cancelOthers(tx: Tx, access: Access, actionKey: string, businessDate: string) {
-  const cancelled = await tx
-    .update(approvals)
-    .set({
-      status: 'cancelled',
-      draft: null,
-      reason: CANCEL_REASON_LABELS.booking_changed,
-      updatedAt: new Date(),
-    })
+  const open = await tx
+    .select({ id: approvals.id, status: approvals.status, propertyId: approvals.propertyId })
+    .from(approvals)
     .where(
       and(
         eq(approvals.organizationId, access.organizationId),
         eq(approvals.requesterMemberId, access.memberId),
         eq(approvals.actionKey, actionKey),
-        eq(approvals.status, 'pending'),
+        inArray(approvals.status, ['pending', 'approved']),
+        isNull(approvals.usedAt),
       ),
     )
-    .returning({ id: approvals.id, propertyId: approvals.propertyId })
-  for (const row of cancelled) {
+    .orderBy(asc(approvals.id))
+    .for('update')
+  if (open.length === 0) return
+  await tx
+    .update(approvals)
+    .set({ status: 'cancelled', draft: null, reason: SUPERSEDED, updatedAt: new Date() })
+    .where(
+      inArray(
+        approvals.id,
+        open.map((row) => row.id),
+      ),
+    )
+  for (const row of open) {
     await recordAudit(tx, access, {
       action: 'approval.cancelled',
       entityType: 'approval',
       entityId: row.id,
       propertyId: row.propertyId,
       businessDate,
-      reason: CANCEL_REASON_LABELS.booking_changed,
+      reason: SUPERSEDED,
+      before: { status: row.status },
       after: { status: 'cancelled' },
     })
   }
+}
+
+// A requester can have a few requests waiting at once, not a flood of them.
+export const MAX_OPEN_REQUESTS = 5
+
+async function requireRoomForAnother(db: Reader, access: Access, actionKey: string, now: Date) {
+  const [row] = await db
+    .select({ value: count() })
+    .from(approvals)
+    .innerJoin(properties, eq(properties.id, approvals.propertyId))
+    .where(
+      and(
+        eq(approvals.organizationId, access.organizationId),
+        eq(approvals.requesterMemberId, access.memberId),
+        not(eq(approvals.actionKey, actionKey)),
+        openNow(now),
+      ),
+    )
+  if ((row?.value ?? 0) >= MAX_OPEN_REQUESTS) throw tooManyOpenRequests(MAX_OPEN_REQUESTS)
 }
 
 // --- Asking ---------------------------------------------------------------------------------------
@@ -303,83 +350,100 @@ export async function approveHere(
   input: z.output<typeof approveHereSchema>,
   device: ThisDevice,
 ): Promise<ApprovalView> {
+  // A double submit or a retry returns the approval already given, never a second one.
+  const replayed = await replay(db, access, input.idempotencyKey)
+  if (replayed) return replayed
   const now = new Date()
   const evaluated = await evaluate(db, access, input, now, device?.name ?? null)
   if (!device || device.propertyId !== evaluated.hotel.id) throw pinHereNeedsDevice()
+  if (wrongTriesLeft(access.memberId) <= 0) throw tooManyWrongPins()
   requireOverLimit(access, evaluated.value)
   const approver = await requireApprover(db, access, evaluated, input.approverMemberId)
   const businessDate = evaluated.hotel.businessDate
   const id = newId()
-  const outcome = await db.transaction(async (tx): Promise<{ id: string } | Failure> => {
-    const pin = await lockPin(tx, access.organizationId, approver.memberId)
-    if (!pin) return { error: needsPin(approver.name) }
-    const checked = await tryPin(tx, pin, input.pin, {
-      organizationId: access.organizationId,
-      propertyId: evaluated.hotel.id,
-      deviceId: device.id,
-      deviceName: device.name,
-      actorLabel: 'Approvals',
-    })
-    if (!('ok' in checked)) {
-      return { error: pinFailure(checked, approver.name, evaluated.hotel.timeZone, false) }
-    }
-    await cancelOthers(tx, access, input.booking.idempotencyKey, businessDate)
-    await tx.insert(approvals).values({
-      id,
-      organizationId: access.organizationId,
-      propertyId: evaluated.hotel.id,
-      kind: STAY_DISCOUNT.kind,
-      permission: STAY_DISCOUNT.permission,
-      value: evaluated.value,
-      valueKind: STAY_DISCOUNT.valueKind,
-      status: 'approved',
-      method: 'pin_here',
-      requesterMemberId: access.memberId,
-      requesterName: access.userName,
-      requesterLimit: discountLimitOf(access),
-      approverMemberId: approver.memberId,
-      approverName: approver.name,
-      approverLimit: approver.limit,
-      bindingHash: evaluated.bindingHash,
-      subject: evaluated.subject,
-      actionKey: input.booking.idempotencyKey,
-      businessDate,
-      requestedAt: now,
-      answeredAt: now,
-      expiresAt: later(now),
-      requestDeviceId: device.id,
-      approverDeviceId: device.id,
-      idempotencyKey: newId(),
-    })
-    await recordAudit(
-      tx,
-      { ...access, deviceId: device.id },
-      {
-        action: 'approval.granted',
-        entityType: 'approval',
-        entityId: id,
+  let outcome: { id: string } | Failure
+  try {
+    outcome = await db.transaction(async (tx): Promise<{ id: string } | Failure> => {
+      const pin = await lockPin(tx, access.organizationId, approver.memberId)
+      if (!pin) return { error: needsPin(approver.name) }
+      const checked = await tryPin(tx, pin, input.pin, {
+        organizationId: access.organizationId,
         propertyId: evaluated.hotel.id,
-        businessDate,
+        deviceId: device.id,
+        deviceName: device.name,
+        actorLabel: 'Approvals',
+        actor: { ...access, deviceId: device.id },
+      })
+      if (!('ok' in checked)) {
+        // A wrong PIN (or the one that locks it) counts against this desk as well as the approver.
+        if (!pinBlocked(pin)) countWrongTry(access.memberId)
+        return { error: pinFailure(checked, approver.name, evaluated.hotel.timeZone, false) }
+      }
+      await cancelOthers(tx, access, input.booking.idempotencyKey, businessDate)
+      await tx.insert(approvals).values({
+        id,
+        organizationId: access.organizationId,
+        propertyId: evaluated.hotel.id,
+        kind: STAY_DISCOUNT.kind,
+        permission: STAY_DISCOUNT.permission,
+        value: evaluated.value,
+        valueKind: STAY_DISCOUNT.valueKind,
+        status: 'approved',
+        method: 'pin_here',
+        requesterMemberId: access.memberId,
+        requesterName: access.userName,
+        requesterLimit: discountLimitOf(access),
         approverMemberId: approver.memberId,
-        after: {
-          approvalId: id,
-          kind: STAY_DISCOUNT.kind,
-          permission: STAY_DISCOUNT.permission,
-          value: evaluated.value,
-          method: 'pin_here',
-          device: device.name,
-          requesterMemberId: access.memberId,
-          requesterName: access.userName,
-          requesterLimit: discountLimitOf(access),
-          approverName: approver.name,
-          approverLimit: approver.limit,
-          subject: evaluated.subject,
-          expiresAt: later(now).toISOString(),
+        approverName: approver.name,
+        approverLimit: approver.limit,
+        bindingHash: evaluated.bindingHash,
+        subject: evaluated.subject,
+        actionKey: input.booking.idempotencyKey,
+        businessDate,
+        requestedAt: now,
+        answeredAt: now,
+        expiresAt: later(now),
+        requestDeviceId: device.id,
+        approverDeviceId: device.id,
+        idempotencyKey: input.idempotencyKey,
+      })
+      await recordAudit(
+        tx,
+        { ...access, deviceId: device.id },
+        {
+          action: 'approval.granted',
+          entityType: 'approval',
+          entityId: id,
+          propertyId: evaluated.hotel.id,
+          businessDate,
+          approverMemberId: approver.memberId,
+          after: {
+            approvalId: id,
+            kind: STAY_DISCOUNT.kind,
+            permission: STAY_DISCOUNT.permission,
+            value: evaluated.value,
+            method: 'pin_here',
+            device: device.name,
+            requesterMemberId: access.memberId,
+            requesterName: access.userName,
+            requesterLimit: discountLimitOf(access),
+            approverName: approver.name,
+            approverLimit: approver.limit,
+            subject: evaluated.subject,
+            expiresAt: later(now).toISOString(),
+          },
         },
-      },
-    )
-    return { id }
-  })
+      )
+      return { id }
+    })
+  } catch (error) {
+    // The same key submitted twice at once: the second finds the first's approval.
+    if (isUniqueViolation(error)) {
+      const again = await replay(db, access, input.idempotencyKey)
+      if (again) return again
+    }
+    throw error
+  }
   if ('error' in outcome) throw outcome.error
   return toView(await loadRow(db, access, outcome.id), access, now)
 }
@@ -398,6 +462,7 @@ export async function requestApproval(
   const evaluated = await evaluate(db, access, input, now, device?.name ?? null)
   requireOverLimit(access, evaluated.value)
   const approver = await requireApprover(db, access, evaluated, input.approverMemberId)
+  await requireRoomForAnother(db, access, input.booking.idempotencyKey, now)
   const businessDate = evaluated.hotel.businessDate
   const id = newId()
   try {
@@ -621,6 +686,7 @@ export async function approveRequest(
       deviceId: access.deviceId,
       deviceName: null,
       actorLabel: 'Approvals',
+      actor: access,
     })
     if (!('ok' in checked))
       return { error: pinFailure(checked, access.userName, row.timeZone, true) }

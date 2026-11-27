@@ -288,7 +288,15 @@ export const createReservationSchema = z.object({
         .refine(afterArrival, departureIssue),
     )
     .min(1)
-    .max(MAX_STAYS),
+    .max(MAX_STAYS)
+    // An approval covers one stay (spec: stage-1-approvals.md).
+    .refine(
+      (list) => {
+        const ids = list.flatMap((stay) => (stay.approvalId ? [stay.approvalId] : []))
+        return new Set(ids).size === ids.length
+      },
+      { message: 'An approval covers one stay. Ask for each stay.' },
+    ),
 })
 export type CreateReservationInput = z.input<typeof createReservationSchema>
 

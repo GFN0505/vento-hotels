@@ -47,6 +47,7 @@ export function ApprovalPrompt({ action, timeZone, onApproved, onSent, onClose }
   const askedAt = useRef(new Date())
   // One key per request: a double tap or a retry after a dropped connection returns the same one.
   const requestKey = useRef(newId())
+  const hereKey = useRef(newId())
   const approvers = useQuery({
     ...orpc.approvals.approvers.queryOptions({ input: action }),
     enabled: online,
@@ -76,9 +77,11 @@ export function ApprovalPrompt({ action, timeZone, onApproved, onSent, onClose }
     try {
       const approval = await approveHere.mutateAsync({
         ...action,
+        idempotencyKey: hereKey.current,
         approverMemberId: approver.memberId,
         pin,
       })
+      hereKey.current = newId()
       onApproved(approval)
     } catch (error) {
       const code = errorCode(error)

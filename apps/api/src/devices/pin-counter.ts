@@ -5,7 +5,7 @@
 // stick even though the action it was for is refused.
 import { verifyPassword } from 'better-auth/crypto'
 import { eq } from 'drizzle-orm'
-import { recordSystemAudit } from '../audit/record.ts'
+import { type Actor, recordAudit, recordSystemAudit } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { memberPins } from '../db/schema/tenancy.ts'
 
@@ -38,6 +38,9 @@ export type PinWhere = {
   deviceName: string | null
   // Who the lockout event names as acting: "Lock screen", "Approvals".
   actorLabel: string
+  // The signed-in member whose screen the PIN was typed on (approvals): the lockout event names
+  // them as the actor, so a desk locking out managers is visible in the audit log.
+  actor?: Actor | undefined
 }
 
 // Whether the PIN can be tried at all, without trying it.
@@ -76,25 +79,29 @@ export async function tryPin(tx: Tx, row: PinRow, pin: string, where: PinWhere):
     .update(memberPins)
     .set({ failedAttempts: 0, lockedUntil, lockCount, updatedAt: now })
     .where(eq(memberPins.id, row.pinId))
-  await recordSystemAudit(
-    tx,
-    where.organizationId,
-    {
-      action: 'pin.locked',
-      entityType: 'member',
-      entityId: row.memberId,
-      propertyId: where.propertyId,
-      deviceId: where.deviceId,
-      after: {
-        name: row.name,
-        device: where.deviceName,
-        lockedUntil: lockedUntil.toISOString(),
-        lockCount,
-        needsReset: lockCount >= PIN_LOCKS_BEFORE_RESET,
-      },
+  const event = {
+    action: 'pin.locked',
+    entityType: 'member',
+    entityId: row.memberId,
+    propertyId: where.propertyId,
+    deviceId: where.deviceId,
+    after: {
+      name: row.name,
+      device: where.deviceName,
+      lockedUntil: lockedUntil.toISOString(),
+      lockCount,
+      needsReset: lockCount >= PIN_LOCKS_BEFORE_RESET,
+      ...(where.actor
+        ? {
+            via: where.actorLabel,
+            typedBy: where.actor.userName,
+            typedByMemberId: where.actor.memberId,
+          }
+        : {}),
     },
-    where.actorLabel,
-  )
+  }
+  if (where.actor) await recordAudit(tx, where.actor, event)
+  else await recordSystemAudit(tx, where.organizationId, event, where.actorLabel)
   if (lockCount >= PIN_LOCKS_BEFORE_RESET) return { code: 'PIN_NEEDS_RESET' }
   return { code: 'PIN_LOCKED', lockedUntil: lockedUntil.toISOString() }
 }

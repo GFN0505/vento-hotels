@@ -401,14 +401,16 @@ export const router = base.router({
         await approvals.thisDevice(context.db, context.access, context.headers),
       )
     }),
-    request: inOrganization.approvals.request.handler(async ({ context, input }) =>
-      approvals.requestApproval(
+    // Each request lands in someone's inbox: 20 per person per 10 minutes is plenty.
+    request: inOrganization.approvals.request.handler(async ({ context, input }) => {
+      context.limiter.take(`approval-request:${context.access.memberId}`, 20, 600)
+      return approvals.requestApproval(
         context.db,
         context.access,
         input,
         await approvals.thisDevice(context.db, context.access, context.headers),
-      ),
-    ),
+      )
+    }),
     get: inOrganization.approvals.get.handler(({ context, input }) =>
       approvals.getApproval(context.db, context.access, input.id),
     ),
