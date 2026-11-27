@@ -18,10 +18,19 @@ const ACTIVITY_WRITE_SECONDS = 15
 const signedOut = (why: string) =>
   new ORPCError('UNAUTHORIZED', { message: why, data: { code: 'DEVICE_SESSION_ENDED' } })
 
+// Reads the app makes on its own, without anyone touching the device: the waiting screen's poll and
+// the bell's count (spec stage-1-approvals.md). They are still checked, but don't keep a waiting
+// shared PC awake, so it still locks after its idle time.
+export const BACKGROUND_PROCEDURES: ReadonlySet<string> = new Set([
+  'approvals.get',
+  'approvals.count',
+])
+
 export async function guardDeviceSession(
   db: Database,
   session: { id: string; createdAt: Date; deviceId: string },
   headers: Headers,
+  options: { background?: boolean } = {},
 ): Promise<void> {
   const [row] = await db
     .select({
@@ -52,7 +61,7 @@ export async function guardDeviceSession(
   if (now - last > (idleSecondsFor(row.kind) + IDLE_GRACE_SECONDS) * 1000) {
     return end('Signed out after inactivity')
   }
-  if (now - last > ACTIVITY_WRITE_SECONDS * 1000) {
+  if (!options.background && now - last > ACTIVITY_WRITE_SECONDS * 1000) {
     await db
       .update(sessions)
       .set({ deviceActiveAt: new Date(now) })

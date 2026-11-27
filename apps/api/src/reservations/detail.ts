@@ -16,6 +16,7 @@ import {
 } from '@vento/shared'
 import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm'
 import type { Database } from '../db/client.ts'
+import { approvals } from '../db/schema/approvals.ts'
 import { bankAccounts } from '../db/schema/finance.ts'
 import { auditEvents } from '../db/schema/governance.ts'
 import { guests, reservations, stayNights, stays } from '../db/schema/reservations.ts'
@@ -48,9 +49,18 @@ function activityLine(event: { action: string; reason: string | null; after: unk
     case 'stay.discount_applied': {
       const nights = (after.nights as { planPrice: string; soldPrice: string }[] | undefined) ?? []
       const first = nights[0]
+      const approver =
+        typeof after.approverName === 'string'
+          ? `Approved by ${after.approverName} (${
+              after.approvalMethod === 'pin_here'
+                ? `PIN${typeof after.approvalDevice === 'string' ? ` on ${after.approvalDevice}` : ''}`
+                : 'inbox'
+            })`
+          : null
       const parts = [
         first ? `${naira(first.planPrice)} → ${naira(first.soldPrice)}` : null,
         event.reason ? `“${event.reason}”` : null,
+        approver,
       ]
       return {
         title: `Discount ${formatPercent(String(after.percent ?? '0'))}%`,
@@ -171,6 +181,24 @@ export async function getReservation(
     .innerJoin(roomTypes, eq(roomTypes.id, stays.roomTypeId))
     .where(eq(stays.reservationId, reservation.id))
     .orderBy(asc(stays.arrival), asc(stays.id))
+  // Who approved a discount over the limit: the approval used for each stay (brick 5).
+  const approvers = new Map(
+    (
+      await db
+        .select({ stayId: approvals.usedEntityId, name: approvals.approverName })
+        .from(approvals)
+        .where(
+          and(
+            eq(approvals.organizationId, access.organizationId),
+            eq(approvals.usedEntityType, 'stay'),
+            inArray(
+              approvals.usedEntityId,
+              stayRows.map((row) => row.stay.id),
+            ),
+          ),
+        )
+    ).map((row) => [row.stayId, row.name]),
+  )
   const nightRows = await db
     .select()
     .from(stayNights)
@@ -224,6 +252,7 @@ export async function getReservation(
               reasonText: stay.discountReasonText,
               note: stay.discountNote,
               byName: stay.discountByName ?? '',
+              approverName: approvers.get(stay.id) ?? null,
             }
           : null,
       restrictionOverride: stay.restrictionOverride as {

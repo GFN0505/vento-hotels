@@ -16,6 +16,7 @@ import {
 } from '@vento/shared'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import type { z } from 'zod'
+import { markApprovalUsed, type UsedApproval } from '../approvals/use.ts'
 import { type AuditEvent, recordAuditMany } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation, violatedConstraint } from '../db/errors.ts'
@@ -211,6 +212,7 @@ export async function bookInTx(
   const allDates = input.stays.flatMap((stay) => nightKeys(stay).map((key) => key.date))
   const rules = await rulesByNight(tx, access, hotel, allDates)
   const priced: PricedStay[] = []
+  const approved: (UsedApproval | null)[] = []
   for (const [index, stay] of input.stays.entries()) {
     const quote = await quoteStay(tx, access, { propertyId: hotel.id, ...stay })
     if (quote.terms.bookableBy === 'corporate_only' && !options.allowCorporate) {
@@ -219,7 +221,15 @@ export async function bookInTx(
     const broken = quote.breaks[0]
     if (broken && !stay.restrictionReason) throw restrictionReasonRequired(broken.kind, broken.date)
     const result = priceStay(quote, stay.discount, rules, hotel, bookedAt)
-    requireDiscountAllowed(access, result)
+    // Step 5b: an approval for a discount over the limit is locked and checked here.
+    approved.push(
+      await requireDiscountAllowed(tx, access, result, stay, {
+        propertyId: hotel.id,
+        businessDate,
+        timeZone: hotel.timeZone,
+        now: bookedAt,
+      }),
+    )
     if (!options.trustQuote && result.hash !== stay.quoteHash) {
       throw priceChanged(index, priceChangedMessage(result))
     }
@@ -277,6 +287,7 @@ export async function bookInTx(
   const storedStays = []
   for (const [index, stay] of input.stays.entries()) {
     const result = priced[index] as PricedStay
+    const approval = approved[index] ?? null
     const stayId = newId()
     const discount = result.discount
     const broken = result.quote.breaks[0]
@@ -347,10 +358,14 @@ export async function bookInTx(
       propertyId: hotel.id,
       businessDate,
     }
+    if (approval) {
+      await markApprovalUsed(tx, approval.id, { stayId, reference: number, at: bookedAt })
+    }
     if (discount) {
       stayEvents.push({
         action: 'stay.discount_applied',
         ...at,
+        approverMemberId: approval?.approverMemberId ?? null,
         reason: discount.input.reasonText || DISCOUNT_REASON_LABELS[discount.input.reason],
         after: {
           stayId,
@@ -363,7 +378,16 @@ export async function bookInTx(
           limit: access.rules['stay.rate_override'].limit,
           discountReason: discount.input.reason,
           note: discount.input.note ?? null,
-          approverMemberId: null,
+          approverMemberId: approval?.approverMemberId ?? null,
+          ...(approval
+            ? {
+                approvalId: approval.id,
+                approverName: approval.approverName,
+                approverLimit: approval.approverLimit,
+                approvalMethod: approval.method,
+                approvalDevice: approval.deviceName,
+              }
+            : {}),
           exception: 'discount',
           liveProperty: hotel.liveSince !== null,
         },

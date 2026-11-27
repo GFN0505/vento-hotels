@@ -6,11 +6,13 @@
 //      archive and night audit)
 //   3. rooms FOR UPDATE, then room types (room writes only)
 //   4. room_type_inventory rows FOR UPDATE, ordered by room type id, then date
-//   5. the guest row (an existing guest being corrected)
-//   6. the reservation counter row (upsert)
+//   5. approval rows FOR UPDATE, by id (an approved discount being used, approvals/use.ts)
+//   6. the guest row (an existing guest being corrected)
+//   7. the reservation counter row (upsert)
 // Code that takes more than one takes them in this order. Room count changes (rooms/room-count.ts)
 // take 2 → 3 → 4 without the rates lock: they never touch prices, and bookings never lock rooms or
-// room types, so there is no cycle.
+// room types, so there is no cycle. Answering an approval locks its row, then the approver's
+// member_pins row; bookings never lock member_pins, so that is no cycle either.
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { roomTypeInventory } from '../db/schema/reservations.ts'
 import { rooms, roomTypes } from '../db/schema/rooms.ts'
@@ -27,6 +29,8 @@ function unique(keys: readonly NightKey[]): NightKey[] {
 }
 
 // Creates any missing rows (booked 0) in one statement, in lock order. A row is created on first use.
+// Only for room types of this hotel: an id from elsewhere gets no row, and the caller then answers
+// "We couldn't find that room type" instead of failing on the foreign key.
 export async function ensureInventory(tx: Tx, scope: Scope, keys: readonly NightKey[]) {
   const list = unique(keys)
   if (list.length === 0) return
@@ -36,6 +40,10 @@ export async function ensureInventory(tx: Tx, scope: Scope, keys: readonly Night
     insert into ${roomTypeInventory} (organization_id, property_id, room_type_id, date)
     select ${scope.organizationId}::uuid, ${scope.propertyId}::uuid, k.room_type_id, k.date
     from unnest(${sql.param(types)}::uuid[], ${sql.param(dates)}::date[]) as k(room_type_id, date)
+    where exists (
+      select 1 from ${roomTypes} rt
+      where rt.id = k.room_type_id and rt.property_id = ${scope.propertyId}::uuid
+    )
     order by k.room_type_id, k.date
     on conflict (room_type_id, date) do nothing`)
 }

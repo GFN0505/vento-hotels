@@ -294,7 +294,11 @@ describe.skipIf(!url)('availability and new reservations', () => {
         { ...stay(), discount: { kind: 'percent', value: '12.01', reason: 'repeat_guest' } },
       ])
       expect(over.status).toBe(403)
-      expect(over.data.data).toMatchObject({ code: 'DISCOUNT_OVER_LIMIT', requested: '12.01' })
+      expect(over.data.data).toMatchObject({
+        code: 'DISCOUNT_OVER_LIMIT',
+        requested: '12.01',
+        canAsk: true,
+      })
       const owner = await book(t, k.owner.cookie, k.vi.id, [
         { ...stay(), discount: { kind: 'percent', value: '40', reason: 'service_recovery' } },
       ])
