@@ -1,7 +1,7 @@
 # 0021 · Modules and features ship behind switches
 
 - **Date:** 2026-11-26
-- **Status:** accepted
+- **Status:** accepted; the "Who switches" bullet (command only, support console in Stage 6) is superseded by 0027
 
 ## Context
 Everything merged into `main` ships. The owner wants to build ahead and release when ready: an MVP first, then modules one by one, first to a pilot hotel group and then to everyone. Pricing per module is also an open question (`docs/DOMAIN.md`), so a group may not have bought a module at all. Hiding a menu entry isn't enough: the API must refuse a switched-off module too.

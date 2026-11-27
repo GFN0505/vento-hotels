@@ -33,11 +33,12 @@ Things still undecided stay under *Open questions* in `docs/DOMAIN.md` until the
 | [0018](0018-permissions-and-audit-in-practice.md) | Permissions as data with per-group overrides; audit in the same transaction | accepted |
 | [0019](0019-same-origin-web-and-api.md) | The web app and the API share one origin | accepted |
 | [0020](0020-invitations.md) | Invitations are Vento's, with a secret link that also confirms the email | accepted |
-| [0021](0021-feature-switches.md) | Modules and features ship behind switches | accepted |
+| [0021](0021-feature-switches.md) | Modules and features ship behind switches | accepted; "who switches" superseded by 0027 |
 | [0022](0022-shared-devices-and-pin.md) | Shared devices are registered, and staff sign in on them with a PIN | accepted |
 | [0023](0023-two-step-sign-in.md) | Two-step sign-in with an authenticator app, optional for now | accepted |
 | [0024](0024-offline-shell-first.md) | The offline shell ships in Stage 0; the outbox ships with the first offline command | accepted |
 | [0025](0025-jobs-logs-and-error-tracking.md) | Background jobs on pg-boss, structured logs, and error tracking without personal data | accepted |
 | [0026](0026-hosting-on-contabo.md) | Hosting on Contabo servers we run ourselves, with Docker Compose | accepted |
+| [0027](0027-vento-console.md) | The Vento console is a separate staff area in Stage 1, behind required two-step | accepted |
 
 Template: [0000-template.md](0000-template.md)

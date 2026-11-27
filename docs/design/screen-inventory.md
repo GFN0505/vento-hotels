@@ -152,8 +152,8 @@ Covered by round 4 of the design prompt (screens 24–29).
 |---|---|---|---|
 | Data import | designed #23 | 1 | |
 | Customer billing (plan, invoices) | designed #46 | 6 | Pricing model still open |
-| Support access consent (customer side) | designed #46 | 6 | Grant time-limited access |
-| Support console (Vento staff) | pattern | 6 | Internal; plain design is fine |
+| Support access consent (customer side) | designed #46 | 1 (brick 5b) | Grant time-limited access |
+| Vento console (Vento staff) | pattern | 1 (brick 5b) | Internal; plain design is fine. Groups, group detail, feature switches, trials, failed jobs, support view, activity (decision 0027) |
 
 ## Screens that will change as the work goes on
 Design these now, but expect a revision when the trigger happens.

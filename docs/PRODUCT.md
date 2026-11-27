@@ -89,7 +89,9 @@ Every customer is moving from another PMS or from Excel. Import from CSV/Excel t
 A small, fixed catalogue that every hotel needs, all exportable to PDF and Excel: manager's flash report, owner's daily report, arrivals, departures and in-house lists, guest register (incl. foreign nationals, for authorities), room status and discrepancy report, cashier/shift report, revenue by department and payment method, deposits held, city ledger ageing, no-shows and cancellations, rate override and discount report, POS sales and voids, stock and variance, tax report (VAT, consumption tax, service charge). No report builder in v1.
 
 ### Running Vento as a business
-Our own subscription billing of customers (plans by property and rooms, trial, invoices in NGN), a support console where staff can view a customer's account only with the customer's time-limited consent (logged), status page, daily backups with tested restores, and a seeded demo group for sales and tests.
+- **Vento console** (built in Stage 1, before the first pilot goes live; decision 0027, spec `docs/specs/stage-1-vento-console.md`): the Vento team's own area, kept apart from every customer workspace and opened only with a real two-step sign-in. It lists hotel groups and their hotels, switches modules per group (the same switches and audit as `pnpm features`), runs trials, shows failed background jobs, and opens a read-only support view of a group only with the owner's time-limited consent, with everything logged on both sides.
+- **Subscription billing** (Stage 6): plans by property and rooms, invoices in NGN, and what happens when a trial ends unpaid. It plugs into the console's groups and trials.
+- Status page, daily backups with tested restores, and a seeded demo group for sales and tests.
 
 ## How modules connect
 ```
@@ -116,12 +118,12 @@ All ten modules are in v1, built in stages. Each stage ends usable by a real pil
 | Stage | Scope | A pilot hotel can… |
 |---|---|---|
 | **0. Foundation** *(complete)* | Monorepo, sign-in with organizations, properties and entities, permissions matrix and limits, audit events, team invites and roles, feature switches per group, shared devices with PIN sign-in, two-step sign-in, app shell with the full menu and preview as a role, a role-shaped Home with an All hotels view, offline shell, background jobs, structured logs and error tracking, demo seed, CI with UX gates, deploy setup for Contabo | sign in, set up a group and its hotels, invite the team, register shared devices |
-| **1. Front office** | Room types and rooms, rate plans (manual), reservations, tape chart, check-in/out, walk-in, folios, payments, cashier shifts, corporate accounts with credit limits and settle-to-company (city ledger balances and statements), night audit, guest register, core reports, owner's daily report, data import | run the front desk without its old PMS |
+| **1. Front office** | Room types and rooms, rate plans (manual), reservations, tape chart, check-in/out, walk-in, folios, payments, cashier shifts, corporate accounts with credit limits and settle-to-company (city ledger balances and statements), night audit, guest register, core reports, owner's daily report, data import; and, for the Vento team, the Vento console (groups and hotels, feature switches, trials, failed jobs, consented read-only support access) | run the front desk without its old PMS |
 | **2. Housekeeping & maintenance** | Room status board, attendant app, inspections, discrepancy check, work orders, OOO, power and diesel log | run rooms and catch sleepers/skippers |
 | **3. Restaurant & bar** | Outlets, menus, POS offline, kitchen tickets, post to room, voids/comps controls | run F&B and charge rooms |
 | **4. Distribution & guests** | Booking engine, channel manager, restrictions, guest profiles, corporates, group blocks, events, guest messages, guest app | sell direct and on OTAs, manage corporates |
 | **5. Back office** | City ledger invoicing, ageing and collections, ledger per entity, reconciliation, taxes, inventory and procurement, recipes, HR and payroll | close the books and pay staff |
-| **6. Group & analytics** | Group dashboards, KPIs, budgets, board pack, subscription billing, support console | run the whole group from one screen |
+| **6. Group & analytics** | Group dashboards, KPIs, budgets, board pack, subscription billing (the Vento console itself moved to Stage 1, decision 0027) | run the whole group from one screen |
 
 Stage 0 is complete except going live on servers: the deploy setup is built and waits for the owner's Contabo servers (one-time setup in `docs/ops/deploy.md`).
 
