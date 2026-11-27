@@ -1,7 +1,6 @@
 // The frame every change runs in: one transaction, the change's key lock (twins of one request queue
-// here, so the second finds the first's result), the hotel's rates lock (shared), the hotel row
-// (FOR SHARE: not archived, business date can't roll meanwhile), then the replay check, then the
-// change itself, which locks the reservation row next (lock step 2b). A key reused with a different
+// here, so the second finds the first's result), the replay check, the hotel's rates lock (shared), the hotel row
+// (FOR SHARE: not archived, business date can't roll meanwhile), then the change itself, which locks the reservation row next (lock step 2b). A key reused with a different
 // change is refused; a key from another hotel or group is never revealed.
 import { createHash } from 'node:crypto'
 import type { ChangedReservation } from '@vento/shared'
@@ -85,11 +84,14 @@ export async function inChangeTransaction(
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`change:${access.organizationId}:${request.idempotencyKey}`}, 0))`,
       )
+      // A replay is answered before the hotel checks: a change that already succeeded (an offline
+      // retry) gets its result even if the hotel has been archived since. Only the member's hotels
+      // are searched, so a key never reveals another's change.
+      const existing = await existingChange(tx, access, request.idempotencyKey)
+      if (existing) return replay(tx, existing, request.hash)
       const propertyId = await reservationHotel(tx, access, request.reservationId)
       await lockHotelRatesShared(tx, propertyId)
       const hotel = await holdBookingHotel(tx, access, propertyId)
-      const existing = await existingChange(tx, access, request.idempotencyKey)
-      if (existing) return replay(tx, existing, request.hash)
       return work(tx, hotel)
     })
   } catch (error) {

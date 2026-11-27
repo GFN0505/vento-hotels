@@ -24,6 +24,7 @@ import {
   roomTypeInventory,
   stayNights,
 } from '../../db/schema/reservations.ts'
+import { properties } from '../../db/schema/tenancy.ts'
 import { switchFeature } from '../../features/switches.ts'
 import { setHotel } from '../../finance/testing.ts'
 import { limitTo, person } from '../../tenancy/testing.ts'
@@ -74,14 +75,17 @@ describe.skipIf(!url)('modify, cancel and no-show', () => {
   // Arriving tomorrow on the business date: free cancellation ended 24 Nov, 14:00.
   let lateDay = 0
   const lateStay = (nights = 2) => {
-    // Executive King has 3 rooms; spread late stays across types and the next few days.
-    const type = [k.types.stq, k.types.jrs, k.types.exk][lateDay % 3]
+    // Arriving tomorrow or the day after: free cancellation ended whatever today is (from 27 Nov).
+    // Spread over the room types so none fills up.
+    const types = [k.types.stq, k.types.jrs, k.types.exk, k.types.dlk]
+    const type = types[lateDay % types.length]
+    const arrival = addDays(DAY, 1 + (Math.floor(lateDay / types.length) % 2))
     lateDay++
     return {
       roomTypeId: type?.id ?? k.types.stq.id,
       ratePlanId: k.bar.id,
-      arrival: addDays(DAY, 1 + Math.floor(lateDay / 3)),
-      departure: addDays(DAY, 1 + Math.floor(lateDay / 3) + nights),
+      arrival,
+      departure: addDays(arrival, nights),
     }
   }
 
@@ -396,6 +400,33 @@ describe.skipIf(!url)('modify, cancel and no-show', () => {
     })
   })
 
+  it('answers a retried cancel with its result even after the hotel was archived', async () => {
+    const [arrival, departure] = freeNights(1)
+    const b = await bookStay(t, k.frontDesk.cookie, k.vi.id, dlkBB(arrival, departure))
+    const version = (await endQuote(t, k.frontDesk.cookie, b.id, 'cancel')).data.version
+    const body = {
+      idempotencyKey: newId(),
+      reservationId: b.id,
+      version,
+      reason: 'guest_request',
+    }
+    const first = await rpc(t, k.frontDesk.cookie, 'reservations/cancel', body)
+    expect(first.status).toBe(200)
+    await t.db.update(properties).set({ archivedAt: new Date() }).where(eq(properties.id, k.vi.id))
+    try {
+      const retried = await rpc(t, k.frontDesk.cookie, 'reservations/cancel', body)
+      expect(retried.status).toBe(200)
+      expect(retried.data).toEqual(first.data)
+      const fresh = await rpc(t, k.frontDesk.cookie, 'reservations/cancel', {
+        ...body,
+        idempotencyKey: newId(),
+      })
+      expect(fresh.data.data?.code).toBe('PROPERTY_ARCHIVED')
+    } finally {
+      await t.db.update(properties).set({ archivedAt: null }).where(eq(properties.id, k.vi.id))
+    }
+  })
+
   describe('waivers', () => {
     const waiverAction = (b: Booked, version: number, reason = 'Regular guest') => ({
       kind: 'penalty_waiver',
@@ -574,6 +605,68 @@ describe.skipIf(!url)('modify, cancel and no-show', () => {
         reason: 'Corporate goodwill',
       })
       expect(waived.data.status).toBe('waived')
+    })
+
+    it('refuses a waiver asked of yourself, and of a manager who can waive it themselves', async () => {
+      const b = await bookStay(t, k.frontDesk.cookie, k.vi.id, lateStay(1))
+      const penaltyId = (await noShowOrCancel(b)).penalties[0]?.id ?? ''
+      const ask = (cookie: string, approverMemberId: string) =>
+        rpc(t, cookie, 'approvals/request', {
+          kind: 'penalty_waiver',
+          waiver: { target: 'penalty', penaltyId, reason: 'Please' },
+          idempotencyKey: newId(),
+          approverMemberId,
+        })
+      const self = await ask(k.frontDesk.cookie, k.frontDesk.memberId)
+      expect(self.data.data?.code).toBe('SELF_APPROVAL')
+      const manager = await ask(k.gm.cookie, k.owner.memberId)
+      expect(manager.data.data?.code).toBe('APPROVAL_NOT_NEEDED')
+    })
+
+    it('refuses an inbox approval for a penalty waived meanwhile, and leaves the approval unused', async () => {
+      const b = await bookStay(t, k.frontDesk.cookie, k.vi.id, lateStay(1))
+      const penaltyId = (await noShowOrCancel(b)).penalties[0]?.id ?? ''
+      const request = await rpc<ApprovalView>(t, k.frontDesk.cookie, 'approvals/request', {
+        kind: 'penalty_waiver',
+        waiver: { target: 'penalty', penaltyId, reason: 'Flight cancelled' },
+        idempotencyKey: newId(),
+        approverMemberId: k.gm.memberId,
+      })
+      const direct = await rpc(t, k.sade.cookie, 'penalties/waive', {
+        idempotencyKey: newId(),
+        penaltyId,
+        reason: 'Corporate goodwill',
+      })
+      expect(direct.status).toBe(200)
+      await clearPin(t, k.gm.memberId)
+      const late = await rpc(t, k.gm.cookie, 'approvals/approve', {
+        id: request.data.id,
+        pin: PINS.tunde,
+      })
+      expect(late.data.data?.code).toBe('PENALTY_NOT_OPEN')
+      expect(late.data.message).toMatch(/^This penalty was already waived by Sade Bakare at/)
+      const [row] = await t.db.select().from(approvals).where(eq(approvals.id, request.data.id))
+      expect(row).toMatchObject({ status: 'pending', usedAt: null })
+      const detail = await detailOf(t, k.frontDesk.cookie, b.id)
+      expect(detail.penalties[0]?.waived).toMatchObject({
+        byName: 'Sade Bakare',
+        approverName: null,
+      })
+    })
+
+    it('won’t let a manager limited to another hotel waive this hotel’s penalty', async () => {
+      const b = await bookStay(t, k.frontDesk.cookie, k.vi.id, lateStay(1))
+      const penaltyId = (await noShowOrCancel(b)).penalties[0]?.id ?? ''
+      const elsewhere = await person(t, k.orgId, 'Ngozi Ikeja', 'general_manager')
+      await limitTo(t, k.owner, elsewhere, [k.ikeja.id])
+      const refused = await rpc(t, elsewhere.cookie, 'penalties/waive', {
+        idempotencyKey: newId(),
+        penaltyId,
+        reason: 'Not my hotel',
+      })
+      expect(refused.status).toBe(404)
+      const [row] = await t.db.select().from(penalties).where(eq(penalties.id, penaltyId))
+      expect(row?.status).toBe('to_charge')
     })
 
     async function noShowOrCancel(b: Booked) {

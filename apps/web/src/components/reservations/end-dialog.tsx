@@ -4,7 +4,6 @@
 // cancels and waives together; "Not nearby?" cancels now and sends the waiver to their inbox.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  type ApprovalActionInput,
   type ChangedReservation,
   END_REASON_LABELS,
   END_REASONS,
@@ -74,19 +73,8 @@ export function EndDialog({ detail, mode, onClose }: Props) {
   })
   const q = quote.data
   const canWaive = Boolean(q?.canWaive)
-  // Who could approve a waiver, for "Tunde, Sade or Adaeze can approve it."
-  const waiverAction: ApprovalActionInput | undefined = q
-    ? {
-        kind: 'penalty_waiver',
-        waiver: {
-          target: mode,
-          reservationId: detail.id,
-          version: q.version,
-          actionKey: key.current,
-          reason: waiveReason.trim() || 'Asking who can approve',
-        },
-      }
-    : undefined
+  // Who could approve a waiver, for "Tunde, Sade or Adaeze can approve it." The list doesn't
+  // depend on the reason, so it asks with a fixed one; the prompt below always sends the typed one.
   const approvers = useQuery({
     ...orpc.approvals.approvers.queryOptions({
       input: {
@@ -310,7 +298,7 @@ export function EndDialog({ detail, mode, onClose }: Props) {
           ) : null}
         </div>
       </Dialog>
-      {asking && waiverAction && q ? (
+      {asking && q ? (
         <ApprovalPrompt
           action={{
             kind: 'penalty_waiver',

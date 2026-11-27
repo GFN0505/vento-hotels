@@ -57,7 +57,7 @@ import {
   lockPenalty,
   lockReservationRow,
 } from '../reservations/change/waive.ts'
-import { loadBookingHotel } from '../reservations/context.ts'
+import { type BookingHotel, holdBookingHotel } from '../reservations/context.ts'
 import { discountLimitOf } from '../reservations/pricing.ts'
 import {
   type Access,
@@ -768,7 +768,12 @@ export async function approveRequest(
   // the same order as a cancel or a waiver from the Penalty card, so they can't deadlock.
   const peek = await loadRow(db, access, input.id)
   const outcome = await db.transaction(async (tx): Promise<{ ok: true } | Failure> => {
+    // The hotel FOR SHARE first (lock step 2: the business date can't roll and the hotel can't be
+    // archived while the waiver is stamped), then the reservation (2b): the order cancel takes, and
+    // night audit (hotel FOR UPDATE, then reservations) can't cross it.
+    let waiverHotel: BookingHotel | null = null
     if (peek.kind === PENALTY_WAIVER.kind) {
+      waiverHotel = await holdBookingHotel(tx, access, peek.propertyId)
       await lockReservationRow(tx, (peek.subject as WaiverSubject).reservationId)
     }
     const row = await lockRow(tx, access, input.id)
@@ -828,7 +833,9 @@ export async function approveRequest(
         expiresAt: later(now).toISOString(),
       },
     })
-    if (row.kind === PENALTY_WAIVER.kind) await applyInboxWaiver(tx, access, row, now)
+    if (row.kind === PENALTY_WAIVER.kind && waiverHotel) {
+      await applyInboxWaiver(tx, access, row, waiverHotel, now)
+    }
     return { ok: true }
   })
   if ('error' in outcome) throw outcome.error
@@ -838,11 +845,10 @@ export async function approveRequest(
 // Decision 0028: the penalty a waiver binds to is already recorded and can't change, so the
 // approver's yes applies it at once, in their transaction; the requester needn't come back. The
 // approver acts; the requester is named on the event (`requestedBy`) and as who waived it.
-async function applyInboxWaiver(tx: Tx, access: Access, row: Row, now: Date) {
+async function applyInboxWaiver(tx: Tx, access: Access, row: Row, hotel: BookingHotel, now: Date) {
   const subject = row.subject as WaiverSubject
   if (!subject.penaltyId) throw inboxNeedsRecordedPenalty()
   const found = await findPenalty(tx, access, subject.penaltyId)
-  const hotel = await loadBookingHotel(tx, access, found.propertyId)
   const penalty = await lockPenalty(tx, found.id)
   const binding = waiverBinding({
     propertyId: penalty.propertyId,

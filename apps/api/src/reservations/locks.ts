@@ -17,8 +17,10 @@
 // take 2 → 3 → 4 without the rates lock: they never touch prices, and bookings never lock rooms or
 // room types, so there is no cycle. Answering an approval locks its row, then the approver's
 // member_pins row; bookings never lock member_pins, so that is no cycle either. Answering a penalty
-// waiver locks the reservation row first (2b, looked up from the approval without a lock), then the
-// approval, then the PIN row, then the penalty (decision 0028). A change locks the inventory rows
+// waiver takes the hotel row FOR SHARE (2) and the reservation row (2b), both looked up from the
+// approval without a lock, then the approval, then the PIN row, then the penalty (decision 0028).
+// The hotel comes before the reservation everywhere (cancel, no-show, waivers), so night audit and
+// hotel archive (hotel FOR UPDATE, then whatever they lock after) can't cycle with a waiver. A change locks the inventory rows
 // for the union of its old and new nights in one statement, room type then date.
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { roomTypeInventory } from '../db/schema/reservations.ts'

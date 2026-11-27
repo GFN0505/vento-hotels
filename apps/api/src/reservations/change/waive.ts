@@ -22,7 +22,7 @@ import {
 } from '../../db/schema/reservations.ts'
 import { roomTypes } from '../../db/schema/rooms.ts'
 import { type Access, scopeToProperties } from '../../tenancy/access.ts'
-import { type BookingHotel, loadBookingHotel, type Reader, type Tx } from '../context.ts'
+import { type BookingHotel, holdBookingHotel, type Reader, type Tx } from '../context.ts'
 import { changeAlreadySaved, penaltyNotFound, penaltyNotOpen } from './errors.ts'
 import { resolveWaiver, type Waiver, waivedColumns, waivedEvent } from './penalty.ts'
 import { requireChange } from './rules.ts'
@@ -197,7 +197,9 @@ export async function waivePenalty(
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`change:${access.organizationId}:${parsed.idempotencyKey}`}, 0))`,
       )
-      const hotel = await loadBookingHotel(tx, access, found.propertyId)
+      // Lock steps 2 and 2b: the hotel FOR SHARE (its business date can't roll mid-waiver), then the
+      // reservation row, as cancel does.
+      const hotel = await holdBookingHotel(tx, access, found.propertyId)
       await lockReservationRow(tx, found.reservationId)
       const now = new Date()
       const waiver = await resolveWaiver(tx, access, parsed, {

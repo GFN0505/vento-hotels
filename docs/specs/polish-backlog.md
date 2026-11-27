@@ -46,3 +46,7 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - Demo seed: changes are made on earlier business dates but their timestamps are the seed's run time, so a banner can read "Cancelled 27 Nov 2026, 19:07 (business date 26 Nov)".
 - The Modify dialog lists up to three new nights, then "and N more new nights"; a room type change on a long stay could show the nights in a collapsible list.
 - Discount approvals on a changed stay can't be continued from the inbox ("Continue booking" is for new bookings); closing the dialog withdraws the request.
+- `writeNights` updates every kept night even when its sold price and extra adult are unchanged (`reservations/change/modify.ts`); update only the ones that differ.
+- Add a schema comment on `penalties.waived_by_*`: when an inbox approval applies the waiver, these name the requester (the approver is in `approver_*` and is the audit event's actor).
+- `penalties.approval_id` has no foreign key to `approvals`.
+- An `approvalId` sent with a modify whose discount is within the saver's own limit is still checked and consumed (`reservations/change/modify.ts`, as brick 5 does at Book); decide whether to refuse it instead.

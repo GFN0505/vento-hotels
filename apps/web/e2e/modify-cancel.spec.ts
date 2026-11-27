@@ -151,6 +151,10 @@ test('cancels and waives with the GM’s PIN at a registered front desk PC', asy
     prompt.getByText(/^Waive penalty ₦.* on VI-\d{4}-\d{4} · Kelechi Obi$/),
   ).toBeVisible()
   await expect(prompt.getByText(/^Chiamaka can't waive penalties\. Asked at/)).toBeVisible()
+  // The prompt asks with the reason she typed (the server binds the approval to it).
+  await expect(
+    prompt.getByText('Regular guest, rebooking for January', { exact: true }),
+  ).toBeVisible()
   await prompt
     .getByRole('group', { name: 'Approving manager' })
     .getByText(/^Tunde Bello/)
