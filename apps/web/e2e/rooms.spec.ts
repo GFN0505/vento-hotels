@@ -169,19 +169,19 @@ test.describe('on the demo group', () => {
     await expect(page.getByText('Rooms are set up per hotel. Pick a hotel.')).toBeVisible()
     await page.getByRole('button', { name: /Kora Victoria Island/ }).click()
     await expect(page.getByText('120 rooms · 4 types', { exact: true })).toBeVisible()
-    // 1014, the last Deluxe King: the demo's stays this week are in lower rooms (brick 7 refuses to
-    // remove a room with a booking).
-    await page.getByLabel('Room number').fill('1014')
-    await page.getByRole('button', { name: 'Edit room 1014' }).click()
+    // 808, the last Standard Queen: the demo never books it (brick 7 refuses to remove a room with a
+    // booking, and the Fintech Summit fills every Deluxe King for a night).
+    await page.getByLabel('Room number').fill('808')
+    await page.getByRole('button', { name: 'Edit room 808' }).click()
     await page
-      .getByRole('dialog', { name: 'Room 1014' })
+      .getByRole('dialog', { name: 'Room 808' })
       .getByRole('button', { name: 'Remove', exact: true })
       .click()
-    const ask = page.getByRole('dialog', { name: 'Remove Room 1014?' })
-    await ask.getByRole('button', { name: 'Remove Room 1014' }).click()
+    const ask = page.getByRole('dialog', { name: 'Remove Room 808?' })
+    await ask.getByRole('button', { name: 'Remove Room 808' }).click()
     await expect(ask.getByText('Say why, in a few words')).toBeVisible()
-    await ask.getByLabel('Reason for removing Room 1014').fill('Converted to a store')
-    await ask.getByRole('button', { name: 'Remove Room 1014' }).click()
-    await expect(page.getByText('Room 1014 removed')).toBeVisible()
+    await ask.getByLabel('Reason for removing Room 808').fill('Converted to a store')
+    await ask.getByRole('button', { name: 'Remove Room 808' }).click()
+    await expect(page.getByText('Room 808 removed')).toBeVisible()
   })
 })
