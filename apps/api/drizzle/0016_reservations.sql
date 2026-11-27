@@ -140,24 +140,38 @@ CREATE TABLE "stays" (
 ALTER TABLE "room_types" ADD COLUMN "overbooking_limit" smallint DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE "properties" ADD COLUMN "booking_prefix" text;--> statement-breakpoint
 -- Existing hotels get the first three letters of what follows the brand word ("Kora Lekki" → LEK),
--- with a letter added on a clash within the group (LEKA). Editable until the first reservation.
-WITH base AS (
-  SELECT id, organization_id,
-    left(upper(regexp_replace(
-      CASE WHEN position(' ' in trim(name)) > 0 THEN substr(trim(name), position(' ' in trim(name)) + 1) ELSE name END,
-      '[^A-Za-z]', '', 'g')), 3) AS prefix
-  FROM "properties"
-), padded AS (
-  SELECT id, organization_id,
-    CASE WHEN length(prefix) >= 2 THEN prefix ELSE left(prefix || 'HTL', 3) END AS prefix
-  FROM base
-), numbered AS (
-  SELECT id, prefix, row_number() OVER (PARTITION BY organization_id, prefix ORDER BY id) AS n
-  FROM padded
-)
-UPDATE "properties" p
-SET booking_prefix = CASE WHEN n = 1 THEN numbered.prefix ELSE numbered.prefix || chr(63 + n::int) END
-FROM numbered WHERE numbered.id = p.id;--> statement-breakpoint
+-- or that with the first free letter added (LEKA, LEKB…) when it's taken in the group, checked
+-- one hotel at a time so a suffixed prefix can't collide with one already given. Editable until
+-- the hotel's first reservation.
+DO $$
+DECLARE
+  hotel record;
+  base text;
+  candidate text;
+  letter int;
+BEGIN
+  FOR hotel IN SELECT id, organization_id, name FROM "properties" ORDER BY organization_id, id LOOP
+    base := left(upper(regexp_replace(
+      CASE WHEN position(' ' in trim(hotel.name)) > 0
+        THEN substr(trim(hotel.name), position(' ' in trim(hotel.name)) + 1)
+        ELSE hotel.name END,
+      '[^A-Za-z]', '', 'g')), 3);
+    IF length(base) < 2 THEN base := left(base || 'HTL', 3); END IF;
+    candidate := base;
+    letter := 65;
+    WHILE EXISTS (
+      SELECT 1 FROM "properties"
+      WHERE organization_id = hotel.organization_id AND booking_prefix = candidate
+    ) LOOP
+      IF letter > 90 THEN
+        RAISE EXCEPTION 'No free booking prefix for hotel %', hotel.id;
+      END IF;
+      candidate := left(base, 3) || chr(letter);
+      letter := letter + 1;
+    END LOOP;
+    UPDATE "properties" SET booking_prefix = candidate WHERE id = hotel.id;
+  END LOOP;
+END $$;--> statement-breakpoint
 ALTER TABLE "properties" ALTER COLUMN "booking_prefix" SET NOT NULL;--> statement-breakpoint
 ALTER TABLE "guests" ADD CONSTRAINT "guests_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "reservation_counters" ADD CONSTRAINT "reservation_counters_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint

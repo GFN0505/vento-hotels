@@ -1,7 +1,16 @@
 // Guests, group-wide: search while booking, and find-or-create inside the booking transaction.
-// Phone and email are guest data: they go to the database and audit events (internal), never to
-// logs or Sentry.
-import { type GuestFields, type GuestMatch, guestName, maskPhone } from '@vento/shared'
+// Phone and email are guest data (NDPA 2023): kept in the database, masked in search results and
+// audit events, never in logs or Sentry.
+import { ORPCError } from '@orpc/server'
+import {
+  CONTACT_MESSAGE,
+  type GuestCorrections,
+  type GuestFields,
+  type GuestMatch,
+  guestName,
+  maskEmail,
+  maskPhone,
+} from '@vento/shared'
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
 import type { AuditEvent } from '../audit/record.ts'
 import { guests } from '../db/schema/reservations.ts'
@@ -11,7 +20,7 @@ import { type Reader, requireReservationManage, type Tx } from './context.ts'
 import { guestNotFound } from './errors.ts'
 
 export type GuestChoice =
-  | { kind: 'existing'; id: string; corrections?: GuestFields | undefined }
+  | { kind: 'existing'; id: string; corrections?: GuestCorrections | undefined }
   | { kind: 'new'; fields: GuestFields }
 
 const matchColumns = {
@@ -53,13 +62,23 @@ export async function searchGuests(
     )
     .orderBy(desc(sql`similarity(${guests.search}, ${text})`), guests.lastName)
     .limit(5)
-  return rows.map((row) => ({
+  // Contact details leave the server masked only (NDPA 2023).
+  return rows.map(({ phone, email, ...row }) => ({
     ...row,
-    maskedPhone: row.phone ? maskPhone(row.phone) : null,
+    maskedPhone: phone ? maskPhone(phone) : null,
+    maskedEmail: email ? maskEmail(email) : null,
   }))
 }
 
 type Context = { reservationId: string; propertyId: string; businessDate: string }
+
+// What audit events keep of a guest's contact details: masked, never in full.
+function masked(values: Record<string, unknown>) {
+  const out: Record<string, unknown> = { ...values }
+  if (typeof out.phone === 'string') out.phone = maskPhone(out.phone)
+  if (typeof out.email === 'string') out.email = maskEmail(out.email)
+  return out
+}
 
 const fieldsOf = (fields: GuestFields) => ({
   title: fields.title ?? null,
@@ -95,7 +114,13 @@ export async function resolveGuest(
           entityType: 'guest',
           entityId: row.id,
           ...at,
-          after: { ...values, reservationId: context.reservationId },
+          after: {
+            fields: Object.keys(values).filter(
+              (key) => values[key as keyof typeof values] !== null,
+            ),
+            ...masked(values),
+            reservationId: context.reservationId,
+          },
         },
       ],
     }
@@ -113,17 +138,22 @@ export async function resolveGuest(
     .for('update')
   if (!current) throw guestNotFound()
   if (!choice.corrections) return { id: current.id, name: guestName(current), events: [] }
-  const next = fieldsOf(choice.corrections)
+  // Only fields typed are corrections; an empty field keeps what the record holds.
   const before: Record<string, unknown> = {}
   const after: Record<string, unknown> = {}
-  for (const key of Object.keys(next) as (keyof typeof next)[]) {
-    if (next[key] !== current[key]) {
-      before[key] = current[key]
-      after[key] = next[key]
+  for (const [key, value] of Object.entries(choice.corrections)) {
+    const field = key as keyof typeof current
+    if (value !== undefined && value !== current[field]) {
+      before[key] = current[field]
+      after[key] = value
     }
   }
   if (Object.keys(after).length === 0) {
     return { id: current.id, name: guestName(current), events: [] }
+  }
+  const next = { ...current, ...after } as typeof current
+  if (!next.phone && !next.email) {
+    throw new ORPCError('BAD_REQUEST', { message: CONTACT_MESSAGE, data: { field: 'phone' } })
   }
   await tx.update(guests).set(after).where(eq(guests.id, current.id))
   return {
@@ -135,8 +165,12 @@ export async function resolveGuest(
         entityType: 'guest',
         entityId: current.id,
         ...at,
-        before,
-        after: { ...after, reservationId: context.reservationId },
+        before: masked(before),
+        after: {
+          fields: Object.keys(after),
+          ...masked(after),
+          reservationId: context.reservationId,
+        },
       },
     ],
   }

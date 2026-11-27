@@ -112,6 +112,12 @@ export function maskPhone(e164: string): string {
   return `+${code} ${national.slice(0, 3)} ••• ${national.slice(-4)}`
 }
 
+// "s•••@example.com": enough to recognise, not enough to use.
+export function maskEmail(email: string): string {
+  const [local = '', domain = ''] = email.split('@')
+  return `${local.slice(0, 1)}•••@${domain}`
+}
+
 const nameField = (label: string) =>
   z.string().trim().min(1, `Enter the ${label}`).max(60, 'Use 60 characters or fewer')
 
@@ -162,6 +168,18 @@ export const guestFieldsSchema = z
 export type GuestFields = z.infer<typeof guestFieldsSchema>
 export type GuestFieldsInput = z.input<typeof guestFieldsSchema>
 
+// Corrections to a picked guest: only what the agent typed. Contact details are never sent to the
+// device in full (NDPA 2023), so an empty field keeps what the record holds.
+export const guestCorrectionsSchema = z.object({
+  title: titleField.optional(),
+  firstName: nameField('first name').optional(),
+  lastName: nameField('last name').optional(),
+  phone: phoneField.optional(),
+  email: emailField.optional(),
+  nationality: nationalitySchema.optional(),
+})
+export type GuestCorrections = z.infer<typeof guestCorrectionsSchema>
+
 export const guestSearchInputSchema = z.object({
   q: z.string().trim().min(3, 'Type at least 3 characters').max(120),
 })
@@ -171,10 +189,10 @@ export const guestMatchSchema = z.object({
   title: z.string().nullable(),
   firstName: z.string(),
   lastName: z.string(),
-  // E.164, shown masked in the list and in full once picked (the agent confirms it with the guest).
-  phone: z.string().nullable(),
+  // Masked only (NDPA 2023): full contact details stay on the server. The agent confirms them with
+  // the guest and types any change as a correction.
   maskedPhone: z.string().nullable(),
-  email: z.string().nullable(),
+  maskedEmail: z.string().nullable(),
   nationality: z.string(),
 })
 export type GuestMatch = z.infer<typeof guestMatchSchema>

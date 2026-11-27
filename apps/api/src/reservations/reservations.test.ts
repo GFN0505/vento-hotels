@@ -432,6 +432,79 @@ describe.skipIf(!url)('availability and new reservations', () => {
     })
   })
 
+  describe('guest data (NDPA)', () => {
+    it('searches with masked contact details only', async () => {
+      const found = await t.rpc<Record<string, unknown>[]>(k.frontDesk.cookie, 'guests/search', {
+        q: 'collins',
+      })
+      expect(found.data[0]).not.toHaveProperty('phone')
+      expect(found.data[0]).not.toHaveProperty('email')
+      expect(found.data[0]).toMatchObject({ maskedPhone: '+44 770 ••• 0123' })
+    })
+
+    it('keeps contact details masked in audit events, and takes only typed corrections', async () => {
+      const [match] = (
+        await t.rpc<{ id: string }[]>(k.frontDesk.cookie, 'guests/search', { q: 'collins' })
+      ).data
+      const result = await book(
+        t,
+        k.frontDesk.cookie,
+        k.vi.id,
+        [{ ...walk, arrival: '2026-12-22', departure: '2026-12-24' }],
+        {
+          guest: {
+            kind: 'existing',
+            id: match?.id ?? '',
+            corrections: { email: 'sarah.collins@example.com', phone: '' },
+          },
+        },
+      )
+      expect(result.status).toBe(200)
+      const guestEvents = (await events(t, k.owner, {
+        entityType: 'guest',
+        entityId: match?.id,
+      })) as AuditEventView[]
+      const changed = guestEvents.find((event) => event.action === 'guest.changed')
+      expect(changed?.after).toMatchObject({ fields: ['email'], email: 's•••@example.com' })
+      const created = guestEvents.find((event) => event.action === 'guest.created')
+      expect(created?.after).toMatchObject({ phone: '+44 770 ••• 0123' })
+      expect(JSON.stringify(guestEvents)).not.toContain('900123')
+      const view = await detail(k.frontDesk.cookie, result.data.id)
+      expect(view.data.guest).toMatchObject({
+        phone: '+447700900123',
+        email: 'sarah.collins@example.com',
+      })
+    })
+  })
+
+  describe('idempotency and scope', () => {
+    it('never replays a booking at a hotel outside the member’s access', async () => {
+      const key = newId()
+      const q = await quote(t, k.frontDesk.cookie, k.vi.id, walk)
+      const body = {
+        idempotencyKey: key,
+        propertyId: k.vi.id,
+        guest: COLLINS,
+        source: 'phone',
+        stays: [{ ...walk, adults: 1, children: 0, quoteHash: q.data.quoteHash }],
+      }
+      const first = await t.rpc<{ id: string }>(k.frontDesk.cookie, 'reservations/create', body)
+      expect(first.status).toBe(200)
+      await limitTo(t, k.owner, k.sade, [k.ikeja.id])
+      try {
+        const replay = await t.rpc<Problem & { id?: string }>(
+          k.sade.cookie,
+          'reservations/create',
+          body,
+        )
+        expect(replay.data.id).toBeUndefined()
+        expect(replay.data.data?.code).toBe('PROPERTY_NOT_FOUND')
+      } finally {
+        await limitTo(t, k.owner, k.sade, [k.vi.id, k.ikeja.id])
+      }
+    })
+  })
+
   describe('what bookings hold back', () => {
     it('refuses to delete a plan a stay used', async () => {
       await t.rpc(k.gm.cookie, 'ratePlans/archive', { id: k.bb.id })

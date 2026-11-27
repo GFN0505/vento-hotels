@@ -145,6 +145,6 @@ export async function addBooked(tx: Tx, scope: Scope, counts: ReadonlyMap<string
       ${sql.param(entries.map((e) => e.date))}::date[],
       ${sql.param(entries.map((e) => e.count))}::int[]
     ) as k(room_type_id, date, n)
-    where i.property_id = ${scope.propertyId}
+    where i.organization_id = ${scope.organizationId} and i.property_id = ${scope.propertyId}
       and i.room_type_id = k.room_type_id and i.date = k.date`)
 }

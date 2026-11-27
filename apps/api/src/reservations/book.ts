@@ -24,7 +24,7 @@ import { roomTypes } from '../db/schema/rooms.ts'
 import { rulesByNight } from '../finance/taxes.ts'
 import { lockHotelRatesShared } from '../rates/context.ts'
 import { quoteStay, requireStayDates } from '../rates/quote.ts'
-import type { Access } from '../tenancy/access.ts'
+import { type Access, scopeToProperties } from '../tenancy/access.ts'
 import {
   type BookingHotel,
   holdBookingHotel,
@@ -35,6 +35,7 @@ import {
 import {
   type Alternative,
   idempotencyConflict,
+  keyUsedElsewhere,
   planCorporateOnly,
   priceChanged,
   restrictionReasonRequired,
@@ -86,6 +87,8 @@ async function existingBooking(db: Reader, access: Access, key: string) {
       and(
         eq(reservations.organizationId, access.organizationId),
         eq(reservations.idempotencyKey, key),
+        // Only bookings at the member's hotels are replayed: a key never reveals another's.
+        scopeToProperties(access, reservations.propertyId),
       ),
     )
   return row
@@ -189,12 +192,13 @@ export async function bookInTx(
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtextextended(${`booking:${access.organizationId}:${input.idempotencyKey}`}, 0))`,
   )
-  const existing = await existingBooking(tx, access, input.idempotencyKey)
-  if (existing) return replay(existing, hash)
 
-  // Steps 1–2: the rates lock (shared), then the hotel.
+  // Steps 1–2: the rates lock (shared), then the hotel, in the member's scope.
   await lockHotelRatesShared(tx, input.propertyId)
   const hotel = await holdBookingHotel(tx, access, input.propertyId)
+  // A replay is answered only after the hotel check, and only for the member's hotels.
+  const existing = await existingBooking(tx, access, input.idempotencyKey)
+  if (existing) return replay(existing, hash)
   const scope = { organizationId: access.organizationId, propertyId: hotel.id }
   for (const stay of input.stays) requireStayDates(stay, hotel)
   const bookedAt = options.bookedAt ?? new Date()
@@ -426,6 +430,7 @@ export async function createReservation(
     ) {
       const existing = await existingBooking(db, access, parsed.idempotencyKey)
       if (existing) return replay(existing, requestHash(parsed))
+      throw keyUsedElsewhere()
     }
     throw error
   }

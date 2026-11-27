@@ -5,7 +5,12 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { calendarDateSchema } from '../dates.ts'
-import { guestFieldsSchema, guestMatchSchema, guestSearchInputSchema } from '../guests.ts'
+import {
+  guestCorrectionsSchema,
+  guestFieldsSchema,
+  guestMatchSchema,
+  guestSearchInputSchema,
+} from '../guests.ts'
 import { idSchema } from '../ids.ts'
 import { pageQuerySchema, pageSchema } from '../pagination.ts'
 import { cancellationPolicySchema, depositRuleSchema, mealPlanSchema } from '../rates.ts'
@@ -245,7 +250,7 @@ export const guestChoiceSchema = z.discriminatedUnion('kind', [
     kind: z.literal('existing'),
     id: idSchema,
     // The details as confirmed with the guest; a difference updates the record (audited).
-    corrections: guestFieldsSchema.optional(),
+    corrections: guestCorrectionsSchema.optional(),
   }),
   z.object({ kind: z.literal('new'), fields: guestFieldsSchema }),
 ])

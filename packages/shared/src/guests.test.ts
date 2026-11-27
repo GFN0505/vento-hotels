@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { formatPhone, guestFieldsSchema, maskPhone, normalizePhone } from './guests.ts'
+import {
+  formatPhone,
+  guestCorrectionsSchema,
+  guestFieldsSchema,
+  maskEmail,
+  maskPhone,
+  normalizePhone,
+} from './guests.ts'
 
 describe('phone numbers', () => {
   it('stores a Nigerian number typed with 0 as +234', () => {
@@ -36,5 +43,16 @@ describe('guest fields', () => {
         email: '',
       }),
     ).toEqual({ firstName: 'Ada', lastName: 'Obi', phone: '+2348034564567', nationality: 'NG' })
+  })
+})
+
+describe('masking and corrections', () => {
+  it('masks an email', () => {
+    expect(maskEmail('sarah.collins@example.com')).toBe('s•••@example.com')
+  })
+  it('takes only what was typed as a correction', () => {
+    expect(guestCorrectionsSchema.parse({ phone: '0803 456 4567', email: '' })).toEqual({
+      phone: '+2348034564567',
+    })
   })
 })

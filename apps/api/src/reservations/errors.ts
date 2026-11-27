@@ -84,6 +84,10 @@ export const planCorporateOnly = (plan: string) =>
 export const idempotencyConflict = (existing: { id: string; number: string }) =>
   conflict('IDEMPOTENCY_CONFLICT', `This booking was already made as ${existing.number}.`, existing)
 
+// The key belongs to a booking the member can't see (another hotel of the group).
+export const keyUsedElsewhere = () =>
+  conflict('IDEMPOTENCY_CONFLICT', 'This booking was already sent. Start a new booking.')
+
 // "Deluxe King would be 1 room short on 11 Dec (48 booked, 47 rooms). Move or cancel a booking first."
 export function roomsBooked(
   type: string,
