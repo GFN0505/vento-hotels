@@ -41,7 +41,12 @@ async function pick(page: Page, type: string, plan: RegExp) {
 
 async function guest(page: Page, first: string, last: string, phone: string) {
   const sheet = page.getByRole('dialog', { name: 'New reservation' })
-  await sheet.getByRole('button', { name: 'Continue to guest' }).click()
+  // With two desks open, a window-focus refresh of the quote can be in flight; Continue then
+  // answers "Checking the price. One moment." and stays on the step, so click again until it moves.
+  await expect(async () => {
+    await sheet.getByRole('button', { name: 'Continue to guest' }).click()
+    await expect(sheet.getByLabel('First name')).toBeVisible({ timeout: 1_000 })
+  }).toPass({ timeout: 15_000 })
   await sheet.getByLabel('First name').fill(first)
   await sheet.getByLabel('Last name').fill(last)
   await sheet.getByRole('textbox', { name: 'Phone', exact: true }).fill(phone)

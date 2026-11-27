@@ -31,3 +31,4 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - Demo seed: audit events' `createdAt` is the seed's run time, not the business date each booking was made on.
 - Guest and reservation search: say "Type at least 3 characters" for 1–2 characters instead of showing nothing.
 - New reservation dates use the browser's native date inputs: swap for a design-system date range picker once one exists in `components/ui` (none today; not built here on purpose).
+- New reservation: Continue looks enabled while the quote refreshes (window focus) and only says "Checking the price. One moment." on click, so the person clicks twice; show a busy state on the button while refetching.
