@@ -15,6 +15,8 @@ export type ReservationsSearch = {
   depositDue?: boolean | undefined
   page?: number | undefined
   sheet?: 'new' | undefined
+  // With the sheet: the approval request whose booking reopens at Review ("Continue booking").
+  approval?: string | undefined
 }
 
 export type OnReservationsSearch = (

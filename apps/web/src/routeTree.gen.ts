@@ -18,6 +18,7 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSectionRouteImport } from './routes/_app/$section'
+import { Route as AppApprovalsRouteImport } from './routes/_app/approvals'
 import { Route as AppRatesRouteImport } from './routes/_app/rates'
 import { Route as AppReservationsRouteImport } from './routes/_app/reservations'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
@@ -82,6 +83,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppSectionRoute = AppSectionRouteImport.update({
   id: '/$section',
   path: '/$section',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApprovalsRoute = AppApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
   getParentRoute: () => AppRoute,
 } as any)
 const AppRatesRoute = AppRatesRouteImport.update({
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/$section': typeof AppSectionRoute
+  '/approvals': typeof AppApprovalsRoute
   '/rates': typeof AppRatesRouteWithChildren
   '/reservations': typeof AppReservationsRouteWithChildren
   '/settings': typeof AppSettingsRouteWithChildren
@@ -230,6 +237,7 @@ export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/$section': typeof AppSectionRoute
+  '/approvals': typeof AppApprovalsRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof AppIndexRoute
   '/rates/calendar': typeof AppRatesCalendarRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/sign-in': typeof SignInRoute
   '/_app/$section': typeof AppSectionRoute
+  '/_app/approvals': typeof AppApprovalsRoute
   '/_app/rates': typeof AppRatesRouteWithChildren
   '/_app/reservations': typeof AppReservationsRouteWithChildren
   '/_app/settings': typeof AppSettingsRouteWithChildren
@@ -294,6 +303,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/$section'
+    | '/approvals'
     | '/rates'
     | '/reservations'
     | '/settings'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/$section'
+    | '/approvals'
     | '/join/$token'
     | '/'
     | '/rates/calendar'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/setup'
     | '/sign-in'
     | '/_app/$section'
+    | '/_app/approvals'
     | '/_app/rates'
     | '/_app/reservations'
     | '/_app/settings'
@@ -451,6 +463,13 @@ declare module '@tanstack/react-router' {
       path: '/$section'
       fullPath: '/$section'
       preLoaderRoute: typeof AppSectionRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/approvals': {
+      id: '/_app/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof AppApprovalsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/rates': {
@@ -669,6 +688,7 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppSectionRoute: typeof AppSectionRoute
+  AppApprovalsRoute: typeof AppApprovalsRoute
   AppRatesRoute: typeof AppRatesRouteWithChildren
   AppReservationsRoute: typeof AppReservationsRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
@@ -677,6 +697,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppSectionRoute: AppSectionRoute,
+  AppApprovalsRoute: AppApprovalsRoute,
   AppRatesRoute: AppRatesRouteWithChildren,
   AppReservationsRoute: AppReservationsRouteWithChildren,
   AppSettingsRoute: AppSettingsRouteWithChildren,

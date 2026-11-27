@@ -304,6 +304,7 @@ function NightsCard({ stay, taxesSetUp }: { stay: Stay; taxesSetUp: boolean }) {
             ? stay.discount.reasonText || DISCOUNT_REASON_LABELS[stay.discount.reason]
             : ''}{' '}
           ({stay.discount?.byName})
+          {stay.discount?.approverName ? ` · Approved by ${stay.discount.approverName}` : ''}
         </p>
       ) : null}
       {/* Phones: one block per night (ReservationMobile). */}

@@ -16,7 +16,7 @@ import { Field } from '@/components/ui/field'
 import { cn } from '@/lib/cn'
 import { cancellationLine, dayLabel, depositBasis, naira, stayLine, taxLabel } from '../format'
 import { type Draft, updateDraft } from './booking-draft'
-import { type Problems, percentFromRate, rateFromPercent } from './booking-model'
+import { overLimitNotice, type Problems, percentFromRate, rateFromPercent } from './booking-model'
 
 type Props = {
   draft: Draft
@@ -214,6 +214,7 @@ function ChangeRate({
       <div className="grid grid-cols-2 gap-2">
         <Field
           label="Discount"
+          id="discount-percent"
           inputMode="decimal"
           suffix="%"
           value={typed.percent}
@@ -244,6 +245,10 @@ function ChangeRate({
       {problems.value && base.value.trim() ? (
         <p id="discount-problem" role="alert" className="text-sm text-ro">
           {problems.value}
+        </p>
+      ) : overLimitNotice(draft.discount, quote, limits) ? (
+        <p role="status" className="rounded-sm bg-am-bg px-2.5 py-1.5 text-sm text-am">
+          {overLimitNotice(draft.discount, quote, limits)}
         </p>
       ) : null}
       {limits.discountLimit !== null ? (

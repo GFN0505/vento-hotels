@@ -2,6 +2,8 @@
 // check on the device (the server checks again inside the booking), the linked Discount / Rate per
 // night fields, what goes to the API, and which step a refusal belongs to.
 import {
+  type ApprovalDetail,
+  type ApprovalView,
   type Availability,
   applyDiscount,
   CONTACT_MESSAGE,
@@ -16,7 +18,7 @@ import {
   type StayQuote,
   toAmount,
 } from '@vento/shared'
-import type { DiscountDraft, Draft, GuestDraft } from './booking-draft'
+import type { ApprovalDraft, DiscountDraft, Draft, GuestDraft } from './booking-draft'
 
 export const STEPS = ['Dates & guests', 'Room & rate', 'Guest', 'Review & book'] as const
 
@@ -88,8 +90,6 @@ export function discountProblems(
         mealPlan: quote.terms.mealPlan,
         mealAllocation: quote.terms.mealAllocation,
       })
-    } else if (overLimit(result.percent, limit.discountLimit)) {
-      problems.value = overLimitMessage(result.percent, limit.discountLimit ?? '0')
     } else if (result.percent.isZero()) {
       problems.value = 'That is the plan price. Remove the discount instead.'
     }
@@ -99,6 +99,124 @@ export function discountProblems(
     problems.reasonText = 'Say why, in a few words'
   }
   return problems
+}
+
+// Over the member's limit is no dead end: a manager can approve it at Book (brick 5). Shown in
+// amber under the discount; Continue stays enabled.
+export function overLimitNotice(
+  discount: DiscountDraft | undefined,
+  quote: Pick<StayQuote, 'discount'> | undefined,
+  limit: { canDiscount: boolean; discountLimit: string | null },
+): string | undefined {
+  if (!discount || !limit.canDiscount || !quote?.discount) return undefined
+  if (!overLimit(quote.discount.percent, limit.discountLimit)) return undefined
+  return overLimitMessage(quote.discount.percent, limit.discountLimit ?? '0')
+}
+
+export type ApprovalState = 'none' | 'over_limit' | 'waiting' | 'approved' | 'declined' | 'expired'
+
+// Where Review & book stands with the discount: within the limit (none), over it with nothing
+// asked yet, or the answer of the request for this exact price.
+export function approvalState(
+  quote: Pick<StayQuote, 'quoteHash' | 'discount'> | undefined,
+  approval: ApprovalDraft | undefined,
+): ApprovalState {
+  if (!quote?.discount || quote.discount.within) return 'none'
+  if (!approval || approval.quoteHash !== quote.quoteHash) return 'over_limit'
+  switch (approval.status) {
+    case 'pending':
+      return 'waiting'
+    case 'approved':
+      return 'approved'
+    case 'declined':
+      return 'declined'
+    case 'expired':
+      return 'expired'
+    default:
+      return 'over_limit'
+  }
+}
+
+// Whether a held approval no longer matches the priced stay (dates, room, plan or discount moved).
+export const approvalStale = (approval: ApprovalDraft | undefined, quoteHash: string | undefined) =>
+  Boolean(approval && quoteHash && approval.quoteHash !== quoteHash)
+
+export function approvalDraftOf(view: ApprovalView, quoteHash: string): ApprovalDraft {
+  return {
+    id: view.id,
+    quoteHash,
+    status: view.status,
+    approverName: view.approver?.name ?? '',
+    requestedAt: view.requestedAt,
+    expiresAt: view.expiresAt,
+    answeredAt: view.answeredAt,
+    comment: view.comment,
+  }
+}
+
+// "Continue booking": the sheet again at Review, from the booking stored with the request.
+export function draftFromRequest(detail: ApprovalDetail, scopeKey: string): Draft | undefined {
+  const booking = detail.draft
+  const stay = booking?.stays[0]
+  if (!booking || !stay) return undefined
+  const guest = booking.guest
+  const [firstName = '', ...rest] = detail.subject.guestName.split(' ')
+  const discount = stay.discount
+  return {
+    key: booking.idempotencyKey,
+    scopeKey,
+    hotelId: booking.propertyId,
+    step: 4,
+    arrival: stay.arrival,
+    departure: stay.departure,
+    adults: stay.adults,
+    children: stay.children,
+    roomTypeId: stay.roomTypeId,
+    ratePlanId: stay.ratePlanId,
+    discount: discount
+      ? {
+          kind: discount.kind,
+          value: discount.kind === 'percent' ? discount.value : discount.value.replace(/\.00$/, ''),
+          reason: discount.reason,
+          reasonText: discount.reasonText ?? '',
+          note: discount.note ?? '',
+        }
+      : undefined,
+    guest:
+      guest.kind === 'new'
+        ? {
+            picked: undefined,
+            title: guest.fields.title ?? '',
+            firstName: guest.fields.firstName,
+            lastName: guest.fields.lastName,
+            phone: guest.fields.phone ?? '',
+            email: guest.fields.email ?? '',
+            nationality: guest.fields.nationality,
+          }
+        : {
+            // The record's contact details stay on the server; corrections typed before are kept.
+            picked: {
+              id: guest.id,
+              title: null,
+              firstName,
+              lastName: rest.join(' '),
+              maskedPhone: 'On file',
+              maskedEmail: null,
+              nationality: guest.corrections?.nationality ?? 'NG',
+            },
+            title: guest.corrections?.title ?? '',
+            firstName: guest.corrections?.firstName ?? firstName,
+            lastName: guest.corrections?.lastName ?? rest.join(' '),
+            phone: guest.corrections?.phone ?? '',
+            email: guest.corrections?.email ?? '',
+            nationality: guest.corrections?.nationality ?? 'NG',
+          },
+    source: booking.source,
+    notes: booking.notes ?? '',
+    restrictionReason: stay.restrictionReason ?? '',
+    approval: approvalDraftOf(detail, stay.quoteHash),
+    savedAt: undefined,
+  }
 }
 
 // Discount and Rate per night are linked through the first night's plan price.
@@ -175,6 +293,10 @@ export function createInput(
 ): CreateReservationInput {
   const guest = guestInput(draft.guest)
   const discount = discountInput(draft.discount)
+  const approval =
+    draft.approval?.status === 'approved' && draft.approval.quoteHash === quote.quoteHash
+      ? draft.approval.id
+      : undefined
   return {
     idempotencyKey: draft.key,
     propertyId,
@@ -196,6 +318,7 @@ export function createInput(
         ...(quote.breaks.length > 0 && draft.restrictionReason.trim()
           ? { restrictionReason: draft.restrictionReason.trim() }
           : {}),
+        ...(approval ? { approvalId: approval } : {}),
       },
     ],
   }
@@ -215,7 +338,6 @@ export function stepFor(code: string | undefined): Draft['step'] {
     case 'PLAN_ARCHIVED':
     case 'ROOM_TYPE_NOT_FOUND':
     case 'PLAN_CORPORATE_ONLY':
-    case 'DISCOUNT_OVER_LIMIT':
     case 'DISCOUNT_ABOVE_PLAN':
     case 'DISCOUNT_ZERO':
     case 'DISCOUNT_BELOW_MEAL':

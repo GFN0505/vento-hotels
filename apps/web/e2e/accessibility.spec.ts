@@ -337,6 +337,32 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
+    test('approvals: the bell, Waiting, Asked by you, Done and a request have no accessibility problems', async ({
+      page,
+    }, testInfo) => {
+      const domain = seedDemoGroup(`a11y-appr-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
+      await signIn(page, `tunde@${domain}`, 'Demo-pass-42!')
+      await page.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.getByRole('button', { name: /^Approvals, / }).click()
+      await page
+        .getByRole('region', { name: 'Notifications' })
+        .getByText("You're all caught up.")
+        .waitFor()
+      await expectAccessible(page)
+      await page.goto('/approvals')
+      await page.getByText(/^Nothing waiting for you\. Approvals your team asks you for/).waitFor()
+      await expectAccessible(page)
+      await page.goto('/approvals?view=asked')
+      await page.getByText(/^You haven't asked for any approvals today/).waitFor()
+      await expectAccessible(page)
+      // Done: the seed's declined, expired and approved requests; desktop opens the first.
+      await page.goto('/approvals?view=done')
+      await page.getByRole('button', { name: /Discount 18% · Ifeoma Chukwu/ }).click()
+      await page.getByRole('article', { name: 'Discount 18% · Ifeoma Chukwu' }).waitFor()
+      await expectAccessible(page)
+    })
+
     test('the plan editor preview with Guest pays has no accessibility problems', async ({
       page,
     }, testInfo) => {

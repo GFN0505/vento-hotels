@@ -4,10 +4,12 @@
 // and again, under lock, at Book. Offline, Book is disabled: nothing is queued.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { addDays, type Property } from '@vento/shared'
+import { type ApprovalView, addDays, firstNameOf, type Property } from '@vento/shared'
 import { Check } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { ApprovalPrompt } from '@/components/approvals/approval-prompt'
+import { answerLine, NEEDS_CONNECTION } from '@/components/approvals/format'
 import { useLeaveGuard, useProperty } from '@/components/shell/property-context'
 import { Button } from '@/components/ui/button'
 import { Sheet } from '@/components/ui/sheet'
@@ -28,11 +30,15 @@ import {
   useDraft,
 } from './booking-draft'
 import {
+  approvalDraftOf,
+  approvalStale,
+  approvalState,
   chosenPlan,
   createInput,
   datesProblems,
   discountInput,
   discountProblems,
+  draftFromRequest,
   guestProblems,
   STEPS,
   stepFor,
@@ -59,7 +65,21 @@ function useOpenDraft(hotel: Property | undefined, scopeKey: string): Draft | un
   return draft?.scopeKey === scopeKey ? draft : undefined
 }
 
-export function BookingSheet({ onClose }: { onClose: () => void }) {
+// Codes from Book that mean the approval held can't be used: Review asks again.
+const APPROVAL_REFUSALS = new Set([
+  'APPROVAL_USED',
+  'APPROVAL_EXPIRED',
+  'APPROVAL_NOT_MATCHING',
+  'APPROVAL_NO_LONGER_VALID',
+])
+
+type SheetProps = {
+  onClose: () => void
+  // "Continue booking" from the bell: the request whose stored booking reopens at Review.
+  resume?: string | undefined
+}
+
+export function BookingSheet({ onClose, resume }: SheetProps) {
   const { scope, properties } = useProperty()
   const online = useOnline()
   const queryClient = useQueryClient()
@@ -67,6 +87,7 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
   const scopeKey = scope?.kind === 'hotel' ? scope.hotel.id : 'all'
   const scopedHotel = scope?.kind === 'hotel' ? scope.hotel : undefined
   const draft = useOpenDraft(scopedHotel, scopeKey)
+  useResume(resume, scopeKey)
   const hotels = useMemo(() => properties.filter((p) => p.status !== 'archived'), [properties])
   const hotel = scopedHotel ?? hotels.find((p) => p.id === draft?.hotelId)
   const [refusal, setRefusal] = useState<{ step: Draft['step']; message: string; code?: string }>()
@@ -126,6 +147,50 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
   })
 
   const create = useMutation(orpc.reservations.create.mutationOptions())
+  const cancelRequest = useMutation(orpc.approvals.cancel.mutationOptions())
+  const [prompt, setPrompt] = useState(false)
+  const approval = draft?.approval
+  const approvalNow = approvalState(quote.data, approval)
+  const approverFirst = approval ? firstNameOf(approval.approverName) : ''
+
+  // While a request is out, its answer is read every 3 seconds when this tab is visible. A
+  // background read: it doesn't keep a shared PC awake.
+  const pendingId = approval?.status === 'pending' ? approval.id : undefined
+  const watched = useQuery({
+    ...orpc.approvals.get.queryOptions({ input: { id: pendingId ?? '' } }),
+    enabled: Boolean(pendingId) && online,
+    refetchInterval: 3000,
+    refetchOnWindowFocus: true,
+    retry: false,
+  })
+  useEffect(() => {
+    const view = watched.data
+    const held = getDraft()?.approval
+    if (!view || !held || held.id !== view.id || view.status === held.status) return
+    updateDraft({ approval: approvalDraftOf(view, held.quoteHash) })
+    const name = view.approver?.name ?? 'The manager'
+    if (view.status === 'approved') toast.success(`${name} approved ${view.subject.percent}%`)
+    else if (view.status === 'declined') toast.info(`${name} declined ${view.subject.percent}%`)
+  }, [watched.data])
+
+  // Anything that changes the price cancels a pending request and drops an approval for it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only when the price settles.
+  useEffect(() => {
+    if (!quote.data || quote.isFetching) return
+    const held = getDraft()?.approval
+    if (!approvalStale(held, quote.data.quoteHash) || !held) return
+    updateDraft({ approval: undefined })
+    if (held.status === 'pending') {
+      cancelRequest.mutate({ id: held.id, reason: 'booking_changed' })
+      toast.info(`Request to ${firstNameOf(held.approverName)} cancelled`)
+    }
+  }, [quote.data?.quoteHash, quote.isFetching])
+
+  // Leaving the booking withdraws a request still waiting.
+  const withdraw = () => {
+    const held = getDraft()?.approval
+    if (held?.status === 'pending') cancelRequest.mutate({ id: held.id, reason: 'discarded' })
+  }
 
   const limits = {
     canDiscount: availability.data?.canDiscount ?? false,
@@ -147,6 +212,7 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
     3: Object.keys(guestIssues).length === 0,
     4: Boolean(quote.data) && !needsReason && online && !quote.isFetching,
   }
+  const canBook = canContinue[4] && (approvalNow === 'none' || approvalNow === 'approved')
 
   const go = (next: Draft['step']) => {
     setRefusal(undefined)
@@ -170,25 +236,45 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
   }
 
   const next = () => {
+    if (step === 4 && canContinue[4]) {
+      if (approvalNow === 'over_limit' || approvalNow === 'expired') setPrompt(true)
+      else if (approvalNow === 'declined') changeDiscount()
+      else if (canBook) void book()
+      return
+    }
     if (canContinue[step]) {
       if (step < 4) go((step + 1) as Draft['step'])
-      else void book()
       return
     }
     setBlocked({ step, message: missing(step) })
   }
 
+  // Back to Room & rate with the discount field focused.
+  const changeDiscount = () => {
+    go(2)
+    requestAnimationFrame(() => document.getElementById('discount-percent')?.focus())
+  }
+
+  const askedFor = (view: ApprovalView) => {
+    const hash = quote.data?.quoteHash
+    if (!hash) return
+    updateDraft({ approval: approvalDraftOf(view, hash) })
+    setPrompt(false)
+  }
+
   const book = async () => {
-    if (!draft || !quote.data || !hotel) return
+    // The latest draft: an approval given a moment ago is in the store before React re-renders.
+    const current = getDraft()
+    if (!current || !quote.data || !hotel) return
     setRefusal(undefined)
     const quoted = quote.data
-    const input = inFlight.current.take(() => createInput(draft, hotel.id, quoted))
+    const input = inFlight.current.take(() => createInput(current, hotel.id, quoted))
     try {
       const booked = await create.mutateAsync(input)
       inFlight.current.clear()
       setRetrying(false)
-      rememberSource(draft.source)
-      const name = `${draft.guest.firstName.trim()} ${draft.guest.lastName.trim()}`
+      rememberSource(current.source)
+      const name = `${current.guest.firstName.trim()} ${current.guest.lastName.trim()}`
       toast.success(`Booked ${booked.number} for ${name}`)
       clearDraft()
       void queryClient.invalidateQueries({ queryKey: orpc.reservations.key() })
@@ -209,6 +295,7 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
       const code = errorCode(error)
       const target = stepFor(code)
       setRefusal({ step: target, message: problemMessage(error), ...(code ? { code } : {}) })
+      if (code && APPROVAL_REFUSALS.has(code)) updateDraft({ approval: undefined })
       if (code === 'SOLD_OUT') void availability.refetch()
       if (code === 'PRICE_CHANGED') void quote.refetch()
       if (target !== step) updateDraft({ step: target })
@@ -232,7 +319,7 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
   if (!draft) return null
 
   keys.current = (event: KeyboardEvent) => {
-    if (event.defaultPrevented) return
+    if (event.defaultPrevented || prompt) return
     const target = event.target as HTMLElement
     const mod = event.metaKey || event.ctrlKey
     if (mod && event.key === 'ArrowLeft' && step > 1) {
@@ -265,7 +352,11 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
 
   const footer = leaving ? (
     <div className="flex w-full flex-wrap items-center gap-2" role="alert">
-      <p className="grow font-medium">Discard this booking?</p>
+      <p className="grow font-medium">
+        {approval?.status === 'pending'
+          ? `Discard this booking? Your request to ${approverFirst} is cancelled.`
+          : 'Discard this booking?'}
+      </p>
       <Button onClick={() => setLeaving(undefined)} data-autofocus>
         Keep booking
       </Button>
@@ -274,12 +365,13 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
         onClick={() => {
           const proceed = leaving
           setLeaving(undefined)
+          withdraw()
           clearDraft()
           onClose()
           proceed()
         }}
       >
-        Discard
+        Discard booking
       </Button>
     </div>
   ) : (
@@ -306,17 +398,15 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
             <kbd className="ml-1 hidden text-xs opacity-80 lg:inline">↵</kbd>
           </Button>
         ) : (
-          <Button
-            variant="primary"
-            size="lg"
-            disabled={create.isPending || retrying}
+          <BookButton
+            state={approvalNow}
+            percent={quote.data?.discount?.percent}
+            total={total}
+            online={online}
+            busy={create.isPending || retrying}
             loading={create.isPending}
-            aria-keyshortcuts="Meta+Enter"
-            onClick={next}
-          >
-            Book{total ? ` · ${naira(total)}` : ''}
-            <kbd className="ml-1 hidden text-xs opacity-80 lg:inline">⌘↵</kbd>
-          </Button>
+            onPress={next}
+          />
         )}
       </div>
     </div>
@@ -339,6 +429,7 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
             type="button"
             className="inline-flex min-h-11 items-center font-medium text-pri-ink hover:underline lg:min-h-0"
             onClick={() => {
+              withdraw()
               clearDraft()
               onClose()
             }}
@@ -385,12 +476,37 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
           ) : step === 3 ? (
             <StepGuest draft={draft} problems={guestIssues} showErrors={blocked?.step === 3} />
           ) : (
-            <StepReview
-              draft={draft}
-              quote={quote.data}
-              hotel={hotel}
-              showErrors={blocked?.step === 4}
-            />
+            <>
+              <ApprovalStatus
+                state={approvalNow}
+                draft={draft}
+                quote={quote.data}
+                timeZone={hotel?.timeZone ?? 'Africa/Lagos'}
+                online={online}
+                onCancel={() => {
+                  const held = getDraft()?.approval
+                  if (!held) return
+                  cancelRequest.mutate(
+                    { id: held.id, reason: 'by_requester' },
+                    {
+                      onSuccess: () => {
+                        updateDraft({ approval: undefined })
+                        toast.info('Request cancelled')
+                      },
+                      onError: (error) => toast.error(problemMessage(error)),
+                    },
+                  )
+                }}
+                onChangeDiscount={changeDiscount}
+                onAskAgain={() => setPrompt(true)}
+              />
+              <StepReview
+                draft={draft}
+                quote={quote.data}
+                hotel={hotel}
+                showErrors={blocked?.step === 4}
+              />
+            </>
           )}
         </div>
         {step >= 2 ? (
@@ -413,6 +529,25 @@ export function BookingSheet({ onClose }: { onClose: () => void }) {
           </aside>
         )}
       </div>
+      {prompt && quote.data && hotel ? (
+        <ApprovalPrompt
+          action={{
+            kind: 'stay_discount',
+            booking: createInput(draft, hotel.id, quote.data),
+            stayIndex: 0,
+          }}
+          timeZone={hotel.timeZone}
+          onClose={() => setPrompt(false)}
+          onApproved={(view) => {
+            askedFor(view)
+            void book()
+          }}
+          onSent={(view) => {
+            askedFor(view)
+            toast.success(`Sent to ${view.approver?.name ?? 'the manager'}`)
+          }}
+        />
+      ) : null}
     </Sheet>
   )
 }
@@ -476,5 +611,182 @@ function Stepper({
         })}
       </ol>
     </nav>
+  )
+}
+
+// "Continue booking": loads the request's stored booking and opens it at Review, for the hotel in
+// view (the bell's link selects the request's hotel first).
+function useResume(id: string | undefined, scopeKey: string) {
+  const request = useQuery({
+    ...orpc.approvals.get.queryOptions({ input: { id: id ?? '' } }),
+    enabled: Boolean(id),
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY,
+  })
+  const told = useRef(false)
+  useEffect(() => {
+    if (!request.data) return
+    const restored = draftFromRequest(request.data, scopeKey)
+    if (!restored) {
+      if (!told.current) toast.info('This booking can’t be continued any more. Start it again.')
+      told.current = true
+      return
+    }
+    const open = getDraft()
+    if (open?.key === restored.key && open.scopeKey === scopeKey) return
+    startDraft(restored)
+  }, [request.data, scopeKey])
+}
+
+function BookButton({
+  state,
+  percent,
+  total,
+  online,
+  busy,
+  loading,
+  onPress,
+}: {
+  state: ReturnType<typeof approvalState>
+  percent: string | undefined
+  total: string | undefined
+  online: boolean
+  busy: boolean
+  loading: boolean
+  onPress: () => void
+}) {
+  if (state === 'over_limit' || state === 'expired') {
+    return (
+      <Button
+        variant="primary"
+        size="lg"
+        disabled={!online}
+        title={online ? undefined : NEEDS_CONNECTION}
+        aria-keyshortcuts="Meta+Enter"
+        onClick={onPress}
+      >
+        {state === 'expired' ? 'Ask again' : `Ask for approval · ${percent ?? ''}%`}
+      </Button>
+    )
+  }
+  if (state === 'waiting') {
+    return (
+      <Button variant="primary" size="lg" disabled>
+        Waiting for approval
+      </Button>
+    )
+  }
+  if (state === 'declined') {
+    return (
+      <Button variant="primary" size="lg" onClick={onPress}>
+        Change discount
+      </Button>
+    )
+  }
+  return (
+    <Button
+      variant="primary"
+      size="lg"
+      disabled={busy}
+      loading={loading}
+      aria-keyshortcuts="Meta+Enter"
+      onClick={onPress}
+    >
+      Book{total ? ` · ${naira(total)}` : ''}
+      <kbd className="ml-1 hidden text-xs opacity-80 lg:inline">⌘↵</kbd>
+    </Button>
+  )
+}
+
+// Review & book's line about the approval: waiting (with Cancel request), approved, declined
+// (with Change discount) or expired (with Ask again and Change discount).
+function ApprovalStatus({
+  state,
+  draft,
+  quote,
+  timeZone,
+  online,
+  onCancel,
+  onChangeDiscount,
+  onAskAgain,
+}: {
+  state: ReturnType<typeof approvalState>
+  draft: Draft
+  quote: { discount: { percent: string } | null } | undefined
+  timeZone: string
+  online: boolean
+  onCancel: () => void
+  onChangeDiscount: () => void
+  onAskAgain: () => void
+}) {
+  const approval = draft.approval
+  if (state === 'none') return null
+  if (state === 'over_limit' || !approval) {
+    return (
+      <p role="status" className="rounded-sm bg-am-bg px-3 py-2 text-sm text-am">
+        {quote?.discount?.percent}% is over your limit. Ask a manager to approve it: they can enter
+        their PIN here or answer from their inbox.
+        {online ? '' : ` ${NEEDS_CONNECTION}`}
+      </p>
+    )
+  }
+  const view = {
+    status: approval.status,
+    approver: { memberId: '', name: approval.approverName },
+    requestedAt: approval.requestedAt,
+    expiresAt: approval.expiresAt,
+    answeredAt: approval.answeredAt,
+    comment: approval.comment,
+    subject: { percent: quote?.discount?.percent ?? '' } as never,
+  }
+  const line = answerLine(view, timeZone)
+  const tone =
+    state === 'approved'
+      ? 'bg-em-bg text-em'
+      : state === 'waiting'
+        ? 'bg-bl-bg text-bl'
+        : 'bg-am-bg text-am'
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={cn(
+        'flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm px-3 py-2 text-sm',
+        tone,
+      )}
+    >
+      <span className="num grow">{line}</span>
+      {state === 'waiting' ? (
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={!online}
+          className="inline-flex min-h-11 items-center font-medium underline-offset-2 hover:underline lg:min-h-0"
+        >
+          Cancel request
+        </button>
+      ) : null}
+      {state === 'declined' || state === 'expired' ? (
+        <span className="flex gap-3">
+          {state === 'expired' ? (
+            <button
+              type="button"
+              onClick={onAskAgain}
+              disabled={!online}
+              className="inline-flex min-h-11 items-center font-medium hover:underline lg:min-h-0"
+            >
+              Ask again
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onChangeDiscount}
+            className="inline-flex min-h-11 items-center font-medium hover:underline lg:min-h-0"
+          >
+            Change discount
+          </button>
+        </span>
+      ) : null}
+    </div>
   )
 }

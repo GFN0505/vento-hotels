@@ -45,6 +45,11 @@
    - *Sees:* ₦617,400.00* for 3 nights, deposit due ₦205,800.00* by 27 Nov, ≈ £316.62 at ₦1,950/£; reservation VI-2611-0483; she copies the confirmation into WhatsApp with Zenith Bank 0123454471 and the reference.
    - *Behind the scenes:* one transaction locks Deluxe King for 9, 10 and 11 Dec, checks the overbooking limit (0), adds one booked room per night, stores the plan price and terms; audit events `guest.created`, `reservation.created`. About 75 seconds.
 
+6b. **10:36 Discount over her limit.**
+   - *Does:* Mr Kola Bankole, a repeat guest, calls for the same Deluxe King, Bed & breakfast, 9–12 Dec, and asks for 15%. Chiamaka sets 15% with reason Repeat guest; on Review the button reads Ask for approval · 15%. Tunde comes to the desk, taps his name and enters his PIN, then Approve 15% and book.
+   - *Sees:* "15% is over your 12% discount limit. A manager with a higher limit can approve it when you book."; the prompt with ₦168,000.00 → ₦142,800.00 a night and ₦617,400.00 → ₦524,790.00* incl. taxes; VI-2611-0484 with "Approved by Tunde Bello".
+   - *Behind the scenes:* the server checks Tunde's PIN on the shared counter, that he works at Kora Victoria Island, isn't Chiamaka, and that 15% is within his 50%; the approval is bound to the priced stay and used once inside the booking transaction. Audit events `approval.granted` (method PIN on FD-VI-01) and `stay.discount_applied` with approver Tunde. About 15 seconds more than a normal booking.
+
 7. **10:40 Walk-in: the Okoro family.**
    - *Does:* ⌘K → "Walk-in". Mr and Mrs Okoro with two children, 25–27 Nov · 2 nights. Picks Standard Queen → BAR → room 302 (inspected) → Mr Okoro (Nigerian, NIN masked, phone `+234…`) → payment.
    - *Sees:* one screen (#6 walk-in). Standard Queen BAR ₦120,000.00 × 2 nights with tax lines listed separately; the total updates as she types. "Standard Queen · 2 left on 25 Nov".
@@ -52,7 +57,7 @@
 
 8. **Discount above her limit.**
    - *Does:* Mr Okoro asks for a better price. She sets 15%, reason "Family, 2 nights midweek, low Standard Queen occupancy".
-   - *Sees:* in the same dialog: "15% is above your 10% limit. Ask a manager to approve." Tunde taps his avatar and enters his PIN. Rate becomes ₦102,000.00 per night, ₦204,000.00 before tax lines.
+   - *Sees:* the same approval prompt as step 6b. In the same dialog: "15% is above your 10% limit. Ask a manager to approve." Tunde taps his avatar and enters his PIN. Rate becomes ₦102,000.00 per night, ₦204,000.00 before tax lines.
    - *Behind the scenes:* the server re-checks both limits (front desk ≤ 10%, GM ≤ 50%) and that Tunde isn't approving his own action. Audit event `stay.discount_applied`: before ₦120,000.00, after ₦102,000.00, reason, actor Chiamaka, approver Tunde. It is an exception in tomorrow's owner's daily report.
 
 9. **Transfer payment and deposit.**
@@ -80,11 +85,10 @@
 - **Early arrival, room not ready:** check-in offers ready rooms of the same type first, or "Check in, room pending" so the guest can leave bags; the row stays amber until a room is assigned.
 - **Walk-in for a sold-out type:** the type shows "0 left" and can't be picked. If two agents take the last Standard Queen at the same moment, the second sees "Standard Queen was just sold for 25 Nov. Pick another type." Nothing is saved for the second.
 - **Booking for a sold-out night:** the type shows 0 and "Sold out 11 Dec"; if two agents book the last room at once, the second sees "Deluxe King was just sold for 11 Dec" with what is still free, and nothing is saved.
-- **Discount above her limit while booking:** refused with the limit ("15% is over your 12% discount limit…") until approvals (brick 5).
+- **Approver not at the desk:** she sends it to Tunde's inbox; Review shows "Waiting for Tunde Bello · expires 11:06"; he approves from his phone with his PIN and she books. If he doesn't answer in 30 minutes it expires and she asks again or lowers it. The room isn't held while she waits.
 - **Internet down:** walk-ins and new bookings are disabled with "Needs a connection to check live availability". Check-in of an already assigned arrival and cash or POS-terminal payments still work and show "Saved on this device" until synced.
 - **Transfer not yet in the bank:** the payment stays "awaiting bank match" and ages in the matching queue (whether the key can be issued first is an open question).
-- **Approver not at the desk:** the discount goes to the approvals inbox (#29); the stay stays at BAR until approved, or she lowers it to 10%.
-- **Wrong approver PIN:** "That PIN didn't match. 2 tries left." Lockout is per member and syncs.
+- **Wrong approver PIN:** "That PIN didn't match. 2 tries left." The tries count with the lock screen's; five lock his PIN for 15 minutes.
 - **Over the credit limit:** the settle button reads "Over Acme's limit by ₦…" and the same dialog asks for a GM or finance PIN.
 - **OOO would overbook:** putting 503 OOO when every Executive King is sold shows "Executive King would be 1 room short on 26 Nov" with the booking affected, before anything changes.
 - **Room move to a dirty room:** allowed with "501 is dirty. Move anyway?"; ready rooms are always listed first.
@@ -104,9 +108,10 @@
 - Take payment is disabled until a shift is open; the opening float is stored.
 - Check-out of 502 splits across POS terminal (reference required) and city ledger; settlement checks Acme's credit limit and creates an invoice; over-limit needs approval.
 - Room move records reason and before/after; 503 can't go OOO while occupied; once OOO it is removed from Executive King availability for 25–26 Nov with the work order linked.
-- A phone booking locks and decrements Deluxe King for each night and stores plan price and terms; the last-room race books once; a discount over the limit is refused on the server (`apps/api/src/reservations/*.test.ts`, `apps/web/e2e/reservations.spec.ts`).
+- A phone booking locks and decrements Deluxe King for each night and stores plan price and terms; the last-room race books once; a discount over the limit is refused without an approval and booked with one (`apps/api/src/reservations/*.test.ts`, `apps/api/src/approvals/*.test.ts`, `apps/web/e2e/reservations.spec.ts`).
 - Walk-in decrements Standard Queen availability for both nights in one transaction; a concurrent walk-in for the last Standard Queen fails cleanly.
 - A 15% discount is refused for front desk alone and succeeds with Tunde's PIN; the audit event carries reason, actor and approver; Tunde can't approve his own.
+- An approval is used once and only for the stay it was given for; a request to Tunde's inbox is approved from his phone and the booking completes (`apps/api/src/approvals/*.test.ts`, `apps/web/e2e/approvals.spec.ts`).
 - Transfer payment requires a reference and appears in the matching queue.
 - Check-in of a Ghanaian guest shows the foreign national fields; the passport number is masked in the UI and never returned in plain text.
 - Routing sends the room charge to the Acme folio and extras to the guest folio; no room charge exists before night audit.

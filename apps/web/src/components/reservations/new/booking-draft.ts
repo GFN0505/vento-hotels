@@ -32,6 +32,19 @@ export type DiscountDraft = {
   note: string
 }
 
+// An approval asked or given for this booking (spec stage-1-approvals.md). Kept with the quote hash
+// it was for: a new price means it no longer matches.
+export type ApprovalDraft = {
+  id: string
+  quoteHash: string
+  status: 'pending' | 'approved' | 'declined' | 'expired' | 'cancelled'
+  approverName: string
+  requestedAt: string
+  expiresAt: string
+  answeredAt: string | null
+  comment: string | null
+}
+
 export type Draft = {
   key: string
   // Where the draft was started (a hotel id, or 'all'), so another hotel never reuses it.
@@ -49,6 +62,7 @@ export type Draft = {
   source: DeskSource
   notes: string
   restrictionReason: string
+  approval?: ApprovalDraft | undefined
   savedAt: number | undefined
 }
 

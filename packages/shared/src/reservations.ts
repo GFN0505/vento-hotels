@@ -234,7 +234,7 @@ export function discountProblemMessage(
 
 export function overLimitMessage(percent: Decimal | string, limit: string): string {
   const shown = formatPercent(limit)
-  return `${formatPercent(percent)}% is over your ${shown}% discount limit. Use up to ${shown}%, or ask a manager with a higher limit to make this booking.`
+  return `${formatPercent(percent)}% is over your ${shown}% discount limit. A manager with a higher limit can approve it when you book.`
 }
 
 // --- Tax lines per night ---------------------------------------------------------------------------
