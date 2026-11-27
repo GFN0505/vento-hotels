@@ -12,14 +12,15 @@ The tape chart shows every room of a hotel by night: who is in which room, which
 ## Give a booking a room, or move it
 - Drag a bar onto a room. Rooms free for every night of the stay light up; a taken room says why ("402 · Shittu R. 26–27 Nov"). The toast has **Undo**.
 - Or click the bar, then **Room move** (or **Assign room**), pick a room (ready rooms come first when the guest arrives today) and click **Move to 401**. A reason is optional.
+- You see only rooms of the room type the guest booked. Other room types appear, as upgrades, only when no room of the booked type is free for every night of the stay; dropping a bar on another type's room says so while one is.
 - Drag a bar back onto its type's **Unassigned** row, or use **Remove room** in the dialog, to take the room off.
-- Moving to another room type changes the price, so Vento shows it first: **Charge Executive King rate**, or **Keep ₦168,000.00 a night** (an upgrade at the booked price, recorded as a discount with reason Upgrade). Over your discount limit, **Ask for approval** lets a manager approve it with their PIN, as for any discount.
+- Moving to another room type (when the booked type is full) changes the price, so Vento shows it first: **Charge Executive King rate**, or **Keep ₦168,000.00 a night** (an upgrade at the booked price, recorded as a discount with reason Upgrade). Over your discount limit, **Ask for approval** lets a manager approve it with their PIN, as for any discount.
 
 ## Extend or shorten a stay
 Drag the right end of a bar to the new departure. The box shows the nights added (at today's rate) or taken off, with service charge and taxes, and whether the room is free. Click **Extend stay** (or **Shorten stay**). If the room is taken on a new night, move the stay first or use **Modify** (press E on a bar) and leave it unassigned.
 
 ## Book from the chart
-Click an empty night of a room (today or later): New reservation opens on that room type and night, and the room is assigned when you book. If it was taken meanwhile, **Book without a room**.
+Click an empty night of a room (today or later): New reservation opens on that room type and night, and the room is assigned when you book. A night that can't be sold (out of order, booked, or the room type is full) doesn't open a booking; hover it to see why. If you change the dates to cover a night the room isn't free, Vento says so before you book; pick other dates or **Book without a room**.
 
 ## Keyboard
 Click into the chart, then use the arrow keys to move between rooms and nights. **Enter** opens what's there (a booking's card, the room's menu on its number, or New reservation on a free night). On a booking, **M** opens Room move and **E** opens Modify. **Escape** cancels a drag.

@@ -72,6 +72,29 @@ describe.skipIf(!url)('out of order', () => {
     expect(event?.after).not.toHaveProperty('exception')
   })
 
+  it('sells nothing on a night the last free room is out of order', async () => {
+    const [from, to] = nights(1)
+    // Two Executive Kings booked, the third out of order: none left that night.
+    await bookStay(t, k.frontDesk.cookie, k.vi.id, exkBar(from, to))
+    await bookStay(t, k.frontDesk.cookie, k.vi.id, exkBar(from, to))
+    const off = await outOfOrder(t, k.gm.cookie, {
+      propertyId: k.vi.id,
+      roomId: room(exk, 2).id,
+      from,
+      backInService: to,
+    })
+    expect(off.status).toBe(200)
+    const offered = (await availabilityOf(t, k.frontDesk.cookie, k.vi.id, from, to)).data
+    const type = offered.roomTypes.find((r) => r.id === k.types.exk.id)
+    expect(type?.nights[0]?.left).toBe(0)
+    expect(type?.soldOut).toEqual([from])
+    const chart = await chartOf(t, k.gm.cookie, k.vi.id, { from, days: 7 })
+    expect(chart.data.roomTypes.find((r) => r.id === k.types.exk.id)?.nights[0]?.left).toBe(0)
+    await expect(bookStay(t, k.frontDesk.cookie, k.vi.id, exkBar(from, to))).rejects.toThrow(
+      /SOLD_OUT/,
+    )
+  })
+
   it('refuses a room with a booking, a night that would go short, an overlap, the past, too long', async () => {
     const [from, to] = nights(2)
     const stay = await bookStay(t, k.frontDesk.cookie, k.vi.id, exkBar(from, to))

@@ -468,11 +468,22 @@ for (const theme of ['light', 'dark'] as const) {
       const move = page.getByRole('dialog', { name: 'Room move · Ngozi Okafor' })
       await move.getByRole('radio', { name: /^401 Deluxe King/ }).waitFor()
       await expectAccessible(page)
-      await move.getByRole('radio', { name: /^506 Executive King/ }).check()
-      await move.getByRole('radio', { name: /^Keep ₦168,000\.00 a night/ }).check()
-      await move.getByText(/discount on Executive King/).waitFor()
-      await expectAccessible(page)
       await move.getByRole('button', { name: /^Cancel/ }).click()
+      // Deluxe King full on Mr Eze's second night: the upgrade with the Keep rate line.
+      await page.getByRole('button', { name: /Chidi Eze, Deluxe King/ }).click()
+      await page
+        .getByRole('dialog', { name: /^Chidi Eze · VI-/ })
+        .getByRole('button', { name: /^Room move/ })
+        .click()
+      const upgrade = page.getByRole('dialog', { name: 'Room move · Chidi Eze' })
+      await upgrade
+        .getByRole('radio', { name: /Executive King/ })
+        .first()
+        .check()
+      await upgrade.getByRole('radio', { name: /^Keep ₦168,000\.00 a night/ }).check()
+      await upgrade.getByText(/discount on Executive King/).waitFor()
+      await expectAccessible(page)
+      await upgrade.getByRole('button', { name: /^Cancel/ }).click()
       // The extend popover, by keyboard-free drag of Mr Mensah's bar end.
       await page.getByLabel('Room type').selectOption({ label: 'Executive King' })
       const mensah = page.getByRole('button', { name: /Daniel Mensah, Executive King/ })

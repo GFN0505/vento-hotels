@@ -270,3 +270,50 @@ export function dayList(chart: TapeChart, date: string): DaySection[] {
     })
     .filter((section) => section.rooms.length > 0 || section.arriving.length > 0)
 }
+
+// Why a free-looking cell can't start a booking, or null when it can (the owner: no bookings on a
+// room-day that isn't available): a past night, out of order, already booked, or the room type
+// has no room left to sell that night.
+export function cellProblem(chart: TapeChart, room: ChartRoom, date: string): string | null {
+  const day = formatRateDate(date, false)
+  if (date < chart.hotel.businessDate) return `${day} has passed`
+  const off = chart.outOfOrder.find(
+    (p) => p.roomId === room.id && p.from <= date && date < p.backInService,
+  )
+  if (off) return `${room.number} is out of order on ${day}`
+  const taken = chart.stays.find(
+    (s) => s.roomId === room.id && s.arrival <= date && date < s.departure,
+  )
+  if (taken) return `${room.number} is taken on ${day} (${taken.guestShort})`
+  const type = chart.roomTypes.find((t) => t.id === room.roomTypeId)
+  const night = type?.nights.find((n) => n.date === date)
+  if (type && night && night.left <= 0) return `${type.name} is full on ${day}`
+  return null
+}
+
+// The nights a room is busy (stays and out of order), for a booking started from one of its cells.
+export function busyWindows(chart: TapeChart, roomId: string) {
+  return [
+    ...chart.stays
+      .filter((s) => s.roomId === roomId)
+      .map((s) => ({ from: s.arrival, to: s.departure, why: s.guestShort })),
+    ...chart.outOfOrder
+      .filter((p) => p.roomId === roomId)
+      .map((p) => ({ from: p.from, to: p.backInService, why: 'out of order' })),
+  ]
+}
+
+// A booked type with a room free every night of the stay (other than its own): moves to another
+// type wait until it is full.
+export function bookedTypeFree(
+  chart: TapeChart,
+  stay: Pick<
+    ChartStay,
+    'id' | 'arrival' | 'departure' | 'adults' | 'children' | 'roomTypeId' | 'roomId'
+  >,
+) {
+  return chart.rooms.some(
+    (r) =>
+      r.roomTypeId === stay.roomTypeId && r.id !== stay.roomId && roomFreeFor(chart, r, stay).free,
+  )
+}

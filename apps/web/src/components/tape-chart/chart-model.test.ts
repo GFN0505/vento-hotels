@@ -1,6 +1,14 @@
 import type { TapeChart } from '@vento/shared'
 import { describe, expect, it } from 'vitest'
-import { barText, buildRows, dayList, laneStays, roomFreeFor } from './chart-model'
+import {
+  barText,
+  bookedTypeFree,
+  buildRows,
+  cellProblem,
+  dayList,
+  laneStays,
+  roomFreeFor,
+} from './chart-model'
 
 const night = (
   date: string,
@@ -148,5 +156,30 @@ describe('chart model', () => {
       ['502', 'inspected', 'Arriving · Mensah D. · 3 nights'],
       ['503', 'out_of_order', 'Out of order until 27 Nov · AC'],
     ])
+  })
+})
+
+describe('what a cell and a move allow', () => {
+  it('starts a booking only on a night the room can be sold', () => {
+    const [r1, r2] = [room('r1', '502'), room('r2', '503')]
+    expect(cellProblem(chart, r1, '2026-11-24')).toBe('24 Nov has passed')
+    expect(cellProblem(chart, r2, '2026-11-25')).toBe('503 is out of order on 25 Nov')
+    expect(cellProblem(chart, r1, '2026-11-26')).toBe('502 is taken on 26 Nov (Mensah D.)')
+    expect(cellProblem(chart, r2, '2026-11-28')).toBeNull()
+    const full = {
+      ...chart,
+      roomTypes: chart.roomTypes.map((t) => ({ ...t, nights: [night('2026-11-28', { left: 0 })] })),
+    }
+    expect(cellProblem(full, r2, '2026-11-28')).toBe('Executive King is full on 28 Nov')
+  })
+
+  it('keeps moves to another type for when the booked type has no free room', () => {
+    const adebayo = chart.stays[1]
+    if (!adebayo) throw new Error('no stay')
+    // 502 is taken and 503 out of order on 25 Nov: Executive King is full for her night.
+    expect(bookedTypeFree(chart, adebayo)).toBe(false)
+    expect(
+      bookedTypeFree(chart, { ...adebayo, arrival: '2026-11-28', departure: '2026-11-29' }),
+    ).toBe(true)
   })
 })

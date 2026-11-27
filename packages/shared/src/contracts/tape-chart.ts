@@ -26,6 +26,7 @@ export const ROOM_MOVE_ERROR_CODES = [
   'ROOM_ARCHIVED',
   'ROOM_WRONG_HOTEL',
   'ROOM_WRONG_TYPE',
+  'BOOKED_TYPE_FREE', // a move to another type while the booked type has a free room
   'NOT_MOVABLE',
   'ROOM_HAS_BOOKINGS', // room archive or type change with assigned stays
   'ROOM_OUT_OF_ORDER_PERIOD', // room archive or type change with an active out-of-order period

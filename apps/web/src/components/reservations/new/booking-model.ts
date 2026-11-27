@@ -361,3 +361,16 @@ const RESTRICTION_WORDS = {
 export function restrictionLabel(kind: keyof typeof RESTRICTION_WORDS): string {
   return `Reason for booking through ${RESTRICTION_WORDS[kind]}`
 }
+
+// A booking from a chart cell whose dates cover a night the room isn't free (the server refuses it
+// too): the first such night and why.
+export function roomClash(draft: Pick<Draft, 'room' | 'roomTypeId' | 'arrival' | 'departure'>) {
+  const room = draft.room
+  if (!room || room.roomTypeId !== draft.roomTypeId) return null
+  const hit = room.busy
+    .filter((w) => w.from < draft.departure && draft.arrival < w.to)
+    .sort((a, b) => a.from.localeCompare(b.from))[0]
+  if (!hit) return null
+  const date = [hit.from, draft.arrival].sort().at(-1) ?? draft.arrival
+  return { date, why: hit.why }
+}

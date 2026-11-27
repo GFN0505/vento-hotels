@@ -30,6 +30,8 @@ import {
   barLabel,
   barSpan,
   barText,
+  bookedTypeFree,
+  cellProblem,
   LABEL_WIDTH,
   oooReason,
   periodsByRoom,
@@ -188,10 +190,17 @@ export function ChartGrid(props: Props) {
       const date = dates[col] ?? ''
       const stay = stayAt(row, date)
       const off = periods.get(row.room.id)?.find((p) => p.from <= date && date < p.backInService)
-      const what = stay ? stay.guestShort : off ? `Out of order · ${oooReason(off)}` : 'free'
+      const problem = cellProblem(chart, row.room, date)
+      const what = stay
+        ? stay.guestShort
+        : off
+          ? `Out of order · ${oooReason(off)}`
+          : problem
+            ? `${problem}, can't be booked`
+            : 'free, Enter books it'
       return `Room ${row.room.number}, ${dayName(date)}: ${what}`
     },
-    [rows, dates, overlay, periods, business, stayAt],
+    [rows, dates, overlay, periods, business, stayAt, chart],
   )
 
   const moveFocus = (rowIndex: number, col: number) => {
@@ -253,7 +262,9 @@ export function ChartGrid(props: Props) {
       if (stay) return props.onOpenStay(stay, anchor)
       if (row.kind !== 'room') return
       if (focus.col < 0) return props.onOpenRoom(row.room, anchor)
-      if (date >= business && props.canBook) props.onCell(row.room, date)
+      const problem = cellProblem(chart, row.room, date)
+      if (problem) return setSaid(`${problem}. It can't be booked.`)
+      if (props.canBook) props.onCell(row.room, date)
       return
     }
     if ((event.key === 'm' || event.key === 'M') && stay && !event.metaKey && !event.ctrlKey) {
@@ -307,7 +318,17 @@ export function ChartGrid(props: Props) {
     event.stopPropagation()
     const free = new Map<string, { free: true } | { free: false; why: string }>()
     if (mode === 'move') {
-      for (const room of chart.rooms) free.set(room.id, roomFreeFor(chart, room, stay))
+      // Rooms of another type only when the booked type has none free (an upgrade).
+      const typeName = chart.roomTypes.find((t) => t.id === stay.roomTypeId)?.name ?? ''
+      const sameFree = bookedTypeFree(chart, stay)
+      for (const room of chart.rooms) {
+        free.set(
+          room.id,
+          sameFree && room.roomTypeId !== stay.roomTypeId
+            ? { free: false, why: `A ${typeName} room is free: assign one of those` }
+            : roomFreeFor(chart, room, stay),
+        )
+      }
     }
     dragRef.current = { stay, mode, x: event.clientX, y: event.clientY, started: false, free }
   }
@@ -798,15 +819,24 @@ function RoomRow(p: RowProps & { row: Extract<Row, { kind: 'room' }> }) {
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: the grid's own keys (Enter) do this. */}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: cells are reached by the grid's keys. */}
       <div
-        className={cn('relative flex-none', p.canBook && 'cursor-cell')}
+        className="relative flex-none"
         style={{ width: p.trackW, backgroundImage: p.background }}
+        onMouseMove={(event) => {
+          if (!p.canBook || event.target !== event.currentTarget) return
+          const rect = event.currentTarget.getBoundingClientRect()
+          const date = addDays(p.from, Math.floor((event.clientX - rect.left) / p.colW))
+          const problem = cellProblem(p.chart, room, date)
+          // The reason on hover; only a night that can be sold looks clickable.
+          event.currentTarget.title = problem ?? `Book ${room.number} from ${dayName(date)}`
+          event.currentTarget.style.cursor = problem ? 'not-allowed' : 'cell'
+        }}
         onClick={(event) => {
           if (event.target !== event.currentTarget || p.suppressClick.current) return
           const rect = event.currentTarget.getBoundingClientRect()
           const col = Math.floor((event.clientX - rect.left) / p.colW)
           p.onFocusCell(col)
           const date = addDays(p.from, col)
-          if (date >= p.business && p.canBook) p.onCell(room, date)
+          if (p.canBook && !cellProblem(p.chart, room, date)) p.onCell(room, date)
         }}
       >
         {p.periods.map((period) => {

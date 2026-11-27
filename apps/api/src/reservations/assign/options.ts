@@ -1,6 +1,8 @@
-// stays.roomOptions: the Room move dialog's lists (spec: "Room move dialog"). Rooms free for every
-// night of the stay: the stay's own type first (ready rooms first when it arrives today), then other
-// types its plan sells and its party fits, cheapest first, with the plan price difference a night.
+// stays.roomOptions: the Room move dialog's lists (spec: "Room move dialog"). Rooms of the booked
+// type free for every night of the stay (ready rooms first when it arrives today). Other types the
+// plan sells and the party fits come only when no room of the booked type is free (the owner,
+// 2026-11-27: "I should see just the type of room that was paid for"), cheapest first, with the
+// plan price difference a night.
 // A read: the move itself checks again under the room's lock.
 import {
   compareRoomOptions,
@@ -63,13 +65,17 @@ export async function roomOptions(
       .sort((a, b) => compareRoomOptions(a, b, arrivesToday))
       .map(option)
 
-  // Other room types: sold by the plan, fit the party, a room left every night.
-  const planTypes = await typesOnPlan(db, access, {
-    propertyId: hotel.id,
-    ratePlanId: stay.ratePlanId,
-    from: stay.arrival,
-    to: dates.at(-1) ?? stay.arrival,
-  }).catch(() => [])
+  // Other room types only when the booked type has no room free every night.
+  const sameType = ofType(stay.roomTypeId)
+  const planTypes =
+    sameType.length > 0
+      ? []
+      : await typesOnPlan(db, access, {
+          propertyId: hotel.id,
+          ratePlanId: stay.ratePlanId,
+          from: stay.arrival,
+          to: dates.at(-1) ?? stay.arrival,
+        }).catch(() => [])
   const others = planTypes.filter(
     (type) =>
       type.id !== stay.roomTypeId &&
@@ -124,7 +130,7 @@ export async function roomOptions(
       nationality: loaded.guest.nationality,
     },
     arrivesToday,
-    sameType: ofType(stay.roomTypeId),
+    sameType,
     otherTypes,
     blocked: movableProblem(loaded, stay, hotel),
     discountLimit: can(access, 'stay.rate_override') ? discountLimitOf(access) : '0',

@@ -119,6 +119,7 @@
 - **Over the credit limit:** the settle button reads "Over Acme's limit by ₦…" and the same dialog asks for a GM or finance PIN.
 - **OOO would overbook:** "Executive King would be 1 room short on 26 Nov." before anything changes; nothing is saved.
 - **Room move to a dirty room:** dirty rooms are listed after ready ones with their status; moving to one is allowed.
+- **Guest asks for a better room type while the booked type has rooms:** Room move lists only the booked type; dropping on another type says "A Deluxe King room is free: assign one of those". An upgrade is offered only when the booked type is full; otherwise it's a Modify (a booking change, re-priced).
 - **Blind count mismatch:** variance shown only after submission; a reason is required to close; the count can't be edited afterwards.
 
 ## Targets
@@ -135,7 +136,7 @@
 - Take payment is disabled until a shift is open; the opening float is stored.
 - Check-out of 502 splits across POS terminal (reference required) and city ledger; settlement checks Acme's credit limit and creates an invoice; over-limit needs approval.
 - Room move records reason and before/after; 503 can't go OOO while occupied; once OOO it is removed from Executive King availability for 25–26 Nov (the work order link comes with Stage 2).
-- A room holds one booking per night (race test); out of order is refused while a booking is assigned and when a night would go short, and reduces rooms left on New reservation; an upgrade at the booked price over 12% needs Tunde's PIN; Mark clean works offline and syncs (`apps/api/src/rooms/*/*.test.ts`, `apps/api/src/reservations/assign/*.test.ts`, `apps/web/e2e/tape-chart.spec.ts`).
+- A room holds one booking per night (race test); out of order is refused while a booking is assigned and when a night would go short, and reduces rooms left on New reservation; assigning offers only the booked room type, and another type only as an upgrade when the booked type is full; an upgrade at the booked price over 12% needs Tunde's PIN; a booking from the chart can't start on a night the room isn't free; Mark clean works offline and syncs (`apps/api/src/rooms/*/*.test.ts`, `apps/api/src/reservations/assign/*.test.ts`, `apps/web/e2e/tape-chart.spec.ts`).
 - A phone booking locks and decrements Deluxe King for each night and stores plan price and terms; the last-room race books once; a discount over the limit is refused without an approval and booked with one (`apps/api/src/reservations/*.test.ts`, `apps/api/src/approvals/*.test.ts`, `apps/web/e2e/reservations.spec.ts`).
 - Walk-in decrements Standard Queen availability for both nights in one transaction; a concurrent walk-in for the last Standard Queen fails cleanly.
 - A 15% discount is refused for front desk alone and succeeds with Tunde's PIN; the audit event carries reason, actor and approver; Tunde can't approve his own.

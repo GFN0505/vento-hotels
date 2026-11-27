@@ -21,7 +21,7 @@ import {
   newId,
   rangesOverlap,
 } from '@vento/shared'
-import { and, asc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
 import { recordAuditMany } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { ratePlans } from '../db/schema/rates.ts'
@@ -42,6 +42,30 @@ export type TapeChartSeedContext = {
   hotels: { vi: string; ikeja: string }
   access: { chiamaka: Access; tunde: Access; grace: Access; sade: Access; adaeze: Access }
 }
+
+// Delegates of the Lagos Fintech Summit, who fill Deluxe King for a night.
+const SUMMIT: [string, string][] = [
+  ['Ada', 'Nwachukwu'],
+  ['Bayo', 'Ogunleye'],
+  ['Chinedu', 'Okonkwo'],
+  ['Damilola', 'Adeyemi'],
+  ['Efe', 'Omoregie'],
+  ['Femi', 'Bakare'],
+  ['Gbemi', 'Afolabi'],
+  ['Hadiza', 'Usman'],
+  ['Ifeanyi', 'Eze'],
+  ['Jide', 'Coker'],
+  ['Kemi', 'Oladipo'],
+  ['Lanre', 'Akinola'],
+  ['Musa', 'Abdullahi'],
+  ['Nneka', 'Obi'],
+  ['Ope', 'Adebanjo'],
+  ['Rotimi', 'Fasanya'],
+  ['Seun', 'Ojo'],
+  ['Temi', 'Ajayi'],
+  ['Uche', 'Nnaji'],
+  ['Wale', 'Adewale'],
+]
 
 type Room = { id: string; number: string; floor: number; typeId: string; code: string }
 type Window = { from: string; to: string }
@@ -182,6 +206,19 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
     at: '10:10',
   })
 
+  // Mr Chidi Eze (Deluxe King, Bed & breakfast, D+3 → D+5): Deluxe King fills up on D+4 (the
+  // Lagos Fintech Summit below), so his upgrade to Executive King at his price can be tried.
+  const chidi = await book({
+    code: 'DLK',
+    plan: 'BB',
+    arrival: addDays(D, 3),
+    nights: 2,
+    guest: { title: 'Mr', firstName: 'Chidi', lastName: 'Eze', phone: '+2348031110510' },
+    notes: 'Repeat guest. Asked for a bigger room if one comes up.',
+    on: addDays(D, -4),
+    at: '16:40',
+  })
+
   // --- Packing Kora Victoria Island's next seven days -------------------------------------------------
 
   type Arriving = {
@@ -286,6 +323,61 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
       source: 'dialog',
     })
 
+  async function fillDeluxeKing(night: string, exceptStay: string) {
+    const taken = await tx
+      .select({ roomId: stays.roomId })
+      .from(stays)
+      .where(
+        and(
+          eq(stays.propertyId, vi),
+          inArray(stays.status, ['confirmed', 'checked_in']),
+          lte(stays.arrival, night),
+          gt(stays.departure, night),
+        ),
+      )
+    const busy = new Set(taken.map((row) => row.roomId))
+    const free = viRooms.filter((r) => r.code === 'DLK' && !busy.has(r.id))
+    const filled: { stay: Arriving; room: Room; businessDate: string }[] = []
+    for (const [i, r] of free.entries()) {
+      const [firstName, lastName] = SUMMIT[i % SUMMIT.length] ?? ['Ada', 'Obi']
+      const made = await book({
+        code: 'DLK',
+        plan: 'BAR',
+        arrival: night,
+        nights: 1,
+        guest: {
+          title: 'Mx',
+          firstName,
+          lastName,
+          phone: `+23480377${String(1000 + i).slice(-4)}`,
+        },
+        notes: 'Lagos Fintech Summit',
+        on: addDays(D, -6),
+        at: '10:00',
+      })
+      filled.push({
+        stay: {
+          id: made.stay.id,
+          reservationId: made.id,
+          version: made.stay.version,
+          roomTypeId: made.stay.roomTypeId,
+          arrival: made.stay.arrival,
+          departure: made.stay.departure,
+          firstName,
+          lastName,
+        },
+        room: r,
+        businessDate: D,
+      })
+    }
+    await assignInBulk(chiamaka, vi, filled)
+    const [mine] = await tx
+      .select({ roomId: stays.roomId })
+      .from(stays)
+      .where(eq(stays.id, exceptStay))
+    if (!mine?.roomId) throw new Error('The demo needs Mr Eze in a room')
+  }
+
   // Rooms for many stays at once, as the packing above checked them free (each stay's room was
   // held for its nights): one update and one insert of events.
   async function assignInBulk(
@@ -356,6 +448,10 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
       return [{ stay, room, businessDate: stay.arrival <= addDays(D, 1) ? addDays(D, -1) : D }]
     }),
   )
+
+  // The Lagos Fintech Summit takes every Deluxe King left on D+4, each in a room, so no Deluxe King
+  // is free for all of Mr Eze's nights and Room move offers Executive King as an upgrade.
+  await fillDeluxeKing(addDays(D, 4), chidi.stay.id)
 
   // D, 10:15: Mr Kalu moved 503 → 501 for the AC repair; 10:25: Tunde puts 503 out of order.
   await on(vi, D, () =>
@@ -457,7 +553,8 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
 
   return [
     `Tape chart: 503 out of order (AC) until ${formatRateDate(addDays(D, 2), false)}, Unassigned 7, Mr Mensah in 502`,
-    `Drag Funmilayo Adebayo (Deluxe King, unassigned) onto 408; move Ngozi Okafor (404) to 401, then to 506 at her price`,
+    `Drag Funmilayo Adebayo (Deluxe King, unassigned) onto 408; move Ngozi Okafor (404) to 401`,
+    `Room move for Chidi Eze (Deluxe King full on ${formatRateDate(addDays(D, 4), false)}): Executive King at his price, with Tunde's PIN`,
     `Drag the end of Mr Mensah's bar to ${formatRateDate(addDays(D, 5), false)}; mark 502 clean`,
     `As Tunde: put 1104 out of order on ${formatRateDate(addDays(D, 16), false)} (refused: Junior Suite full)`,
   ]

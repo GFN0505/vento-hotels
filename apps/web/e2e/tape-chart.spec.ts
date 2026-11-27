@@ -130,13 +130,28 @@ test.describe('desktop', () => {
     await page.getByRole('heading', { name: /^Good/ }).waitFor()
 
     await chartOf(page, 'Deluxe King')
+    // Mrs Okafor's Deluxe King has free rooms: only Deluxe King is offered.
     await page.getByRole('button', { name: /Ngozi Okafor, Deluxe King/ }).click()
     await page
       .getByRole('dialog', { name: /^Ngozi Okafor · VI-/ })
       .getByRole('button', { name: /^Room move/ })
       .click()
-    const move = page.getByRole('dialog', { name: 'Room move · Ngozi Okafor' })
-    await move.getByRole('radio', { name: /^506 Executive King/ }).check()
+    const hers = page.getByRole('dialog', { name: 'Room move · Ngozi Okafor' })
+    await expect(hers.getByRole('radio', { name: /^401 Deluxe King/ })).toBeVisible()
+    await expect(hers.getByRole('radio', { name: /Executive King/ })).toHaveCount(0)
+    await hers.getByRole('button', { name: /^Cancel/ }).click()
+    // Deluxe King is full on Mr Eze's second night: Executive King is offered as an upgrade.
+    await page.getByRole('button', { name: /Chidi Eze, Deluxe King/ }).click()
+    await page
+      .getByRole('dialog', { name: /^Chidi Eze · VI-/ })
+      .getByRole('button', { name: /^Room move/ })
+      .click()
+    const move = page.getByRole('dialog', { name: 'Room move · Chidi Eze' })
+    await expect(move.getByText(/^No Deluxe King room is free for all of /)).toBeVisible()
+    await move
+      .getByRole('radio', { name: /Executive King/ })
+      .first()
+      .check()
     await move.getByRole('radio', { name: /^Keep ₦168,000\.00 a night/ }).check()
     await expect(
       move.getByText(/26\.32% discount on Executive King, over your 12(\.00)?% limit/),
@@ -150,7 +165,7 @@ test.describe('desktop', () => {
     await digits(prompt, '5072')
     await prompt.getByRole('button', { name: 'Approve upgrade and move' }).click()
     await expect(
-      page.getByText('Ngozi Okafor moved to 506 · upgrade approved by Tunde Bello'),
+      page.getByText(/^Chidi Eze moved to \S+ · upgrade approved by Tunde Bello$/),
     ).toBeVisible()
   })
 
@@ -203,6 +218,22 @@ test.describe('desktop', () => {
     ).toBeVisible({
       timeout: 40_000,
     })
+  })
+
+  test('books only from a night the room can be sold', async ({ page }, testInfo) => {
+    test.setTimeout(120_000)
+    const domain = seedDemoGroup(`chart-cell-${testInfo.project.name}`, PASSWORD)
+    await signedIn(page, 'chiamaka', domain)
+    await chartOf(page, 'Executive King')
+    // 503 is out of order today: its block is not a way to book.
+    await page.getByText('Out of order · AC').first().click()
+    await expect(page.getByRole('dialog', { name: /New reservation/ })).toHaveCount(0)
+    // Two weeks on, every Executive King night is free: a cell starts a booking for that room.
+    await page.getByRole('button', { name: 'Next week' }).click()
+    await page.getByRole('button', { name: 'Next week' }).click()
+    const label = await centre(page.getByRole('button', { name: /^Room 514 / }))
+    await page.mouse.click(label.box.x + label.box.width + 40, label.y)
+    await expect(page.getByText('Room 514 will be assigned.')).toBeVisible()
   })
 
   test('asks for a hotel with All hotels, then shows that hotel', async ({ page }, testInfo) => {

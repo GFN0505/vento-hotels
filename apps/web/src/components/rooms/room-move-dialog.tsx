@@ -541,7 +541,7 @@ function RoomLists({
           No {data.stay.roomTypeName} room is free for all of{' '}
           {rangeLabel(data.stay.arrival, data.stay.departure)}.
           {freeOthers
-            ? ` ${freeOthers} ${freeOthers === 1 ? 'room of another type is' : 'rooms of other types are'} free.`
+            ? ` ${freeOthers} ${freeOthers === 1 ? 'room of another type is' : 'rooms of other types are'} free as an upgrade.`
             : ''}
         </p>
       ) : null}

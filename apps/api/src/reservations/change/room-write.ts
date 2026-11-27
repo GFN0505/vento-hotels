@@ -3,8 +3,9 @@
 // asked for that isn't free refuses the change; a room kept that isn't free any more is dropped and
 // the stay comes out unassigned (said on reservation.modified, not as its own event).
 import type { AuditEvent } from '../../audit/record.ts'
-import { roomRemoved } from '../assign/errors.ts'
+import { bookedTypeFree, roomRemoved } from '../assign/errors.ts'
 import {
+  bookedTypeHasFreeRoom,
   conflictError,
   lockRoomsForStay,
   type RoomRow,
@@ -44,6 +45,12 @@ export async function settleRoom(
   const room = (await lockRoomsForStay(tx, scope, [target.id])).get(target.id)
   if (!room) return { before, after: null, asked: target.asked, unassigned: null }
   if (target.asked) requireAskedRoom(room, input)
+  // A room of another type (the Room move flow): only when the booked type has none free.
+  if (target.asked && room.roomTypeId !== stay.roomTypeId) {
+    if (await bookedTypeHasFreeRoom(tx, stay, input.arrival, input.departure)) {
+      throw bookedTypeFree(stay.roomTypeName)
+    }
+  }
   const conflict = await roomConflict(tx, room.id, input.arrival, input.departure, {
     stay: stay.id,
   })

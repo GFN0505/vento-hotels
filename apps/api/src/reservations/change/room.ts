@@ -3,8 +3,9 @@
 // left out, the stay keeps its room when it is of the same type and free on every night, and is
 // unassigned otherwise. Quotes read it without a lock; modify locks the room first (step 3).
 import type { ChangeQuote } from '@vento/shared'
-import { roomWrongType } from '../assign/errors.ts'
+import { bookedTypeFree, roomWrongType } from '../assign/errors.ts'
 import {
+  bookedTypeHasFreeRoom,
   type RoomConflict,
   type RoomRow,
   readRoom,
@@ -53,6 +54,11 @@ export async function quoteRoom(
   if (!target) return { room: null, roomBefore }
   const room = target.id === before?.id ? before : await readRoom(db, scope, target.id)
   if (target.asked) requireAskedRoom(room, input)
+  if (target.asked && room.roomTypeId !== stay.roomTypeId) {
+    if (await bookedTypeHasFreeRoom(db, stay, input.arrival, input.departure)) {
+      throw bookedTypeFree(stay.roomTypeName)
+    }
+  }
   const conflict = await roomConflict(db, room.id, input.arrival, input.departure, {
     stay: stay.id,
   })

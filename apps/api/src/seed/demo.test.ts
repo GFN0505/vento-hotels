@@ -9,6 +9,7 @@ import type {
   RateCalendar,
   RatePlanView,
   ReservationRow,
+  RoomOptions,
   RoomTypeView,
   RoomView,
   TapeChart,
@@ -558,6 +559,25 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
       '305': 'inspected',
     })
     expect(roomOf('301')?.statusBy).toBe('Grace Akpan')
+    // Mr Chidi Eze: Deluxe King is full in rooms on D+4, so Room move offers Executive King.
+    const chidi = stayOf('Chidi Eze')
+    expect(chidi?.roomId).toBeTruthy()
+    const dlk = chart.data.roomTypes.find((type) => type.name === 'Deluxe King')
+    expect(dlk?.nights.find((n) => n.date === addDays(today, 4))?.left).toBe(0)
+    const choices = await t.rpc<RoomOptions>(cookie, 'stays/roomOptions', {
+      stayId: chidi?.id,
+      version: chidi?.version,
+    })
+    expect(choices.data.sameType).toEqual([])
+    expect(choices.data.otherTypes.map((type) => type.name)).toContain('Executive King')
+    // Mrs Okafor has Deluxe King rooms free: only those are offered.
+    const ngozi = stayOf('Ngozi Okafor')
+    const hers = await t.rpc<RoomOptions>(cookie, 'stays/roomOptions', {
+      stayId: ngozi?.id,
+      version: ngozi?.version,
+    })
+    expect(hers.data.sameType.length).toBeGreaterThan(0)
+    expect(hers.data.otherTypes).toEqual([])
 
     // No room holds two stays on a night, and no stay sits in a room out of order.
     const doubled = await t.db.execute(sql`

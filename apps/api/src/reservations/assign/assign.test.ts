@@ -62,6 +62,16 @@ describe.skipIf(!url)('room assignment and moves', () => {
     return found
   }
 
+  // Books and assigns every Deluxe King room not listed, for the nights given.
+  const fillDeluxeKing = async (arrival: string, departure: string, skip: string[]) => {
+    for (const r of dlk) {
+      if (skip.includes(r.id)) continue
+      const filler = await bookStay(t, k.frontDesk.cookie, k.vi.id, dlkBB(arrival, departure))
+      const done = await assign(t, k.frontDesk.cookie, filler.stay, r.id)
+      if (done.status !== 200) throw new Error(`fill failed: ${done.data.message}`)
+    }
+  }
+
   beforeAll(async () => {
     k = await koraApprovals(t)
     dlk = await roomsOf(t, k.owner.cookie, k.vi.id, k.types.dlk.id)
@@ -205,7 +215,7 @@ describe.skipIf(!url)('room assignment and moves', () => {
       expect((await assign(t, k.frontDesk.cookie, d.stay, room(dlk, 5).id)).status).toBe(200)
     })
 
-    it('lists free rooms of the type and other types with the price difference', async () => {
+    it('offers only the booked type while it has a free room, other types once it is full', async () => {
       const [arrival, departure] = nights()
       const b = await bookStay(t, k.frontDesk.cookie, k.vi.id, dlkBB(arrival, departure))
       const other = await bookStay(t, k.frontDesk.cookie, k.vi.id, dlkBB(arrival, departure))
@@ -217,10 +227,20 @@ describe.skipIf(!url)('room assignment and moves', () => {
       expect(options.status).toBe(200)
       expect(options.data.sameType.map((r) => r.number)).not.toContain(room(dlk, 0).number)
       expect(options.data.sameType.length).toBe(dlk.length - 1)
-      const executive = options.data.otherTypes.find((type) => type.roomTypeId === k.types.exk.id)
-      expect(executive?.difference).toBe('60000.00')
+      expect(options.data.otherTypes).toEqual([])
       expect(options.data.stay.soldPerNight).toBe('168000.00')
       expect(options.data.discountLimit).toBe('12.00')
+      // Every other Deluxe King taken: Executive King shows as an upgrade with the difference.
+      const mine = await assign(t, k.frontDesk.cookie, b.stay, room(dlk, 1).id)
+      await fillDeluxeKing(arrival, departure, [room(dlk, 0).id, room(dlk, 1).id])
+      const full = await rpc<RoomOptions>(t, k.frontDesk.cookie, 'stays/roomOptions', {
+        stayId: b.stay.id,
+        version: mine.data.version,
+      })
+      expect(full.data.sameType).toEqual([])
+      expect(
+        full.data.otherTypes.find((type) => type.roomTypeId === k.types.exk.id)?.difference,
+      ).toBe('60000.00')
     })
   })
 
@@ -262,9 +282,37 @@ describe.skipIf(!url)('room assignment and moves', () => {
       expect(modified[0]?.after).toMatchObject({ roomId: null, roomUnassigned: 'modify_not_free' })
     })
 
-    it('moves to another type re-priced, or at the booked price as an Upgrade discount with approval', async () => {
+    it('refuses a move to another type while a room of the booked type is free', async () => {
       const [arrival, departure] = nights(2)
       const a = await bookStay(t, k.frontDesk.cookie, k.vi.id, dlkBB(arrival, departure))
+      const fields = fieldsOf(a, { roomTypeId: k.types.exk.id, roomId: room(exk, 1).id })
+      const quoted = await quoteChange(t, k.frontDesk.cookie, fields)
+      expect(quoted.data.data?.code).toBe('BOOKED_TYPE_FREE')
+      expect(quoted.data.message).toBe(
+        'A Deluxe King room is free for these nights. Assign one of those: other room types are for when Deluxe King is full.',
+      )
+      const saved = await rpc(t, k.frontDesk.cookie, 'reservations/modify', {
+        idempotencyKey: newId(),
+        ...fields,
+        changeHash: 'any',
+      })
+      expect(saved.data.data?.code).toBe('BOOKED_TYPE_FREE')
+      // Modify's own room type change (no room) is a booking change and stays allowed.
+      const quotedType = await quoteChange(
+        t,
+        k.frontDesk.cookie,
+        fieldsOf(a, { roomTypeId: k.types.exk.id }),
+      )
+      expect(quotedType.status).toBe(200)
+    })
+
+    it('moves to another type re-priced, or at the booked price as an Upgrade discount with approval', async () => {
+      const [arrival, departure] = nights(2)
+      const guest = await bookStay(t, k.frontDesk.cookie, k.vi.id, dlkBB(arrival, departure))
+      // Deluxe King is full in rooms for these nights, so the upgrade path opens.
+      const inRoom = await assign(t, k.frontDesk.cookie, guest.stay, room(dlk, 0).id)
+      await fillDeluxeKing(arrival, departure, [room(dlk, 0).id])
+      const a = { ...guest, stay: { ...guest.stay, version: inRoom.data.version } }
       const charge = fieldsOf(a, { roomTypeId: k.types.exk.id, roomId: room(exk, 0).id })
       const priced = await quoteChange(t, k.frontDesk.cookie, charge)
       expect(priced.status).toBe(200)
@@ -321,7 +369,7 @@ describe.skipIf(!url)('room assignment and moves', () => {
         approverName: 'Tunde Bello',
         exception: 'discount',
       })
-      const moved = await auditFor(t, k.orgId, 'stay.room_assigned', a.id)
+      const moved = await auditFor(t, k.orgId, 'stay.room_moved', a.id)
       expect(moved[0]?.after).toMatchObject({ keptBookedPrice: true, approverName: 'Tunde Bello' })
       const detail = await detailOf(t, k.frontDesk.cookie, a.id)
       expect(detail.stays[0]?.discount?.reason).toBe('upgrade')
@@ -376,6 +424,29 @@ describe.skipIf(!url)('room assignment and moves', () => {
       expect(taken.data.message).toMatch(
         /^Room \S+ was just taken for .+ Book without a room, or pick another\.$/,
       )
+    })
+  })
+
+  describe('a booking from a chart cell, on a night the room isn’t free', () => {
+    it('refuses a booking whose nights cover the room out of order or taken', async () => {
+      const [arrival, departure] = nights(3)
+      await outOfOrder(t, k.gm.cookie, {
+        propertyId: k.vi.id,
+        roomId: room(dlk, 4).id,
+        from: addDays(arrival, 2),
+        backInService: departure,
+      })
+      const stay = { ...dlkBB(arrival, departure), adults: 1, children: 0 }
+      const quoted = await quote(t, k.frontDesk.cookie, k.vi.id, stay)
+      const made = await rpc<{ id: string }>(t, k.frontDesk.cookie, 'reservations/create', {
+        idempotencyKey: newId(),
+        propertyId: k.vi.id,
+        guest: COLLINS,
+        source: 'direct',
+        stays: [{ ...stay, quoteHash: quoted.data.quoteHash, roomId: room(dlk, 4).id }],
+      })
+      expect(made.data.data?.code).toBe('ROOM_OUT_OF_ORDER')
+      expect(made.data.message).toMatch(new RegExp(`^${room(dlk, 4).number} is out of order `))
     })
   })
 

@@ -41,6 +41,7 @@ import { dismiss, useOutbox } from '@/offline/outbox'
 import { ChartGrid, type StatusOverlay } from './chart-grid'
 import {
   buildRows,
+  busyWindows,
   currentOrNext,
   datesOf,
   type Filters,
@@ -509,6 +510,7 @@ function HotelTapeChart({ hotel, memberId }: { hotel: Property; memberId: string
                       id: open.room.id,
                       number: open.room.number,
                       roomTypeId: open.room.roomTypeId,
+                      busy: busyWindows(data, open.room.id),
                     },
                   }
                 : undefined

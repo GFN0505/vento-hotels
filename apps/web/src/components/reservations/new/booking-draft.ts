@@ -65,7 +65,15 @@ export type Draft = {
   approval?: ApprovalDraft | undefined
   // Booked from a tape chart cell (brick 7): the room, assigned in the booking's transaction while
   // the draft stays on its room type.
-  room?: { id: string; number: string; roomTypeId: string } | undefined
+  room?:
+    | {
+        id: string
+        number: string
+        roomTypeId: string
+        // Its busy nights as the chart showed them, so dates that cover one are refused before Book.
+        busy: { from: string; to: string; why: string }[]
+      }
+    | undefined
   savedAt: number | undefined
 }
 

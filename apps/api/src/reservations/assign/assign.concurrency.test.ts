@@ -300,8 +300,14 @@ describe.skipIf(!url)('room moves under concurrency', { timeout: 900_000 }, () =
   it('never deadlocks when moves cross room types', async () => {
     for (let round = 0; round < Math.min(ROUNDS, 50); round++) {
       const night = addDays(DAY, 610 + round)
-      const x = await book('pair', night)
+      // Each in the only room of its type, so a move to another type is allowed (the booked type
+      // is full).
+      const solo = await book('solo', night)
       const y = await book('up', night)
+      const xIn = await assign(t, k.owner.cookie, solo.stay, room('solo').id)
+      const yIn = await assign(t, k.owner.cookie, y.stay, room('up').id)
+      const x = { ...solo, stay: { ...solo.stay, version: xIn.data.version } }
+      y.stay = { ...y.stay, version: yIn.data.version }
       const xTo = fieldsOf(x, { roomTypeId: types.up.id, roomId: room('up').id })
       const yTo = fieldsOf(y, { roomTypeId: types.pair.id, roomId: room('pair', 3).id })
       const [qx, qy] = await Promise.all([

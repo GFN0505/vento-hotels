@@ -4,7 +4,7 @@
 // stay-against-out-of-order check (two tables) can't be passed by two of them at once; the
 // exclusion constraints on stays and room_out_of_order are the last line of defence.
 import { shortGuestName } from '@vento/shared'
-import { and, asc, eq, gt, inArray, lt, ne } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, isNull, lt, ne } from 'drizzle-orm'
 import { guests, stays } from '../../db/schema/reservations.ts'
 import { roomOutOfOrder, rooms, roomTypes } from '../../db/schema/rooms.ts'
 import type { Reader, Tx } from '../context.ts'
@@ -231,4 +231,27 @@ export async function busyRooms(
       (id): id is string => id !== null,
     ),
   )
+}
+
+// Whether a room of the booked type, other than the stay's own, is free every night of [from, to):
+// while one is, a move to another type isn't offered or allowed (only a full booked type opens the
+// upgrade path).
+export async function bookedTypeHasFreeRoom(
+  db: Reader,
+  stay: { id: string; propertyId: string; roomTypeId: string; roomId: string | null },
+  from: string,
+  to: string,
+): Promise<boolean> {
+  const busy = await busyRooms(db, stay.propertyId, from, to, stay.id)
+  const candidates = await db
+    .select({ id: rooms.id })
+    .from(rooms)
+    .where(
+      and(
+        eq(rooms.roomTypeId, stay.roomTypeId),
+        eq(rooms.propertyId, stay.propertyId),
+        isNull(rooms.archivedAt),
+      ),
+    )
+  return candidates.some((room) => room.id !== stay.roomId && !busy.has(room.id))
 }
