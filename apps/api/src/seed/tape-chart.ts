@@ -21,7 +21,8 @@ import {
   newId,
   rangesOverlap,
 } from '@vento/shared'
-import { and, asc, eq, gte, inArray, isNull, lte } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
+import { recordAuditMany } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
 import { ratePlans } from '../db/schema/rates.ts'
 import { guests, stays } from '../db/schema/reservations.ts'
@@ -185,6 +186,7 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
 
   type Arriving = {
     id: string
+    reservationId: string
     version: number
     roomTypeId: string
     arrival: string
@@ -196,6 +198,7 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
     return tx
       .select({
         id: stays.id,
+        reservationId: stays.reservationId,
         version: stays.version,
         roomTypeId: stays.roomTypeId,
         arrival: stays.arrival,
@@ -283,6 +286,43 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
       source: 'dialog',
     })
 
+  // Rooms for many stays at once, as the packing above checked them free (each stay's room was
+  // held for its nights): one update and one insert of events.
+  async function assignInBulk(
+    who: Access,
+    propertyId: string,
+    list: { stay: Arriving; room: Room; businessDate: string }[],
+  ) {
+    if (list.length === 0) return
+    await tx.execute(sql`
+      update ${stays} s set room_id = k.room_id, version = s.version + 1, updated_at = now()
+      from unnest(
+        ${sql.param(list.map((item) => item.stay.id))}::uuid[],
+        ${sql.param(list.map((item) => item.room.id))}::uuid[]
+      ) as k(stay_id, room_id)
+      where s.id = k.stay_id and s.property_id = ${propertyId}::uuid and s.room_id is null`)
+    await recordAuditMany(
+      tx,
+      who,
+      list.map(({ stay, room, businessDate }) => ({
+        action: 'stay.room_assigned',
+        entityType: 'reservation',
+        entityId: stay.reservationId,
+        propertyId,
+        businessDate,
+        before: { room: null },
+        after: {
+          stayId: stay.id,
+          guestName: `${stay.firstName} ${stay.lastName}`,
+          arrival: stay.arrival,
+          departure: stay.departure,
+          room: { id: room.id, number: room.number },
+          source: 'seed',
+        },
+      })),
+    )
+  }
+
   // 406 was out of order D−3 → D−1 (AC compressor), Tunde on D−3.
   await on(vi, addDays(D, -3), () =>
     createOutOfOrder(tx, tunde, {
@@ -295,15 +335,27 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
       note: 'AC compressor',
     }),
   )
-  // Chiamaka assigns today's and tomorrow's arrivals the evening before, the rest on D.
+  // Chiamaka assigns today's and tomorrow's arrivals the evening before, the rest on D. The named
+  // guests go through the assign service; the rest of the week is written in one statement with
+  // its events (source `seed`), which keeps the demo quick to load for every browser test.
+  const named = new Set(fixed.keys())
   let kaluVersion = kalu.stay.version
   for (const stay of arriving) {
     const room = plan.get(stay.id)
-    if (!room) continue
+    if (!room || !named.has(stay.id)) continue
     const day = stay.arrival <= addDays(D, 1) ? addDays(D, -1) : D
     const done = await on(vi, day, () => assign(chiamaka, stay, room))
     if (stay.id === kalu.stay.id) kaluVersion = done.version
   }
+  await assignInBulk(
+    chiamaka,
+    vi,
+    arriving.flatMap((stay) => {
+      const room = plan.get(stay.id)
+      if (!room || named.has(stay.id)) return []
+      return [{ stay, room, businessDate: stay.arrival <= addDays(D, 1) ? addDays(D, -1) : D }]
+    }),
+  )
 
   // D, 10:15: Mr Kalu moved 503 → 501 for the AC repair; 10:25: Tunde puts 503 out of order.
   await on(vi, D, () =>
@@ -367,6 +419,7 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
   // --- Kora Ikeja GRA -----------------------------------------------------------------------------------
 
   const ikejaArriving = await arrivingAt(ikeja, addDays(D, 3))
+  const ikejaPlan: { stay: Arriving; room: Room; businessDate: string }[] = []
   const ikejaTaken = new Map<string, Window[]>()
   const ikejaFree = (room: Room, from: string, to: string) =>
     !(ikejaTaken.get(room.id) ?? []).some((w) => rangesOverlap(w.from, w.to, from, to))
@@ -379,8 +432,9 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
       ...(ikejaTaken.get(room.id) ?? []),
       { from: stay.arrival, to: stay.departure },
     ])
-    await assign(sade, stay, room)
+    ikejaPlan.push({ stay, room, businessDate: D })
   }
+  await assignInBulk(sade, ikeja, ikejaPlan)
   const later = await tx
     .select({ roomId: stays.roomId })
     .from(stays)

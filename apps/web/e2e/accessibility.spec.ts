@@ -191,6 +191,7 @@ for (const theme of ['light', 'dark'] as const) {
     test('taxes and charges, payments and FX rates, with their sheets, have no accessibility problems', async ({
       page,
     }, testInfo) => {
+      test.setTimeout(90_000)
       const domain = seedDemoGroup(
         `a11y-finance-${theme}-${testInfo.project.name}`,
         'Demo-pass-42!',
@@ -281,6 +282,7 @@ for (const theme of ['light', 'dark'] as const) {
     test('reservations: the list (All hotels, one hotel, empty), a reservation and New reservation at Room & rate and Review have no accessibility problems', async ({
       page,
     }, testInfo) => {
+      test.setTimeout(120_000)
       const domain = seedDemoGroup(`a11y-res-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
       await signIn(page, `adaeze@${domain}`, 'Demo-pass-42!')
       await page.getByRole('heading', { name: /^Good/ }).waitFor()
@@ -342,6 +344,7 @@ for (const theme of ['light', 'dark'] as const) {
     test('approvals: the bell, Waiting, Asked by you, Done and a request have no accessibility problems', async ({
       page,
     }, testInfo) => {
+      test.setTimeout(90_000)
       const domain = seedDemoGroup(`a11y-appr-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
       await signIn(page, `tunde@${domain}`, 'Demo-pass-42!')
       await page.getByRole('heading', { name: /^Good/ }).waitFor()
@@ -502,6 +505,7 @@ for (const theme of ['light', 'dark'] as const) {
     test('the plan editor preview with Guest pays has no accessibility problems', async ({
       page,
     }, testInfo) => {
+      test.setTimeout(90_000)
       const domain = seedDemoGroup(`a11y-pays-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
       await signIn(page, `tunde@${domain}`, 'Demo-pass-42!')
       await page.getByRole('heading', { name: /^Good/ }).waitFor()

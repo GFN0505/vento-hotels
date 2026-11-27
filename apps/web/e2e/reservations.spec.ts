@@ -57,6 +57,7 @@ async function guest(page: Page, first: string, last: string, phone: string) {
 test('front desk takes a phone booking with a discount within her limit, and finds it again', async ({
   page,
 }, testInfo) => {
+  test.setTimeout(90_000)
   const domain = seedDemoGroup(`res-book-${testInfo.project.name}`, PASSWORD)
   await signIn(page, `chiamaka@${domain}`, PASSWORD)
   await page.getByRole('heading', { name: /^Good/ }).waitFor()
@@ -152,6 +153,7 @@ test('two desks race for the last Junior Suite: one books, the other is told it 
 })
 
 test('offline, New reservation waits for a connection', async ({ page, context }, testInfo) => {
+  test.setTimeout(90_000)
   const domain = seedDemoGroup(`res-offline-${testInfo.project.name}`, PASSWORD)
   await signIn(page, `chiamaka@${domain}`, PASSWORD)
   await page.getByRole('heading', { name: /^Good/ }).waitFor()
@@ -173,6 +175,7 @@ test('offline, New reservation waits for a connection', async ({ page, context }
 test('the owner sees every hotel with a Hotel column, picks the hotel when booking, and an empty hotel', async ({
   page,
 }, testInfo) => {
+  test.setTimeout(90_000)
   const domain = seedDemoGroup(`res-owner-${testInfo.project.name}`, PASSWORD)
   await signIn(page, `adaeze@${domain}`, PASSWORD)
   await page.getByRole('heading', { name: /^Good/ }).waitFor()
