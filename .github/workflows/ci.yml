@@ -16,7 +16,9 @@ jobs:
   check:
     name: Check, typecheck and test
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # End-to-end tests on desktop and phone, light and dark, grow with every brick; brick 5 took
+    # about 13 minutes and brick 6 ran past 15.
+    timeout-minutes: 25
     # Same images and ports as docker-compose.yml, so tests run against the same services as locally.
     services:
       postgres:
