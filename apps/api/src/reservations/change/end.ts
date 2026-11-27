@@ -47,7 +47,7 @@ import {
   requireAllowed,
   requireChange,
 } from './rules.ts'
-import { changedView, inChangeTransaction, requestHashOf } from './transaction.ts'
+import { type ChangeDb, changedView, inChangeTransaction, requestHashOf } from './transaction.ts'
 
 export type EndPenalty = {
   stayId: string
@@ -327,7 +327,7 @@ async function endInTx(
 }
 
 export async function cancelReservation(
-  db: Database,
+  db: ChangeDb,
   access: Access,
   input: CancelInput,
 ): Promise<ChangedReservation> {
@@ -343,7 +343,7 @@ export async function cancelReservation(
 }
 
 export async function markNoShow(
-  db: Database,
+  db: ChangeDb,
   access: Access,
   input: MarkNoShowInput,
 ): Promise<ChangedReservation> {

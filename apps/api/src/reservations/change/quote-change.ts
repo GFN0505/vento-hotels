@@ -103,7 +103,7 @@ const money = (value: { amount: string; dueAt: Date } | null) =>
   value ? { amount: value.amount, dueAt: value.dueAt.toISOString() } : null
 
 export async function quoteChange(
-  db: Database,
+  db: Pick<Database, 'select' | 'execute'>,
   access: Access,
   input: Input,
 ): Promise<ChangeQuote> {

@@ -12,7 +12,6 @@ import { and, eq, sql } from 'drizzle-orm'
 import { waiverBinding } from '../../approvals/kinds/change-rules.ts'
 import { markApprovalUsed } from '../../approvals/use.ts'
 import { recordAudit } from '../../audit/record.ts'
-import type { Database } from '../../db/client.ts'
 import { isUniqueViolation } from '../../db/errors.ts'
 import {
   guests,
@@ -27,6 +26,7 @@ import { type BookingHotel, loadBookingHotel, type Reader, type Tx } from '../co
 import { changeAlreadySaved, penaltyNotFound, penaltyNotOpen } from './errors.ts'
 import { resolveWaiver, type Waiver, waivedColumns, waivedEvent } from './penalty.ts'
 import { requireChange } from './rules.ts'
+import type { ChangeDb } from './transaction.ts'
 import { penaltyView } from './views.ts'
 
 type PenaltyRow = typeof penalties.$inferSelect
@@ -168,7 +168,7 @@ const hashOf = (input: { penaltyId: string; reason: string; approvalId?: string 
 // penalties.waive: a manager waives it, or a member with an approval given for exactly this
 // penalty, amount and reason.
 export async function waivePenalty(
-  db: Database,
+  db: ChangeDb,
   access: Access,
   input: WaivePenaltyInput,
 ): Promise<PenaltyView> {

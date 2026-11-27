@@ -27,7 +27,6 @@ import {
   useApproval,
 } from '../../approvals/use.ts'
 import { type AuditEvent, recordAuditMany } from '../../audit/record.ts'
-import type { Database } from '../../db/client.ts'
 import {
   reservationChanges,
   reservations,
@@ -49,7 +48,7 @@ import { loadForChange, requireVersion, termsOf } from './load.ts'
 import { recordPenalty, resolveWaiver } from './penalty.ts'
 import { givenPercent, type PricedChange, priceChange } from './price-change.ts'
 import { netCounts, nightKeysOf, requireAllowed, requireChange } from './rules.ts'
-import { changedView, inChangeTransaction, requestHashOf } from './transaction.ts'
+import { type ChangeDb, changedView, inChangeTransaction, requestHashOf } from './transaction.ts'
 
 type Input = ReturnType<typeof modifyInputSchema.parse>
 
@@ -464,7 +463,7 @@ async function modifyInTx(
 }
 
 export async function modifyReservation(
-  db: Database,
+  db: ChangeDb,
   access: Access,
   input: ModifyInput,
 ): Promise<ChangedReservation> {

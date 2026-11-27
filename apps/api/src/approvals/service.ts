@@ -99,6 +99,8 @@ import { evaluateStayDiscount, STAY_DISCOUNT } from './kinds/stay-discount.ts'
 import { countWrongTry, wrongTriesLeft } from './wrong-tries.ts'
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
+// The database, or a transaction (the demo seed asks and answers inside its own).
+type ServiceDb = Pick<Database, 'transaction' | 'select' | 'execute'>
 type Reader = Pick<Database, 'select'>
 type Action = z.output<typeof approvalActionSchema>
 type Failure = { error: ORPCError<string, unknown> }
@@ -542,7 +544,7 @@ export async function approveHere(
 // Ask in the inbox: a pending request to the one manager the requester picked, with what they see
 // and, for the requester only, the booking to resume it. A double tap or a retry returns it again.
 export async function requestApproval(
-  db: Database,
+  db: ServiceDb,
   access: Access,
   input: z.output<typeof requestApprovalSchema>,
   device: ThisDevice,
@@ -755,7 +757,7 @@ function requireAnswerable(row: Row, access: Access, now: Date) {
 
 // Approve from the inbox: the addressed approver, from any session, with their own PIN.
 export async function approveRequest(
-  db: Database,
+  db: ServiceDb,
   access: Access,
   input: { id: string; pin: string; comment?: string | undefined },
 ): Promise<ApprovalView> {

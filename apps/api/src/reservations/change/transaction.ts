@@ -71,8 +71,11 @@ async function replay(
 
 export type ChangeWork = (tx: Tx, hotel: BookingHotel) => Promise<ChangedReservation>
 
+// The database, or a transaction (the demo seed runs changes inside its own; each is a savepoint).
+export type ChangeDb = Pick<Database, 'transaction' | 'select'>
+
 export async function inChangeTransaction(
-  db: Database,
+  db: ChangeDb,
   access: Access,
   request: { idempotencyKey: string; reservationId: string; hash: string },
   work: ChangeWork,

@@ -361,7 +361,7 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
     const drift = await t.db.execute(sql`
       select i.room_type_id, i.date, i.booked, count(n.id)::int as nights
       from room_type_inventory i
-      left join stays s on s.room_type_id = i.room_type_id and s.status <> 'cancelled'
+      left join stays s on s.room_type_id = i.room_type_id and s.status in ('confirmed', 'checked_in')
       left join stay_nights n on n.stay_id = s.id and n.date = i.date
       where i.organization_id = ${org?.id}
       group by i.id having i.booked <> count(n.id)`)
@@ -389,7 +389,8 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
     }>(sql`
       select requester_name, approver_name, status, method, value::float::text as value,
              used_at is not null as used, draft
-      from approvals where organization_id = ${org?.id} order by requested_at`)
+      from approvals where organization_id = ${org?.id} and kind = 'stay_discount'
+      order by requested_at`)
     expect(
       rows.rows.map((r) => [
         r.requester_name,
@@ -408,7 +409,9 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
     expect(rows.rows.every((r) => r.draft === null)).toBe(true)
     const events = await t.db.execute<{ action: string; n: number }>(sql`
       select action, count(*)::int as n from audit_events
-      where organization_id = ${org?.id} and action like 'approval.%' group by action order by action`)
+      where organization_id = ${org?.id} and action like 'approval.%'
+        and entity_id in (select id from approvals where kind = 'stay_discount')
+      group by action order by action`)
     expect(events.rows).toEqual([
       { action: 'approval.declined', n: 1 },
       { action: 'approval.expired', n: 1 },
@@ -420,5 +423,69 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
       where organization_id = ${org?.id} and action = 'stay.discount_applied'
         and approver_member_id is not null`)
     expect(approved.rows).toHaveLength(2)
+  })
+
+  it('changes, cancels and marks no-shows through the change service, with waivers both ways', async () => {
+    const [org] = await t.db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.slug, options.slug))
+    const ended = await t.db.execute<{ status: string; n: number }>(sql`
+      select status, count(*)::int as n from reservations
+      where organization_id = ${org?.id} and status in ('cancelled', 'no_show')
+      group by status order by status`)
+    expect(ended.rows).toEqual([
+      { status: 'cancelled', n: 5 },
+      { status: 'no_show', n: 1 },
+    ])
+    const penalties = await t.db.execute<{
+      kind: string
+      status: string
+      hotel: string
+      waived_by: string | null
+      approver: string | null
+    }>(sql`
+      select p.kind, p.status, pr.name as hotel, p.waived_by_name as waived_by,
+             p.approver_name as approver
+      from penalties p join properties pr on pr.id = p.property_id
+      where p.organization_id = ${org?.id}`)
+    expect(penalties.rows).toHaveLength(5)
+    expect(penalties.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'late_cancellation', status: 'to_charge' }),
+        expect.objectContaining({ status: 'waived', waived_by: 'Tunde Bello', approver: null }),
+        expect.objectContaining({
+          status: 'waived',
+          waived_by: 'Ibrahim Musa',
+          approver: 'Tunde Bello',
+        }),
+        expect.objectContaining({ kind: 'no_show', status: 'to_charge' }),
+        expect.objectContaining({
+          hotel: 'Kora Ikeja GRA',
+          status: 'waived',
+          waived_by: 'Sade Bakare',
+        }),
+      ]),
+    )
+    const waiver = await t.db.execute<{ status: string; used: boolean; method: string }>(sql`
+      select status, used_at is not null as used, method from approvals
+      where organization_id = ${org?.id} and kind = 'penalty_waiver'`)
+    expect(waiver.rows).toEqual([{ status: 'approved', used: true, method: 'inbox' }])
+    const exceptions = await t.db.execute<{ actor_name: string }>(sql`
+      select actor_name from audit_events
+      where organization_id = ${org?.id} and action = 'reservation.penalty_waived'
+        and after->>'exception' = 'penalty_waived'`)
+    expect(exceptions.rows.map((row) => row.actor_name).sort()).toEqual([
+      'Sade Bakare',
+      'Tunde Bello',
+      'Tunde Bello',
+    ])
+    const modified = await t.db.execute<{ actor_name: string }>(sql`
+      select actor_name from audit_events
+      where organization_id = ${org?.id} and action = 'reservation.modified'`)
+    expect(modified.rows.map((row) => row.actor_name).sort()).toEqual([
+      'Chiamaka Eze',
+      'Sade Bakare',
+    ])
   })
 })
