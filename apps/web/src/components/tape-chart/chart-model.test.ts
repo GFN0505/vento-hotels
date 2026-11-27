@@ -2,12 +2,15 @@ import type { TapeChart } from '@vento/shared'
 import { describe, expect, it } from 'vitest'
 import {
   barText,
+  barTime,
   bookedTypeFree,
   buildRows,
   cellProblem,
   dayList,
   laneStays,
+  occupancyOf,
   roomFreeFor,
+  tonightCounts,
 } from './chart-model'
 
 const night = (
@@ -142,11 +145,39 @@ describe('chart model', () => {
     expect(mensah && roomFreeFor(chart, room('r1', '502'), mensah)).toEqual({ free: true })
   })
 
-  it('writes the surname only on bars under two nights wide', () => {
+  it('fits the name to the bar, never cutting it short', () => {
     const [mensah] = chart.stays
     if (!mensah) throw new Error('no stay')
-    expect(barText(mensah, 1)).toEqual({ name: 'Mensah', sub: '' })
-    expect(barText(mensah, 3)).toEqual({ name: 'Mensah D.', sub: '· 3 nights' })
+    expect(barText(mensah, 240)).toEqual({ name: 'Mensah D.', sub: '· 3 nights' })
+    expect(barText(mensah, 80)).toEqual({ name: 'Mensah D.', sub: '' })
+    expect(barText(mensah, 60)).toEqual({ name: 'Mensah', sub: '' })
+    expect(barText(mensah, 30)).toEqual({ name: 'DM', sub: '' })
+  })
+
+  it('says who is in each room tonight and counts the night', () => {
+    const r1 = room('r1', '502')
+    const r2 = room('r2', '503')
+    expect(occupancyOf(chart, r1)).toBe('arriving')
+    expect(occupancyOf(chart, r1, '2026-11-26')).toBe('occupied')
+    expect(occupancyOf(chart, r1, '2026-11-28')).toBe('leaving')
+    expect(occupancyOf(chart, r1, '2026-11-29')).toBe('vacant')
+    expect(occupancyOf(chart, r2)).toBe('out_of_order')
+    expect(tonightCounts(chart)).toEqual({ occupied: 1, vacant: 0, outOfOrder: 1, unassigned: 1 })
+    expect(tonightCounts(chart, '2026-11-28')).toEqual({
+      occupied: 0,
+      vacant: 2,
+      outOfOrder: 0,
+      unassigned: 0,
+    })
+    const { rows } = buildRows(chart, { tonight: 'occupied' }, new Set())
+    expect(
+      rows.filter((r) => r.kind === 'room').map((r) => (r.kind === 'room' ? r.room.number : '')),
+    ).toEqual(['502'])
+    expect(barTime({ arrival: '2026-11-25', departure: '2026-11-28' }, '2026-11-25')).toBe(
+      'tonight',
+    )
+    expect(barTime({ arrival: '2026-11-26', departure: '2026-11-28' }, '2026-11-25')).toBe('later')
+    expect(barTime({ arrival: '2026-11-23', departure: '2026-11-25' }, '2026-11-25')).toBe('past')
   })
 
   it('groups the phone day list by type with what is on each room', () => {

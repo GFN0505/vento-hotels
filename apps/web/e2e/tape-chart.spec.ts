@@ -202,19 +202,19 @@ test.describe('desktop', () => {
     await signedIn(page, 'chiamaka', domain)
     await chartOf(page, 'Executive King')
     await expect(
-      page.getByRole('button', { name: /^Room 502 Dirty ?, Executive King$/ }),
+      page.getByRole('button', { name: /^Room 502 .*Dirty ?, Executive King$/ }),
     ).toBeVisible()
     await context.setOffline(true)
     await expect(page.getByText(/moving rooms and out of order need a connection/)).toBeVisible()
-    await page.getByRole('button', { name: /^Room 502 Dirty ?, Executive King$/ }).click()
+    await page.getByRole('button', { name: /^Room 502 .*Dirty ?, Executive King$/ }).click()
     await page.getByRole('button', { name: 'Mark clean' }).click()
     await expect(page.getByText('502 marked clean · Will sync')).toBeVisible()
     await expect(
-      page.getByRole('button', { name: /^Room 502 Clean ?, Executive King, will sync$/ }),
+      page.getByRole('button', { name: /^Room 502 .*Clean.*will sync ?, Executive King$/ }),
     ).toBeVisible()
     await context.setOffline(false)
     await expect(
-      page.getByRole('button', { name: /^Room 502 Clean ?, Executive King$/ }),
+      page.getByRole('button', { name: /^Room 502 \S+ Clean ?, Executive King$/ }),
     ).toBeVisible({
       timeout: 40_000,
     })
@@ -225,6 +225,12 @@ test.describe('desktop', () => {
     const domain = seedDemoGroup(`chart-cell-${testInfo.project.name}`, PASSWORD)
     await signedIn(page, 'chiamaka', domain)
     await chartOf(page, 'Executive King')
+    // The Tonight strip: its out-of-order figure shows just 503.
+    await expect(page.getByRole('region', { name: 'Tonight' })).toContainText(/\d+ occupied/)
+    await page.getByRole('button', { name: /^1 out of order$/ }).click()
+    await expect(page.getByRole('button', { name: /^Room 503 Out of order/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Room 502 / })).toHaveCount(0)
+    await page.getByRole('button', { name: /^1 out of order$/ }).click()
     // 503 is out of order today: its block is not a way to book.
     await page.getByText('Out of order · AC').first().click()
     await expect(page.getByRole('dialog', { name: /New reservation/ })).toHaveCount(0)
@@ -258,7 +264,7 @@ test.describe('phone', () => {
     await signedIn(page, 'chiamaka', domain)
     await page.goto('/tape-chart')
     await expect(page.getByText('Business date', { exact: true })).toBeVisible()
-    await page.getByRole('button', { name: /^502 Dirty/ }).click()
+    await page.getByRole('button', { name: /^502 .*Dirty/ }).click()
     await page
       .getByRole('dialog', { name: 'Room 502' })
       .getByRole('button', { name: 'Mark clean' })

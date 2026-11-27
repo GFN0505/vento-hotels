@@ -18,7 +18,15 @@ import {
   rangeLabel,
   type TapeChart,
 } from '@vento/shared'
-import { AlertTriangle, BedDouble, ChevronLeft, ChevronRight, Plus, SearchX } from 'lucide-react'
+import {
+  AlertTriangle,
+  BedDouble,
+  ChevronLeft,
+  ChevronRight,
+  LogIn,
+  Plus,
+  SearchX,
+} from 'lucide-react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { OutOfOrderDialog } from '@/components/rooms/out-of-order-dialog'
@@ -55,6 +63,7 @@ import { ModifyFromChart } from './modify-from-chart'
 import type { Anchor } from './popover'
 import { RoomMenu } from './room-menu'
 import { StayCard } from './stay-card'
+import { TonightStrip } from './tonight-strip'
 import { MOVE_NEEDS_LIVE, useChartActions } from './use-chart-actions'
 
 // The booking sheet loads when it's first opened.
@@ -216,7 +225,9 @@ function HotelTapeChart({ hotel, memberId }: { hotel: Property; memberId: string
   const periods = useMemo(() => (data ? periodsByRoom(data) : new Map()), [data])
   const dates = data ? datesOf(data.from, data.days) : []
   const waiting = data ? totalUnassigned(data) : 0
-  const filtered = Boolean(filters.typeId || filters.floor !== undefined || filters.unassigned)
+  const filtered = Boolean(
+    filters.typeId || filters.floor !== undefined || filters.unassigned || filters.tonight,
+  )
   const close = () => setOpen(null)
   const windowLine = data
     ? `${rangeLabel(data.from, addDays(data.from, data.days - 1), true)} · ${
@@ -360,6 +371,18 @@ function HotelTapeChart({ hotel, memberId }: { hotel: Property; memberId: string
         />
       ) : (
         <>
+          <TonightStrip
+            chart={data}
+            filter={filters.tonight}
+            onFilter={(tonight) => setFilters({ ...filters, tonight })}
+            onUnassigned={() => {
+              const open = new Set(
+                data.stays.filter((stay) => stay.roomId === null).map((stay) => stay.roomTypeId),
+              )
+              setLanes(open)
+              setFilters({ ...filters, tonight: undefined })
+            }}
+          />
           <Toolbar data={data} filters={filters} onFilters={setFilters} waiting={waiting} />
           {data.stays.length === 0 ? (
             <p className="flex flex-wrap items-center gap-2 text-text-2">
@@ -633,11 +656,19 @@ function Toolbar({
       </div>
       <div className="flex flex-wrap items-center gap-3 text-sm text-text-2">
         <span className="inline-flex items-center gap-1.5">
+          <i aria-hidden="true" className="h-2.5 w-3.5 rounded-[3px] border border-pri bg-pri" />
+          Occupied tonight
+        </span>
+        <span className="inline-flex items-center gap-1.5">
           <i
             aria-hidden="true"
-            className="h-2.5 w-3.5 rounded-[3px] border border-pri-line bg-pri-soft"
+            className="h-2.5 w-3.5 rounded-[3px] border border-pri bg-pri-soft"
           />
-          Confirmed
+          Booked later
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <LogIn className="size-3.5 text-pri-ink" aria-hidden="true" />
+          Arriving today
         </span>
         <span className="inline-flex items-center gap-1.5">
           <i
@@ -649,6 +680,14 @@ function Toolbar({
             }}
           />
           Out of order
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <i aria-hidden="true" className="size-2 rounded-full bg-em-dot" />
+          Clean or inspected
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <i aria-hidden="true" className="size-2 rounded-full bg-am-dot" />
+          Dirty
         </span>
       </div>
     </div>

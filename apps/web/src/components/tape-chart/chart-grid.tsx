@@ -10,11 +10,12 @@ import {
   type ChartRoom,
   type ChartStay,
   formatNaira,
+  nightsBetween,
   type OutOfOrderView,
   type RoomStatus,
   type TapeChart,
 } from '@vento/shared'
-import { Accessibility, Check, ChevronDown, ChevronLeft, ChevronRight, Link2 } from 'lucide-react'
+import { Accessibility, ChevronDown, ChevronLeft, ChevronRight, Link2, LogIn } from 'lucide-react'
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
@@ -30,15 +31,18 @@ import {
   barLabel,
   barSpan,
   barText,
+  barTime,
   bookedTypeFree,
   cellProblem,
   LABEL_WIDTH,
+  OCCUPANCY_WORDS,
+  type Occupancy,
+  occupancyOf,
   oooReason,
   periodsByRoom,
   type Row,
   roomFreeFor,
   STATUS_WORDS,
-  shownStatus,
   staysByRoom,
   VIRTUAL_FROM,
 } from './chart-model'
@@ -76,20 +80,14 @@ type Drag = {
   free: Map<string, { free: true } | { free: false; why: string }>
 }
 
-const TONE: Record<RoomStatus | 'out_of_order', string> = {
-  inspected: 'bg-em-bg text-em',
-  clean: 'bg-em-bg text-em',
-  dirty: 'bg-am-bg text-am',
-  out_of_order: 'bg-ro-bg text-ro',
-}
-
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const dayOf = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay()
 const isWeekend = (date: string) => [5, 6].includes(dayOf(date))
 
 function columnWidth(width: number, days: number) {
-  const min = days >= 30 ? 40 : days >= 14 ? 56 : 72
+  // 14 days fits "Surname I." on a one-night bar; narrower ranges scroll inside the chart.
+  const min = days >= 30 ? 44 : days >= 14 ? 84 : 110
   return Math.max(min, Math.min(160, Math.floor((width - LABEL_WIDTH) / days)))
 }
 
@@ -180,13 +178,9 @@ export function ChartGrid(props: Props) {
         return `${row.type.name} unassigned${date ? `, ${dayName(date)}: ${count}` : ''}`
       }
       if (row.kind !== 'room') return ''
-      const status = shownStatus(
-        overlay.get(row.room.id) ?? row.room,
-        periods.get(row.room.id),
-        business,
-      )
+      const housekeeping = overlay.get(row.room.id)?.status ?? row.room.status
       if (col < 0)
-        return `Room ${row.room.number}, ${row.type.name}, ${STATUS_WORDS[status].toLowerCase()}`
+        return `Room ${row.room.number}, ${row.type.name}, ${OCCUPANCY_WORDS[occupancyOf(chart, row.room)]} · ${STATUS_WORDS[housekeeping]}`
       const date = dates[col] ?? ''
       const stay = stayAt(row, date)
       const off = periods.get(row.room.id)?.find((p) => p.from <= date && date < p.backInService)
@@ -200,7 +194,7 @@ export function ChartGrid(props: Props) {
             : 'free, Enter books it'
       return `Room ${row.room.number}, ${dayName(date)}: ${what}`
     },
-    [rows, dates, overlay, periods, business, stayAt, chart],
+    [rows, dates, overlay, periods, stayAt, chart],
   )
 
   const moveFocus = (rowIndex: number, col: number) => {
@@ -500,7 +494,7 @@ export function ChartGrid(props: Props) {
                 className={cn(
                   'pointer-events-none absolute top-0 bottom-0',
                   date === business
-                    ? 'bg-pri-soft/70'
+                    ? 'border-x-2 border-pri-line bg-pri-soft/70'
                     : date < business
                       ? 'bg-surface-2/50'
                       : 'bg-weekend',
@@ -757,15 +751,36 @@ function LaneRow(p: RowProps & { row: Extract<Row, { kind: 'unassigned' }> }) {
   )
 }
 
+// Front office status first (who is in the room tonight), housekeeping second, as hotels say it:
+// "Vacant · Dirty".
+const OCCUPANCY_TONE: Record<Occupancy, string> = {
+  occupied: 'bg-pri text-white',
+  arriving: 'bg-bl-bg text-bl ring-1 ring-bl-dot/40',
+  leaving: 'bg-am-bg text-am ring-1 ring-am-dot/40',
+  vacant: 'bg-surface-2 text-text-2 ring-1 ring-border',
+  out_of_order: 'bg-ro-bg text-ro ring-1 ring-ro-dot/40',
+}
+const HOUSEKEEPING_DOT: Record<RoomStatus, string> = {
+  inspected: 'bg-em-dot',
+  clean: 'bg-em-dot',
+  dirty: 'bg-am-dot',
+}
+
 function RoomRow(p: RowProps & { row: Extract<Row, { kind: 'room' }> }) {
   const { row } = p
   const room = row.room
   const overlay = p.overlay.get(room.id)
-  const status = shownStatus(overlay ?? room, p.periods, p.business)
+  const housekeeping: RoomStatus = overlay?.status ?? room.status
+  const occupancy = occupancyOf(p.chart, room)
   const dragging = p.dragging?.mode === 'move' ? p.dragging : null
   const check =
     dragging && room.id !== dragging.stay.roomId ? dragging.free.get(room.id) : undefined
-  const words = STATUS_WORDS[status]
+  const pair = `${OCCUPANCY_WORDS[occupancy]} · ${STATUS_WORDS[housekeeping]}`
+  // Free tonight: marked in the business date's column so empty rooms stand out.
+  const freeTonight =
+    (occupancy === 'vacant' || occupancy === 'leaving') && p.from <= p.business
+      ? nightsBetween(p.from, p.business)
+      : -1
   return (
     <div
       className={cn(
@@ -777,13 +792,15 @@ function RoomRow(p: RowProps & { row: Extract<Row, { kind: 'room' }> }) {
       <button
         type="button"
         tabIndex={-1}
-        title={
-          room.statusBy && status !== 'out_of_order'
-            ? `${words} · ${room.statusBy}${room.statusAt ? ` · ${clock(room.statusAt, p.chart.hotel.timeZone)}` : ''}`
-            : room.connectsTo.length
-              ? `Connects to ${room.connectsTo.join(', ')}`
-              : undefined
-        }
+        title={[
+          pair,
+          room.statusBy
+            ? `${STATUS_WORDS[housekeeping]} set by ${room.statusBy}${room.statusAt ? ` at ${clock(room.statusAt, p.chart.hotel.timeZone)}` : ''}`
+            : null,
+          room.connectsTo.length ? `Connects to ${room.connectsTo.join(', ')}` : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
         onClick={(event) => p.onOpenRoom(room, anchorOf(event.currentTarget))}
         className={cn(
           'sticky left-0 z-10 flex h-full flex-none items-center gap-2 border-r border-border bg-surface px-3 text-left hover:bg-surface-2',
@@ -791,26 +808,29 @@ function RoomRow(p: RowProps & { row: Extract<Row, { kind: 'room' }> }) {
         )}
         style={{ width: LABEL_WIDTH }}
       >
-        <span className="num w-11 text-[13px] font-semibold">
+        <span className="num w-11 flex-none text-[13px] font-semibold">
           <span className="sr-only">Room </span>
           {room.number}
         </span>{' '}
-        <span
-          className={cn(
-            'inline-flex h-[18px] items-center gap-1 rounded-full px-1.5 text-[11px] font-semibold whitespace-nowrap',
-            TONE[status],
-          )}
-        >
-          {status === 'inspected' ? <Check className="size-3" aria-hidden="true" /> : null}
-          {words}
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span
+            className={cn(
+              'inline-flex h-[18px] w-fit items-center rounded-full px-1.5 text-[11px] font-semibold whitespace-nowrap',
+              OCCUPANCY_TONE[occupancy],
+            )}
+          >
+            {OCCUPANCY_WORDS[occupancy]}
+          </span>{' '}
+          <span className="inline-flex items-center gap-1 text-[11px] leading-none text-text-2">
+            <span
+              aria-hidden="true"
+              className={cn('size-1.5 rounded-full', HOUSEKEEPING_DOT[housekeeping])}
+            />
+            {STATUS_WORDS[housekeeping]}
+            {overlay?.pending ? <span className="font-semibold text-am">· will sync</span> : null}
+          </span>
         </span>
-        <span className="sr-only">
-          , {row.type.name}
-          {overlay?.pending ? ', will sync' : ''}
-        </span>
-        {overlay?.pending ? (
-          <span className="size-1.5 rounded-full bg-am-dot" aria-hidden="true" title="Will sync" />
-        ) : null}
+        <span className="sr-only">, {row.type.name}</span>
         <span className="ml-auto flex items-center gap-1 text-text-3">
           {room.accessible ? <Accessibility className="size-3.5" aria-hidden="true" /> : null}
           {room.connectsTo.length ? <Link2 className="size-3.5" aria-hidden="true" /> : null}
@@ -839,6 +859,15 @@ function RoomRow(p: RowProps & { row: Extract<Row, { kind: 'room' }> }) {
           if (p.canBook && !cellProblem(p.chart, room, date)) p.onCell(room, date)
         }}
       >
+        {freeTonight >= 0 && freeTonight < p.days ? (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute top-[6px] flex h-8 items-center justify-center rounded-[7px] border border-dashed border-em-dot/60 bg-em-bg/50 text-[11px] font-semibold text-em"
+            style={{ left: freeTonight * p.colW + 2, width: p.colW - 4 }}
+          >
+            {p.colW >= 56 ? 'Free' : ''}
+          </span>
+        ) : null}
         {p.periods.map((period) => {
           const span = barSpan(period.from, period.backInService, p.from, p.days)
           if (!span) return null
@@ -887,11 +916,13 @@ function Bar(p: RowProps & { stay: ChartStay; top: number }) {
   if (!span) return null
   const typeName = p.chart.roomTypes.find((t) => t.id === stay.roomTypeId)?.name ?? ''
   const room = p.chart.rooms.find((r) => r.id === stay.roomId)
-  const text = barText(stay, span.span)
+  const width = span.span * p.colW - 4
+  const text = barText(stay, width)
+  const time = barTime(stay, p.business)
+  const arrivingToday = stay.arrival === p.business
   const lifted = p.dragging?.stay.id === stay.id
   const draggable = p.canDrag && stay.movable
   const extendable = p.canExtend && stay.movable && !span.clippedEnd
-  const past = stay.departure <= p.business
   return (
     <button
       type="button"
@@ -904,20 +935,23 @@ function Bar(p: RowProps & { stay: ChartStay; top: number }) {
         p.onOpenStay(stay, anchorOf(event.currentTarget))
       }}
       className={cn(
-        'group absolute z-[1] flex h-8 items-center gap-1.5 overflow-hidden rounded-[7px] border border-pri-line bg-pri-soft px-2 text-left text-[12px] font-medium whitespace-nowrap text-pri-ink',
+        'group absolute z-[1] flex h-8 items-center gap-1 overflow-hidden rounded-[7px] border px-[7px] text-left text-[12px] font-medium whitespace-nowrap',
         'transition-[box-shadow,opacity] hover:shadow-[0_2px_8px_-2px_color-mix(in_srgb,var(--brand)_40%,transparent)]',
+        // Over tonight: solid (the occupied look); later: a tint with a brand edge; before: muted.
+        time === 'tonight' && 'border-pri bg-pri text-white',
+        time === 'later' && 'border-pri bg-pri-soft text-pri-ink',
+        time === 'past' && 'border-border bg-surface-2 text-text-2',
         draggable && 'cursor-grab active:cursor-grabbing',
         lifted && 'opacity-40',
-        past && 'opacity-70',
-        stay.status === 'checked_in' && 'border-bl-dot/40 bg-bl-bg text-bl',
       )}
-      style={{ top: p.top, left: span.start * p.colW + 2, width: span.span * p.colW - 4 }}
+      style={{ top: p.top, left: span.start * p.colW + 2, width }}
     >
       {span.clippedStart ? (
         <ChevronLeft className="-ml-1 size-3.5 flex-none" aria-hidden="true" />
       ) : null}
-      <span className="truncate font-semibold">{text.name}</span>
-      {text.sub ? <span className="truncate font-normal">{text.sub}</span> : null}
+      {arrivingToday ? <LogIn className="size-3.5 flex-none" aria-hidden="true" /> : null}
+      <span className="font-semibold">{text.name}</span>
+      {text.sub ? <span className="font-normal">{text.sub}</span> : null}
       {span.clippedEnd ? (
         <ChevronRight className="ml-auto size-3.5 flex-none" aria-hidden="true" />
       ) : null}

@@ -9,13 +9,11 @@ import {
   type ChartStay,
   formatRateDate,
   type OutOfOrderView,
-  type RoomStatus,
   type TapeChart,
 } from '@vento/shared'
 import {
   ArrowLeftRight,
   CalendarClock,
-  Check,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -29,16 +27,26 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import type { StatusOverlay } from './chart-grid'
-import { currentOrNext, type DayRoom, dayList, periodsByRoom, STATUS_WORDS } from './chart-model'
+import {
+  currentOrNext,
+  type DayRoom,
+  dayList,
+  OCCUPANCY_WORDS,
+  type Occupancy,
+  periodsByRoom,
+  STATUS_WORDS,
+} from './chart-model'
+import { TonightStrip } from './tonight-strip'
 
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const dayWords = (date: string) =>
   `${DOW[new Date(`${date}T00:00:00Z`).getUTCDay()]} ${formatRateDate(date, false)}`
 
-const TONE: Record<RoomStatus | 'out_of_order', string> = {
-  inspected: 'bg-em-bg text-em',
-  clean: 'bg-em-bg text-em',
-  dirty: 'bg-am-bg text-am',
+const OCCUPANCY_TONE: Record<Occupancy, string> = {
+  occupied: 'bg-pri text-white',
+  arriving: 'bg-bl-bg text-bl',
+  leaving: 'bg-am-bg text-am',
+  vacant: 'bg-surface-2 text-text-2 ring-1 ring-border',
   out_of_order: 'bg-ro-bg text-ro',
 }
 
@@ -77,6 +85,7 @@ export function DayList(p: Props) {
   const business = chart.hotel.businessDate
   return (
     <div className="flex flex-col gap-4">
+      <TonightStrip chart={chart} date={date} />
       <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-surface p-1.5 shadow-card">
         <Button
           variant="ghost"
@@ -149,16 +158,25 @@ export function DayList(p: Props) {
                     className="flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left hover:bg-surface-2"
                   >
                     <span className="num w-12 flex-none font-semibold">{entry.room.number}</span>
-                    <span
-                      className={cn(
-                        'inline-flex flex-none items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                        TONE[entry.status],
-                      )}
-                    >
-                      {entry.status === 'inspected' ? (
-                        <Check className="size-3" aria-hidden="true" />
-                      ) : null}
-                      {STATUS_WORDS[entry.status]}
+                    <span className="flex flex-none flex-col gap-0.5">
+                      <span
+                        className={cn(
+                          'inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                          OCCUPANCY_TONE[entry.occupancy],
+                        )}
+                      >
+                        {OCCUPANCY_WORDS[entry.occupancy]}
+                      </span>{' '}
+                      <span className="inline-flex items-center gap-1 text-[11px] leading-none text-text-2">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'size-1.5 rounded-full',
+                            entry.room.status === 'dirty' ? 'bg-am-dot' : 'bg-em-dot',
+                          )}
+                        />
+                        {STATUS_WORDS[entry.room.status]}
+                      </span>
                     </span>
                     <span className="min-w-0 grow truncate text-text-2">
                       {entry.line ?? 'Free'}

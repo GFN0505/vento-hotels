@@ -19,13 +19,15 @@ import {
 } from '@vento/shared'
 
 export const ROW = { type: 32, room: 44, available: 30, unassigned: 30, lane: 34 } as const
-export const LABEL_WIDTH = 168
+export const LABEL_WIDTH = 196
 // Rows are windowed above this many rooms (hotels of 200+ rooms are the design's revision trigger).
 export const VIRTUAL_FROM = 150
 
 export type Filters = {
   typeId?: string | undefined
   floor?: number | undefined
+  // The Tonight strip's toggles: only rooms occupied, vacant or out of order tonight.
+  tonight?: 'occupied' | 'vacant' | 'out_of_order' | undefined
   unassigned?: boolean
 }
 
@@ -82,6 +84,9 @@ export function buildRows(
     const rooms = chart.rooms
       .filter((room) => room.roomTypeId === type.id)
       .filter((room) => filters.floor === undefined || room.floor === filters.floor)
+      .filter(
+        (room) => !filters.tonight || tonightGroup(occupancyOf(chart, room)) === filters.tonight,
+      )
       .sort((a, b) => a.floor - b.floor || compareRoomNumbers(a.number, b.number))
     if (rooms.length === 0 && waiting.length === 0) continue
     rows.push({ kind: 'type', key: `type-${type.id}`, type, height: ROW.type })
@@ -183,13 +188,89 @@ export function roomFreeFor(
 }
 
 // "Mensah D." with "· 3 nights" when there is room; the surname only below 2 nights wide.
-export function barText(stay: ChartStay, span: number): { name: string; sub: string } {
+// What fits on a bar `width` pixels wide (12px text, about 6.6px a character): "Mensah D. · 3
+// nights", "Mensah D.", "Mensah", then initials "DM". Never a cut-off name; the full name is in the
+// tooltip and the accessible name.
+const CHAR_PX = 6.6
+const BAR_PADDING = 14
+export function barText(stay: ChartStay, width: number): { name: string; sub: string } {
+  const room = width - BAR_PADDING
+  const fits = (text: string) => text.length * CHAR_PX <= room
   const nights = nightsBetween(stay.arrival, stay.departure)
-  if (span < 2) return { name: stay.guestShort.split(' ')[0] ?? stay.guestShort, sub: '' }
-  return {
-    name: stay.guestShort,
-    sub: span >= 3 ? `· ${nights === 1 ? '1 night' : `${nights} nights`}` : '',
+  const sub = `· ${nights === 1 ? '1 night' : `${nights} nights`}`
+  const short = stay.guestShort
+  if (fits(`${short} ${sub}`)) return { name: short, sub }
+  if (fits(short)) return { name: short, sub: '' }
+  const surname = short.replace(/ \S+\.$/, '')
+  if (fits(surname)) return { name: surname, sub: '' }
+  const initials = stay.guestName
+    .split(' ')
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('')
+    .slice(0, 3)
+  return { name: initials, sub: '' }
+}
+
+// --- Tonight: who is in each room on the business date -------------------------------------------
+
+// The front office word for a room on the business date: a stay over tonight that arrives today is
+// Arriving, one already here is Occupied; a stay leaving today (with nobody arriving) is Leaving;
+// else Vacant, or Out of order. Check-in is brick 8, so "occupied" means a stay booked over tonight.
+export type Occupancy = 'occupied' | 'arriving' | 'leaving' | 'vacant' | 'out_of_order'
+
+export function occupancyOf(
+  chart: TapeChart,
+  room: ChartRoom,
+  date = chart.hotel.businessDate,
+): Occupancy {
+  const off = chart.outOfOrder.some(
+    (p) => p.roomId === room.id && p.from <= date && date < p.backInService,
+  )
+  if (off) return 'out_of_order'
+  const mine = chart.stays.filter((s) => s.roomId === room.id)
+  if (mine.some((s) => s.arrival === date)) return 'arriving'
+  if (mine.some((s) => s.arrival < date && date < s.departure)) return 'occupied'
+  if (mine.some((s) => s.departure === date)) return 'leaving'
+  return 'vacant'
+}
+
+// For the counts and filters: arriving rooms are occupied tonight, leaving ones vacant.
+export const tonightGroup = (occupancy: Occupancy): 'occupied' | 'vacant' | 'out_of_order' =>
+  occupancy === 'arriving' || occupancy === 'occupied'
+    ? 'occupied'
+    : occupancy === 'out_of_order'
+      ? 'out_of_order'
+      : 'vacant'
+
+export const OCCUPANCY_WORDS: Record<Occupancy, string> = {
+  occupied: 'Occupied',
+  arriving: 'Arriving',
+  leaving: 'Leaving',
+  vacant: 'Vacant',
+  out_of_order: 'Out of order',
+}
+
+// The Tonight strip: rooms occupied, vacant and out of order on the business date, and bookings over
+// tonight with no room yet.
+export function tonightCounts(chart: TapeChart, date = chart.hotel.businessDate) {
+  const counts = { occupied: 0, vacant: 0, outOfOrder: 0, unassigned: 0 }
+  for (const room of chart.rooms) {
+    const group = tonightGroup(occupancyOf(chart, room, date))
+    if (group === 'occupied') counts.occupied++
+    else if (group === 'out_of_order') counts.outOfOrder++
+    else counts.vacant++
   }
+  counts.unassigned = chart.stays.filter(
+    (s) => s.roomId === null && s.arrival <= date && date < s.departure,
+  ).length
+  return counts
+}
+
+// Where a bar sits in time against the business date.
+export function barTime(stay: Pick<ChartStay, 'arrival' | 'departure'>, date: string) {
+  if (stay.departure <= date) return 'past' as const
+  if (stay.arrival <= date) return 'tonight' as const
+  return 'later' as const
 }
 
 // "Daniel Mensah, Executive King, 25–28 Nov 2026, 3 nights, Room 502"
@@ -221,6 +302,7 @@ export const datesOf = (from: string, days: number) =>
 
 export type DayRoom = {
   room: ChartRoom
+  occupancy: Occupancy
   status: RoomStatus | 'out_of_order'
   // What's on that night.
   line: string | null
@@ -264,7 +346,14 @@ export function dayList(chart: TapeChart, date: string): DaySection[] {
                 ? `Arriving · ${stay.guestShort} · ${nights === 1 ? '1 night' : `${nights} nights`}`
                 : `Staying · ${stay.guestShort}`
               : null
-          return { room, status: shownStatus(room, periods.get(room.id), date), line, stay, period }
+          return {
+            room,
+            occupancy: occupancyOf(chart, room, date),
+            status: shownStatus(room, periods.get(room.id), date),
+            line,
+            stay,
+            period,
+          }
         })
       return { type, left: night?.left ?? 0, arriving, rooms }
     })

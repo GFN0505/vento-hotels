@@ -3,9 +3,11 @@
 The tape chart shows every room of a hotel by night: who is in which room, which rooms are free, which are out of order, and how many rooms of each type are left. Open **Tape chart** in the menu and pick the hotel in the top bar (with All hotels chosen, it asks which).
 
 ## Read it
+- **Tonight** at the top says how many rooms are occupied, vacant and out of order tonight, and how many bookings for tonight have no room yet. Click a figure to see just those rooms (click again to see all); "not in a room yet" opens the Unassigned rows.
+- Each room says who is in it tonight first: **Occupied**, **Arriving** (arrives today), **Leaving** (leaves today), **Vacant** or **Out of order**, with its cleaning status under it as a dot (Clean, Inspected, Dirty). Hover it for both together, like "Vacant · Dirty".
+- A booking over tonight is a solid bar; one starting later is a lighter bar; one that has ended is grey. An arrow at the start means the guest arrives today. Tonight's column is outlined down the chart, and an empty room tonight shows **Free** in it.
 - Rooms are rows, grouped by room type and floor; nights are columns, starting two nights before the business date (highlighted). Choose **7**, **14** or **30 days**, step a week with the arrows, and press **T** (or **Today**) to come back.
 - Each booking is a bar from arrival to departure with the guest's name. A hatched rose block is a room out of order.
-- Each room shows its status: **Inspected**, **Clean**, **Dirty** or **Out of order**. Hover it to see who set it and when.
 - **Available** under each room type is how many rooms are left that night (rose at 0). **Unassigned** at the top of a type shows bookings with no room yet; click it to see them as bars.
 - Filter by room type, floor, or **Unassigned** to see only types with bookings waiting for a room.
 
