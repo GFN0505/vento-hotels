@@ -134,6 +134,13 @@
       "when": 1795801037395,
       "tag": "0018_modify_cancel",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795807927258,
+      "tag": "0019_tape_chart",
+      "breakpoints": true
     }
   ]
 }

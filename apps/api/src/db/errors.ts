@@ -25,3 +25,8 @@ export function violatedConstraint(error: unknown): string | undefined {
   }
   return undefined
 }
+
+// An exclusion constraint (two stays in one room on a night; overlapping out-of-order periods).
+export function isExclusionViolation(error: unknown): boolean {
+  return pgCode(error) === '23P01'
+}

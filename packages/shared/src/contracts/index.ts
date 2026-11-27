@@ -9,6 +9,7 @@ import { ratesContract } from './rates.ts'
 import { reservationsContract } from './reservations.ts'
 import { roomsContract } from './rooms.ts'
 import { systemContract } from './system.ts'
+import { tapeChartContract } from './tape-chart.ts'
 import { teamContract } from './team.ts'
 import { tenancyContract } from './tenancy.ts'
 
@@ -20,12 +21,15 @@ export const contract = {
   invitations: teamContract.invitations,
   ...devicesContract,
   ...roomsContract,
+  rooms: { ...roomsContract.rooms, ...tapeChartContract.rooms },
   ...financeContract,
   ...ratesContract,
   ...reservationsContract,
   reservations: { ...reservationsContract.reservations, ...changesContract.reservations },
   penalties: changesContract.penalties,
   ...approvalsContract,
+  tapeChart: tapeChartContract.tapeChart,
+  stays: tapeChartContract.stays,
 }
 export type Contract = typeof contract
 
@@ -38,5 +42,6 @@ export * from './rates.ts'
 export * from './reservations.ts'
 export * from './rooms.ts'
 export * from './system.ts'
+export * from './tape-chart.ts'
 export * from './team.ts'
 export * from './tenancy.ts'

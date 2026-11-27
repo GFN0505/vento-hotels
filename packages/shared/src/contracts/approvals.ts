@@ -70,6 +70,8 @@ export const approvalSubjectSchema = z.object({
   requesterLimit: z.string(),
   requesterRole: z.string(),
   deviceName: z.string().nullable(),
+  // An upgrade at the booked price (brick 7): the room type the price was kept from.
+  fromRoomTypeName: z.string().nullable().optional(),
 })
 export type ApprovalSubject = z.infer<typeof approvalSubjectSchema>
 

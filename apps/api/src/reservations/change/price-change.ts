@@ -219,7 +219,36 @@ export async function priceChange(
     mealAllocation: night.mealAllocation,
     from: night.from,
   })
-  if (mode.mode === 'set') {
+  const keepPrice = input.keepBookedPrice && input.roomTypeId !== stay.roomTypeId
+  if (keepPrice) {
+    // An upgrade at the booked price (brick 7): each night keeps the price it was sold at (capped
+    // at the new type's plan price), and the difference is a discount with reason Upgrade,
+    // measured on the night it is largest.
+    nights = planned.map((night) => {
+      const old = byDate.get(night.date)
+      const keep = old ? dec(old.soldPrice) : dec(night.planPrice)
+      const floor = Decimal.max(keep, dec(night.mealAllocation))
+      return { ...base(night), soldPrice: toAmount(Decimal.min(dec(night.planPrice), floor)) }
+    })
+    const largest = nights.reduce((top, night) => {
+      const plan = dec(night.planPrice)
+      if (plan.isZero()) return top
+      const off = plan.minus(night.soldPrice).dividedBy(plan).times(100)
+      return off.greaterThan(top) ? off : top
+    }, dec('0'))
+    if (largest.greaterThan(0)) {
+      given = {
+        percent: largest,
+        scope: 'all_nights',
+        input: {
+          kind: 'percent',
+          value: largest.toDecimalPlaces(4).toString(),
+          reason: 'upgrade',
+          note: input.keepBookedPrice?.note || undefined,
+        },
+      }
+    }
+  } else if (mode.mode === 'set') {
     const applied = requireDiscount(stay, planned.map(base), mode.discount)
     nights = planned.map((night, i) => ({
       ...base(night),
@@ -259,27 +288,37 @@ export async function priceChange(
   const discounted = nights.some((night) => dec(night.soldPrice).lessThan(night.planPrice))
   const discountAfter: PricedChange['discountAfter'] = !discounted
     ? null
-    : mode.mode === 'set'
+    : keepPrice && given
       ? {
-          percent: (given?.percent ?? dec('0')).toDecimalPlaces(4).toString(),
-          rate: mode.discount.kind === 'rate' ? mode.discount.value : null,
-          reason: mode.discount.reason,
-          reasonText: mode.discount.reasonText ?? null,
-          note: mode.discount.note ?? null,
+          percent: given.percent.toDecimalPlaces(4).toString(),
+          rate: null,
+          reason: 'upgrade',
+          reasonText: null,
+          note: input.keepBookedPrice?.note || null,
           byMemberId: access.memberId,
           byName: access.userName,
         }
-      : stay.discountPercent && stay.discountReason
+      : mode.mode === 'set'
         ? {
-            percent: stay.discountPercent,
-            rate: stay.discountRate,
-            reason: stay.discountReason,
-            reasonText: stay.discountReasonText,
-            note: stay.discountNote,
-            byMemberId: stay.discountByMemberId,
-            byName: stay.discountByName,
+            percent: (given?.percent ?? dec('0')).toDecimalPlaces(4).toString(),
+            rate: mode.discount.kind === 'rate' ? mode.discount.value : null,
+            reason: mode.discount.reason,
+            reasonText: mode.discount.reasonText ?? null,
+            note: mode.discount.note ?? null,
+            byMemberId: access.memberId,
+            byName: access.userName,
           }
-        : null
+        : stay.discountPercent && stay.discountReason
+          ? {
+              percent: stay.discountPercent,
+              rate: stay.discountRate,
+              reason: stay.discountReason,
+              reasonText: stay.discountReasonText,
+              note: stay.discountNote,
+              byMemberId: stay.discountByMemberId,
+              byName: stay.discountByName,
+            }
+          : null
 
   // Tax lines per night with the rules in force on that night, before and after.
   const dates = [...new Set([...stored.map((n) => n.date), ...nights.map((n) => n.date)])]
@@ -367,6 +406,9 @@ export async function priceChange(
         stay: stay.id,
         fields: [input.arrival, input.departure, input.roomTypeId, input.adults, input.children],
         discount: mode,
+        // The room asked for (left out: kept if free) and an upgrade at the booked price.
+        room: input.roomId === undefined ? 'keep' : input.roomId,
+        keepBookedPrice: keepPrice ? (input.keepBookedPrice?.note ?? '') : null,
         nights: nights.map((n, i) => [
           n.date,
           n.kept,

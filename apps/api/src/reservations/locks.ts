@@ -6,7 +6,10 @@
 //      archive and night audit)
 //   2b. the reservation row FOR UPDATE (modify, cancel, no-show and penalty waivers, brick 6; one
 //      change per reservation at a time). Bookings never lock existing reservations, so no cycle.
-//   3. rooms FOR UPDATE, then room types (room writes only)
+//   3. rooms FOR UPDATE in id order, then room types (room writes). Brick 7: assigning or moving a
+//      room locks the old and new rooms here (after 2b), a booking from a chart cell and a modify
+//      with a room lock the target room here, and out of order locks its room here; Mark clean /
+//      dirty locks only its room row and nothing after.
 //   4. room_type_inventory rows FOR UPDATE, ordered by room type id, then date
 //   5. approval rows FOR UPDATE, all of the request's at once in id order (approvals/use.ts); the
 //      expiry job skips locked rows, so it never waits on a booking
@@ -22,9 +25,14 @@
 // The hotel comes before the reservation everywhere (cancel, no-show, waivers), so night audit and
 // hotel archive (hotel FOR UPDATE, then whatever they lock after) can't cycle with a waiver. A change locks the inventory rows
 // for the union of its old and new nights in one statement, room type then date.
+// Brick 7's users: a same-type assign or move takes 2 → 2b → 3 (no inventory); a move to another
+// type or a drag-extend with a room is a modify: 1 → 2 → 2b → 3 (the target room) → 4 → 5; a booking
+// from a cell 1 → 2 → 3 → 4 → …; out of order (create, change, end) 2 → 3 → 4 for its type's nights.
+// The stay-against-out-of-order check is made under the room's lock (every assignment and every
+// out-of-order write locks the room row), so the two can't both pass.
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { roomTypeInventory } from '../db/schema/reservations.ts'
-import { rooms, roomTypes } from '../db/schema/rooms.ts'
+import { roomOutOfOrder, rooms, roomTypes } from '../db/schema/rooms.ts'
 import type { Reader, Tx } from './context.ts'
 
 export type Scope = { organizationId: string; propertyId: string }
@@ -107,11 +115,25 @@ export async function bookedFor(
   return new Map(rows.map((row) => [keyOf(row), row.booked]))
 }
 
-export type Capacity = { name: string; rooms: number; limit: number }
+export type Capacity = {
+  name: string
+  rooms: number
+  limit: number
+  // Active out-of-order periods of the type's active rooms (brick 7): each takes one room off on
+  // every night from `from` until `to` (exclusive).
+  outOfOrder: { id: string; from: string; to: string }[]
+}
 
-// Active rooms and the overbooking limit per room type, counted live (read after the inventory
-// lock, so a room archived by a transaction that held it is seen). Out-of-order rooms reduce this
-// from brick 7.
+// Rooms of a type that can be sold on a night: active rooms less those out of order that night.
+export function roomsOn(capacity: Capacity | undefined, date: string): number {
+  if (!capacity) return 0
+  const off = capacity.outOfOrder.filter((period) => period.from <= date && date < period.to)
+  return capacity.rooms - off.length
+}
+
+// Active rooms, out-of-order periods and the overbooking limit per room type, counted live (read
+// after the inventory lock, so a room archived or put out of order by a transaction that held it
+// is seen).
 export async function capacityOf(
   db: Reader,
   scope: Scope,
@@ -135,14 +157,48 @@ export async function capacityOf(
         isNull(roomTypes.archivedAt),
       ),
     )
+  const periods = rows.length
+    ? await db
+        .select({
+          id: roomOutOfOrder.id,
+          roomTypeId: rooms.roomTypeId,
+          from: roomOutOfOrder.fromDate,
+          to: roomOutOfOrder.backInService,
+        })
+        .from(roomOutOfOrder)
+        .innerJoin(rooms, eq(rooms.id, roomOutOfOrder.roomId))
+        .where(
+          and(
+            eq(roomOutOfOrder.organizationId, scope.organizationId),
+            eq(roomOutOfOrder.propertyId, scope.propertyId),
+            eq(roomOutOfOrder.status, 'active'),
+            isNull(rooms.archivedAt),
+            inArray(
+              rooms.roomTypeId,
+              rows.map((row) => row.id),
+            ),
+          ),
+        )
+    : []
   return new Map(
-    rows.map((row) => [row.id, { name: row.name, rooms: Number(row.rooms), limit: row.limit }]),
+    rows.map((row) => [
+      row.id,
+      {
+        name: row.name,
+        rooms: Number(row.rooms),
+        limit: row.limit,
+        outOfOrder: periods
+          .filter((period) => period.roomTypeId === row.id)
+          .map((period) => ({ id: period.id, from: period.from, to: period.to })),
+      },
+    ]),
   )
 }
 
-// Rooms left as shown (never below 0) and whether `wanted` more can be sold on a night.
-export function leftOn(capacity: Capacity | undefined, booked: number) {
-  const rooms = capacity?.rooms ?? 0
+// Rooms left on a night as shown (never below 0) and how many more can be sold (rooms left plus the
+// overbooking limit).
+export function leftOn(capacity: Capacity | undefined, booked: number, date: string) {
+  const rooms = roomsOn(capacity, date)
   const limit = capacity?.limit ?? 0
   return { left: Math.max(0, rooms - booked), bookable: rooms - booked + limit }
 }

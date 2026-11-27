@@ -19,6 +19,9 @@ const TZ = 'Africa/Lagos'
 
 function quote(overrides: Partial<ChangeQuote> = {}): ChangeQuote {
   return {
+    room: null,
+    roomBefore: null,
+    keptPrice: null,
     changeHash: 'h',
     changed: true,
     reservationId: ID,

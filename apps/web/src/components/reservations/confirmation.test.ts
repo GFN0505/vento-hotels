@@ -23,6 +23,7 @@ function detail(overrides: Partial<ReservationDetail> = {}): ReservationDetail {
       modify: true,
       cancel: true,
       noShow: false,
+      roomMove: true,
       blocked: null,
       canManage: true,
       canWaive: false,
@@ -57,6 +58,7 @@ function detail(overrides: Partial<ReservationDetail> = {}): ReservationDetail {
       {
         id: ID,
         version: 1,
+        room: null,
         roomTypeId: ID,
         roomTypeName: 'Deluxe King',
         arrival: '2026-12-09',

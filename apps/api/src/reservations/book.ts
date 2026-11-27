@@ -11,6 +11,7 @@ import {
   newId,
   nightsBetween,
   periodOf,
+  rangesOverlap,
   reservationNumber,
   toAmount,
 } from '@vento/shared'
@@ -25,13 +26,15 @@ import {
 } from '../approvals/use.ts'
 import { type AuditEvent, recordAuditMany } from '../audit/record.ts'
 import type { Database } from '../db/client.ts'
-import { isUniqueViolation, violatedConstraint } from '../db/errors.ts'
+import { isExclusionViolation, isUniqueViolation, violatedConstraint } from '../db/errors.ts'
 import { reservationCounters, reservations, stayNights, stays } from '../db/schema/reservations.ts'
-import { roomTypes } from '../db/schema/rooms.ts'
+import { rooms, roomTypes } from '../db/schema/rooms.ts'
 import { rulesByNight } from '../finance/taxes.ts'
 import { lockHotelRatesShared } from '../rates/context.ts'
 import { quoteStay, requireStayDates } from '../rates/quote.ts'
 import { type Access, scopeToProperties } from '../tenancy/access.ts'
+import { cellRoomTaken, roomWrongType } from './assign/errors.ts'
+import { conflictError, lockRoomsForStay, requireFits, roomConflict } from './assign/room-check.ts'
 import {
   type BookingHotel,
   holdBookingHotel,
@@ -126,7 +129,7 @@ async function alternatives(
     const capacity = types.get(id)
     const nights = nightKeys({ ...stay, roomTypeId: id })
     const left = Math.min(
-      ...nights.map((key) => leftOn(capacity, booked.get(keyOf(key)) ?? 0).left),
+      ...nights.map((key) => leftOn(capacity, booked.get(keyOf(key)) ?? 0, key.date).left),
     )
     if (left > 0 && capacity) result.push({ roomTypeId: id, name: capacity.name, left })
   }
@@ -164,7 +167,7 @@ async function holdRooms(tx: Tx, scope: Scope, input: CreateInput) {
     const [roomTypeId = '', date = ''] = key.split(':')
     const type = capacity.get(roomTypeId)
     if (!type) throw await roomTypeRemoved(tx, scope, roomTypeId)
-    const night = leftOn(type, booked.get(key) ?? 0)
+    const night = leftOn(type, booked.get(key) ?? 0, date)
     if (night.bookable < count) {
       const stay = input.stays.find((s) => s.roomTypeId === roomTypeId) ?? input.stays[0]
       const others = stay ? await alternatives(tx, scope, stay) : []
@@ -172,6 +175,29 @@ async function holdRooms(tx: Tx, scope: Scope, input: CreateInput) {
     }
   }
   return wanted
+}
+
+// Step 3 (brick 7): rooms picked on the tape chart, locked in id order, each checked to be of the
+// stay's type, big enough, and free every night (no other stay in it, not out of order).
+async function holdPickedRooms(tx: Tx, scope: Scope, input: CreateInput) {
+  const asked = input.stays.flatMap((stay) => (stay.roomId ? [stay.roomId] : []))
+  const locked = await lockRoomsForStay(tx, scope, asked)
+  for (const [index, stay] of input.stays.entries()) {
+    const room = stay.roomId ? locked.get(stay.roomId) : undefined
+    if (!room) continue
+    if (room.roomTypeId !== stay.roomTypeId) throw roomWrongType(room.number, room.roomTypeName)
+    requireFits(room, stay)
+    const conflict = await roomConflict(tx, room.id, stay.arrival, stay.departure)
+    const twin = input.stays.find(
+      (other, i) =>
+        i < index &&
+        other.roomId === room.id &&
+        rangesOverlap(other.arrival, other.departure, stay.arrival, stay.departure),
+    )
+    if (conflict?.kind === 'out_of_order') throw conflictError(room, conflict)
+    if (conflict || twin) throw cellRoomTaken(room, conflict?.date ?? stay.arrival)
+  }
+  return locked
 }
 
 async function nextNumber(tx: Tx, scope: Scope, hotel: BookingHotel, businessDate: string) {
@@ -211,7 +237,8 @@ export async function bookInTx(
   const bookedAt = options.bookedAt ?? new Date()
   const businessDate = options.bookedOnBusinessDate ?? hotel.businessDate
 
-  // Steps 3–4: inventory.
+  // Step 3: rooms picked on the tape chart, locked and checked free (brick 7); step 4: inventory.
+  const picked = await holdPickedRooms(tx, scope, input)
   const wanted = await holdRooms(tx, scope, input)
 
   // Step 5: price each stay as quoted, inside the locks.
@@ -336,6 +363,7 @@ export async function bookInTx(
         broken && stay.restrictionReason
           ? { kind: broken.kind, date: broken.date, reason: stay.restrictionReason }
           : null,
+      roomId: stay.roomId ?? null,
     })
     await tx.insert(stayNights).values(
       result.nights.map((night) => ({
@@ -406,6 +434,23 @@ export async function bookInTx(
         },
       })
     }
+    const room = stay.roomId ? picked.get(stay.roomId) : undefined
+    if (room) {
+      stayEvents.push({
+        action: 'stay.room_assigned',
+        ...at,
+        before: { room: null },
+        after: {
+          stayId,
+          reservationNumber: number,
+          guestName: guest.name,
+          arrival: stay.arrival,
+          departure: stay.departure,
+          room: { id: room.id, number: room.number, roomTypeName: room.roomTypeName },
+          source: 'booking',
+        },
+      })
+    }
     if (broken && stay.restrictionReason) {
       stayEvents.push({
         action: 'stay.restriction_overridden',
@@ -468,6 +513,15 @@ export async function createReservation(
       const existing = await existingBooking(db, access, parsed.idempotencyKey)
       if (existing) return replay(existing, requestHash(parsed))
       throw keyUsedElsewhere()
+    }
+    // The room's exclusion constraint caught what its lock should have.
+    const picked = parsed.stays.find((stay) => stay.roomId)
+    if (isExclusionViolation(error) && picked?.roomId) {
+      const [room] = await db
+        .select({ id: rooms.id, number: rooms.number })
+        .from(rooms)
+        .where(eq(rooms.id, picked.roomId))
+      if (room) throw cellRoomTaken(room, picked.arrival)
     }
     throw error
   }

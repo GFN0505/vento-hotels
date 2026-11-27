@@ -23,7 +23,7 @@ import { approvals } from '../db/schema/approvals.ts'
 import { bankAccounts } from '../db/schema/finance.ts'
 import { auditEvents } from '../db/schema/governance.ts'
 import { guests, reservations, stayNights, stays } from '../db/schema/reservations.ts'
-import { roomTypes } from '../db/schema/rooms.ts'
+import { rooms, roomTypes } from '../db/schema/rooms.ts'
 import { methodSettings } from '../finance/payment-methods.ts'
 import { rulesByNight } from '../finance/taxes.ts'
 import { type Access, can } from '../tenancy/access.ts'
@@ -187,6 +187,26 @@ function activityLine(event: {
               : 'Booked through a closed night',
         detail: event.reason ? `“${event.reason}”` : null,
       }
+    case 'stay.room_assigned':
+    case 'stay.room_moved':
+    case 'stay.room_unassigned': {
+      const before = ((event.before ?? {}) as { room?: { number?: string } | null }).room
+      const room = (after.room ?? null) as { number?: string } | null
+      const title =
+        event.action === 'stay.room_assigned'
+          ? `Room ${room?.number ?? ''} assigned`
+          : event.action === 'stay.room_moved'
+            ? `Room ${before?.number ?? ''} → ${room?.number ?? ''}`
+            : 'Room removed'
+      const approver =
+        typeof after.approverName === 'string' && after.approverName
+          ? `Approved by ${after.approverName}`
+          : null
+      return {
+        title,
+        detail: [event.reason, approver].filter(Boolean).join(' · ') || null,
+      }
+    }
     case 'guest.created':
       return { title: 'Guest added', detail: null }
     case 'guest.changed':
@@ -299,9 +319,10 @@ export async function getReservation(
   const [guest] = await db.select().from(guests).where(eq(guests.id, reservation.guestId))
   if (!guest) throw reservationNotFound()
   const stayRows = await db
-    .select({ stay: stays, roomTypeName: roomTypes.name })
+    .select({ stay: stays, roomTypeName: roomTypes.name, roomNumber: rooms.number })
     .from(stays)
     .innerJoin(roomTypes, eq(roomTypes.id, stays.roomTypeId))
+    .leftJoin(rooms, eq(rooms.id, stays.roomId))
     .where(eq(stays.reservationId, reservation.id))
     .orderBy(asc(stays.arrival), asc(stays.id))
   // Who approved a discount over the limit: the approval used for each stay (brick 5).
@@ -339,7 +360,7 @@ export async function getReservation(
     nightRows.map((night) => night.date),
   )
   const empty: TaxRuleInForce[] = []
-  const staysView = stayRows.map(({ stay, roomTypeName }) => {
+  const staysView = stayRows.map(({ stay, roomTypeName, roomNumber }) => {
     const terms = stay.terms as StoredTerms
     const nights = nightRows.filter((night) => night.stayId === stay.id)
     const taxes = nights.map((night) =>
@@ -385,6 +406,7 @@ export async function getReservation(
         date: string
         reason: string
       } | null,
+      room: stay.roomId && roomNumber ? { id: stay.roomId, number: roomNumber } : null,
       nights: nights.map((night, index) => {
         const tax = taxes[index]
         return {
@@ -431,6 +453,11 @@ export async function getReservation(
       blocked: allowed.blocked,
       canManage: manage,
       canWaive: manage && can(access, 'penalty.waive'),
+      roomMove:
+        can(access, 'room.move') &&
+        !hotel.archived &&
+        reservation.status === 'confirmed' &&
+        reservation.arrival >= hotel.businessDate,
     },
     source: reservation.source,
     guarantee: reservation.guarantee,

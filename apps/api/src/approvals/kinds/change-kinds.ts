@@ -52,6 +52,7 @@ export type EvaluatedChange = {
 }
 
 async function loadChange(db: Reader, access: Access, change: ModifyAction['change']) {
+  requireChange(access, change)
   const propertyId = await reservationHotel(db, access, change.reservationId)
   const hotel = await loadBookingHotel(db, access, propertyId)
   const loaded = await loadForChange(db, access, change.reservationId)
@@ -112,6 +113,10 @@ export async function evaluateModifyDiscount(
     requesterLimit: formatPercent(discountLimitOf(access) ?? '0'),
     requesterRole: roleLabel(access.role).toLowerCase(),
     deviceName: context.deviceName,
+    fromRoomTypeName:
+      action.change.keepBookedPrice && action.change.roomTypeId !== priced.stay.roomTypeId
+        ? priced.stay.roomTypeName
+        : null,
   }
   return {
     hotel,

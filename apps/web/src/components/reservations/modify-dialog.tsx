@@ -9,8 +9,8 @@ import {
   addDays,
   type ChangeDiscount,
   type ChangedReservation,
+  DESK_DISCOUNT_REASONS,
   DISCOUNT_REASON_LABELS,
-  DISCOUNT_REASONS,
   type DiscountReason,
   dec,
   firstNameOf,
@@ -46,7 +46,10 @@ import { dateLabel, naira } from './format'
 
 type Props = { detail: ReservationDetail; onClose: () => void }
 
-const REASONS = DISCOUNT_REASONS.map((value) => ({ value, label: DISCOUNT_REASON_LABELS[value] }))
+const REASONS = DESK_DISCOUNT_REASONS.map((value) => ({
+  value,
+  label: DISCOUNT_REASON_LABELS[value],
+}))
 
 // Waits a moment after the last edit before asking for new figures.
 function useSettled<T>(value: T, ms = 250): T {

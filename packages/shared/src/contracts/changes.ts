@@ -48,6 +48,15 @@ export const changeFieldsSchema = z.object({
   adults: z.number().int().min(1, 'At least 1 adult').max(20),
   children: z.number().int().min(0).max(20),
   discount: changeDiscountSchema.default({ mode: 'keep' }),
+  // The room (brick 7): a room id moves the stay into it (checked free every night, under its
+  // lock); null removes it; left out, the stay keeps its room when it is free on every night and
+  // of the same type, else it is unassigned.
+  roomId: idSchema.nullable().optional(),
+  // A move to a better room type at the booked price: each night keeps its sold price, and the
+  // difference to the new type's plan price is a discount with reason Upgrade.
+  keepBookedPrice: z
+    .object({ note: z.string().trim().max(200, 'Use 200 characters or fewer').optional() })
+    .optional(),
 })
 
 export const quoteChangeInputSchema = changeFieldsSchema.refine(afterArrival, departureIssue)
@@ -73,6 +82,8 @@ export const modifyInputSchema = changeFieldsSchema
     approvalId: idSchema.optional(),
     // Waive a late-change penalty.
     waive: waiveInputSchema.optional(),
+    // Where it was made, for the audit trail.
+    source: z.enum(['dialog', 'tape_chart']).default('dialog'),
   })
   .refine(afterArrival, departureIssue)
 export type ModifyInput = z.input<typeof modifyInputSchema>
@@ -153,6 +164,24 @@ export const changeQuoteSchema = z.object({
   existingDiscount: z.object({ percent: z.string() }).nullable(),
   fx: z.object({ amount: z.string(), currency: z.string(), text: z.string() }).nullable(),
   canWaive: z.boolean(),
+  // The room after the change (brick 7): kept, moved, or unassigned because it isn't free.
+  room: z
+    .object({
+      id: idSchema,
+      number: z.string(),
+      free: z.boolean(),
+      // The first night it isn't free and why ("Kalu E.", or out of order).
+      blockedOn: calendarDateSchema.nullable(),
+      blockedBy: z.string().nullable(),
+      // Asked for (roomId given): saving is refused when not free. Kept: unassigned instead.
+      asked: z.boolean(),
+    })
+    .nullable(),
+  // The room the stay has now, when the change leaves it unassigned or moves it.
+  roomBefore: z.object({ id: idSchema, number: z.string() }).nullable(),
+  // Keeping the booked price on a better type: the old type's name, for "Keeping the Deluxe King
+  // price is a 26.32% discount on Executive King".
+  keptPrice: z.object({ fromRoomTypeName: z.string(), perNight: z.string() }).nullable(),
 })
 export type ChangeQuote = z.infer<typeof changeQuoteSchema>
 
