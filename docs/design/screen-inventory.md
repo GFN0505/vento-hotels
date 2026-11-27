@@ -34,13 +34,13 @@ Covered by round 4 of the design prompt (screens 24–29).
 | Property GM home | designed #2 · **shape built (brick 15)** | 1 | Built: Home for one hotel, shaped by role (GM, front desk, housekeeping, restaurant, finance and the rest): figures that say which module brings them, quick actions, the hotel, Needs attention. Arrivals list, house status, VIPs and staff on duty come with Stage 1 data |
 | Tape chart | designed #3 | 1 | |
 | New reservation | designed #4 · **built (Stage 1 brick 4, one room)** | 1 | Four steps (Dates & guests · Room & rate · Guest · Review & book) in a side sheet with the summary beside them; rooms left per night, plans with excl./incl. taxes, Change rate with a reason, guest search, Copy confirmation on the result. Approvals built (brick 5: Ask for approval on Review, PIN here or the inbox, Continue booking), Add another room (brick 14) and the corporate row (brick 12) come later |
-| Reservation detail | designed #5 · **built read-only (Stage 1 brick 4)** | 1 | Summary, rate per night with tax lines in force each night, guest, guarantee and deposit, activity, Copy confirmation and the audit trail (`AuditOnReservation`). Modify, cancel, room move, check-in, folios and messages come with bricks 5–10 and Stage 4 |
+| Reservation detail | designed #5 · **built (Stage 1 bricks 4–6)** | 1 | Summary, rate per night with tax lines in force each night, guest, guarantee and deposit, activity, Copy confirmation (Copy cancellation once ended) and the audit trail (`AuditOnReservation`); **Modify (M), Cancel and More → Mark no-show built (brick 6)**, with the cancelled / no-show banner and the Penalty card. Room move, check-in, folios and messages come with bricks 7–10 and Stage 4 |
 | Check-in and walk-in | designed #6 | 1 | |
 | Folio and check-out | designed #7 | 1 | |
 | **Front desk working lists**: arrivals, departures, in-house | designed #30 | 1 | The front desk's real home; bulk check-in/out, print |
 | Reservations list and search | pattern · **built (Stage 1 brick 4)** | 1 | Upcoming / Booked today / All, search, filter pills, Hotel column under All hotels, cards on phones. Bulk actions, columns and export come later |
 | **Group reservation and rooming list** | designed #32 | 1 | Many rooms, names added later, one master folio |
-| Modify / cancel reservation (with penalty) | designed #31 | 1 | Dialog: shows policy, penalty, refund, reason |
+| Modify / cancel reservation (with penalty) | designed #31 · **built (Stage 1 brick 6)** | 1 | Modify: dates, room type, guests, Change rate, new nights at today's rate, late-change penalty. Cancel: policy, penalty, nights released, reason, Waive the penalty (direct or with a manager's approval). Mark no-show is its variant. No refund line until brick 10 |
 | Room move | designed #31 | 1 | Dialog: ready rooms, rate change, reason |
 | Post charge, take payment, refund, transfer to another folio | designed #31 | 1 | Dialogs on the folio; payment shows method, reference, FX |
 | Deposits held | designed #34 | 1 | List of deposits not yet applied, with ageing |

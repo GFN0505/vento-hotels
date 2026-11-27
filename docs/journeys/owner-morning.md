@@ -107,7 +107,7 @@ Staff named in exceptions never get a notification that they were named; their m
 - **Self-approved voids:** Femi rang and voided the bar bill himself. The F&B manager role needs no approver for a void after send. Should a void by the same person who rang the bill need a second person?
 - **Ageing basis:** by invoice date or by due date? For 30-day terms the 12 Oct invoice is 45 days old but 15 days overdue.
 - **Notes vs resolution:** can the owner resolve an exception, or only comment? Who closes a note thread?
-- Is a **waived no-show** an exception? Is a **post-audit correction**? Neither is in DOMAIN's exception list.
+- Is a **waived no-show** an exception? *Answer:* yes, "penalty waived" (Stage 1 brick 6). Is a **post-audit correction**? Neither is in DOMAIN's exception list.
 - ADR here excludes the day use from room nights but its revenue is in room revenue. Confirm whether day-use revenue counts in ADR.
 - Kora Abuja's GM and staff aren't named in the demo world.
 - Stage 1 promises the owner's daily report, but POS voids, comps, room discrepancies, city ledger ageing and group home come in stages 2–6. What does the stage 1 report contain?

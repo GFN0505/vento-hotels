@@ -23,13 +23,13 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
 
 3. **Arrival not checked in: mark no-show with the policy charge.**
    - *Does:* opens reservation VI-2611-0391, Standard Queen, 25–27 Nov, guaranteed by a ₦147,000.00* transfer deposit (first night with tax lines). No call, no message. Clicks "Mark no-show".
-   - *Sees:* the dialog (#31): "Policy: first night charged. No-show charge ₦120,000.00 + tax lines = ₦147,000.00*, paid from deposit held ₦147,000.00. Remaining nights released." He confirms.
-   - *Behind the scenes:* one transaction: status `no_show`, penalty charge posted on business date 25 Nov with tax lines, deposit applied, Standard Queen inventory for 26 Nov released (locked row, incremented). Audit event `reservation.no_show` with policy applied.
+   - *Sees:* the dialog (#31, the cancel dialog's no-show variant, from ⋯ More → Mark no-show): "Policy: Best available: a no-show is charged the first night. Penalty First night · ₦147,000.00*. 2 nights released (25 and 26 Nov)." He clicks Mark no-show · ₦147,000.00 penalty.
+   - *Behind the scenes:* one transaction: status `no_show`, penalty recorded to charge on business date 25 Nov, Standard Queen released for 25 and 26 Nov (locked rows). From brick 10 the penalty posts with tax lines and is paid from the deposit held. Audit events `reservation.no_show`, `penalty.recorded`.
 
 4. **Arrival not checked in: waive with permission.**
-   - *Does:* opens VI-2611-0405, Deluxe King, 25–26 Nov, deposit ₦183,750.00*. The reservation note from 21:30 says the guest's Abuja flight was cancelled. Ibrahim can't waive penalties, so he picks "Mark no-show, request waiver", reason "Flight cancelled, guest called 21:30".
-   - *Sees:* "Waiver sent to Tunde Bello for approval." At 00:41 Tunde approves from the approvals inbox (#29) on his phone. The row turns green: "No-show · penalty waived · approved by Tunde".
-   - *Behind the scenes:* no penalty posted. Deposit stays as a deposit held on the reservation for the day team to rebook or refund. Audit event `reservation.penalty_waived` with reason, requester Ibrahim, approver Tunde.
+   - *Does:* opens VI-2611-0405, Deluxe King, 25–26 Nov, deposit ₦183,750.00*. The reservation note from 21:30 says the guest's Abuja flight was cancelled. Ibrahim can't waive penalties, so he ticks Waive the penalty, reason "Flight cancelled, guest called 21:30", Ask to waive, picks Tunde and taps "Mark no-show now and send the waiver to Tunde's inbox".
+   - *Sees:* "Marked no-show · waiver sent to Tunde"; the Penalty card reads "Waiver asked of Tunde Bello · expires 01:08". At 00:41 Tunde approves from the approvals inbox (#29) on his phone with his PIN; the card turns to "Waived · Approved by Tunde Bello".
+   - *Behind the scenes:* the no-show and release happen at once; the waiver is applied when Tunde approves, in his transaction (decision 0028). Audit event `reservation.penalty_waived` with requester Ibrahim, approver Tunde and `exception: 'penalty_waived'`.
 
 5. **Departure not checked out.**
    - *Does:* room 611 was due out 25 Nov with a late check-out to 18:00. The key is in the drop box and the folio balance is ₦0.00 (prepaid). Clicks "Check out" from the fix link.
@@ -88,7 +88,7 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
 ## What can go wrong
 - **Audit started twice** (two PCs, double click): the second gets "Night audit for 25 Nov is already running (Ibrahim, PC 2)."
 - **Check can't be fixed** (bar still trading at 01:00): the wizard keeps "Run audit" disabled and says which item blocks it; see Open questions.
-- **Waiver not approved:** the request stays pending; Ibrahim can mark the no-show with the policy charge and the waiver becomes a correction later.
+- **Waiver not approved:** the no-show stands with the penalty to charge; Ibrahim or the day team can ask again from the Penalty card; once posted (brick 10) removing it is a folio correction.
 - **Ledger doesn't balance:** "Ledger is out by ₦… on 25 Nov. Business date not moved." Finance is notified; front desk keeps working on 25 Nov.
 - **Power cut on the PC:** the server keeps going; Ibrahim reopens on any registered PC and the wizard shows where it is.
 - **Offline postings for a closed date:** if a device syncs after 25 Nov is closed, its postings go to 26 Nov with the original time kept and are flagged for the auditor in #36.
@@ -118,7 +118,7 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
 - **Remote approval:** DOMAIN says the approver signs in or enters their PIN on the same device; screen 29 allows approving from a phone. Is remote approval allowed for waivers at night? *Answer:* yes: the inbox is the same mechanism for any kind (Stage 1 brick 5); waivers use it from brick 6.
 - Should an open POS bill be allowed to **carry over** to the next business date when an outlet trades past audit, or must every bill close first?
 - Can someone close **another person's cashier shift** (e.g. a cashier who went home)? Who, and with what witness?
-- Is a **waived no-show penalty** an exception in the owner's daily report? It isn't in DOMAIN's exception list.
+- Is a **waived no-show penalty** an exception in the owner's daily report? *Answer:* yes, "penalty waived" (Stage 1 brick 6), with requester, approver, amount and reason.
 - What time is the owner's daily report sent: as soon as audit finishes, or at a fixed morning time? With four properties, one message or one per property?
 - Room discrepancy checks, POS and the ledger are stages 2, 3 and 5, but night audit is stage 1. Which checks and steps does the stage 1 audit include?
 - The demo world has no named **finance** member for the correction. Add one to the seed?

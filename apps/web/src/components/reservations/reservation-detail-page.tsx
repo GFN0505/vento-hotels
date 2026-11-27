@@ -1,7 +1,7 @@
-// One reservation (design #5 ReservationDetail, ReservationMobile; read-only in this brick): who,
-// the stay, what was sold night by night with tax lines in force on each night, the deposit and
-// cancellation terms, and what happened. Actions: Copy confirmation and Audit trail. Modify,
-// cancel, room move and check-in come with their bricks; nothing links to what isn't built.
+// One reservation (design #5 ReservationDetail, ReservationMobile): who, the stay, what was sold
+// night by night with tax lines in force on each night, the deposit and cancellation terms, and what
+// happened. Actions: Modify (M), Cancel, More → Mark no-show (brick 6), Copy confirmation (or Copy
+// cancellation once ended) and Audit trail. Room move and check-in come with their bricks.
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import {
@@ -12,8 +12,8 @@ import {
   SOURCE_LABELS,
   toAmount,
 } from '@vento/shared'
-import { AlertTriangle, ClipboardCopy, History } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { AlertTriangle, Ban, ClipboardCopy, History, MoreHorizontal, Pencil } from 'lucide-react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { AuditSheet } from '@/components/audit/audit-sheet'
 import { Message } from '@/components/rooms/message'
@@ -28,7 +28,9 @@ import { cn } from '@/lib/cn'
 import { CANT_REACH_VENTO, errorCode, problemMessage } from '@/lib/errors'
 import { useOnline } from '@/offline/connection'
 import { describeReservationEvent } from './activity-format'
+import { cancellationText, endBanner, NEEDS_CONNECTION } from './change-model'
 import { confirmationText } from './confirmation'
+import { EndDialog } from './end-dialog'
 import {
   cancellingNowLine,
   dateLabel,
@@ -47,13 +49,39 @@ import {
   stayRange,
   taxLabel,
 } from './format'
+import { ModifyDialog } from './modify-dialog'
 import { ReservationsOffline } from './offline-note'
+import { PenaltyCard } from './penalty-card'
 import { useCountries } from './use-countries'
 
+type Open = 'modify' | 'cancel' | 'no_show' | null
+
 export function ReservationDetailPage({ id }: { id: string }) {
-  const detail = useQuery(orpc.reservations.get.queryOptions({ input: { id } }))
+  // While a waiver is waiting for a manager, the answer shows within seconds.
+  const detail = useQuery({
+    ...orpc.reservations.get.queryOptions({ input: { id } }),
+    refetchInterval: (query) =>
+      query.state.data?.penalties.some((p) => p.request?.status === 'pending') ? 5000 : false,
+  })
   useScopedTitle(detail.data ? detail.data.number : 'Reservation')
   const [auditing, setAuditing] = useState(false)
+  const [open, setOpen] = useState<Open>(null)
+  const online = useOnline()
+  const canModify = Boolean(detail.data?.actions.modify)
+  // M opens Modify (UX standard: keyboard first), unless typing or a dialog is open.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'm' && event.key !== 'M') return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, select, [contenteditable="true"], dialog')) return
+      if (!canModify || !online || open) return
+      event.preventDefault()
+      setOpen('modify')
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [canModify, online, open])
 
   if (detail.isPending) return <FormSkeleton />
   if (detail.isError && !detail.data) {
@@ -80,20 +108,30 @@ export function ReservationDetailPage({ id }: { id: string }) {
     <div className="flex flex-col gap-4">
       <ReservationsOffline savedAt={detail.dataUpdatedAt} />
       <Crumbs number={data.number} />
-      <Header data={data} onAudit={() => setAuditing(true)} />
+      <Header data={data} onAudit={() => setAuditing(true)} onOpen={setOpen} />
       {/* Activity sits beside the nights only on wide screens, so the nights table never clips. */}
       <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex min-w-0 flex-col gap-4">
           {data.stays.map((stay) => (
-            <NightsCard key={stay.id} stay={stay} taxesSetUp={data.taxesSetUp} />
+            <NightsCard
+              key={stay.id}
+              stay={stay}
+              taxesSetUp={data.taxesSetUp}
+              asBooked={Boolean(data.end)}
+            />
           ))}
           <div className="grid gap-4 lg:grid-cols-2">
             <GuestCard data={data} />
-            <DepositCard data={data} />
+            {data.end ? <PenaltyCard detail={data} /> : <DepositCard data={data} />}
+            {!data.end && data.penalties.length ? <PenaltyCard detail={data} /> : null}
           </div>
         </div>
         <ActivityCard data={data} onAudit={() => setAuditing(true)} />
       </div>
+      {open === 'modify' ? <ModifyDialog detail={data} onClose={() => setOpen(null)} /> : null}
+      {open === 'cancel' || open === 'no_show' ? (
+        <EndDialog detail={data} mode={open} onClose={() => setOpen(null)} />
+      ) : null}
       {auditing ? (
         <AuditSheet
           entityType="reservation"
@@ -131,13 +169,28 @@ function Crumbs({ number }: { number: string | undefined }) {
   )
 }
 
-function Header({ data, onAudit }: { data: ReservationDetail; onAudit: () => void }) {
+function Header({
+  data,
+  onAudit,
+  onOpen,
+}: {
+  data: ReservationDetail
+  onAudit: () => void
+  onOpen: (open: Open) => void
+}) {
   const tz = data.property.timeZone
   const stay = data.stays[0]
   const name = `${data.guest.firstName} ${data.guest.lastName}`
+  const online = useOnline()
+  const ended = Boolean(data.end)
   const copy = async () => {
-    const { text, noTransferAccount } = confirmationText(data)
     try {
+      if (ended) {
+        await navigator.clipboard.writeText(cancellationText(data))
+        toast.success('Cancellation copied')
+        return
+      }
+      const { text, noTransferAccount } = confirmationText(data)
       await navigator.clipboard.writeText(text)
       toast.success(
         noTransferAccount
@@ -148,6 +201,8 @@ function Header({ data, onAudit }: { data: ReservationDetail; onAudit: () => voi
       toast.error("Couldn't copy. Select the text and copy it instead.")
     }
   }
+  const banner = endBanner(data)
+  const note = blockedNote(data)
   const rate = stay ? rateSummary(stay) : null
   return (
     <Card>
@@ -185,19 +240,59 @@ function Header({ data, onAudit }: { data: ReservationDetail; onAudit: () => voi
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {data.canAudit ? (
-            <Button className="max-lg:h-11" onClick={onAudit}>
-              <History className="size-4" aria-hidden="true" />
-              Audit trail
+        <div className="flex flex-col items-end gap-1.5 max-sm:w-full max-sm:items-stretch">
+          <div className="flex flex-wrap gap-2">
+            {data.actions.cancel ? (
+              <Button
+                variant="ghost"
+                className="text-ro max-lg:h-11"
+                disabled={!online}
+                onClick={() => onOpen('cancel')}
+              >
+                <Ban className="size-4" aria-hidden="true" />
+                Cancel
+              </Button>
+            ) : null}
+            {data.canAudit ? (
+              <Button className="max-lg:h-11" onClick={onAudit}>
+                <History className="size-4" aria-hidden="true" />
+                Audit trail
+              </Button>
+            ) : null}
+            {data.actions.modify ? (
+              <Button className="max-lg:h-11" disabled={!online} onClick={() => onOpen('modify')}>
+                <Pencil className="size-4" aria-hidden="true" />
+                Modify
+                <kbd className="ml-1 text-xs text-text-3 max-lg:hidden">M</kbd>
+              </Button>
+            ) : null}
+            <Button
+              variant={data.actions.modify ? 'default' : 'primary'}
+              className="max-lg:h-11"
+              onClick={copy}
+            >
+              <ClipboardCopy className="size-4" aria-hidden="true" />
+              {ended ? 'Copy cancellation' : 'Copy confirmation'}
             </Button>
+            {data.actions.noShow ? (
+              <MoreMenu disabled={!online} onNoShow={() => onOpen('no_show')} />
+            ) : null}
+          </div>
+          {!online && (data.actions.modify || data.actions.cancel || data.actions.noShow) ? (
+            <span className="text-sm text-text-3">{NEEDS_CONNECTION}</span>
+          ) : note ? (
+            <span className="text-sm text-text-3">{note}</span>
           ) : null}
-          <Button variant="primary" className="max-lg:h-11" onClick={copy}>
-            <ClipboardCopy className="size-4" aria-hidden="true" />
-            Copy confirmation
-          </Button>
         </div>
       </div>
+      {banner ? (
+        <p
+          role="status"
+          className="num border-t border-border bg-ro-bg px-5 py-2.5 text-sm break-words text-ro"
+        >
+          {banner}
+        </p>
+      ) : null}
       {stay ? (
         <dl className="grid gap-4 border-t border-border px-5 py-3.5 sm:grid-cols-2 lg:grid-cols-5">
           <Summary label="Stay" value={stayRange(stay.arrival, stay.departure)}>
@@ -216,15 +311,21 @@ function Header({ data, onAudit }: { data: ReservationDetail; onAudit: () => voi
           <Summary label="Stay total" value={naira(data.quotedTotal)}>
             incl. service charge &amp; taxes
           </Summary>
-          <Summary
-            label="Deposit"
-            value={data.depositDue ? naira(data.depositDue.amount) : 'Not required'}
-            tone={data.depositDue ? (isOverdue(data.depositDue) ? 'rose' : 'amber') : undefined}
-          >
-            {data.depositDue
-              ? `${isOverdue(data.depositDue) ? 'overdue, was due' : 'due'} by ${instantLabel(data.depositDue.dueAt, tz)}`
-              : null}
-          </Summary>
+          {ended ? (
+            <Summary label="Deposit" value="—">
+              No longer due
+            </Summary>
+          ) : (
+            <Summary
+              label="Deposit"
+              value={data.depositDue ? naira(data.depositDue.amount) : 'Not required'}
+              tone={data.depositDue ? (isOverdue(data.depositDue) ? 'rose' : 'amber') : undefined}
+            >
+              {data.depositDue
+                ? `${isOverdue(data.depositDue) ? 'overdue, was due' : 'due'} by ${instantLabel(data.depositDue.dueAt, tz)}`
+                : null}
+            </Summary>
+          )}
         </dl>
       ) : null}
       {data.notes ? (
@@ -276,7 +377,15 @@ function rateSummary(stay: Stay) {
   return { value: `avg ${naira(toAmount(total.dividedBy(stay.nights.length)))} /night` }
 }
 
-function NightsCard({ stay, taxesSetUp }: { stay: Stay; taxesSetUp: boolean }) {
+function NightsCard({
+  stay,
+  taxesSetUp,
+  asBooked,
+}: {
+  stay: Stay
+  taxesSetUp: boolean
+  asBooked: boolean
+}) {
   const columns = stay.totals.lines
   const roomHeader =
     stay.terms.mealPlan === 'room_only'
@@ -290,7 +399,9 @@ function NightsCard({ stay, taxesSetUp }: { stay: Stay; taxesSetUp: boolean }) {
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3.5">
-        <h2 className="text-[15px] font-semibold">Rate per night · {stay.terms.planName}</h2>
+        <h2 className="text-[15px] font-semibold">
+          Rate per night · {asBooked ? 'as booked' : stay.terms.planName}
+        </h2>
         <span className="text-sm text-text-3">
           {taxesSetUp
             ? 'Taxes use the rates in force on each night.'
@@ -492,5 +603,72 @@ function ActivityCard({ data, onAudit }: { data: ReservationDetail; onAudit: () 
         ))}
       </ol>
     </Card>
+  )
+}
+
+// Where Modify and Cancel would be, why they aren't: "This booking was cancelled on 25 Nov 2026." /
+// "Arrival was 24 Nov 2026. Mark it as a no-show."
+function blockedNote(data: ReservationDetail): string | null {
+  if (!data.actions.canManage) return null
+  if (data.end) {
+    const on = dateLabel(instantDate(data.end.at, data.property.timeZone))
+    return data.end.kind === 'cancelled'
+      ? `This booking was cancelled on ${on}.`
+      : `This booking was marked no-show on ${on}.`
+  }
+  if (data.actions.blocked === 'arrival_passed') {
+    return `Arrival was ${dateLabel(data.stays[0]?.arrival ?? data.bookedOnBusinessDate)}. Mark it as a no-show.`
+  }
+  return null
+}
+
+// More: Mark no-show (design header ⋯ "More: no-show, duplicate, print"; only no-show is built).
+function MoreMenu({ disabled, onNoShow }: { disabled: boolean; onNoShow: () => void }) {
+  const [open, setOpen] = useState(false)
+  const menu = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const away = (event: Event) => {
+      if (!menu.current?.contains(event.target as Node)) setOpen(false)
+    }
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false)
+    document.addEventListener('pointerdown', away)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', away)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+  return (
+    <div ref={menu} className="relative">
+      <Button
+        size="icon"
+        aria-label="More: no-show"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <MoreHorizontal className="size-4" aria-hidden="true" />
+      </Button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-1 w-52 overflow-hidden rounded-md border border-border bg-surface py-1 shadow-[var(--shadow-lg)]"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            disabled={disabled}
+            className="flex h-11 w-full items-center px-3 text-left font-medium hover:bg-surface-2 disabled:opacity-45"
+            onClick={() => {
+              setOpen(false)
+              onNoShow()
+            }}
+          >
+            Mark no-show
+          </button>
+        </div>
+      ) : null}
+    </div>
   )
 }

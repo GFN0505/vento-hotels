@@ -4,7 +4,7 @@
 // requests of today with Continue booking. Approvals only in this brick: no read/unread state.
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { type ApprovalView, isWaiverSubject } from '@vento/shared'
+import { type ApprovalView, isWaiverSubject, PENALTY_KIND_LABELS } from '@vento/shared'
 import { Bell } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useProperty } from '@/components/shell/property-context'
@@ -178,7 +178,11 @@ function BellPanel({
                       : `${view.subject.percent}% discount waiting for you`}
                   </span>
                   <span className="num truncate text-sm text-text-2">
-                    {view.requester.name} · {view.subject.guestName} · {age(view.requestedAt)}
+                    {view.requester.name} ·{' '}
+                    {isWaiverSubject(view.subject)
+                      ? `${PENALTY_KIND_LABELS[view.subject.penalty.kind]} · ${view.subject.reservationNumber}`
+                      : view.subject.guestName}{' '}
+                    · {age(view.requestedAt)}
                   </span>
                   <Link
                     to="/approvals"

@@ -50,6 +50,16 @@
    - *Sees:* "15% is over your 12% discount limit. A manager with a higher limit can approve it when you book."; the prompt with ₦168,000.00 → ₦142,800.00 a night and ₦617,400.00 → ₦524,790.00* incl. taxes; VI-2611-0484 with "Approved by Tunde Bello".
    - *Behind the scenes:* the server checks Tunde's PIN on the shared counter, that he works at Kora Victoria Island, isn't Chiamaka, and that 15% is within his 50%; the approval is bound to the priced stay and used once inside the booking transaction. Audit events `approval.granted` (method PIN on FD-VI-01) and `stay.discount_applied` with approver Tunde. About 15 seconds more than a normal booking.
 
+6c. **11:10 Guest adds a night.**
+   - *Does:* Ms Collins calls to stay until 13 Dec. Chiamaka opens VI-2611-0483, Modify (or M), sets Leave to 13 Dec, saves.
+   - *Sees:* "+1 night", "Sat 12 Dec · Bed & breakfast · new night at today's rate ₦168,000.00", ₦617,400.00 → ₦823,200.00*, "Deluxe King is free on 12 Dec. Same plan, no approval needed.", Save · +₦205,800.00. Activity: "Changed · 9–12 Dec → 9–13 Dec 2026 · ₦617,400.00 → ₦823,200.00".
+   - *Behind the scenes:* one transaction locks the reservation and Deluxe King for 12 Dec, adds one booked room, keeps 9–11 Dec at their stored prices and prices 12 Dec at today's Bed & breakfast rate; audit event `reservation.modified`. About 25 seconds.
+
+6d. **11:20 Late cancellation.**
+   - *Does:* Mr Obi cancels VI-2611-0447 (Executive King, 26–28 Nov); free cancellation ended 24 Nov, 14:00. Chiamaka clicks Cancel, picks Guest request and cancels.
+   - *Sees:* "Penalty: First night · ₦257,250.00*", "2 nights released (26 and 27 Nov)", Cancel booking · ₦257,250.00 penalty; then Cancelled with the Penalty card "To charge".
+   - *Behind the scenes:* both nights released under the inventory lock; `reservation.cancelled` and `penalty.recorded`; the penalty is charged from the deposit once folios arrive (brick 10). If Tunde agrees to waive it, she ticks Waive the penalty with a reason, he enters his PIN on her screen (Approve waiver and cancel), and the owner sees "Penalty waived … Approved by Tunde Bello" tomorrow.
+
 7. **10:40 Walk-in: the Okoro family.**
    - *Does:* ⌘K → "Walk-in". Mr and Mrs Okoro with two children, 25–27 Nov · 2 nights. Picks Standard Queen → BAR → room 302 (inspected) → Mr Okoro (Nigerian, NIN masked, phone `+234…`) → payment.
    - *Sees:* one screen (#6 walk-in). Standard Queen BAR ₦120,000.00 × 2 nights with tax lines listed separately; the total updates as she types. "Standard Queen · 2 left on 25 Nov".
@@ -88,6 +98,8 @@
 - **Approver not at the desk:** she sends it to Tunde's inbox; Review shows "Waiting for Tunde Bello · expires 11:06"; he approves from his phone with his PIN and she books. If he doesn't answer in 30 minutes it expires and she asks again or lowers it. The room isn't held while she waits.
 - **Internet down:** walk-ins and new bookings are disabled with "Needs a connection to check live availability". Check-in of an already assigned arrival and cash or POS-terminal payments still work and show "Saved on this device" until synced.
 - **Transfer not yet in the bank:** the payment stays "awaiting bank match" and ages in the matching queue (whether the key can be issued first is an open question).
+- **Guest wants a night that's sold out:** "Sold out 12 Dec" on the Room type and Save; nothing changes.
+- **Waiver without a manager nearby:** she cancels now and sends the waiver to Tunde's inbox; the Penalty card shows "Waiver asked of Tunde Bello" until he answers, then "Waived · Approved by Tunde Bello".
 - **Wrong approver PIN:** "That PIN didn't match. 2 tries left." The tries count with the lock screen's; five lock his PIN for 15 minutes.
 - **Over the credit limit:** the settle button reads "Over Acme's limit by ₦…" and the same dialog asks for a GM or finance PIN.
 - **OOO would overbook:** putting 503 OOO when every Executive King is sold shows "Executive King would be 1 room short on 26 Nov" with the booking affected, before anything changes.
@@ -112,6 +124,7 @@
 - Walk-in decrements Standard Queen availability for both nights in one transaction; a concurrent walk-in for the last Standard Queen fails cleanly.
 - A 15% discount is refused for front desk alone and succeeds with Tunde's PIN; the audit event carries reason, actor and approver; Tunde can't approve his own.
 - An approval is used once and only for the stay it was given for; a request to Tunde's inbox is approved from his phone and the booking completes (`apps/api/src/approvals/*.test.ts`, `apps/web/e2e/approvals.spec.ts`).
+- Extending locks the new night, keeps the booked nights' prices and prices the new one at today's rate; a late cancellation records the first-night penalty; a waiver is refused for front desk alone and succeeds with Tunde's PIN, with both names in the audit event (`apps/api/src/reservations/change/*.test.ts`, `apps/web/e2e/modify-cancel.spec.ts`).
 - Transfer payment requires a reference and appears in the matching queue.
 - Check-in of a Ghanaian guest shows the foreign national fields; the passport number is masked in the UI and never returned in plain text.
 - Routing sends the room charge to the Acme folio and extras to the guest folio; no room charge exists before night audit.

@@ -56,7 +56,16 @@ export function ReservationsTable({ rows, showHotel, dimmed }: Props) {
   )
 }
 
+// Cancelled and no-show rows: what is owed, not the stay's price ("₦257,250.00 penalty", "Waived",
+// "No penalty"); no deposit is due on them.
+export function endedTotal(row: Pick<ReservationRow, 'status' | 'penalty'>): string | null {
+  if (row.status !== 'cancelled' && row.status !== 'no_show') return null
+  if (!row.penalty) return 'No penalty'
+  return row.penalty.waived ? 'Waived' : `${naira(row.penalty.amount)} penalty`
+}
+
 function Row({ row, showHotel }: { row: ReservationRow; showHotel: boolean }) {
+  const ended = endedTotal(row)
   const sub = [SOURCE_LABELS[row.source], row.foreign ? 'Foreign national' : null]
     .filter(Boolean)
     .join(' · ')
@@ -103,7 +112,7 @@ function Row({ row, showHotel }: { row: ReservationRow; showHotel: boolean }) {
         <StatusBadge tone={statusTone(row.status)}>{statusLabel(row.status)}</StatusBadge>
       </td>
       <td className={cn(TD, 'whitespace-nowrap')}>
-        {row.depositDue ? (
+        {row.depositDue && !ended ? (
           <StatusBadge tone={isOverdue(row.depositDue) ? 'rose' : 'amber'} className="num">
             {depositShort(row.depositDue)}
           </StatusBadge>
@@ -117,7 +126,7 @@ function Row({ row, showHotel }: { row: ReservationRow; showHotel: boolean }) {
           'num pr-5 text-right whitespace-nowrap max-md:ml-auto max-md:font-medium',
         )}
       >
-        {naira(row.total)}
+        {ended ? <span className="text-text-2">{ended}</span> : naira(row.total)}
       </td>
     </tr>
   )
