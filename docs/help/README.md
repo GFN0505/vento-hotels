@@ -52,5 +52,8 @@ docs/help/
 | [Mark a no-show](reservations/mark-a-no-show.md) | `night-audit.md` steps 3 and 4 | written |
 | [Use the tape chart](reservations/use-the-tape-chart.md) | `front-desk-morning.md` steps 3a and 6e | written |
 | [Mark a room clean, or put it out of order](reservations/room-status-and-out-of-order.md) | `front-desk-morning.md` steps 6 and 10a | written |
+| [Open your cashier shift](front-desk/open-your-cashier-shift.md) | `front-desk-morning.md` step 2, `night-audit.md` step 1 | written |
+| [Count and close your cashier shift](front-desk/close-your-cashier-shift.md) | `front-desk-morning.md` step 12 | written |
+| [Set up cash drawers](finance/set-up-cash-drawers.md) | `going-live.md` step 4a | written |
 
 Status: `todo` · `written` · `published`

@@ -118,6 +118,7 @@ Kora Victoria Island, Wednesday 25 Nov 2026, business date 25 Nov 2026. Desk 1's
 **Ready for brick 10 (contract, not built here)**
 - `payments.shiftId` will be NOT NULL: every payment and cash refund is on the taker's shift with status `open` at that hotel; without one, Take payment says "Open a shift to take payments" with **Open cashier shift**. The payment transaction locks the shift row (`FOR SHARE`) and checks `open`; submit takes it `FOR UPDATE`, so a payment and a count never interleave.
 - `expectedFor(shift)` (`apps/api/src/cash/shifts/expected.ts`, pure over its query) gains: cash NGN + Σ NGN cash payments − Σ NGN cash refunds; per foreign currency Σ tendered − Σ refunded; per terminal Σ POS payments; per currency Σ transfers. In this brick it returns the opening float on the cash ₦ line and 0.00 elsewhere.
+- A POS terminal may sit at more than one drawer (Moniepoint · Desk 1 at Desk 1 and Desk 2): brick 10 attributes each POS payment to the taker's open shift, not to the terminal, so a shared terminal never mixes two shifts' slips.
 - Nothing in brick 10 may show a running takings total for an open shift (no "My takings today"), or the count stops being blind.
 
 ### Organization isolation

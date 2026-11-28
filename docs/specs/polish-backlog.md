@@ -59,3 +59,16 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - The sync queue's "needs a look" list shows only on the tape chart; a shell-wide queue panel comes with the next offline module (check-in, POS).
 - `reservations/assign/assign.ts`: the exclusion-violation fallback calls `roomTaken(room, '')` with an empty date ("402 was just taken."); look up the first clashing night instead.
 - Migration 0019's check `rooms_housekeeping_status_stored` has no data guard: fine before any hotel is live (nothing stores `out_of_order` or `out_of_service`), but a deploy onto data that does would fail; add an update or a guard first if that ever changes.
+
+## Cashier shifts (brick 9)
+- `version` in the submit and close inputs isn't checked; check it against the shift or drop it.
+- `sameClose` (a replayed close) compares the float and bag only, not the reason or the approval.
+- Trigger gaps in `vento_cashier_shift_forward`: the hand-over source fields, `terminal_ids`, the business dates and the idempotency keys aren't locked; count lines can still be inserted after a shift leaves `open`.
+- No foreign keys on `cashier_shifts.member_id`, the approval ids and `handover_from_shift_id`.
+- `aria-live` on the `NoteCount` total announces every keystroke; announce on pause or on leaving the row.
+- The Shifts empty state builds its "Open cashier shift" link by hand with `text-white` instead of `Button asChild`.
+- The Cash drawers card's load error has no retry (use `LoadError`).
+- A member with `leakage.view` but not `cashier_shift.operate` lands on "no access" at `/cash`; send them to `/cash/shifts`.
+- A first load of Shifts while offline shows the skeleton forever; show the offline state.
+- A reason chip fills the 5-character minimum with one tap.
+- A shift counted but never closed raises no exception yet (night audit, brick 13).
