@@ -5,7 +5,7 @@
 // devices at Kora Victoria Island and Kora Ikeja GRA (none at Abuja or Port Harcourt, for the empty
 // state); taxes, payment methods, bank accounts, POS terminals and 30 days of FX rates; about 430
 // reservations at Kora Victoria Island and 20 at Kora Ikeja GRA; rooms assigned for the coming week,
-// room statuses and rooms out of order (brick 7); a pending
+// room statuses and rooms out of order (brick 7); cash drawers and cashier shifts (brick 9); a pending
 // invite; and one permission change with its reason. Used for local development, browser tests and sales demos. Everything here is
 // made up.
 import { createHash, randomBytes } from 'node:crypto'
@@ -26,6 +26,7 @@ import {
 } from '../db/schema/tenancy.ts'
 import type { StorageProvider } from '../providers/storage.ts'
 import { seedApprovals } from './approvals.ts'
+import { seedCash } from './cash.ts'
 import { seedChanges } from './changes.ts'
 import { seedFinance } from './finance.ts'
 import { seedLogo } from './logo.ts'
@@ -440,13 +441,31 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
       },
     })
 
+    // Cash drawers and cashier shifts (stage-1-cashier-shifts.md).
+    const onTheDesk = await seedCash(tx, {
+      organizationId,
+      businessDate,
+      hotels: hotelIds,
+      finance: {
+        organizationId,
+        userId: kunle.userId,
+        memberId: kunle.memberId,
+        userName: kunle.name,
+      },
+      access: {
+        chiamaka: await accessFor(tx, booking, who('chiamaka')),
+        tunde: await accessFor(tx, booking, who('tunde')),
+        ibrahim: await accessFor(tx, booking, who('ibrahim')),
+      },
+    })
+
     return {
       status: 'seeded' as const,
       organizationId,
       viId: hotelIds.vi,
       ownerMemberId: owner.memberId,
       people: seeded.map(({ name, email, role, pin }) => ({ name, email, role, pin })),
-      tryToday: [...tryToday, ...onTheChart],
+      tryToday: [...tryToday, ...onTheChart, ...onTheDesk],
     }
   })
   // After the group is saved: storage is outside the database, so it's never written mid-transaction.
