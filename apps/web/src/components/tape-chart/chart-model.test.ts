@@ -86,6 +86,7 @@ const chart: TapeChart = {
       maxAdults: 2,
       maxChildren: 1,
       tonightPrice: '210000.00',
+      tonightIncludesTaxes: true,
       nights: [night('2026-11-25', { unassigned: 1 })],
     },
   ],

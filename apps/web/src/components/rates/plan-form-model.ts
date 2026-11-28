@@ -111,7 +111,7 @@ export function formFrom(
     minStay: String(plan?.minStay ?? 1),
     extraAdult: naira(plan?.extraAdult),
     bookableBy: plan?.bookableBy ?? 'anyone',
-    pricesIncludeTaxes: plan?.pricesIncludeTaxes ?? false,
+    pricesIncludeTaxes: plan?.pricesIncludeTaxes ?? true,
   }
 }
 

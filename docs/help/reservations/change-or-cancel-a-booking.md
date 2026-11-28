@@ -5,8 +5,8 @@ When a guest calls to add a night, change their dates or room type, or cancel, o
 ## Change dates, room type or guests
 1. Find the reservation (search by name, phone or number) and open it.
 2. Click **Modify** (or press **M**).
-3. Change **Arrive**, **Leave**, **Room type** or the number of guests. Within a moment the box shows each new night "at today's rate", the taxes, and the stay total before and after (₦617,400.00 → ₦823,200.00), and whether the room type is free on the new nights.
-4. Click **Save · +₦205,800.00**. The reservation and its Activity show the change.
+3. Change **Arrive**, **Leave**, **Room type** or the number of guests. Within a moment the box shows each new night "at today's rate", the taxes, and the stay total before and after (₦504,000.00 → ₦672,000.00), and whether the room type is free on the new nights.
+4. Click **Save · +₦168,000.00**. The reservation and its Activity show the change.
 
 What stays and what changes:
 - **Nights the guest already agreed keep their price**, even if the rate has gone up since. New nights, and every night when you change the room type, are priced from the same rate plan at today's price.

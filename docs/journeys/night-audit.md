@@ -27,7 +27,7 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
    - *Behind the scenes:* one transaction: status `no_show`, penalty recorded to charge on business date 25 Nov, Standard Queen released for 25 and 26 Nov (locked rows). From brick 10 the penalty posts with tax lines and is paid from the deposit held. Audit events `reservation.no_show`, `penalty.recorded`.
 
 4. **Arrival not checked in: waive with permission.**
-   - *Does:* opens VI-2611-0405, Deluxe King, 25–26 Nov, deposit ₦183,750.00*. The reservation note from 21:30 says the guest's Abuja flight was cancelled. Ibrahim can't waive penalties, so he ticks Waive the penalty, reason "Flight cancelled, guest called 21:30", Ask to waive, picks Tunde and taps "Mark no-show now and send the waiver to Tunde's inbox".
+   - *Does:* opens VI-2611-0405, Deluxe King, 25–26 Nov, deposit ₦150,000.00*. The reservation note from 21:30 says the guest's Abuja flight was cancelled. Ibrahim can't waive penalties, so he ticks Waive the penalty, reason "Flight cancelled, guest called 21:30", Ask to waive, picks Tunde and taps "Mark no-show now and send the waiver to Tunde's inbox".
    - *Sees:* "Marked no-show · waiver sent to Tunde"; the Penalty card reads "Waiver asked of Tunde Bello · expires 01:08". At 00:41 Tunde approves from the approvals inbox (#29) on his phone with his PIN; the card turns to "Waived · Approved by Tunde Bello".
    - *Behind the scenes:* the no-show and release happen at once; the waiver is applied when Tunde approves, in his transaction (decision 0028). Audit event `reservation.penalty_waived` with requester Ibrahim, approver Tunde and `exception: 'penalty_waived'`.
 

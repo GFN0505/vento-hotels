@@ -131,6 +131,7 @@ export async function roomOptions(
       children: stay.children,
       room: room ? { id: room.id, number: room.number } : null,
       soldPerNight: firstNight?.soldPrice ?? '0.00',
+      pricesIncludeTaxes: termsOf(stay).pricesIncludeTaxes,
       nationality: loaded.guest.nationality,
     },
     arrivesToday,

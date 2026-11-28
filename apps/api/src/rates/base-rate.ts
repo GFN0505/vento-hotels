@@ -7,7 +7,12 @@ import { ratePlanRoomTypes } from '../db/schema/rates.ts'
 import type { Reader } from './context.ts'
 import { basePlanOf } from './plan-reads.ts'
 
-export type BaseRate = { ratePlanId: string; ratePlanName: string; amount: string | null }
+export type BaseRate = {
+  ratePlanId: string
+  ratePlanName: string
+  amount: string | null
+  pricesIncludeTaxes: boolean
+}
 
 // Per room type: the weekday standard price on the hotel's base plan (null amount = "Not priced").
 // Null when the hotel has no base plan yet.
@@ -29,6 +34,7 @@ export async function baseRates(
       return {
         ratePlanId: plan.id,
         ratePlanName: plan.name,
+        pricesIncludeTaxes: plan.pricesIncludeTaxes,
         amount: weekday ? toAmount(weekday) : null,
       }
     },

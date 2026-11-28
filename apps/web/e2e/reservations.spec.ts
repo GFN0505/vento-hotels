@@ -64,6 +64,11 @@ test('front desk takes a phone booking with a discount within her limit, and fin
   const today = lagosToday()
   const sheet = await openSheet(page, plusDays(today, 12), plusDays(today, 15))
   await pick(page, 'Deluxe King', /^Bed & breakfast/)
+  // All-in (decision 0032): the total leads and the taxes are inside it.
+  const summary = sheet.getByRole('complementary', { name: 'Summary' })
+  await expect(summary.getByText('₦504,000.00')).toBeVisible()
+  await expect(summary.getByText('Includes', { exact: true })).toBeVisible()
+  await expect(summary.getByText('Prices include taxes and service charge.')).toBeVisible()
 
   await sheet.getByRole('button', { name: 'Change rate' }).click()
   await sheet.getByLabel('Discount', { exact: true }).fill('15')
@@ -91,7 +96,7 @@ test('front desk takes a phone booking with a discount within her limit, and fin
   await expect(sheet.getByText(/≈ £/).first()).toBeVisible()
   await expect(sheet.getByText('10% off Bed & breakfast', { exact: false })).toBeVisible()
   // ⌘↵ books from the keyboard.
-  await sheet.getByRole('button', { name: /^Book · ₦555,660\.00/ }).press('Control+Enter')
+  await sheet.getByRole('button', { name: /^Book · ₦453,600\.00/ }).press('Control+Enter')
 
   await expect(page.getByRole('heading', { name: 'Sarah Collins' })).toBeVisible()
   await expect(page.getByText(/^Booked VI-\d{4}-\d{4} for Sarah Collins$/)).toBeVisible()

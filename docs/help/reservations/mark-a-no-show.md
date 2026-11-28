@@ -13,7 +13,7 @@ Mark a no-show only when the guest won't arrive tonight. A guest who turns up af
 After midnight, before night audit, the business date hasn't moved: last night's arrivals are still that day's and can be marked.
 
 ## Waive the penalty
-If the guest had a good reason (a cancelled flight), tick **Waive the penalty** and say why. Managers waive it themselves (**Mark no-show and waive ₦183,750.00**). At the front desk, **Ask to waive** sends it to a manager: their PIN at your desk does both at once; or **Not nearby? Mark no-show now and send the waiver to Tunde's inbox** marks the no-show now and he approves from his phone. The Penalty card turns to "Waived · Approved by Tunde Bello" when he does.
+If the guest had a good reason (a cancelled flight), tick **Waive the penalty** and say why. Managers waive it themselves (**Mark no-show and waive ₦150,000.00**). At the front desk, **Ask to waive** sends it to a manager: their PIN at your desk does both at once; or **Not nearby? Mark no-show now and send the waiver to Tunde's inbox** marks the no-show now and he approves from his phone. The Penalty card turns to "Waived · Approved by Tunde Bello" when he does.
 
 If the manager declines or doesn't answer in 30 minutes, the penalty stays to charge and you can **Ask again** from the Penalty card.
 

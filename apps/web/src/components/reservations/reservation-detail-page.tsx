@@ -465,6 +465,10 @@ function NightsCard({
   const first = stay.nights[0]
   const discounted = stay.discount && first
   const net = toAmount(stay.nights.reduce((sum, night) => sum.plus(night.net), dec('0')))
+  // All-in plans (the default, decision 0032) read price first, then what's inside it.
+  const inside = stay.terms.pricesIncludeTaxes
+  const muted = inside ? 'text-text-3' : ''
+  const totalHead = inside ? 'Price' : 'Total'
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3.5">
@@ -472,9 +476,11 @@ function NightsCard({
           Rate per night · {asBooked ? 'as booked' : stay.terms.planName}
         </h2>
         <span className="text-sm text-text-3">
-          {taxesSetUp
-            ? 'Taxes use the rates in force on each night.'
-            : "This hotel's taxes aren't set up, so tax lines can't be shown."}
+          {!taxesSetUp
+            ? "This hotel's taxes aren't set up, so tax lines can't be shown."
+            : inside
+              ? 'Prices include taxes and service charge, at the rates in force on each night.'
+              : 'Taxes are added on top, at the rates in force on each night.'}
         </span>
       </div>
       {discounted ? (
@@ -496,7 +502,7 @@ function NightsCard({
               <span>{naira(night.gross)}</span>
             </span>
             <span className="flex justify-between gap-3 text-sm text-text-2">
-              <span>{roomHeader}</span>
+              <span>{inside ? `Includes ${roomHeader.toLowerCase()}` : roomHeader}</span>
               <span>{naira(night.net)}</span>
             </span>
             {night.lines.map((line) => (
@@ -518,51 +524,87 @@ function NightsCard({
             <th scope="col" className={cn(TH, 'pl-5')}>
               Night
             </th>
+            {inside ? (
+              <th scope="col" className={cn(TH, 'text-right')}>
+                {totalHead}
+              </th>
+            ) : null}
             <th scope="col" className={cn(TH, 'text-right')}>
-              {roomHeader}
+              {inside ? `Includes ${roomHeader.toLowerCase()}` : roomHeader}
             </th>
             {columns.map((line) => (
               <th key={line.key} scope="col" className={cn(TH, 'text-right')}>
                 {taxLabel(line)}
               </th>
             ))}
-            <th scope="col" className={cn(TH, 'pr-5 text-right')}>
-              Total
-            </th>
+            {inside ? null : (
+              <th scope="col" className={cn(TH, 'pr-5 text-right')}>
+                {totalHead}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
           {stay.nights.map((night) => (
             <tr key={night.date} className="[&>td]:border-b [&>td]:border-border">
               <td className="num py-2.5 pr-3 pl-5 whitespace-nowrap">{dayLabel(night.date)}</td>
-              <td className="num px-3 py-2.5 text-right whitespace-nowrap">{naira(night.net)}</td>
+              {inside ? (
+                <td className="num px-3 py-2.5 text-right font-medium whitespace-nowrap">
+                  {naira(night.gross)}
+                </td>
+              ) : null}
+              <td className={cn('num px-3 py-2.5 text-right whitespace-nowrap', muted)}>
+                {naira(night.net)}
+              </td>
               {columns.map((line) => {
                 const found = night.lines.find((l) => l.key === line.key)
                 return (
                   <td
                     key={line.key}
-                    className="num px-3 py-2.5 text-right whitespace-nowrap text-text-2"
+                    className={cn(
+                      'num px-3 py-2.5 text-right whitespace-nowrap',
+                      inside ? 'text-text-3' : 'text-text-2',
+                      inside && line.key === columns.at(-1)?.key && 'pr-5',
+                    )}
                   >
                     {found ? naira(found.amount) : '—'}
                   </td>
                 )
               })}
-              <td className="num py-2.5 pr-5 pl-3 text-right font-medium whitespace-nowrap">
-                {naira(night.gross)}
-              </td>
+              {inside ? null : (
+                <td className="num py-2.5 pr-5 pl-3 text-right font-medium whitespace-nowrap">
+                  {naira(night.gross)}
+                </td>
+              )}
             </tr>
           ))}
           <tr className="font-semibold">
             <td className="py-2.5 pr-3 pl-5">{nightsLabel(stay.nights.length)}</td>
-            <td className="num px-3 py-2.5 text-right whitespace-nowrap">{naira(net)}</td>
+            {inside ? (
+              <td className="num px-3 py-2.5 text-right whitespace-nowrap">
+                {naira(stay.totals.total)}
+              </td>
+            ) : null}
+            <td className={cn('num px-3 py-2.5 text-right whitespace-nowrap', muted)}>
+              {naira(net)}
+            </td>
             {columns.map((line) => (
-              <td key={line.key} className="num px-3 py-2.5 text-right whitespace-nowrap">
+              <td
+                key={line.key}
+                className={cn(
+                  'num px-3 py-2.5 text-right whitespace-nowrap',
+                  muted,
+                  inside && line.key === columns.at(-1)?.key && 'pr-5',
+                )}
+              >
                 {naira(line.amount)}
               </td>
             ))}
-            <td className="num py-2.5 pr-5 pl-3 text-right whitespace-nowrap">
-              {naira(stay.totals.total)}
-            </td>
+            {inside ? null : (
+              <td className="num py-2.5 pr-5 pl-3 text-right whitespace-nowrap">
+                {naira(stay.totals.total)}
+              </td>
+            )}
           </tr>
         </tbody>
       </table>

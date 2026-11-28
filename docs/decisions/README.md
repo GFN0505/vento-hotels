@@ -44,5 +44,6 @@ Things still undecided stay under *Open questions* in `docs/DOMAIN.md` until the
 | [0029](0029-front-desk-lists-stay-through-pin-locks.md) | The front desk PC keeps today's and tomorrow's lists through PIN locks | accepted |
 | [0030](0030-room-per-night-segments.md) | A stay keeps its room per night through room segments | accepted |
 | [0031](0031-guest-id-numbers-and-images.md) | Guest ID numbers are encrypted in the database; ID photos live in the private bucket | accepted |
+| [0032](0032-prices-include-taxes-by-default.md) | Rate plan prices include taxes and service charge by default | accepted |
 
 Template: [0000-template.md](0000-template.md)

@@ -47,17 +47,17 @@
 
 6a. **10:32 Phone booking.**
    - *Does:* Ms Sarah Collins calls for 9–12 Dec. Chiamaka opens New reservation, picks the dates and 1 adult, sees Deluxe King "7 · 5 · 3" and Junior Suite "Sold out 11 Dec", picks Bed & breakfast, finds no match for Collins, adds her (British, phone), and books.
-   - *Sees:* ₦617,400.00* for 3 nights, deposit due ₦205,800.00* by 27 Nov, ≈ £316.62 at ₦1,950/£; reservation VI-2611-0483; she copies the confirmation into WhatsApp with Zenith Bank 0123454471 and the reference.
+   - *Sees:* ₦504,000.00* for 3 nights, deposit due ₦168,000.00* by 27 Nov, ≈ £258.46 at ₦1,950/£; reservation VI-2611-0483; she copies the confirmation into WhatsApp with Zenith Bank 0123454471 and the reference.
    - *Behind the scenes:* one transaction locks Deluxe King for 9, 10 and 11 Dec, checks the overbooking limit (0), adds one booked room per night, stores the plan price and terms; audit events `guest.created`, `reservation.created`. About 75 seconds.
 
 6b. **10:36 Discount over her limit.**
    - *Does:* Mr Kola Bankole, a repeat guest, calls for the same Deluxe King, Bed & breakfast, 9–12 Dec, and asks for 15%. Chiamaka sets 15% with reason Repeat guest; on Review the button reads Ask for approval · 15%. Tunde comes to the desk, taps his name and enters his PIN, then Approve 15% and book.
-   - *Sees:* "15% is over your 12% discount limit. A manager with a higher limit can approve it when you book."; the prompt with ₦168,000.00 → ₦142,800.00 a night and ₦617,400.00 → ₦524,790.00* incl. taxes; VI-2611-0484 with "Approved by Tunde Bello".
+   - *Sees:* "15% is over your 12% discount limit. A manager with a higher limit can approve it when you book."; the prompt with ₦168,000.00 → ₦142,800.00 a night and ₦504,000.00 → ₦428,400.00* incl. taxes; VI-2611-0484 with "Approved by Tunde Bello".
    - *Behind the scenes:* the server checks Tunde's PIN on the shared counter, that he works at Kora Victoria Island, isn't Chiamaka, and that 15% is within his 50%; the approval is bound to the priced stay and used once inside the booking transaction. Audit events `approval.granted` (method PIN on FD-VI-01) and `stay.discount_applied` with approver Tunde. About 15 seconds more than a normal booking.
 
 6c. **11:10 Guest adds a night.**
    - *Does:* Ms Collins calls to stay until 13 Dec. Chiamaka opens VI-2611-0483, Modify (or M), sets Leave to 13 Dec, saves.
-   - *Sees:* "+1 night", "Sat 12 Dec · Bed & breakfast · new night at today's rate ₦168,000.00", ₦617,400.00 → ₦823,200.00*, "Deluxe King is free on 12 Dec. Same plan, no approval needed.", Save · +₦205,800.00. Activity: "Changed · 9–12 Dec → 9–13 Dec 2026 · ₦617,400.00 → ₦823,200.00".
+   - *Sees:* "+1 night", "Sat 12 Dec · Bed & breakfast · new night at today's rate ₦168,000.00", ₦504,000.00 → ₦672,000.00*, "Deluxe King is free on 12 Dec. Same plan, no approval needed.", Save · +₦168,000.00. Activity: "Changed · 9–12 Dec → 9–13 Dec 2026 · ₦504,000.00 → ₦672,000.00".
    - *Behind the scenes:* one transaction locks the reservation and Deluxe King for 12 Dec, adds one booked room, keeps 9–11 Dec at their stored prices and prices 12 Dec at today's Bed & breakfast rate; audit event `reservation.modified`. About 25 seconds.
 
 6e. **11:12 Mr Mensah extends.**
@@ -97,7 +97,7 @@
 
 11. **Folios and key.**
     - *Does:* confirms the routing that came with the corporate booking, takes ₦30,000.00 cash as a deposit for extras, has him sign the registration card (#21, printed at check-in) and hands key 502. (Stage 1: the card and signature are built; folios and the deposit come with brick 10, and no key is recorded until key cards after v1.)
-    - *Sees:* Folio A, Mr Daniel Mensah: extras (breakfast, Calabash, Pool bar, room service, laundry, minibar), ₦30,000.00 in credit. Folio B, Acme Energy Ltd: room at Acme Corporate, ₦180,000.00 per night, room only, "exclusive of VAT, Lagos consumption tax and 10% service charge".
+    - *Sees:* Folio A, Mr Daniel Mensah: extras (breakfast, Calabash, Pool bar, room service, laundry, minibar), ₦30,000.00 in credit. Folio B, Acme Energy Ltd: room at Acme Corporate, ₦180,000.00 per night, room only, "inclusive of VAT, Lagos consumption tax and 10% service charge".
     - *Behind the scenes:* routing rule on the stay (`room` → Folio B). Cash deposit posted to Folio A on business date 25 Nov, on her shift. No room charge yet: night audit posts it. Audit events `folio.routing_set`, `payment.taken` (brick 10).
 
 12. **14:45 Close her shift with a blind count.**

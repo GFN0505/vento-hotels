@@ -71,8 +71,9 @@ describe.skipIf(!url)('availability and new reservations', () => {
       const bb = dlk?.plans.find((plan) => plan.code === 'BB')
       expect(bb).toMatchObject({
         derivedLabel: 'BAR + ₦18,000',
-        perNightExcl: '168000.00',
-        totalIncl: '617400.00',
+        perNightExcl: '137142.86',
+        perNightIncl: '168000.00',
+        totalIncl: '504000.00',
         varies: false,
       })
       expect(result.data.discountLimit).toBe('12.00')
@@ -102,19 +103,23 @@ describe.skipIf(!url)('availability and new reservations', () => {
     it('prices the walkthrough stay with taxes, deposit, cancellation and the pound equivalent', async () => {
       const result = await quote(t, k.frontDesk.cookie, k.vi.id, walk, { nationality: 'GB' })
       expect(result.status).toBe(200)
-      expect(result.data.totals.total).toBe('617400.00')
+      // All-in (decision 0032): ₦168,000 a night is the price, taxes inside it.
+      expect(result.data.terms.pricesIncludeTaxes).toBe(true)
+      expect(result.data.totals.total).toBe('504000.00')
+      expect(result.data.totals.net).toBe('411428.58')
       expect(result.data.totals.lines.map((line) => [line.name, line.amount])).toEqual([
-        ['Service charge', '50400.00'],
-        ['VAT', '37800.00'],
-        ['Lagos consumption tax', '25200.00'],
+        ['Service charge', '41142.87'],
+        ['VAT', '30857.13'],
+        ['Lagos consumption tax', '20571.42'],
       ])
-      expect(result.data.deposit?.amount).toBe('205800.00')
+      expect(result.data.totals.rounding).toBe('0.00')
+      expect(result.data.deposit?.amount).toBe('168000.00')
       expect(result.data.cancellation).toMatchObject({
         kind: 'free_until',
         deadline: '2026-12-07T13:00:00.000Z',
-        penalty: '205800.00',
+        penalty: '168000.00',
       })
-      expect(result.data.fx?.text).toBe('≈ £316.62 at ₦1,950/£, CBN, 25 Nov 2026')
+      expect(result.data.fx?.text).toBe('≈ £258.46 at ₦1,950/£, CBN, 25 Nov 2026')
     })
 
     it('checks a discount against the member’s limit', async () => {
@@ -122,8 +127,8 @@ describe.skipIf(!url)('availability and new reservations', () => {
         ...walk,
         discount: { kind: 'percent', value: '10', reason: 'repeat_guest' },
       })
-      expect(ten.data.totals.total).toBe('555660.00')
-      expect(ten.data.deposit?.amount).toBe('185220.00')
+      expect(ten.data.totals.total).toBe('453600.00')
+      expect(ten.data.deposit?.amount).toBe('151200.00')
       expect(ten.data.discount).toEqual({ percent: '10', limit: '12.00', within: true })
       const fifteen = await quote(t, k.frontDesk.cookie, k.vi.id, {
         ...walk,
@@ -176,14 +181,14 @@ describe.skipIf(!url)('availability and new reservations', () => {
         ['168000.00', '168000.00'],
         ['168000.00', '168000.00'],
       ])
-      expect(stay?.totals.total).toBe('617400.00')
+      expect(stay?.totals.total).toBe('504000.00')
       expect(stay?.terms).toMatchObject({ planName: 'Bed & breakfast', mealAllocation: '18000.00' })
       expect(result.data).toMatchObject({
         number,
         status: 'confirmed',
         source: 'phone',
         guarantee: 'deposit',
-        depositDue: { amount: '205800.00' },
+        depositDue: { amount: '168000.00' },
         bookedByName: 'Chiamaka Eze',
         notes: 'Quiet room, late arrival around 22:00.',
         guest: { firstName: 'Sarah', phone: '+447700900123', nationality: 'GB' },

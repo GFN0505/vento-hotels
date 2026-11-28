@@ -103,8 +103,8 @@ describe.skipIf(!url)('approvals', () => {
         newPrice: '142800.00',
         percent: '15',
         discountTotal: '75600.00',
-        totalBefore: '617400.00',
-        totalAfter: '524790.00',
+        totalBefore: '504000.00',
+        totalAfter: '428400.00',
         requesterLimit: '12',
       })
       const thirty = await rpc<Approvers>(

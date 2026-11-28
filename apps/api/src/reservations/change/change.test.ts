@@ -1,7 +1,7 @@
 // Modify, cancel, no-show and waivers against the test database through the real HTTP flow (spec:
 // stage-1-modify-cancel.md, "Tests"). Kora Victoria Island, business date 25 Nov 2026; Deluxe King
-// Bed & breakfast ₦168,000.00 a night (₦205,800.00 incl. taxes), Best available ₦150,000.00
-// (₦183,750.00); every plan free until 48 h before arrival, then the first night; deposit the first
+// Bed & breakfast ₦168,000.00 a night and Best available ₦150,000.00, all-in (decision 0032);
+// every plan free until 48 h before arrival, then the first night; deposit the first
 // night (so every stay is guaranteed). Each test books its own nights.
 import type { ApprovalView, Approvers, Page, PenaltyView, ReservationRow } from '@vento/shared'
 import { addDays, calendarDateIn, newId } from '@vento/shared'
@@ -101,9 +101,10 @@ describe.skipIf(!url)('modify, cancel and no-show', () => {
       const quoted = await quoteChange(t, k.frontDesk.cookie, fields)
       expect(quoted.status).toBe(200)
       expect(quoted.data.nights.map((n) => n.kept)).toEqual([true, true, true, false])
-      expect(quoted.data.before.total).toBe('617400.00')
-      expect(quoted.data.totals.total).toBe('823200.00')
-      expect(quoted.data.difference).toEqual({ sign: 1, amount: '205800.00' })
+      // All-in (decision 0032): ₦168,000 a night, taxes inside.
+      expect(quoted.data.before.total).toBe('504000.00')
+      expect(quoted.data.totals.total).toBe('672000.00')
+      expect(quoted.data.difference).toEqual({ sign: 1, amount: '168000.00' })
       expect(quoted.data.newNights).toEqual([{ date: departure, left: 6, bookable: true }])
       expect(quoted.data.latePenalty).toBeNull()
       const before = await booked(k.types.dlk.id, departure)
@@ -111,12 +112,12 @@ describe.skipIf(!url)('modify, cancel and no-show', () => {
       expect(saved.status).toBe(200)
       expect(await booked(k.types.dlk.id, departure)).toBe(before + 1)
       const detail = await detailOf(t, k.frontDesk.cookie, b.id)
-      expect(detail.quotedTotal).toBe('823200.00')
+      expect(detail.quotedTotal).toBe('672000.00')
       expect(detail.stays[0]?.version).toBe(2)
       expect(detail.activity[0]).toMatchObject({ title: 'Changed' })
-      expect(detail.activity[0]?.detail).toContain('₦617,400.00 → ₦823,200.00')
+      expect(detail.activity[0]?.detail).toContain('₦504,000.00 → ₦672,000.00')
       const [event] = await auditFor(t, k.orgId, 'reservation.modified', b.id)
-      expect(event?.after).toMatchObject({ version: 2, total: '823200.00' })
+      expect(event?.after).toMatchObject({ version: 2, total: '672000.00' })
     })
 
     it('keeps the agreed price on unchanged nights after the rate changed', async () => {
@@ -348,7 +349,7 @@ describe.skipIf(!url)('modify, cancel and no-show', () => {
       const before = await booked(k.types.stq.id, DAY)
       const done = await noShow(t, k.frontDesk.cookie, b.id, { note: 'Phone off' })
       expect(done.data.status).toBe('no_show')
-      expect(done.data.penalties[0]).toMatchObject({ amount: '147000.00', status: 'to_charge' })
+      expect(done.data.penalties[0]).toMatchObject({ amount: '120000.00', status: 'to_charge' })
       expect(await booked(k.types.stq.id, DAY)).toBe(before - 1)
       const future = await bookStay(t, k.frontDesk.cookie, k.vi.id, lateStay(1))
       const early = await noShow(t, k.frontDesk.cookie, future.id)

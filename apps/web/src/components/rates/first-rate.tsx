@@ -17,7 +17,7 @@ import { focusFirstProblem } from '@/lib/forms'
 import { useOnline } from '@/offline/connection'
 import { FirstRateAside } from './first-rate-aside'
 import * as M from './first-rate-model'
-import { EXCL, formatNaira, NEEDS_CONNECTION, plural } from './format'
+import { formatNaira, INCL, NEEDS_CONNECTION, plural } from './format'
 import { TAXES_FIRST, useGuestPays } from './guest-pays'
 import { GuestPays } from './guest-pays-cell'
 import { groupTyped } from './money-input'
@@ -74,7 +74,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
             </p>
           ) : null}
           <p className="text-text-2">
-            Per room per night, {EXCL}. Weekday is Sunday to Thursday nights.
+            Per room per night, {INCL}. Weekday is Sunday to Thursday nights.
           </p>
           {guest.notSetUp ? <p className="text-sm text-text-3">{TAXES_FIRST}</p> : null}
           <Card className="overflow-hidden">
@@ -126,8 +126,7 @@ export function FirstRate({ overview }: { overview: RatesOverview }) {
                       />
                       {guest.column && rows[type.id]?.weekday ? (
                         <span className="num mt-1 block text-sm text-text-3">
-                          Guest pays per night{' '}
-                          <GuestPays guest={guest} price={rows[type.id]?.weekday ?? ''} />
+                          <GuestPays guest={guest} price={rows[type.id]?.weekday ?? ''} perNight />
                         </span>
                       ) : null}
                     </td>

@@ -32,7 +32,8 @@ const BEST_AVAILABLE: PlanTerms = {
   minStay: 1,
   extraAdult: null,
   bookableBy: 'anyone',
-  pricesIncludeTaxes: false,
+  // All-in prices, as most Nigerian hotels quote them (decision 0032).
+  pricesIncludeTaxes: true,
 }
 
 const bedAndBreakfast = (parentId: string): PlanTerms => ({

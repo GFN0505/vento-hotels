@@ -1,8 +1,8 @@
 // The demo group's rate plans and dates (spec: docs/specs/stage-1-rate-plans.md, "Demo seed").
 // Kora Victoria Island has Best available, Bed & breakfast, Non-refundable and Acme's two corporate
 // plans, the Festive season, Saturday 5 Dec and Wednesday 2 Dec as in RatesGrid; the other hotels
-// have the first three plans at their own prices. Prices are illustrative, NGN, excl. taxes and
-// service charge, with no Fri and Sat uplift (the walkthrough totals assume flat prices).
+// have the first three plans at their own prices. Prices are illustrative, NGN, all-in (incl. taxes
+// and service charge, decision 0032), with no Fri and Sat uplift (the walkthrough totals assume flat prices).
 import {
   BREAKFAST_SUPPLEMENT,
   type CalendarDate,
@@ -43,7 +43,7 @@ const BASE: Omit<PlanTerms, 'name' | 'code'> = {
   minStay: 1,
   extraAdult: null,
   bookableBy: 'anyone',
-  pricesIncludeTaxes: false,
+  pricesIncludeTaxes: true,
 }
 
 const ACME_TERMS: Omit<PlanTerms, 'name' | 'code'> = {

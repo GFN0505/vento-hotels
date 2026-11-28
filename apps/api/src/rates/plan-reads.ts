@@ -179,7 +179,11 @@ export async function getRatePlan(db: Database, access: Access, id: string) {
 // order with own prices, open to anyone.
 export async function basePlanOf(db: Reader, organizationId: string, propertyId: string) {
   const [plan] = await db
-    .select({ id: ratePlans.id, name: ratePlans.name })
+    .select({
+      id: ratePlans.id,
+      name: ratePlans.name,
+      pricesIncludeTaxes: ratePlans.pricesIncludeTaxes,
+    })
     .from(ratePlans)
     .where(
       and(
@@ -218,7 +222,11 @@ export async function ratesOverview(
       )
       .groupBy(rooms.roomTypeId),
     db
-      .select({ archived: sql<boolean>`${ratePlans.archivedAt} is not null`, value: count() })
+      .select({
+        archived: sql<boolean>`${ratePlans.archivedAt} is not null`,
+        value: count(),
+        exclusive: sql<number>`count(*) filter (where not ${ratePlans.pricesIncludeTaxes})::int`,
+      })
       .from(ratePlans)
       .where(inHotel)
       .groupBy(sql`${ratePlans.archivedAt} is not null`),
@@ -250,6 +258,7 @@ export async function ratesOverview(
       maxChildren: type.maxChildren,
     })),
     activePlans: planCounts.find((row) => !row.archived)?.value ?? 0,
+    exclusivePlans: planCounts.find((row) => !row.archived)?.exclusive ?? 0,
     archivedPlans: planCounts.find((row) => row.archived)?.value ?? 0,
     unpricedRoomTypes: types
       .filter((type) => !pricedIds.has(type.id))

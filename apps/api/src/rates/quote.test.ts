@@ -98,7 +98,7 @@ describe.skipIf(!url)('quoting a stay', () => {
         mealAllocation: '18000.00',
         cancellation: TERMS.cancellation,
         deposit: TERMS.deposit,
-        pricesIncludeTaxes: false,
+        pricesIncludeTaxes: true,
         bookableBy: 'anyone',
       },
       breaks: [],

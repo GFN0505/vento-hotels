@@ -576,7 +576,7 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
-    test('the plan editor preview with Guest pays has no accessibility problems', async ({
+    test('the plan editor preview with Before taxes has no accessibility problems', async ({
       page,
     }, testInfo) => {
       test.setTimeout(90_000)
@@ -587,7 +587,7 @@ for (const theme of ['light', 'dark'] as const) {
       await page.goto('/rates/plans')
       await page.getByRole('link', { name: 'Bed & breakfast', exact: true }).click()
       await page
-        .getByText(/^Guest pays/)
+        .getByText(/^Before taxes/)
         .first()
         .waitFor()
       await expectAccessible(page)

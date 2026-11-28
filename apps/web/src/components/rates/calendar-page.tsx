@@ -19,7 +19,7 @@ import type { CalendarSearch, OnCalendarSearch } from './calendar-search'
 import { CalendarToolbar } from './calendar-toolbar'
 import { CellDetail } from './cell-detail'
 import { ChangeDatesSheet } from './change-dates-sheet'
-import { CHANGE_DENIED_SHORT, dateRange, NEEDS_CONNECTION, PER_NIGHT_EXCL } from './format'
+import { CHANGE_DENIED_SHORT, dateRange, NEEDS_CONNECTION, perNight } from './format'
 import { LiveBadge } from './plans-page'
 import { calendarQuery, plansQuery, useRatesOverview } from './queries'
 import { RatesHotel } from './rates-hotel'
@@ -32,7 +32,7 @@ type Props = { search: CalendarSearch; onSearch: OnCalendarSearch }
 
 export function CalendarPage(props: Props) {
   return (
-    <RatesHotel title="Rate calendar" description={PER_NIGHT_EXCL} calendar>
+    <RatesHotel title="Rate calendar" description="₦ per night, as each plan quotes it" calendar>
       {(hotel) => <HotelCalendar hotel={hotel} {...props} />}
     </RatesHotel>
   )
@@ -111,6 +111,11 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
     openSheet({ typeId: '', planId: '', date: first }, end)
   }
   const empty = data?.roomTypes.every((t) => t.rows.length === 0)
+  const shown = data?.roomTypes.flatMap((t) => t.rows) ?? []
+  const priced = perNight({
+    exclusive: shown.filter((row) => !row.pricesIncludeTaxes).length,
+    total: shown.length,
+  })
   const changeDates = (
     <Button
       variant="primary"
@@ -129,7 +134,7 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
         title="Rate calendar"
         badge={<LiveBadge live={o.property.live} />}
         description={
-          <span className="num">{`${PER_NIGHT_EXCL} · ${dateRange(from, addDays(from, nights - 1))}`}</span>
+          <span className="num">{`${priced} · ${dateRange(from, addDays(from, nights - 1))}`}</span>
         }
         actions={
           o.canEdit && !phone ? (

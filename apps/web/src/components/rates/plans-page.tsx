@@ -9,7 +9,7 @@ import { StatusBadge } from '@/components/ui/status-badge'
 import { cn } from '@/lib/cn'
 import { useOnline } from '@/offline/connection'
 import { FirstRate } from './first-rate'
-import { listNames, NEEDS_CONNECTION, PER_NIGHT_EXCL, plural } from './format'
+import { listNames, NEEDS_CONNECTION, perNight, plural } from './format'
 import { PlansList } from './plans-list'
 import { useRatesOverview } from './queries'
 import { RatesHotel } from './rates-hotel'
@@ -75,7 +75,7 @@ function HotelPlans({ hotel, archived, onArchived }: Props & { hotel: Property }
         title="Rate plans"
         badge={<LiveBadge live={o.property.live} />}
         description={
-          <span className="num">{`${plural(o.activePlans, 'plan')} · ${PER_NIGHT_EXCL}`}</span>
+          <span className="num">{`${plural(o.activePlans, 'plan')} · ${perNight({ exclusive: o.exclusivePlans, total: o.activePlans })}`}</span>
         }
         actions={
           o.canEdit ? (
