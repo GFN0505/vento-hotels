@@ -11,6 +11,7 @@ import {
   overLimitNotice,
   percentFromRate,
   rateFromPercent,
+  roomClash,
   stepFor,
 } from './booking-model'
 
@@ -233,5 +234,23 @@ describe('approval on Review & book', () => {
       guest: { firstName: 'Sarah', phone: '+447700900123' },
       approval: { id: 'appr', status: 'approved', quoteHash: 'abc', approverName: 'Tunde Bello' },
     })
+  })
+})
+
+describe('a booking started from a chart cell', () => {
+  it('refuses dates that cover a night the room is not free', () => {
+    const room = {
+      id: 'r',
+      number: '506',
+      roomTypeId: 't',
+      busy: [{ from: '2026-11-27', to: '2026-11-29', why: 'Kalu E.' }],
+    }
+    const base = { room, roomTypeId: 't', arrival: '2026-11-25', departure: '2026-11-27' }
+    expect(roomClash(base)).toBeNull()
+    expect(roomClash({ ...base, departure: '2026-11-28' })).toEqual({
+      date: '2026-11-27',
+      why: 'Kalu E.',
+    })
+    expect(roomClash({ ...base, roomTypeId: 'other', departure: '2026-11-28' })).toBeNull()
   })
 })

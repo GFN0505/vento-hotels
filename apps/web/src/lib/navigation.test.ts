@@ -21,7 +21,7 @@ describe('navigation', () => {
 
   it('shows each role only the modules it uses', () => {
     expect(labels('waiter')).toEqual(['Restaurant & bar'])
-    expect(labels('room_attendant')).toEqual(['Housekeeping'])
+    expect(labels('room_attendant')).toEqual(['Tape chart', 'Housekeeping'])
     expect(labels('front_desk')).toEqual([
       'Reservations',
       'Tape chart',

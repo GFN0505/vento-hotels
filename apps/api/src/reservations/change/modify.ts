@@ -47,6 +47,7 @@ import { changePriceChanged, modifyDiscountOverLimit, nothingChanged } from './e
 import { loadForChange, requireVersion, termsOf } from './load.ts'
 import { recordPenalty, resolveWaiver } from './penalty.ts'
 import { givenPercent, type PricedChange, priceChange } from './price-change.ts'
+import { roomChanges, roomEvent, settleRoom } from './room-write.ts'
 import { netCounts, nightKeysOf, requireAllowed, requireChange } from './rules.ts'
 import { type ChangeDb, changedView, inChangeTransaction, requestHashOf } from './transaction.ts'
 
@@ -77,7 +78,7 @@ async function moveRooms(tx: Tx, scope: Scope, priced: PricedChange) {
     const [roomTypeId = '', date = ''] = key.split(':')
     const type = capacity.get(roomTypeId)
     if (!type) throw await roomTypeRemoved(tx, scope, roomTypeId)
-    const night = leftOn(type, booked.get(key) ?? 0)
+    const night = leftOn(type, booked.get(key) ?? 0, date)
     if (night.bookable < count) {
       throw soldOut({ id: roomTypeId, name: type.name }, date, night.left, [])
     }
@@ -193,11 +194,14 @@ async function modifyInTx(
   if (stay) await requireVersion(tx, loaded, input.version, stay.version, hotel.timeZone)
   requireAllowed(loaded, hotel, 'modify')
   const priced = await priceChange(tx, access, hotel, loaded, input, now)
-  if (!priced.changed) throw nothingChanged()
+  if (!priced.changed && !(stay && roomChanges(stay, input))) throw nothingChanged()
   const broken = priced.breaks[0]
   if (broken && !priced.breakAlreadyAllowed && !input.restrictionReason) {
     throw restrictionReasonRequired(broken.kind, broken.date)
   }
+
+  // Step 3: the room the stay ends up in (brick 7), checked free under its lock.
+  const room = await settleRoom(tx, scope, priced.stay, input)
 
   // Steps 4–5: inventory for the old and new nights, then the approvals in id order.
   const net = await moveRooms(tx, scope, priced)
@@ -262,6 +266,7 @@ async function modifyInTx(
       discountByMemberId: after?.byMemberId ?? null,
       discountByName: after?.byName ?? null,
       restrictionOverride,
+      roomId: room.after?.id ?? null,
       version: old.version + 1,
       updatedAt: now,
     })
@@ -303,6 +308,7 @@ async function modifyInTx(
     cancellationDeadline: priced.deadline.before?.toISOString() ?? null,
     penaltyAmount: priced.penalty.before,
     version: old.version,
+    room: room.before ? { id: room.before.id, number: room.before.number } : null,
   }
   const afterView = {
     arrival: input.arrival,
@@ -322,6 +328,9 @@ async function modifyInTx(
     cancellationDeadline: priced.deadline.after?.toISOString() ?? null,
     penaltyAmount: priced.penalty.after,
     version: old.version + 1,
+    roomId: room.after?.id ?? null,
+    room: room.after ? { id: room.after.id, number: room.after.number } : null,
+    roomUnassigned: room.unassigned,
   }
   await tx.insert(reservationChanges).values({
     id: changeId,
@@ -366,10 +375,25 @@ async function modifyInTx(
         changeId,
         stayId: old.id,
         restrictionReason: input.restrictionReason ?? null,
+        source: input.source === 'tape_chart' ? 'tape_chart' : 'dialog',
         liveProperty: live,
       },
     },
   ]
+  const moved = roomEvent(room, {
+    at,
+    changeId,
+    stayId: old.id,
+    reservationNumber: loaded.reservation.number,
+    guestName,
+    arrival: input.arrival,
+    departure: input.departure,
+    keptBookedPrice: Boolean(input.keepBookedPrice && priced.given),
+    approverMemberId: discountApproval?.approverMemberId ?? null,
+    approverName: discountApproval?.approverName ?? null,
+    source: input.source,
+  })
+  if (moved) events.push(moved)
   if (priced.given) {
     const discounted = priced.nights.filter(
       (n) =>
@@ -467,8 +491,8 @@ export async function modifyReservation(
   access: Access,
   input: ModifyInput,
 ): Promise<ChangedReservation> {
-  requireChange(access)
   const parsed = modifyInputSchema.parse(input)
+  requireChange(access, parsed)
   const hash = requestHashOf(parsed)
   return inChangeTransaction(
     db,

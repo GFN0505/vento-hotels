@@ -25,6 +25,11 @@
    - *Sees:* 26 arrivals, 19 departures, 80 in-house. Each arrival shows room readiness (emerald inspected, amber dirty, "Not assigned"), balance due and requests. Top row: Mr Daniel Mensah · Acme Energy Ltd · Executive King · 25–28 Nov 2026 · 3 nights · Room 502 · amber "Due out first, dirty" · "Early arrival 11:30, quiet room".
    - *Behind the scenes:* stays with arrival date = business date. Readiness is the live housekeeping status; 502 is still occupied by a departing Acme guest.
 
+3a. **07:10 Assign today's arrivals.**
+   - *Does:* opens the Tape chart, opens Deluxe King's Unassigned lane and drags Mrs Adebayo onto 408.
+   - *Sees:* rows free for both nights light up; "Funmilayo Adebayo assigned to 408 · Undo".
+   - *Behind the scenes:* the stay and room 408 are locked, 408 is checked free for 25 and 26 Nov, no inventory row changes; `stay.room_assigned`. About 5 seconds.
+
 4. **07:35 Departure from 502 (Acme Energy guest).**
    - *Does:* clicks "Check out" on the Departures tab. Stay 22–25 Nov · 3 nights, Acme Corporate, room routed to Acme.
    - *Sees:* Folio A (guest extras: Calabash dinners, laundry) ₦46,500.00 + tax lines = ₦56,962.50*. Folio B (Acme): 3 × ₦180,000.00 + tax lines = ₦661,500.00*. A city ledger panel: "Acme Energy Ltd · Balance ₦9,187,500.00 · Limit ₦15,000,000.00 · After this ₦9,849,000.00".
@@ -35,10 +40,10 @@
    - *Sees:* both folios settled; the invoice PDF ready to email to Acme's accounts contact; the receipt ready for WhatsApp. 502 turns `vacant` + `dirty` (checked out 07:40).
    - *Behind the scenes:* the credit limit check runs inside the settlement transaction. A city ledger invoice is created for Acme with 30-day terms. Audit events `payment.taken`, `folio.settled_to_city_ledger`, `stay.checked_out`. Housekeeping sees 502 as a departure with an early arrival tag.
 
-6. **09:50–10:30 AC fault in 503, room move.**
-   - *Does:* Blessing Udo reports "AC not cooling" in 503 from her phone; a wrench icon appears on 503. At 10:20 maintenance updates work order WO-0412: "Compressor fault, part needed, 2 days". Chiamaka calls the guest in 503 (Executive King, BAR, in house 23–27 Nov) and offers a move. Opens the stay → "Room move" (#31). Ready Executive King rooms are listed first; she picks 501 (inspected), rate unchanged, reason "AC fault, WO-0412".
-   - *Sees:* "Moved to 501." Then maintenance puts 503 out of order 25–27 Nov from the work order; 503 shows rose on the board.
-   - *Behind the scenes:* move recorded on the stay; folios and routing follow the stay. Putting 503 OOO locks the Executive King inventory rows for 25 and 26 Nov and removes one room; Vento refused OOO while the guest was still in 503. Audit events `stay.room_moved` (before 503, after 501, reason), `room.status_changed` (`out_of_order`, work order linked).
+6. **10:15–10:25 AC fault in 503, room move.** (Stage 1; Stage 2 adds Blessing's fault report and the work order.)
+   - *Does:* Tunde hears from maintenance that 503's AC compressor needs a part. On the Tape chart he clicks 503 → Put out of order, 25–27 Nov, reason AC.
+   - *Sees:* "Room 503 has Emeka Kalu on 25–27 Nov. Move the booking first." He moves Mr Kalu to 501 (Room move, 3 clicks), then puts 503 out of order: "503 out of order until 27 Nov", and Executive King's Available row drops by one on 25 and 26 Nov.
+   - *Behind the scenes:* the move locks Mr Kalu's reservation and rooms 501 and 503; the out-of-order locks 503 and Executive King's rows for 25 and 26 Nov, checks no night goes short, and removes one room; audit events `stay.room_moved` (503 → 501) and `room.out_of_order` (`exception: 'out_of_order'`). Tomorrow's owner's report lists it. (In Stage 1 Mr Kalu is arriving, not in house; brick 8 turns this into the in-house move.)
 
 6a. **10:32 Phone booking.**
    - *Does:* Ms Sarah Collins calls for 9–12 Dec. Chiamaka opens New reservation, picks the dates and 1 adult, sees Deluxe King "7 · 5 · 3" and Junior Suite "Sold out 11 Dec", picks Bed & breakfast, finds no match for Collins, adds her (British, phone), and books.
@@ -54,6 +59,11 @@
    - *Does:* Ms Collins calls to stay until 13 Dec. Chiamaka opens VI-2611-0483, Modify (or M), sets Leave to 13 Dec, saves.
    - *Sees:* "+1 night", "Sat 12 Dec · Bed & breakfast · new night at today's rate ₦168,000.00", ₦617,400.00 → ₦823,200.00*, "Deluxe King is free on 12 Dec. Same plan, no approval needed.", Save · +₦205,800.00. Activity: "Changed · 9–12 Dec → 9–13 Dec 2026 · ₦617,400.00 → ₦823,200.00".
    - *Behind the scenes:* one transaction locks the reservation and Deluxe King for 12 Dec, adds one booked room, keeps 9–11 Dec at their stored prices and prices 12 Dec at today's Bed & breakfast rate; audit event `reservation.modified`. About 25 seconds.
+
+6e. **11:12 Mr Mensah extends.**
+   - *Does:* drags the end of his bar on 502 to 30 Nov.
+   - *Sees:* "+₦441,000.00", "Room 502 is free both nights", Extend stay.
+   - *Behind the scenes:* brick 6's modify with room 502 locked; `reservation.modified`.
 
 6d. **11:20 Late cancellation.**
    - *Does:* Mr Obi cancels VI-2611-0447 (Executive King, 26–28 Nov); free cancellation ended 24 Nov, 14:00. Chiamaka clicks Cancel, picks Guest request and cancels.
@@ -74,6 +84,11 @@
    - *Does:* Mr Okoro transfers the stay ₦249,900.00* plus a ₦50,000.00 deposit for extras, ₦299,900.00* in one transfer. She picks "Bank transfer", enters his bank and the session reference `100004251125104131234567`, then issues keys for 302.
    - *Sees:* stay balance ₦0.00, ₦50,000.00 in credit, and "Transfer ₦299,900.00 · awaiting bank match".
    - *Behind the scenes:* `bank_transfer` payment with reference, unmatched until it appears in the payment matching queue (#34). Walk-in time on the clock: 58 seconds, plus the wait for Tunde.
+
+10a. **11:10 502 is clean.**
+   - *Does:* Blessing calls; Chiamaka clicks 502 → Mark clean.
+   - *Sees:* "502 marked clean · Undo".
+   - *Behind the scenes:* `room.status_changed` dirty → clean with her name; works offline. (Stage 2 replaces the call with the attendant app and Grace's inspection.)
 
 10. **11:35 Check in Mr Mensah.**
     - *Does:* 502 turned emerald (inspected) at 11:10. She clicks "Check in" on his row and scans his Ghanaian passport.
@@ -102,15 +117,16 @@
 - **Waiver without a manager nearby:** she cancels now and sends the waiver to Tunde's inbox; the Penalty card shows "Waiver asked of Tunde Bello" until he answers, then "Waived · Approved by Tunde Bello".
 - **Wrong approver PIN:** "That PIN didn't match. 2 tries left." The tries count with the lock screen's; five lock his PIN for 15 minutes.
 - **Over the credit limit:** the settle button reads "Over Acme's limit by ₦…" and the same dialog asks for a GM or finance PIN.
-- **OOO would overbook:** putting 503 OOO when every Executive King is sold shows "Executive King would be 1 room short on 26 Nov" with the booking affected, before anything changes.
-- **Room move to a dirty room:** allowed with "501 is dirty. Move anyway?"; ready rooms are always listed first.
+- **OOO would overbook:** "Executive King would be 1 room short on 26 Nov." before anything changes; nothing is saved.
+- **Room move to a dirty room:** dirty rooms are listed after ready ones with their status; moving to one is allowed.
+- **Guest asks for a better room type while the booked type has rooms:** Room move lists only the booked type; dropping on another type says "A Deluxe King room is free: assign one of those". An upgrade is offered only when the booked type is full; otherwise it's a Modify (a booking change, re-priced).
 - **Blind count mismatch:** variance shown only after submission; a reason is required to close; the count can't be edited afterwards.
 
 ## Targets
 - PIN sign-in to arrivals list: under 5 seconds.
 - Check-in of a pre-assigned arrival with passport scan: under 2 minutes trained, under 5 minutes for a new agent with no training.
 - Walk-in: under 60 seconds, excluding the approver's wait.
-- Room move: 3 clicks from the stay.
+- Assign a room: 1 drag. Room move: 3 clicks. Extend by drag: 2 actions. Mark clean: 2 clicks.
 - Check-out with split settlement: under 90 seconds.
 - Every interaction under 100 ms; each screen loads in under 1 s.
 
@@ -119,7 +135,8 @@
 - PIN sign-in lands on #30 with "Business date 25 Nov 2026"; audit has `member.signed_in_with_pin` with the device id.
 - Take payment is disabled until a shift is open; the opening float is stored.
 - Check-out of 502 splits across POS terminal (reference required) and city ledger; settlement checks Acme's credit limit and creates an invoice; over-limit needs approval.
-- Room move records reason and before/after; 503 can't go OOO while occupied; once OOO it is removed from Executive King availability for 25–26 Nov with the work order linked.
+- Room move records reason and before/after; 503 can't go OOO while occupied; once OOO it is removed from Executive King availability for 25–26 Nov (the work order link comes with Stage 2).
+- A room holds one booking per night (race test); out of order is refused while a booking is assigned and when a night would go short, and reduces rooms left on New reservation; assigning offers only the booked room type, and another type only as an upgrade when the booked type is full; an upgrade at the booked price over 12% needs Tunde's PIN; a booking from the chart can't start on a night the room isn't free; Mark clean works offline and syncs (`apps/api/src/rooms/*/*.test.ts`, `apps/api/src/reservations/assign/*.test.ts`, `apps/web/e2e/tape-chart.spec.ts`).
 - A phone booking locks and decrements Deluxe King for each night and stores plan price and terms; the last-room race books once; a discount over the limit is refused without an approval and booked with one (`apps/api/src/reservations/*.test.ts`, `apps/api/src/approvals/*.test.ts`, `apps/web/e2e/reservations.spec.ts`).
 - Walk-in decrements Standard Queen availability for both nights in one transaction; a concurrent walk-in for the last Standard Queen fails cleanly.
 - A 15% discount is refused for front desk alone and succeeds with Tunde's PIN; the audit event carries reason, actor and approver; Tunde can't approve his own.
@@ -136,7 +153,7 @@
 - **Is the front desk PC a shared device** (PIN sign-in) or a personal device (password + 2FA)? (Settled: front desk PCs are one of the three shared-device kinds, with PIN sign-in. Decision 0022.)
 - *Settled (rate plans spec):* Acme's **Executive King rate** (₦180,000.00, plan `ACME`) is room only; breakfast goes on the guest folio.
 - *Settled (rate plans spec):* a rate that includes breakfast (Acme's Deluxe King ₦130,000.00, plan `ACME-BB`) carries a **meal allocation** (₦18,000 per room per night) that night audit posts to food; the rest is rooms revenue.
-- The 502 departure needs a **second Acme guest** and 503 an in-house guest; the demo world names neither.
+- The 502 departure needs a **second Acme guest**; the demo world names none. *Answered for Stage 1:* 503's guest is Mr Emeka Kalu, arriving 25 Nov, moved to 501 (brick 7 seed); brick 8 makes him in house 23–27 Nov.
 - Can a key be issued before a bank transfer is matched? Up to what amount, and by whom?
 - Does Acme's credit check count charges already routed to Acme on open folios (Mr Mensah's stay), or only invoiced city ledger balances?
 - The city ledger is stage 5, but stage 1 check-out needs "settle to city ledger". Bring a basic city ledger account into stage 1?

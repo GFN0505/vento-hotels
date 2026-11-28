@@ -14,17 +14,19 @@ import {
   pgTable,
   smallint,
   text,
+  timestamp,
   unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core'
-import { archivedAt, id, timestamps } from '../columns.ts'
-import { organizations } from './auth.ts'
-import { properties } from './tenancy.ts'
+import { archivedAt, calendarDate, id, timestamps } from '../columns.ts'
+import { members, organizations } from './auth.ts'
+import { devices, properties } from './tenancy.ts'
 
 export const roomBedEnum = pgEnum('room_bed', ['king', 'queen', 'double', 'twin', 'single'])
 export const roomFrontOfficeStatusEnum = pgEnum('room_front_office_status', ['vacant', 'occupied'])
-// out_of_order and out_of_service are set from brick 7; listed now to save an enum migration.
+// Only clean, inspected and dirty are stored (a check below): out of order is a dated period
+// (room_out_of_order), and out_of_service waits for Stage 2.
 export const roomHousekeepingStatusEnum = pgEnum('room_housekeeping_status', [
   'clean',
   'inspected',
@@ -32,6 +34,8 @@ export const roomHousekeepingStatusEnum = pgEnum('room_housekeeping_status', [
   'out_of_order',
   'out_of_service',
 ])
+
+const timestamptz = () => timestamp({ withTimezone: true, mode: 'date' })
 
 const organizationId = () =>
   uuid()
@@ -106,6 +110,11 @@ export const rooms = pgTable(
     frontOfficeStatus: roomFrontOfficeStatusEnum().notNull().default('vacant'),
     // Nobody sells a room nobody has checked.
     housekeepingStatus: roomHousekeepingStatusEnum().notNull().default('dirty'),
+    // Who set it and when (brick 7): the device's time for an offline change, so a later change
+    // wins and an older one synced afterwards doesn't overwrite it.
+    housekeepingStatusAt: timestamptz(),
+    housekeepingStatusByMemberId: uuid().references(() => members.id, { onDelete: 'set null' }),
+    housekeepingStatusByName: text(),
     archivedAt: archivedAt(),
     ...timestamps,
   },
@@ -124,6 +133,10 @@ export const rooms = pgTable(
     }).onDelete('restrict'),
     check('rooms_number_format', sql`${t.number} ~ '^[A-Z0-9-]{1,10}$'`),
     check('rooms_floor_range', sql`${t.floor} between -9 and 199`),
+    check(
+      'rooms_housekeeping_status_stored',
+      sql`${t.housekeepingStatus} in ('clean', 'inspected', 'dirty')`,
+    ),
   ],
 )
 
@@ -155,5 +168,112 @@ export const roomConnections = pgTable(
       foreignColumns: [rooms.propertyId, rooms.id],
     }).onDelete('cascade'),
     check('room_connections_ordered', sql`${t.roomAId} < ${t.roomBId}`),
+  ],
+)
+
+export const outOfOrderReasonEnum = pgEnum('out_of_order_reason', [
+  'ac',
+  'plumbing',
+  'electrical',
+  'renovation',
+  'other',
+])
+// active: counted off rooms left on its nights (current, upcoming or ended); removed: an upcoming
+// period taken off before it started, kept for history.
+export const outOfOrderStatusEnum = pgEnum('out_of_order_status', ['active', 'removed'])
+
+// A room taken off sale for dates (brick 7): From to Back in service, exclusive like a departure.
+// Rooms left for the room's type drop by one on each night. Changed only under the room's lock and
+// its type's inventory rows (reservations/locks.ts); an exclusion constraint (migration 0019) keeps
+// two active periods of one room from overlapping.
+export const roomOutOfOrder = pgTable(
+  'room_out_of_order',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    propertyId: propertyId(),
+    roomId: uuid().notNull(),
+    fromDate: calendarDate().notNull(),
+    backInService: calendarDate().notNull(),
+    reason: outOfOrderReasonEnum().notNull(),
+    reasonText: text(),
+    note: text(),
+    status: outOfOrderStatusEnum().notNull().default('active'),
+    // The hotel's business date when it was put on, and who did it (names are snapshots).
+    businessDate: calendarDate().notNull(),
+    byMemberId: uuid()
+      .notNull()
+      .references(() => members.id, { onDelete: 'restrict' }),
+    byName: text().notNull(),
+    deviceId: uuid().references(() => devices.id, { onDelete: 'set null' }),
+    idempotencyKey: uuid().notNull(),
+    // The key of the last change or end, so a resent one returns the period instead of failing
+    // on the version.
+    lastKey: uuid(),
+    version: integer().notNull().default(1),
+    ...timestamps,
+  },
+  (t) => [
+    inProperty('room_out_of_order_property_fk', t),
+    foreignKey({
+      name: 'room_out_of_order_room_fk',
+      columns: [t.propertyId, t.roomId],
+      foreignColumns: [rooms.propertyId, rooms.id],
+    }).onDelete('restrict'),
+    unique('room_out_of_order_organization_id_idempotency_key_unique').on(
+      t.organizationId,
+      t.idempotencyKey,
+    ),
+    index().on(t.organizationId, t.propertyId, t.fromDate),
+    index().on(t.roomId),
+    check('room_out_of_order_dates', sql`${t.backInService} > ${t.fromDate}`),
+    check('room_out_of_order_length', sql`${t.backInService} - ${t.fromDate} <= 365`),
+    check(
+      'room_out_of_order_text_length',
+      sql`(${t.reasonText} is null or char_length(${t.reasonText}) <= 100) and (${t.note} is null or char_length(${t.note}) <= 200)`,
+    ),
+    check(
+      'room_out_of_order_other_text',
+      sql`${t.reason} <> 'other' or ${t.reasonText} is not null`,
+    ),
+  ],
+)
+
+export const roomStatusOutcomeEnum = pgEnum('room_status_outcome', ['applied', 'superseded'])
+
+// The receipt of every Mark clean / Mark dirty (brick 7), online or from an offline outbox: a
+// resent command finds its receipt and is applied once.
+export const roomStatusCommands = pgTable(
+  'room_status_commands',
+  {
+    id: id(),
+    organizationId: organizationId(),
+    propertyId: propertyId(),
+    roomId: uuid().notNull(),
+    idempotencyKey: uuid().notNull(),
+    status: roomHousekeepingStatusEnum().notNull(),
+    // The device's time; appliedAt is when the server received it.
+    occurredAt: timestamptz().notNull(),
+    appliedAt: timestamptz().notNull().defaultNow(),
+    outcome: roomStatusOutcomeEnum().notNull(),
+    byMemberId: uuid()
+      .notNull()
+      .references(() => members.id, { onDelete: 'restrict' }),
+    deviceId: uuid().references(() => devices.id, { onDelete: 'set null' }),
+    ...timestamps,
+  },
+  (t) => [
+    inProperty('room_status_commands_property_fk', t),
+    foreignKey({
+      name: 'room_status_commands_room_fk',
+      columns: [t.propertyId, t.roomId],
+      foreignColumns: [rooms.propertyId, rooms.id],
+    }).onDelete('restrict'),
+    unique('room_status_commands_organization_id_idempotency_key_unique').on(
+      t.organizationId,
+      t.idempotencyKey,
+    ),
+    index().on(t.roomId),
+    index().on(t.organizationId, t.propertyId),
   ],
 )

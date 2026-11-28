@@ -11,6 +11,16 @@ const TITLES: Record<string, string> = {
   'room.restored': 'Restored',
   'room.deleted': 'Deleted for good',
   'room.status_changed': 'Status',
+  'room.out_of_order': 'Out of order',
+  'room.out_of_order_changed': 'Out-of-order dates changed',
+  'room.back_in_service': 'Back in service',
+}
+
+// "25 Nov" from a stored date.
+const day = (value: unknown) => {
+  if (typeof value !== 'string') return ''
+  const [, m, d] = value.split('-').map(Number)
+  return `${d} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][(m ?? 1) - 1]}`
 }
 
 const STATUS: Record<string, string> = {
@@ -68,7 +78,20 @@ export function describe(event: AuditEventView): HistoryLine {
     changes = [`${show('roomTypeName', after.roomTypeName)} · Floor ${show('floor', after.floor)}`]
   } else if (event.action === 'room.status_changed') {
     changes = [
-      `${show('housekeepingStatus', before.housekeepingStatus)} → ${show('housekeepingStatus', after.housekeepingStatus)}`,
+      after.applied === false
+        ? `${show('housekeepingStatus', after.requested)} from a device, kept as ${show('housekeepingStatus', after.housekeepingStatus).toLowerCase()} (a later change won)`
+        : `${show('housekeepingStatus', before.housekeepingStatus)} → ${show('housekeepingStatus', after.housekeepingStatus)}`,
+    ]
+  } else if (event.action === 'room.out_of_order') {
+    changes = [
+      `${day(after.from)} → back in service ${day(after.backInService)}${typeof after.note === 'string' && after.note ? ` · ${after.note}` : ''}`,
+    ]
+  } else if (
+    event.action === 'room.out_of_order_changed' ||
+    event.action === 'room.back_in_service'
+  ) {
+    changes = [
+      `${day(before.from)}–${day(before.backInService)} → ${after.ended === 'removed' ? 'removed' : `${day(after.from)}–${day(after.backInService)}`}`,
     ]
   } else if (event.action === 'room.archived' || event.action === 'room.restored') {
     changes = after.roomTypeName ? [`${show('roomTypeName', after.roomTypeName)}`] : []

@@ -16,6 +16,9 @@ const TITLES: Record<string, string> = {
   'reservation.no_show': 'Marked no-show',
   'penalty.recorded': 'Penalty recorded',
   'reservation.penalty_waived': 'Penalty waived',
+  'stay.room_assigned': 'Room assigned',
+  'stay.room_moved': 'Room moved',
+  'stay.room_unassigned': 'Room removed',
 }
 
 const when = new Intl.DateTimeFormat('en-GB', {
@@ -30,7 +33,16 @@ const when = new Intl.DateTimeFormat('en-GB', {
 export function describeReservationEvent(event: AuditEventView): AuditLine {
   const after = asFields(event.after)
   const changes: string[] = []
-  if (event.action === 'reservation.created') {
+  if (event.action.startsWith('stay.room_')) {
+    const before = asFields(asFields(event.before).room)
+    const room = asFields(after.room)
+    changes.push(
+      [
+        before.number ? `Room ${String(before.number)}` : 'No room',
+        room.number ? `Room ${String(room.number)}` : 'no room',
+      ].join(' → '),
+    )
+  } else if (event.action === 'reservation.created') {
     const total = after.quotedTotal ? `Total ${naira(after.quotedTotal)}` : null
     const deposit = asFields(after.depositDue)
     changes.push(

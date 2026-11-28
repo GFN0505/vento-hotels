@@ -22,7 +22,7 @@ import { numbersTaken, roomArchived, roomNotFound } from './errors.ts'
 import { hasHistory } from './history.ts'
 import { isLive, requireReasonIfLive } from './live.ts'
 import { lockActiveTypes, lockRoom, lockRooms, typeNames } from './locks.ts'
-import { roomCountChanged } from './room-count.ts'
+import { requireRoomsFree, roomCountChanged } from './room-count.ts'
 import { roomDetail, takenNumbers } from './room-reads.ts'
 
 export type NewRoom = { number: string; floor: number; roomTypeId: string }
@@ -164,6 +164,7 @@ export async function updateRoom(
       if (set.number) await requireFreeNumbers(tx, property.id, [set.number])
       if (input.roomTypeId && input.roomTypeId !== room.roomTypeId) {
         requireReasonIfLive(property, input.reason)
+        await requireRoomsFree(tx, { businessDate: property.businessDate, rooms: [room] })
         const names = await lockActiveTypes(tx, access, property.id, [input.roomTypeId])
         const old = await typeNames(tx, property.id, [room.roomTypeId])
         before.roomTypeId = room.roomTypeId

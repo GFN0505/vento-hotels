@@ -12,11 +12,20 @@ import {
   SOURCE_LABELS,
   toAmount,
 } from '@vento/shared'
-import { AlertTriangle, Ban, ClipboardCopy, History, MoreHorizontal, Pencil } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowLeftRight,
+  Ban,
+  ClipboardCopy,
+  History,
+  MoreHorizontal,
+  Pencil,
+} from 'lucide-react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { AuditSheet } from '@/components/audit/audit-sheet'
 import { Message } from '@/components/rooms/message'
+import { RoomMoveDialog } from '@/components/rooms/room-move-dialog'
 import { FormSkeleton } from '@/components/settings/load-states'
 import { TH } from '@/components/settings/table-styles'
 import { useScopedTitle } from '@/components/shell/use-scoped-title'
@@ -54,7 +63,7 @@ import { ReservationsOffline } from './offline-note'
 import { PenaltyCard } from './penalty-card'
 import { useCountries } from './use-countries'
 
-type Open = 'modify' | 'cancel' | 'no_show' | null
+type Open = 'modify' | 'cancel' | 'no_show' | 'room' | null
 
 export function ReservationDetailPage({ id }: { id: string }) {
   // While a waiver is waiting for a manager, the answer shows within seconds.
@@ -129,6 +138,14 @@ export function ReservationDetailPage({ id }: { id: string }) {
         <ActivityCard data={data} onAudit={() => setAuditing(true)} />
       </div>
       {open === 'modify' ? <ModifyDialog detail={data} onClose={() => setOpen(null)} /> : null}
+      {open === 'room' && data.stays[0] ? (
+        <RoomMoveDialog
+          stayId={data.stays[0].id}
+          version={data.stays[0].version}
+          timeZone={data.property.timeZone}
+          onClose={() => setOpen(null)}
+        />
+      ) : null}
       {open === 'cancel' || open === 'no_show' ? (
         <EndDialog detail={data} mode={open} onClose={() => setOpen(null)} />
       ) : null}
@@ -259,6 +276,12 @@ function Header({
                 Audit trail
               </Button>
             ) : null}
+            {data.actions.roomMove && stay ? (
+              <Button className="max-lg:h-11" disabled={!online} onClick={() => onOpen('room')}>
+                <ArrowLeftRight className="size-4" aria-hidden="true" />
+                {stay.room ? 'Room move' : 'Assign room'}
+              </Button>
+            ) : null}
             {data.actions.modify ? (
               <Button className="max-lg:h-11" disabled={!online} onClick={() => onOpen('modify')}>
                 <Pencil className="size-4" aria-hidden="true" />
@@ -302,8 +325,8 @@ function Header({
               ? ` · ${stay.children === 1 ? '1 child' : `${stay.children} children`}`
               : ''}
           </Summary>
-          <Summary label="Room" value={stay.roomTypeName}>
-            Not assigned
+          <Summary label="Room" value={stay.room ? `Room ${stay.room.number}` : 'Not assigned'}>
+            {stay.roomTypeName}
           </Summary>
           <Summary label="Rate" value={rate?.value ?? ''}>
             {stay.terms.planName} · {mealLabel(stay.terms).toLowerCase()}

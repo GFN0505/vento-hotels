@@ -9,8 +9,9 @@ import {
   addDays,
   type ChangeDiscount,
   type ChangedReservation,
+  type ChangeQuote,
+  DESK_DISCOUNT_REASONS,
   DISCOUNT_REASON_LABELS,
-  DISCOUNT_REASONS,
   type DiscountReason,
   dec,
   firstNameOf,
@@ -46,7 +47,10 @@ import { dateLabel, naira } from './format'
 
 type Props = { detail: ReservationDetail; onClose: () => void }
 
-const REASONS = DISCOUNT_REASONS.map((value) => ({ value, label: DISCOUNT_REASON_LABELS[value] }))
+const REASONS = DESK_DISCOUNT_REASONS.map((value) => ({
+  value,
+  label: DISCOUNT_REASON_LABELS[value],
+}))
 
 // Waits a moment after the last edit before asking for new figures.
 function useSettled<T>(value: T, ms = 250): T {
@@ -133,6 +137,7 @@ export function ModifyDialog({ detail, onClose }: Props) {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: orpc.reservations.key() }),
       queryClient.invalidateQueries({ queryKey: orpc.approvals.key() }),
+      queryClient.invalidateQueries({ queryKey: orpc.tapeChart.key() }),
     ])
 
   const done = (result: ChangedReservation) => {
@@ -383,6 +388,7 @@ export function ModifyDialog({ detail, onClose }: Props) {
               {available.text}
             </p>
           ) : null}
+          {q ? <RoomLine quote={q} /> : null}
 
           {q && overLimitLine(q) ? (
             <div className="flex flex-col gap-2 rounded-sm bg-am-bg px-3 py-2 text-am">
@@ -612,5 +618,29 @@ function Counter({
         ))}
       </select>
     </label>
+  )
+}
+
+// The room after the change (brick 7): "Room 502 is free on the new nights." / "Room 502 isn't
+// free on 28 Nov (Kalu E.). The booking will be unassigned."
+function RoomLine({ quote }: { quote: ChangeQuote }) {
+  const room = quote.room ?? null
+  const before = quote.roomBefore ?? null
+  if (!room && before) {
+    return (
+      <p className="text-sm text-am">
+        Room {before.number} is another room type's. The booking will be unassigned.
+      </p>
+    )
+  }
+  if (!room) return null
+  if (room.free)
+    return <p className="text-sm text-em">Room {room.number} is free on the new nights.</p>
+  return (
+    <p className="text-sm text-am">
+      Room {room.number} isn't free on{' '}
+      {room.blockedOn ? dateLabel(room.blockedOn, false) : 'a new night'}
+      {room.blockedBy ? ` (${room.blockedBy})` : ''}. The booking will be unassigned.
+    </p>
   )
 }

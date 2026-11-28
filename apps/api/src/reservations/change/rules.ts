@@ -8,6 +8,7 @@ import {
   nightsBetween,
 } from '@vento/shared'
 import { type Access, can, requireFeature } from '../../tenancy/access.ts'
+import { MOVE_ONLY } from '../assign/errors.ts'
 import type { BookingHotel } from '../context.ts'
 import { noPermission } from '../errors.ts'
 import { keyOf, type NightKey } from '../locks.ts'
@@ -67,8 +68,13 @@ export function netCounts(before: NightKey[], after: NightKey[]): Map<string, nu
 
 export const releaseCounts = (keys: NightKey[]) => netCounts(keys, [])
 
-// Changing, cancelling and marking no-show: the front_desk feature and reservation.manage.
-export function requireChange(access: Access): void {
+// Changing, cancelling and marking no-show: the front_desk feature and reservation.manage; a
+// change that names a room also needs room.move (brick 7).
+export function requireChange(
+  access: Access,
+  change?: { roomId?: string | null | undefined },
+): void {
   requireFeature(access, 'front_desk')
   if (!can(access, 'reservation.manage')) throw noPermission(CHANGE_ONLY)
+  if (change?.roomId !== undefined && !can(access, 'room.move')) throw noPermission(MOVE_ONLY)
 }

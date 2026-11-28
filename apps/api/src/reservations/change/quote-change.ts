@@ -15,6 +15,7 @@ import { bookedFor, capacityOf, keyOf, leftOn, type Scope } from '../locks.ts'
 import { foreignEquivalent } from '../quote.ts'
 import { loadForChange, requireVersion, reservationHotel } from './load.ts'
 import { changeDiscountCheck, type PricedChange, priceChange } from './price-change.ts'
+import { quoteRoom } from './room.ts'
 import { nightKeysOf, requireAllowed, requireChange } from './rules.ts'
 
 type Input = z.output<typeof quoteChangeInputSchema>
@@ -33,7 +34,11 @@ export async function newNightRooms(db: Reader, scope: Scope, priced: PricedChan
     fresh.at(-1)?.date ?? priced.input.arrival,
   )
   return fresh.map((night) => {
-    const room = leftOn(capacity, booked.get(keyOf({ roomTypeId: type, date: night.date })) ?? 0)
+    const room = leftOn(
+      capacity,
+      booked.get(keyOf({ roomTypeId: type, date: night.date })) ?? 0,
+      night.date,
+    )
     return { date: night.date, left: room.left, bookable: room.bookable >= 1 }
   })
 }
@@ -64,7 +69,11 @@ async function offeredTypes(
     let soldOutOn: string | null = null
     for (const night of priced.nights) {
       if (type.id === stay.roomTypeId && stayDates.has(night.date)) continue
-      const room = leftOn(cap, booked.get(keyOf({ roomTypeId: type.id, date: night.date })) ?? 0)
+      const room = leftOn(
+        cap,
+        booked.get(keyOf({ roomTypeId: type.id, date: night.date })) ?? 0,
+        night.date,
+      )
       if (room.bookable < 1) {
         soldOutOn = night.date
         break
@@ -107,7 +116,7 @@ export async function quoteChange(
   access: Access,
   input: Input,
 ): Promise<ChangeQuote> {
-  requireChange(access)
+  requireChange(access, input)
   const propertyId = await reservationHotel(db, access, input.reservationId)
   const hotel = await loadBookingHotel(db, access, propertyId)
   const loaded = await loadForChange(db, access, input.reservationId)
@@ -117,7 +126,16 @@ export async function quoteChange(
   const priced = await priceChange(db, access, hotel, loaded, input, new Date())
   const scope = { organizationId: access.organizationId, propertyId: hotel.id }
   const terms = priced.stay.terms as { planName: string }
+  const room = await quoteRoom(db, scope, priced.stay, input)
+  const keptFrom =
+    input.keepBookedPrice && input.roomTypeId !== priced.stay.roomTypeId
+      ? loaded.nights.find((night) => night.stayId === priced.stay.id)
+      : undefined
   return {
+    ...room,
+    keptPrice: keptFrom
+      ? { fromRoomTypeName: priced.stay.roomTypeName, perNight: keptFrom.soldPrice }
+      : null,
     changeHash: priced.hash,
     changed: priced.changed,
     reservationId: loaded.reservation.id,

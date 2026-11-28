@@ -12,7 +12,7 @@ import { dropConnections } from './connections.ts'
 import { auditAt, holdProperty, type RoomsProperty, requireRoomsSetup } from './context.ts'
 import { isLive, requireReasonIfLive } from './live.ts'
 import { type LockedRoom, lockActiveTypes, lockRooms, typeNames } from './locks.ts'
-import { roomCountChanged } from './room-count.ts'
+import { requireRoomsFree, roomCountChanged } from './room-count.ts'
 
 type BulkInput = { propertyId: string; ids: string[]; reason?: string | undefined }
 
@@ -52,6 +52,7 @@ export async function changeRoomType(
     const names = await lockActiveTypes(tx, access, property.id, [input.roomTypeId])
     const moving = locked.filter((r) => !r.archivedAt && r.roomTypeId !== input.roomTypeId)
     if (moving.length === 0) return { count: 0 }
+    await requireRoomsFree(tx, { businessDate: property.businessDate, rooms: moving })
     const from = await typeNames(tx, property.id, typesOf(moving))
     await tx
       .update(rooms)
@@ -101,6 +102,7 @@ export async function archiveRooms(
     const locked = await lockRooms(tx, access, input.ids, property.id)
     const leaving = locked.filter((room) => !room.archivedAt)
     if (leaving.length === 0) return { count: 0 }
+    await requireRoomsFree(tx, { businessDate: property.businessDate, rooms: leaving })
     const ids = leaving.map((room) => room.id)
     await tx.update(rooms).set({ archivedAt: new Date() }).where(inArray(rooms.id, ids))
     await dropConnections(tx, access, property, ids)

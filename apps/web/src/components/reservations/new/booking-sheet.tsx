@@ -17,7 +17,7 @@ import { orpc } from '@/lib/api'
 import { cn } from '@/lib/cn'
 import { errorCode, isConnectionProblem, problemMessage } from '@/lib/errors'
 import { useOnline } from '@/offline/connection'
-import { naira, stayRange } from '../format'
+import { dateLabel, naira, stayRange } from '../format'
 import { NEEDS_LIVE } from '../queries'
 import {
   clearDraft,
@@ -40,6 +40,7 @@ import {
   discountProblems,
   draftFromRequest,
   guestProblems,
+  roomClash,
   STEPS,
   stepFor,
 } from './booking-model'
@@ -49,6 +50,10 @@ import { StepGuest } from './step-guest'
 import { StepReview } from './step-review'
 import { StepRoomRate } from './step-room-rate'
 import { SummaryAside } from './summary-aside'
+
+// "Room 506 isn't free on 27 Nov (Kalu E.). Pick other dates, or book without a room."
+const clashLine = (draft: Draft, clash: { date: string; why: string }) =>
+  `Room ${draft.room?.number ?? ''} isn't free on ${dateLabel(clash.date, false)}${clash.why ? ` (${clash.why})` : ''}. Pick other dates, or book without a room.`
 
 const clock = (at: number) =>
   new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(at)
@@ -73,14 +78,39 @@ const APPROVAL_REFUSALS = new Set([
   'APPROVAL_NO_LONGER_VALID',
 ])
 
+export type BookingPreset = {
+  roomTypeId: string
+  arrival: string
+  departure: string
+  room: {
+    id: string
+    number: string
+    roomTypeId: string
+    busy: { from: string; to: string; why: string }[]
+  }
+}
+
 type SheetProps = {
   onClose: () => void
+  // Booked from a tape chart cell: the room type, the night and the room (brick 7).
+  preset?: BookingPreset | undefined
   // "Continue booking" from the bell: the request whose stored booking reopens at Review.
   resume?: string | undefined
 }
 
-export function BookingSheet({ onClose, resume }: SheetProps) {
+export function BookingSheet({ onClose, resume, preset }: SheetProps) {
   const { scope, properties } = useProperty()
+  // A cell's booking starts a fresh draft for that room and night.
+  const presetKey = preset ? `${preset.room.id}:${preset.arrival}` : undefined
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per cell opened.
+  useEffect(() => {
+    if (!preset || scope?.kind !== 'hotel') return
+    startDraft({
+      ...newDraft(scope.hotel.id, scope.hotel.id, preset.arrival, preset.departure),
+      roomTypeId: preset.roomTypeId,
+      room: preset.room,
+    })
+  }, [presetKey])
   const online = useOnline()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -266,6 +296,11 @@ export function BookingSheet({ onClose, resume }: SheetProps) {
     // The latest draft: an approval given a moment ago is in the store before React re-renders.
     const current = getDraft()
     if (!current || !quote.data || !hotel) return
+    const clash = roomClash(current)
+    if (clash) {
+      setRefusal({ step: 4, message: clashLine(current, clash), code: 'ROOM_TAKEN' })
+      return
+    }
     setRefusal(undefined)
     const quoted = quote.data
     const input = inFlight.current.take(() => createInput(current, hotel.id, quoted))
@@ -462,7 +497,37 @@ export function BookingSheet({ onClose, resume }: SheetProps) {
             <p role="alert" className="rounded-sm bg-ro-bg px-3 py-2 text-sm text-ro">
               {refusal.message}
               {refusal.code === 'IDEMPOTENCY_CONFLICT' ? <ExistingLink /> : null}
+              {refusal.code === 'ROOM_TAKEN' ? (
+                <Button
+                  size="sm"
+                  className="ml-2 max-lg:h-11"
+                  onClick={() => {
+                    updateDraft({ room: undefined })
+                    setRefusal(undefined)
+                  }}
+                >
+                  Book without a room
+                </Button>
+              ) : null}
             </p>
+          ) : null}
+          {draft.room && draft.room.roomTypeId === draft.roomTypeId ? (
+            roomClash(draft) ? (
+              <p role="alert" className="rounded-sm bg-am-bg px-3 py-2 text-sm text-am">
+                {clashLine(draft, roomClash(draft) ?? { date: draft.arrival, why: '' })}{' '}
+                <Button
+                  size="sm"
+                  className="ml-1 max-lg:h-11"
+                  onClick={() => updateDraft({ room: undefined })}
+                >
+                  Book without a room
+                </Button>
+              </p>
+            ) : (
+              <p className="rounded-sm bg-pri-soft px-3 py-2 text-sm text-pri-ink">
+                Room {draft.room.number} will be assigned.
+              </p>
+            )
           ) : null}
           {step === 1 ? (
             <StepDates

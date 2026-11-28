@@ -86,7 +86,11 @@ function typeView(
   rules: ReadonlyMap<string, TaxRuleInForce[]>,
 ): AvailabilityRoomType {
   const nights = dates.map((date) => {
-    const night = leftOn(capacity, booked.get(keyOf({ roomTypeId: entry.type.id, date })) ?? 0)
+    const night = leftOn(
+      capacity,
+      booked.get(keyOf({ roomTypeId: entry.type.id, date })) ?? 0,
+      date,
+    )
     return { date, left: night.left, bookable: night.bookable }
   })
   const lowest = nights.reduce(
@@ -147,7 +151,8 @@ async function fullyBooked(
   const free = (date: string) =>
     ids.some(
       (id) =>
-        leftOn(capacity.get(id), booked.get(keyOf({ roomTypeId: id, date })) ?? 0).bookable >= 1,
+        leftOn(capacity.get(id), booked.get(keyOf({ roomTypeId: id, date })) ?? 0, date).bookable >=
+        1,
     )
   const nights = stayNights(input.arrival, nightsBetween(input.arrival, input.departure))
   const full = nights.find((date) => !free(date))
@@ -202,7 +207,7 @@ export async function availability(
   const ids = listed.map((entry) => entry.type.id)
   const booked = await bookedFor(db, scope, ids, input.arrival, addDays(input.departure, -1))
   const capacityOfType = (id: string): Capacity =>
-    capacity.get(id) ?? { name: '', rooms: 0, limit: 0 }
+    capacity.get(id) ?? { name: '', rooms: 0, limit: 0, outOfOrder: [] }
   const listedCapacity = new Map(ids.map((id) => [id, capacityOfType(id)]))
   return {
     ...base,

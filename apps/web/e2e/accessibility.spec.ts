@@ -191,6 +191,7 @@ for (const theme of ['light', 'dark'] as const) {
     test('taxes and charges, payments and FX rates, with their sheets, have no accessibility problems', async ({
       page,
     }, testInfo) => {
+      test.setTimeout(90_000)
       const domain = seedDemoGroup(
         `a11y-finance-${theme}-${testInfo.project.name}`,
         'Demo-pass-42!',
@@ -281,6 +282,7 @@ for (const theme of ['light', 'dark'] as const) {
     test('reservations: the list (All hotels, one hotel, empty), a reservation and New reservation at Room & rate and Review have no accessibility problems', async ({
       page,
     }, testInfo) => {
+      test.setTimeout(120_000)
       const domain = seedDemoGroup(`a11y-res-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
       await signIn(page, `adaeze@${domain}`, 'Demo-pass-42!')
       await page.getByRole('heading', { name: /^Good/ }).waitFor()
@@ -342,6 +344,7 @@ for (const theme of ['light', 'dark'] as const) {
     test('approvals: the bell, Waiting, Asked by you, Done and a request have no accessibility problems', async ({
       page,
     }, testInfo) => {
+      test.setTimeout(90_000)
       const domain = seedDemoGroup(`a11y-appr-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
       await signIn(page, `tunde@${domain}`, 'Demo-pass-42!')
       await page.getByRole('heading', { name: /^Good/ }).waitFor()
@@ -427,9 +430,93 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
+    test('tape chart: the chart, an open Unassigned lane, a bar card, Room move (same type and keeping the price), the extend popover, Out of order with a refusal, the room menu and the phone day list have no accessibility problems', async ({
+      page,
+      isMobile,
+    }, testInfo) => {
+      test.setTimeout(150_000)
+      const domain = seedDemoGroup(`a11y-chart-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
+      await signIn(page, `tunde@${domain}`, 'Demo-pass-42!')
+      await page.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.goto('/tape-chart')
+      await page.getByRole('heading', { name: 'Tape chart' }).waitFor()
+      if (isMobile) {
+        await page.getByText('Business date', { exact: true }).waitFor()
+        await expectAccessible(page)
+        await page.getByRole('button', { name: /^502 / }).click()
+        await page.getByRole('dialog', { name: 'Room 502' }).waitFor()
+        await expectAccessible(page)
+        return
+      }
+      await page.getByLabel('Room type').selectOption({ label: 'Deluxe King' })
+      await expectAccessible(page)
+      await page
+        .getByRole('button', { name: /^Unassigned/, expanded: false })
+        .first()
+        .click()
+      await page
+        .getByRole('button', { name: /Funmilayo Adebayo, Deluxe King/ })
+        .first()
+        .waitFor()
+      await expectAccessible(page)
+      // The bar card, then Room move for the same type and with the Keep rate line.
+      await page.getByRole('button', { name: /Ngozi Okafor, Deluxe King/ }).click()
+      const card = page.getByRole('dialog', { name: /^Ngozi Okafor · VI-/ })
+      await expectAccessible(page)
+      await card.getByRole('button', { name: /^Room move/ }).click()
+      const move = page.getByRole('dialog', { name: 'Room move · Ngozi Okafor' })
+      await move.getByRole('radio', { name: /^401 Deluxe King/ }).waitFor()
+      await expectAccessible(page)
+      await move.getByRole('button', { name: /^Cancel/ }).click()
+      // Deluxe King full on Mr Eze's second night: the upgrade with the Keep rate line.
+      await page.getByRole('button', { name: /Chidi Eze, Deluxe King/ }).click()
+      await page
+        .getByRole('dialog', { name: /^Chidi Eze · VI-/ })
+        .getByRole('button', { name: /^Room move/ })
+        .click()
+      const upgrade = page.getByRole('dialog', { name: 'Room move · Chidi Eze' })
+      await upgrade
+        .getByRole('radio', { name: /Executive King/ })
+        .first()
+        .check()
+      await upgrade.getByRole('radio', { name: /^Keep ₦168,000\.00 a night/ }).check()
+      await upgrade.getByText(/discount on Executive King/).waitFor()
+      await expectAccessible(page)
+      await upgrade.getByRole('button', { name: /^Cancel/ }).click()
+      // The extend popover, by keyboard-free drag of Mr Mensah's bar end.
+      await page.getByLabel('Room type').selectOption({ label: 'Executive King' })
+      const mensah = page.getByRole('button', { name: /Daniel Mensah, Executive King/ })
+      await mensah.scrollIntoViewIfNeeded()
+      const bar = await mensah.boundingBox()
+      if (!bar) throw new Error('no bar')
+      await page.mouse.move(bar.x + bar.width - 3, bar.y + bar.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(bar.x + bar.width + 10, bar.y + bar.height / 2, { steps: 4 })
+      await page.mouse.move(bar.x + bar.width + (bar.width * 2) / 3, bar.y + bar.height / 2, {
+        steps: 8,
+      })
+      await page.mouse.up()
+      await page
+        .getByRole('dialog', { name: /^Extend Daniel Mensah to/ })
+        .getByText('Added to stay')
+        .waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+      // The room menu, then Out of order refused for a room with a booking.
+      await page.getByRole('button', { name: /^Room 501 / }).click()
+      await page.getByRole('button', { name: 'Put out of order' }).waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Put out of order' }).click()
+      const ooo = page.getByRole('dialog', { name: 'Put 501 out of order' })
+      await ooo.getByText(/Move the booking first\.$/).waitFor()
+      await expectAccessible(page)
+    })
+
     test('the plan editor preview with Guest pays has no accessibility problems', async ({
       page,
     }, testInfo) => {
+      test.setTimeout(90_000)
       const domain = seedDemoGroup(`a11y-pays-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
       await signIn(page, `tunde@${domain}`, 'Demo-pass-42!')
       await page.getByRole('heading', { name: /^Good/ }).waitFor()

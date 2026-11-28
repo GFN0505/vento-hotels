@@ -6,10 +6,10 @@ const STORE = 'kv'
 
 // Opens the database, creating the store if it's missing (for instance if something opened the
 // database before the app did), by moving to the next version.
-function open(version?: number): Promise<IDBDatabase | undefined> {
+function open(version?: number, name = DB): Promise<IDBDatabase | undefined> {
   return new Promise((resolve) => {
     try {
-      const request = indexedDB.open(DB, version)
+      const request = indexedDB.open(name, version)
       request.onupgradeneeded = () => {
         if (!request.result.objectStoreNames.contains(STORE)) {
           request.result.createObjectStore(STORE)
@@ -19,7 +19,7 @@ function open(version?: number): Promise<IDBDatabase | undefined> {
         const db = request.result
         if (db.objectStoreNames.contains(STORE)) return resolve(db)
         db.close()
-        resolve(open(db.version + 1))
+        resolve(open(db.version + 1, name))
       }
       request.onerror = () => resolve(undefined)
       request.onblocked = () => resolve(undefined)
@@ -32,8 +32,9 @@ function open(version?: number): Promise<IDBDatabase | undefined> {
 async function run<T>(
   mode: IDBTransactionMode,
   action: (store: IDBObjectStore) => IDBRequest,
+  name = DB,
 ): Promise<T | undefined> {
-  const db = await open()
+  const db = await open(undefined, name)
   if (!db) return undefined
   return new Promise((resolve) => {
     try {
@@ -50,3 +51,11 @@ export const getItem = <T>(key: string) => run<T>('readonly', (store) => store.g
 export const setItem = (key: string, value: unknown) =>
   run('readwrite', (store) => store.put(value, key))
 export const clearAll = () => run('readwrite', (store) => store.clear())
+
+// The offline outbox lives in its own database: it belongs to the device, so signing out or locking
+// a shared device (which clears the saved data above) never drops a change waiting to sync.
+const OUTBOX = 'vento-outbox'
+export const getOutboxItem = <T>(key: string) =>
+  run<T>('readonly', (store) => store.get(key), OUTBOX)
+export const setOutboxItem = (key: string, value: unknown) =>
+  run('readwrite', (store) => store.put(value, key), OUTBOX)

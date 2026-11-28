@@ -20,10 +20,12 @@ const signedOut = (why: string) =>
 
 // Reads the app makes on its own, without anyone touching the device: the waiting screen's poll and
 // the bell's count (spec stage-1-approvals.md). They are still checked, but don't keep a waiting
-// shared PC awake, so it still locks after its idle time.
+// shared PC awake, so it still locks after its idle time. The tape chart refreshes itself every 30
+// seconds (brick 7); opening it is activity through the rest of the page's requests.
 export const BACKGROUND_PROCEDURES: ReadonlySet<string> = new Set([
   'approvals.get',
   'approvals.count',
+  'tapeChart.get',
 ])
 
 export async function guardDeviceSession(

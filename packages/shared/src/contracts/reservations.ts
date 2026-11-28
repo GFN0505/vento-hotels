@@ -296,6 +296,8 @@ export const createReservationSchema = z.object({
             .optional(),
           // An approval for a discount over the member's limit (spec: stage-1-approvals.md).
           approvalId: idSchema.optional(),
+          // Booked from a tape chart cell: the room, assigned in the booking's transaction.
+          roomId: idSchema.optional(),
         })
         .refine(afterArrival, departureIssue),
     )
@@ -447,6 +449,8 @@ export const reservationDetailSchema = z.object({
     blocked: z.enum(['ended', 'arrival_passed', 'not_arrived', 'in_house']).nullable(),
     canManage: z.boolean(),
     canWaive: z.boolean(),
+    // Room move / Assign room (brick 7): room.move and a confirmed stay arriving from today on.
+    roomMove: z.boolean(),
   }),
   stays: z.array(
     z.object({
@@ -474,6 +478,8 @@ export const reservationDetailSchema = z.object({
       restrictionOverride: z
         .object({ kind: z.string(), date: calendarDateSchema, reason: z.string() })
         .nullable(),
+      // The assigned room, or null (Not assigned).
+      room: z.object({ id: idSchema, number: z.string() }).nullable(),
       // Tax lines recomputed with the rules in force on each night; null lines when the hotel's
       // taxes aren't set up any more.
       nights: z.array(quotedNightSchema),

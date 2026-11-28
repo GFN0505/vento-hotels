@@ -23,6 +23,8 @@ import * as firstRate from './rates/first-rate.ts'
 import * as planReads from './rates/plan-reads.ts'
 import * as planWrites from './rates/plan-writes.ts'
 import * as rateDates from './rates/rate-dates.ts'
+import { assignRoom } from './reservations/assign/assign.ts'
+import { roomOptions } from './reservations/assign/options.ts'
 import { availability } from './reservations/availability.ts'
 import { createReservation } from './reservations/book.ts'
 import { cancelReservation, endQuote, markNoShow } from './reservations/change/end.ts'
@@ -34,12 +36,15 @@ import { searchGuests } from './reservations/guests.ts'
 import { listReservations } from './reservations/list.ts'
 import { quoteReservation } from './reservations/quote.ts'
 import * as inspected from './rooms/inspected.ts'
+import * as outOfOrder from './rooms/out-of-order/service.ts'
 import * as roomBatch from './rooms/room-batch.ts'
 import * as roomBulk from './rooms/room-bulk.ts'
 import * as roomReads from './rooms/room-reads.ts'
 import * as roomTypes from './rooms/room-types.ts'
 import * as roomWrites from './rooms/room-writes.ts'
+import { setRoomStatus } from './rooms/status/set-status.ts'
 import type { HealthCheck } from './system/health.ts'
+import { getTapeChart } from './tape-chart/get.ts'
 import * as invitations from './team/invitations.ts'
 import * as team from './team/members.ts'
 import { loadAccess } from './tenancy/access.ts'
@@ -322,6 +327,23 @@ export const router = base.router({
     undoMarkInspected: inOrganization.rooms.undoMarkInspected.handler(({ context, input }) =>
       inspected.undoMarkInspected(context.db, context.access, input),
     ),
+    setStatus: inOrganization.rooms.setStatus.handler(({ context, input }) =>
+      setRoomStatus(context.db, context.access, input),
+    ),
+    outOfOrder: {
+      check: inOrganization.rooms.outOfOrder.check.handler(({ context, input }) =>
+        outOfOrder.checkOutOfOrder(context.db, context.access, input),
+      ),
+      create: inOrganization.rooms.outOfOrder.create.handler(({ context, input }) =>
+        outOfOrder.createOutOfOrder(context.db, context.access, input),
+      ),
+      change: inOrganization.rooms.outOfOrder.change.handler(({ context, input }) =>
+        outOfOrder.changeOutOfOrder(context.db, context.access, input),
+      ),
+      end: inOrganization.rooms.outOfOrder.end.handler(({ context, input }) =>
+        outOfOrder.endOutOfOrder(context.db, context.access, input),
+      ),
+    },
   },
   ratePlans: {
     list: inOrganization.ratePlans.list.handler(({ context, input }) =>
@@ -399,6 +421,19 @@ export const router = base.router({
     ),
     markNoShow: inOrganization.reservations.markNoShow.handler(({ context, input }) =>
       markNoShow(context.db, context.access, input),
+    ),
+  },
+  tapeChart: {
+    get: inOrganization.tapeChart.get.handler(({ context, input }) =>
+      getTapeChart(context.db, context.access, input),
+    ),
+  },
+  stays: {
+    roomOptions: inOrganization.stays.roomOptions.handler(({ context, input }) =>
+      roomOptions(context.db, context.access, input),
+    ),
+    assignRoom: inOrganization.stays.assignRoom.handler(({ context, input }) =>
+      assignRoom(context.db, context.access, input),
     ),
   },
   penalties: {

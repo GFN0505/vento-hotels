@@ -50,3 +50,12 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - Add a schema comment on `penalties.waived_by_*`: when an inbox approval applies the waiver, these name the requester (the approver is in `approver_*` and is the audit event's actor).
 - `penalties.approval_id` has no foreign key to `approvals`.
 - An `approvalId` sent with a modify whose discount is within the saver's own limit is still checked and consumed (`reservations/change/modify.ts`, as brick 5 does at Book); decide whether to refuse it instead.
+
+## Tape chart (brick 7)
+- The move-to-another-type drop opens the Room move dialog rather than the spec's own popover; a compact popover could come later if the desk prefers it.
+- The Keep-rate line says "A manager with a higher limit can approve it" instead of naming them ("Tunde or Adaeze"); the approval prompt lists them.
+- The out-of-order refusal says "Ask your GM." rather than naming the hotel's GM.
+- Columns beyond the window aren't fetched on horizontal scroll (Previous / Next week instead); fine for 120 rooms × 30 nights.
+- The sync queue's "needs a look" list shows only on the tape chart; a shell-wide queue panel comes with the next offline module (check-in, POS).
+- `reservations/assign/assign.ts`: the exclusion-violation fallback calls `roomTaken(room, '')` with an empty date ("402 was just taken."); look up the first clashing night instead.
+- Migration 0019's check `rooms_housekeeping_status_stored` has no data guard: fine before any hotel is live (nothing stores `out_of_order` or `out_of_service`), but a deploy onto data that does would fail; add an update or a guard first if that ever changes.

@@ -27,7 +27,11 @@ export const PERMISSIONS = {
   'reservation.manage': { label: 'Create, modify or cancel a reservation; mark a no-show' },
   'stay.rate_override': { label: 'Rate override / discount on a stay', limit: 'percent' },
   'penalty.waive': { label: 'Waive cancellation / no-show penalty' },
-  'room.move': { label: 'Room move (before audit)' },
+  'room.move': { label: 'Assign or move a room (from the business date on)' },
+  // Works in a PIN session and offline (tape chart spec).
+  'room.status': { label: 'Mark a room clean or dirty' },
+  // Not the front desk: the people selling rooms shouldn't also take them off sale (Open question 1).
+  'room.out_of_order': { label: 'Put a room out of order' },
   'folio.void_own_same_day': { label: 'Void own folio posting, same business date' },
   'folio.void_same_day': { label: 'Void any folio posting, same business date' },
   'folio.correct_after_audit': { label: 'Correct folio posting after night audit' },
@@ -72,6 +76,8 @@ export const PERMISSION_GROUPS: readonly { label: string; permissions: readonly 
       'stay.rate_override',
       'penalty.waive',
       'room.move',
+      'room.status',
+      'room.out_of_order',
       'folio.void_own_same_day',
       'folio.void_same_day',
       'folio.correct_after_audit',
@@ -112,6 +118,13 @@ export const RESERVATION_READERS: readonly Permission[] = [
   'night_audit.run',
   'leakage.view',
 ]
+// Reading the tape chart (and the phone day list): reservation readers, and housekeeping and
+// maintenance through their room permissions (they see bars without opening reservations).
+export const TAPE_CHART_READERS: readonly Permission[] = [
+  ...RESERVATION_READERS,
+  'room.status',
+  'room.out_of_order',
+]
 export const permissionSchema = z.enum(PERMISSION_KEYS as [Permission, ...Permission[]])
 
 export function limitKindOf(permission: Permission): LimitKind | undefined {
@@ -146,6 +159,8 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'stay.rate_override': upTo('50'),
     'penalty.waive': yes,
     'room.move': yes,
+    'room.status': yes,
+    'room.out_of_order': yes,
     'folio.void_own_same_day': yes,
     'folio.void_same_day': yes,
     refund: upTo('100000'),
@@ -174,6 +189,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'reservation.manage': yes,
     'stay.rate_override': upTo('10'),
     'room.move': yes,
+    'room.status': yes,
     'folio.void_own_same_day': yes,
     'city_ledger.settle': yes,
     'cashier_shift.operate': yes,
@@ -215,9 +231,10 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
   },
   // Their own modules' permissions arrive with those modules.
   sales: {},
-  housekeeping_supervisor: {},
-  room_attendant: {},
-  maintenance: {},
+  // Their own modules' other permissions arrive with Stage 2.
+  housekeeping_supervisor: { 'room.status': yes, 'room.out_of_order': yes },
+  room_attendant: { 'room.status': yes },
+  maintenance: { 'room.out_of_order': yes },
   storekeeper: {},
   hr: {},
   viewer: {},

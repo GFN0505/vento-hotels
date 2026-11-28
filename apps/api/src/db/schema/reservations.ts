@@ -60,6 +60,7 @@ export const discountReasonEnum = pgEnum('discount_reason', [
   'long_stay',
   'service_recovery',
   'other',
+  'upgrade',
 ])
 export const nightPriceFromEnum = pgEnum('night_price_from', ['date_price', 'standard_price'])
 // Why a reservation was cancelled (null for a no-show). Brick 6.
@@ -75,6 +76,8 @@ export const reservationChangeKindEnum = pgEnum('reservation_change_kind', [
   'cancel',
   'no_show',
   'waive',
+  // Assign, move or unassign a room within the stay's type (brick 7).
+  'room',
 ])
 export const penaltyKindEnum = pgEnum('penalty_kind', [
   'late_cancellation',
@@ -249,7 +252,8 @@ export const stays = pgTable(
     departure: calendarDate().notNull(),
     adults: smallint().notNull(),
     children: smallint().notNull().default(0),
-    // Assigned with bricks 7 and 8.
+    // The assigned room (brick 7), or null: unassigned. A room holds at most one confirmed or
+    // checked-in stay a night (exclusion constraint, migration 0019).
     roomId: uuid(),
     status: stayStatusEnum().notNull(),
     quoteHash: text().notNull(),

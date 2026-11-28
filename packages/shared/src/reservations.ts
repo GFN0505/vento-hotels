@@ -78,6 +78,9 @@ export const DISCOUNT_REASONS = [
   'long_stay',
   'service_recovery',
   'other',
+  // Keeping the booked price on a better room type (tape chart, Open question 2); set by a move,
+  // never picked in the discount field.
+  'upgrade',
 ] as const
 export type DiscountReason = (typeof DISCOUNT_REASONS)[number]
 export const discountReasonSchema = z.enum(DISCOUNT_REASONS)
@@ -87,7 +90,10 @@ export const DISCOUNT_REASON_LABELS: Record<DiscountReason, string> = {
   long_stay: 'Long stay',
   service_recovery: 'Service recovery',
   other: 'Other',
+  upgrade: 'Upgrade',
 }
+// The reasons offered where a discount is typed (New reservation, Modify).
+export const DESK_DISCOUNT_REASONS = DISCOUNT_REASONS.filter((reason) => reason !== 'upgrade')
 
 // Reservations show a hotel's nights one by one up to this many; longer stays show the lowest.
 export const MAX_NIGHT_BADGES = 14

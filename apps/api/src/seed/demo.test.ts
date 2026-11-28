@@ -9,8 +9,10 @@ import type {
   RateCalendar,
   RatePlanView,
   ReservationRow,
+  RoomOptions,
   RoomTypeView,
   RoomView,
+  TapeChart,
   TaxSetup,
 } from '@vento/shared'
 import { addDays, calendarDateIn, newId } from '@vento/shared'
@@ -336,8 +338,9 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
       arrival: today,
       source: 'email',
     })
+    // 26 from bricks 4 and 6, and Mrs Okafor, Mrs Adebayo and Mr Kalu from brick 7.
     expect((await list({ propertyId: vi, arrivalFrom: today, arrivalTo: today })).data.total).toBe(
-      26,
+      29,
     )
     expect((await list({ propertyId: vi })).data.total).toBeGreaterThanOrEqual(140)
     const ikeja = (await list({ propertyId: hotel('Kora Ikeja GRA') })).data.total
@@ -486,6 +489,134 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
     expect(modified.rows.map((row) => row.actor_name).sort()).toEqual([
       'Chiamaka Eze',
       'Sade Bakare',
+    ])
+  })
+
+  it('puts the coming week in rooms, 503 out of order and the statuses on the chart', async () => {
+    const [org] = await t.db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.slug, options.slug))
+    const orgId = org?.id ?? ''
+    const today = calendarDateIn('Africa/Lagos')
+    const cookie = await signInAs(`chiamaka@kora-${run}.example`)
+    const hotels = await t.rpc<{ items: Property[] }>(cookie, 'properties/list', {})
+    const vi = hotels.data.items.find((h) => h.name === 'Kora Victoria Island')?.id ?? ''
+    const chart = await t.rpc<TapeChart>(cookie, 'tapeChart/get', { propertyId: vi, days: 14 })
+    expect(chart.status).toBe(200)
+    const roomOf = (number: string) => chart.data.rooms.find((room) => room.number === number)
+    const stayOf = (name: string) => chart.data.stays.find((stay) => stay.guestName === name)
+    expect(stayOf('Daniel Mensah')?.roomId).toBe(roomOf('502')?.id)
+    expect(stayOf('Ngozi Okafor')?.roomId).toBe(roomOf('404')?.id)
+    expect(stayOf('Funmilayo Adebayo')?.roomId).toBeNull()
+    expect(stayOf('Emeka Kalu')?.roomId).toBe(roomOf('501')?.id)
+    expect(stayOf('Rasheed Shittu')?.roomId).toBe(roomOf('402')?.id)
+    // Seven arriving this week without a room: 2 Deluxe King and 1 Standard Queen today.
+    const week = chart.data.stays.filter(
+      (stay) => stay.arrival >= today && stay.arrival <= addDays(today, 6),
+    )
+    const waiting = week.filter((stay) => stay.roomId === null)
+    expect(waiting).toHaveLength(7)
+    const typeName = (id: string) => chart.data.roomTypes.find((type) => type.id === id)?.name
+    expect(
+      waiting
+        .filter((stay) => stay.arrival === today)
+        .map((stay) => typeName(stay.roomTypeId))
+        .sort(),
+    ).toEqual(['Deluxe King', 'Deluxe King', 'Standard Queen'])
+    // 503 is the only room out of order tonight; 406 ended yesterday, 305 is upcoming.
+    const tonight = chart.data.outOfOrder.filter(
+      (period) => period.from <= today && period.backInService > today,
+    )
+    expect(tonight.map((period) => period.roomNumber)).toEqual(['503'])
+    expect(
+      chart.data.outOfOrder.map((p) => [p.roomNumber, p.from, p.backInService]).sort(),
+    ).toEqual([
+      ['305', addDays(today, 6), addDays(today, 8)],
+      ['406', addDays(today, -3), addDays(today, -1)],
+      ['503', today, addDays(today, 2)],
+    ])
+    const exk = chart.data.roomTypes.find((type) => type.name === 'Executive King')
+    const night = exk?.nights.find((n) => n.date === today)
+    expect(night?.rooms).toBe(28)
+    expect(night?.left).toBe(28 - 1 - (night?.booked ?? 0))
+    expect(
+      Object.fromEntries(
+        ['502', '301', '403', '504', '1102', '303', '408', '503', '305'].map((n) => [
+          n,
+          roomOf(n)?.status,
+        ]),
+      ),
+    ).toEqual({
+      '502': 'dirty',
+      '301': 'dirty',
+      '403': 'dirty',
+      '504': 'dirty',
+      '1102': 'dirty',
+      '303': 'clean',
+      '408': 'clean',
+      '503': 'dirty',
+      '305': 'inspected',
+    })
+    expect(roomOf('301')?.statusBy).toBe('Grace Akpan')
+    // Mr Chidi Eze: Deluxe King is full in rooms on D+4, so Room move offers Executive King.
+    const chidi = stayOf('Chidi Eze')
+    expect(chidi?.roomId).toBeTruthy()
+    const dlk = chart.data.roomTypes.find((type) => type.name === 'Deluxe King')
+    expect(dlk?.nights.find((n) => n.date === addDays(today, 4))?.left).toBe(0)
+    const choices = await t.rpc<RoomOptions>(cookie, 'stays/roomOptions', {
+      stayId: chidi?.id,
+      version: chidi?.version,
+    })
+    expect(choices.data.sameType).toEqual([])
+    expect(choices.data.otherTypes.map((type) => type.name)).toContain('Executive King')
+    // Mrs Okafor has Deluxe King rooms free: only those are offered.
+    const ngozi = stayOf('Ngozi Okafor')
+    const hers = await t.rpc<RoomOptions>(cookie, 'stays/roomOptions', {
+      stayId: ngozi?.id,
+      version: ngozi?.version,
+    })
+    expect(hers.data.sameType.length).toBeGreaterThan(0)
+    expect(hers.data.otherTypes).toEqual([])
+
+    // No room holds two stays on a night, and no stay sits in a room out of order.
+    const doubled = await t.db.execute(sql`
+      select a.id from stays a join stays b on a.room_id = b.room_id and a.id < b.id
+        and a.arrival < b.departure and b.arrival < a.departure
+      where a.organization_id = ${orgId} and a.status in ('confirmed', 'checked_in')
+        and b.status in ('confirmed', 'checked_in')`)
+    expect(doubled.rows).toEqual([])
+    const inOoo = await t.db.execute(sql`
+      select s.id from stays s join room_out_of_order o on o.room_id = s.room_id
+        and o.status = 'active' and s.arrival < o.back_in_service and o.from_date < s.departure
+      where s.organization_id = ${orgId} and s.status in ('confirmed', 'checked_in')`)
+    expect(inOoo.rows).toEqual([])
+    const drift = await t.db.execute(sql`
+      select i.id from room_type_inventory i
+      left join stays s on s.room_type_id = i.room_type_id and s.status in ('confirmed', 'checked_in')
+      left join stay_nights n on n.stay_id = s.id and n.date = i.date
+      where i.organization_id = ${orgId}
+      group by i.id having i.booked <> count(n.id)`)
+    expect(drift.rows).toEqual([])
+
+    const events = await t.db.execute<{ action: string; n: number; exceptions: number }>(sql`
+      select action, count(*)::int as n,
+        count(*) filter (where after->>'exception' = 'out_of_order' and after->>'liveProperty' = 'true')::int as exceptions
+      from audit_events
+      where organization_id = ${orgId} and action like 'room.out_of_order%'
+      group by action`)
+    expect(events.rows).toEqual([{ action: 'room.out_of_order', n: 4, exceptions: 4 }])
+    const moved = await t.db.execute<{ reason: string }>(sql`
+      select reason from audit_events
+      where organization_id = ${orgId} and action = 'stay.room_moved'`)
+    expect(moved.rows).toEqual([{ reason: 'Maintenance' }])
+    const statuses = await t.db.execute<{ actor_name: string }>(sql`
+      select distinct actor_name from audit_events
+      where organization_id = ${orgId} and action = 'room.status_changed' and after->>'source' = 'chart'`)
+    expect(statuses.rows.map((row) => row.actor_name).sort()).toEqual([
+      'Adaeze Okafor',
+      'Chiamaka Eze',
+      'Grace Akpan',
     ])
   })
 })

@@ -25,6 +25,9 @@ const KEPT = new Set([
   'ratePlans.overview',
   'ratePlans.get',
   'rates.calendar',
+  // The tape chart and day list last loaded (brick 7): readable offline under the banner, with
+  // guests' names only (no contact or ID details); cleared on sign-out and device lock.
+  'tapeChart.get',
 ])
 
 type Saved = { savedAt: number; state: ReturnType<typeof dehydrate> }
