@@ -110,7 +110,7 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
-    test('rates: the first rate, the plans, the editor, the calendar and Change dates have no accessibility problems', async ({
+    test('rates: the first rate, the plans, the editor, the calendar with rooms left and Change dates have no accessibility problems', async ({
       page,
     }, testInfo) => {
       await signUpOwnerWithGroup(page, `a11y-rates-${theme}-${testInfo.project.name}`)
@@ -133,6 +133,13 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('heading', { name: 'Rate calendar', level: 1 }).waitFor()
       await page
         .getByRole('button', { name: /^Standard Queen, Best available, / })
+        .filter({ visible: true })
+        .first()
+        .waitFor()
+      // With the Rooms left row (desktop) or each night's "15 left" (phone).
+      await page
+        .getByRole('cell', { name: '15 left', exact: true })
+        .or(page.getByText('15 left', { exact: true }))
         .filter({ visible: true })
         .first()
         .waitFor()
@@ -270,6 +277,13 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('heading', { name: 'Rate calendar', level: 1 }).waitFor()
       await page
         .getByRole('button', { name: /^Standard Queen, Best available, / })
+        .filter({ visible: true })
+        .first()
+        .waitFor()
+      // With the Rooms left row (desktop) or each night's "15 left" (phone).
+      await page
+        .getByRole('cell', { name: '15 left', exact: true })
+        .or(page.getByText('15 left', { exact: true }))
         .filter({ visible: true })
         .first()
         .waitFor()

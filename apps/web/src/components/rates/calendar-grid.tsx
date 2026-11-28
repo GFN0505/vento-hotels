@@ -1,7 +1,8 @@
 // The rate calendar on wider screens (design #8, Rates tab): dates across, room types down with one
-// row per plan, a sticky first column, season bands over the dates and Fri and Sat shaded. One tab
-// stop for the grid; arrows move between cells, Enter or a digit opens an own-price cell.
-import type { RateCalendar, RatePlanView } from '@vento/shared'
+// row per plan under a Rooms left row, a sticky first column, season bands over the dates and Fri
+// and Sat shaded. One tab stop for the grid; arrows move between price cells (Rooms left is read
+// only and not in the way), Enter or a digit opens an own-price cell.
+import type { CalendarLeft, RateCalendar, RatePlanView } from '@vento/shared'
 import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
 import { CalendarCellView } from './calendar-cell'
@@ -15,6 +16,7 @@ import {
 } from './calendar-model'
 import { PlanLabel } from './calendar-plan-label'
 import { dayName, formatRateDate, perNight } from './format'
+import { leftFigure, leftTone, leftWords } from './rooms-left'
 import type { CellEditing } from './use-cell-editing'
 
 type Props = {
@@ -73,7 +75,7 @@ export function CalendarGrid(props: Props) {
     >
       <table className="w-full border-collapse text-left">
         <caption className="sr-only">
-          {`${perNight({
+          {`Rooms left, and prices in ${perNight({
             exclusive: calendar.roomTypes
               .flatMap((t) => t.rows)
               .filter((row) => !row.pricesIncludeTaxes).length,
@@ -134,6 +136,7 @@ export function CalendarGrid(props: Props) {
         <tbody>
           {calendar.roomTypes.map((type) => (
             <TypeRows key={type.id} name={type.name} span={dates.length + 1}>
+              <RoomsLeftRow left={type.left} weekend={dates.map((d) => d.weekend)} />
               {type.rows.map((row) => {
                 index += 1
                 const r = index
@@ -205,6 +208,38 @@ function TypeRows({ name, span, children }: { name: string; span: number; childr
       </tr>
       {children}
     </>
+  )
+}
+
+// Rooms left per night for the type, as on the tape chart's Available row. Plain cells: the column
+// header gives the date, the words give sold out, overbooked and out of order.
+function RoomsLeftRow({ left, weekend }: { left: CalendarLeft[]; weekend: boolean[] }) {
+  return (
+    <tr className="border-b border-border">
+      <th scope="row" className={cn(STICKY, 'px-4 py-1.5 text-sm font-normal text-text-3')}>
+        Rooms left
+      </th>
+      {left.map((night, c) => {
+        const words = leftWords(night)
+        const plain = night.left > 0 && night.outOfOrder === 0
+        return (
+          <td
+            key={night.date}
+            title={plain ? undefined : words}
+            className={cn(
+              // relative: keeps the sr-only words inside the grid's scroll area, not the page's.
+              'num relative px-1 py-1.5 text-center text-sm',
+              leftTone(night.left),
+              night.left <= 2 && 'font-semibold',
+              weekend[c] && 'bg-weekend',
+            )}
+          >
+            <span aria-hidden="true">{leftFigure(night.left)}</span>
+            <span className="sr-only">{words}</span>
+          </td>
+        )
+      })}
+    </tr>
   )
 }
 

@@ -1,6 +1,6 @@
 // Rate plans and the rate calendar (spec: docs/specs/stage-1-rate-plans.md): the first rate with
 // breakfast, a derived plan and the prices that follow, a cell and a range with a season and min
-// stay, Undo, read-only offline; on the demo group, the owner picks a hotel and gives a reason for
+// stay, Undo, read-only offline, rooms left per night; on the demo group, the owner picks a hotel and gives a reason for
 // lowering tonight's price, and the front desk reads rates without changing them. Desktop and phone.
 import { expect, type Page, test } from '@playwright/test'
 import { buildRooms, seedDemoGroup, signIn, signUpOwnerWithGroup } from './support'
@@ -18,6 +18,13 @@ const plusDays = (date: string, days: number) =>
 
 const visible = (page: Page, name: string | RegExp) =>
   page.getByRole('button', { name }).filter({ visible: true }).first()
+
+const roomsLeft = (page: Page, words: string) =>
+  page
+    .getByRole('cell', { name: words, exact: true })
+    .or(page.getByText(words, { exact: true }))
+    .filter({ visible: true })
+    .first()
 
 async function firstRate(page: Page) {
   await page.goto('/rates/plans')
@@ -59,6 +66,9 @@ test('first rate with breakfast, then a derived plan whose prices follow', async
 
   await page.getByRole('link', { name: 'Rate calendar' }).click()
   await expect(visible(page, /^Standard Queen, Non-refundable, .*₦108,000/)).toBeVisible()
+  // Rooms left (spec: stage-1-rooms-left.md): nothing booked yet, so all 15 Standard Queens, in the
+  // grid's Rooms left row or each night's heading on phones.
+  await expect(roomsLeft(page, '15 left')).toBeVisible()
 })
 
 test('a price for one night, a season over a range with min stay, and Undo', async ({
