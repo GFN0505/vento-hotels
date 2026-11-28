@@ -562,7 +562,7 @@ export async function seedFrontDesk(
 
   const HOUSE: [string, string, string][] = [
     ['Mr', 'Adewale', 'Johnson'],
-    ['Mrs', 'Bisi', 'Akande'],
+    ['Mrs', 'Bimpe', 'Akanbi'],
     ['Dr', 'Chika', 'Okoro'],
     ['Mr', 'Danjuma', 'Bala'],
     ['Ms', 'Ebere', 'Nnamdi'],
