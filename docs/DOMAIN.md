@@ -254,6 +254,7 @@ The matrix lives as data in `packages/shared/src/permissions.ts` (keys like `sta
 - Key-card systems to support after v1 (ASSA ABLOY VingCard, Salto, Dormakaba).
 - Fiscal / e-invoicing requirements under the 2025 tax reform (FIRS e-invoicing). (State consumption tax templates: Lagos only; other states added by hand, owner, Nov 2026.)
 - WhatsApp Business API provider (e.g. Termii, Twilio) and template approval. SMS and email providers (e.g. Termii, Resend).
+- Guest inbox and booking assistant (Stage 4, owner 2026-11-28): the WhatsApp provider must also carry two-way conversations, not only templates; Instagram messaging through Meta's API needs the hotel's Instagram professional account linked to a Facebook Page and Meta app review. Which AI model runs the assistant, what it may say about prices and policies, and how long conversations are kept under the NDPA (guest consent, deletion on request) are decided in the Stage 4 spec. Reservation sources gain `whatsapp` and `instagram` then.
 - Printing: which thermal printers to certify, and whether network kitchen printers need a local print bridge app or Android print services are enough.
 - Which legacy PMS exports to support for import first (e.g. Opera, eZee, Hotelogix, Excel).
 - Subscription pricing for customers: per property, per room, or per module.
