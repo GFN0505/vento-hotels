@@ -59,7 +59,7 @@ export const approvalSubjectSchema = z.object({
   newPrice: z.string(),
   varies: z.boolean(),
   percent: z.string(),
-  // Off the plan price over the whole stay, excl. taxes.
+  // Off the plan price over the whole stay, on the plan's basis (all-in by default, decision 0032).
   discountTotal: z.string(),
   totalBefore: z.string(),
   totalAfter: z.string(),

@@ -1,8 +1,8 @@
 // "Guest pays per night" (deferred from rate plans to reservations, designs #19 and #33): a price as
 // typed plus the tax lines in force on the business date, so whoever sets rates sees what the guest
 // hears. For an all-in price (the default, decision 0032) it shows "Before taxes" instead: what the
-// hotel keeps once the taxes inside are taken out. Read with the rates page's own permissions, which include reading taxes; others don't see
-// it. A meal plan's meal allocation is taxed as food, the rest as accommodation (as bookings are).
+// hotel keeps once the taxes inside are taken out. Read with the rates page's own permissions,
+// which include reading taxes; others don't see it. A meal plan's meal allocation is taxed as food, the rest as accommodation (as bookings are).
 import { useQuery } from '@tanstack/react-query'
 import { dec, nightTaxes, ratePriceSchema, toAmount } from '@vento/shared'
 import { orpc } from '@/lib/api'

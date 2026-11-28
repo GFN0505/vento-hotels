@@ -18,7 +18,7 @@ Brick 2 made rate plan prices exclusive of VAT, consumption tax and service char
 
 ## Consequences
 - Quotes, confirmations and the bill agree with the price list the hotel already prints; the front desk never adds taxes in their head.
-- Tax lines on an inclusive price are smaller than the same figure exclusive (₦30,857.14 inside ₦168,000 rather than ₦37,800 on top), so the demo's revenue and tax figures change; the walkthroughs and help say the new figures.
+- Tax lines on an inclusive price are smaller than the same figure exclusive (a night of Deluxe King Bed & breakfast carries ₦10,285.71 of VAT inside ₦168,000, rather than ₦12,600 on top), so the demo's revenue and tax figures change; the walkthroughs and help say the new figures.
 - Night audit (brick 13) posts the stored all-in nightly price and splits it with the same tax function; nothing about posting changes.
 - Settles the display half of rate plans Open question 20 (FCCPC price display) in the guest's favour: the price shown is the price paid. The legal check itself stays open.
 - A demo database seeded before this change still has exclusive plans; reseed to see the all-in demo.

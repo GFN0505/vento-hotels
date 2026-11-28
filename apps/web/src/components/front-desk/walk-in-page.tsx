@@ -483,7 +483,15 @@ function HotelWalkIn({ hotel }: { hotel: Property }) {
                         <span className="font-medium">{t.name}</span>
                         <span className="text-sm text-text-2">{words}</span>
                       </span>
-                      <span className="num flex-none text-sm">{t.from ? naira(t.from) : '–'}</span>
+                      <span className="num flex-none text-sm">
+                        {t.from ? (
+                          <>
+                            {naira(t.from)} <span className="text-text-3">incl. taxes</span>
+                          </>
+                        ) : (
+                          '–'
+                        )}
+                      </span>
                     </button>
                   </li>
                 )

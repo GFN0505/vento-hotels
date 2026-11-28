@@ -770,5 +770,10 @@ describe.skipIf(!url)('rate plans', () => {
     for (const plan of [inclusive.data, saved.data]) {
       await t.rpc(kora.gm.cookie, 'ratePlans/archive', { id: plan.id })
     }
+    // Archived plans don't count: the header goes back to plain "incl.".
+    const after = await t.rpc<RatesOverview>(kora.gm.cookie, 'ratePlans/overview', {
+      propertyId: kora.vi.id,
+    })
+    expect(after.data.exclusivePlans).toBe(0)
   })
 })

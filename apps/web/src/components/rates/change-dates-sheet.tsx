@@ -93,7 +93,11 @@ export function ChangeDatesSheet(props: Props) {
         if (!rateDates.pending) guard.close()
       }}
       title={plan ? `Change dates · ${plan.name}` : 'Change dates'}
-      description={`Prices are whole naira, ${basis(plan?.pricesIncludeTaxes ?? true)}.`}
+      description={
+        plan
+          ? `Prices are whole naira, ${basis(plan.pricesIncludeTaxes)}.`
+          : 'Prices are whole naira.'
+      }
       footer={
         guard.bar ?? (
           <>

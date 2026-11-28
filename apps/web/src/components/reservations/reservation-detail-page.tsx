@@ -467,8 +467,12 @@ function NightsCard({
   const net = toAmount(stay.nights.reduce((sum, night) => sum.plus(night.net), dec('0')))
   // All-in plans (the default, decision 0032) read price first, then what's inside it.
   const inside = stay.terms.pricesIncludeTaxes
-  const muted = inside ? 'text-text-3' : ''
+  const muted = inside ? 'text-text-2' : ''
   const totalHead = inside ? 'Price' : 'Total'
+  // On all-in plans the last "includes" column (a tax, or the room when no taxes are set up) ends
+  // the row, so it takes the card's edge padding in the header, every night and the total.
+  const lastKey = columns.at(-1)?.key ?? 'room'
+  const edge = (key: string) => (inside && key === lastKey ? 'pr-5' : '')
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3.5">
@@ -529,11 +533,11 @@ function NightsCard({
                 {totalHead}
               </th>
             ) : null}
-            <th scope="col" className={cn(TH, 'text-right')}>
+            <th scope="col" className={cn(TH, 'text-right', edge('room'))}>
               {inside ? `Includes ${roomHeader.toLowerCase()}` : roomHeader}
             </th>
             {columns.map((line) => (
-              <th key={line.key} scope="col" className={cn(TH, 'text-right')}>
+              <th key={line.key} scope="col" className={cn(TH, 'text-right', edge(line.key))}>
                 {taxLabel(line)}
               </th>
             ))}
@@ -553,7 +557,9 @@ function NightsCard({
                   {naira(night.gross)}
                 </td>
               ) : null}
-              <td className={cn('num px-3 py-2.5 text-right whitespace-nowrap', muted)}>
+              <td
+                className={cn('num px-3 py-2.5 text-right whitespace-nowrap', muted, edge('room'))}
+              >
                 {naira(night.net)}
               </td>
               {columns.map((line) => {
@@ -563,8 +569,8 @@ function NightsCard({
                     key={line.key}
                     className={cn(
                       'num px-3 py-2.5 text-right whitespace-nowrap',
-                      inside ? 'text-text-3' : 'text-text-2',
-                      inside && line.key === columns.at(-1)?.key && 'pr-5',
+                      'text-text-2',
+                      edge(line.key),
                     )}
                   >
                     {found ? naira(found.amount) : '—'}
@@ -585,7 +591,7 @@ function NightsCard({
                 {naira(stay.totals.total)}
               </td>
             ) : null}
-            <td className={cn('num px-3 py-2.5 text-right whitespace-nowrap', muted)}>
+            <td className={cn('num px-3 py-2.5 text-right whitespace-nowrap', muted, edge('room'))}>
               {naira(net)}
             </td>
             {columns.map((line) => (
@@ -594,7 +600,7 @@ function NightsCard({
                 className={cn(
                   'num px-3 py-2.5 text-right whitespace-nowrap',
                   muted,
-                  inside && line.key === columns.at(-1)?.key && 'pr-5',
+                  edge(line.key),
                 )}
               >
                 {naira(line.amount)}

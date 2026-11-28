@@ -115,7 +115,7 @@ export const bookablePlanSchema = z.object({
   // "BAR + ₦18,000" for derived plans.
   derivedLabel: z.string().nullable(),
   terms: stayTermsSchema,
-  // Room price of the first night and the average per night, excl. and incl. taxes.
+  // The average a night before taxes (net and rounding) and all-in, whatever the plan's basis.
   perNightExcl: z.string(),
   perNightIncl: z.string(),
   // Nightly prices differ across the stay: the card shows "avg".
@@ -138,7 +138,8 @@ export const availabilityRoomTypeSchema = z.object({
   soldOut: z.array(calendarDateSchema),
   sellable: z.boolean(),
   reason: z.enum(['sold_out', 'too_many_guests', 'not_priced']).nullable(),
-  // Lowest first-night room price excl. taxes across the plans ("from ₦120,000.00").
+  // Lowest all-in price a night across the plans, taxes included whatever the plan's basis
+  // ("from ₦120,000.00 incl. taxes", decision 0032).
   from: z.string().nullable(),
   plans: z.array(bookablePlanSchema),
 })

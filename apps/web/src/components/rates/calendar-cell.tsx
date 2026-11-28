@@ -1,5 +1,5 @@
-// One night of one plan for one room type: the price (whole naira; the header says ₦ and excl.
-// taxes), MIN / CTA / Closed tags, muted with a link for derived plans, locked before the business
+// One night of one plan for one room type: the price (whole naira; the header says ₦ and whether
+// taxes are included), MIN / CTA / Closed tags, muted with a link for derived plans, locked before the business
 // date. Own-price cells open an inline price field: Enter saves, Esc cancels.
 import type { CalendarCell as Cell } from '@vento/shared'
 import { Loader2, Lock } from 'lucide-react'

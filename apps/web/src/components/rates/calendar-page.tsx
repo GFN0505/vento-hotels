@@ -112,10 +112,13 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
   }
   const empty = data?.roomTypes.every((t) => t.rows.length === 0)
   const shown = data?.roomTypes.flatMap((t) => t.rows) ?? []
-  const priced = perNight({
-    exclusive: shown.filter((row) => !row.pricesIncludeTaxes).length,
-    total: shown.length,
-  })
+  // Until the nights load, the header doesn't guess the plans' basis.
+  const priced = data
+    ? perNight({
+        exclusive: shown.filter((row) => !row.pricesIncludeTaxes).length,
+        total: shown.length,
+      })
+    : '₦ per night'
   const changeDates = (
     <Button
       variant="primary"

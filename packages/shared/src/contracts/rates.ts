@@ -1,8 +1,8 @@
 // Rate plans and rates, per hotel (spec: docs/specs/stage-1-rate-plans.md). Every procedure needs
 // the front_desk feature. Reading needs rates.edit, rooms.setup or reservation.manage (read-only for
 // the last two); every write needs rates.edit. No input carries an organizationId: the API takes
-// it from the session. Prices are whole naira, NGN, excl. taxes and service charge unless the plan
-// says otherwise.
+// it from the session. Prices are whole naira, NGN, incl. taxes and service charge unless the plan
+// says otherwise (decision 0032).
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { calendarDateSchema } from '../dates.ts'
