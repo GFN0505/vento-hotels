@@ -280,10 +280,11 @@ for (const theme of ['light', 'dark'] as const) {
         .filter({ visible: true })
         .first()
         .waitFor()
-      // With the Rooms left row (desktop) or each night's "15 left" (phone).
+      // With the Rooms left row (desktop) or each night's "N left" (phone). The loop above left
+      // Kora Abuja chosen, whose figures differ from Victoria Island's, so any count will do.
       await page
-        .getByRole('cell', { name: '15 left', exact: true })
-        .or(page.getByText('15 left', { exact: true }))
+        .getByRole('cell', { name: /^\d+ left$/ })
+        .or(page.getByText(/^\d+ left$/))
         .filter({ visible: true })
         .first()
         .waitFor()
