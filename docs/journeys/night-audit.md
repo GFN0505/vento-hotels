@@ -12,7 +12,7 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
 ## The walkthrough
 
 1. **23:00 Start of shift.**
-   - *Does:* signs in on PC 2 and opens his cashier shift with a ₦20,000.00 float.
+   - *Does:* signs in on PC 2 and opens his cashier shift on Desk 2: the hand-over reads "From Ibrahim Musa · shift 3 of 24 Nov · ₦20,000.00 · matches".
    - *Sees:* in-house 86, arrivals still due 2, departures not checked out 1.
    - *Behind the scenes:* audit events `member.signed_in`, `cashier_shift.opened`.
 
@@ -44,7 +44,7 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
 7. **Shift not closed at the Pool bar.**
    - *Does:* sees the Pool bar's cashier shift (Femi, bar tablet) still open. Femi closes the bar, does his blind count at 00:52 and submits.
    - *Sees:* "Pool bar · Femi · Closed · Variance ₦0.00". The shifts list also shows Halima's Calabash shift, closed at 22:45 with "₦1,000.00 short · Reason: change given twice on table 2", which counts as balanced because the variance has a reason.
-   - *Behind the scenes:* `cashier_shift.closed` with counted, expected and variance. Halima's variance is already an exception for the owner's daily report; a variance without a reason would keep this check red.
+   - *Behind the scenes:* `cashier_shift.closed` with counted, expected and variance. Halima's variance is already an exception for the owner's daily report; a variance without a reason would keep this check red. (Closing someone else's shift, e.g. a cashier who went home, is deferred to brick 13; until then only the shift's own person closes it.)
 
 8. **Room discrepancy from the 22:00 check.**
    - *Does:* opens the alert (#39): "Room 402 found vacant at 22:00; shown occupied since 24 Nov." Calls the room at 00:55; the guest answers. Resolves with reason "Guest out at check time, confirmed in room 00:55".
@@ -117,7 +117,7 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
 - **Night auditor role:** settled in `docs/DOMAIN.md`: the night auditor is a `front_desk` member on the night shift with the run-night-audit permission. Still open: is "night shift" a roster shift, a time window, or a flag on the member?
 - **Remote approval:** DOMAIN says the approver signs in or enters their PIN on the same device; screen 29 allows approving from a phone. Is remote approval allowed for waivers at night? *Answer:* yes: the inbox is the same mechanism for any kind (Stage 1 brick 5); waivers use it from brick 6.
 - Should an open POS bill be allowed to **carry over** to the next business date when an outlet trades past audit, or must every bill close first?
-- Can someone close **another person's cashier shift** (e.g. a cashier who went home)? Who, and with what witness?
+- Can someone close **another person's cashier shift** (e.g. a cashier who went home)? Who, and with what witness? Deferred to brick 13 (night audit), which defines the absent-cashier close; until then only the shift's own person closes it.
 - Is a **waived no-show penalty** an exception in the owner's daily report? *Answer:* yes, "penalty waived" (Stage 1 brick 6), with requester, approver, amount and reason.
 - What time is the owner's daily report sent: as soon as audit finishes, or at a fixed morning time? With four properties, one message or one per property?
 - Room discrepancy checks, POS and the ledger are stages 2, 3 and 5, but night audit is stage 1. Which checks and steps does the stage 1 audit include?

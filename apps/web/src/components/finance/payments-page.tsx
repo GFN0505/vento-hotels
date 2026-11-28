@@ -1,7 +1,8 @@
 // Settings › Payments (design #27 PayMethods, with the spec's departures): what the desk can take,
-// where guests transfer to, and the hotel's POS terminals. A hotel page. Configuration only.
+// where guests transfer to, the hotel's POS terminals and its cash drawers (brick 9). A hotel page.
+// Configuration only.
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { BankAccountView, PaymentSetup, PosTerminalView } from '@vento/shared'
+import type { BankAccountView, DrawerView, PaymentSetup, PosTerminalView } from '@vento/shared'
 import { Building2 } from 'lucide-react'
 import { useState } from 'react'
 import { RowsSkeleton } from '@/components/settings/load-states'
@@ -18,6 +19,8 @@ import { useMe } from '@/lib/me'
 import { useOnline } from '@/offline/connection'
 import { AccountsCard } from './accounts-card'
 import { BankAccountSheet } from './bank-account-sheet'
+import { DrawerSheet } from './drawer-sheet'
+import { DrawersCard } from './drawers-card'
 import { FinanceLoadError } from './load-error'
 import { MethodsCard } from './methods-card'
 import { TAXES_OFFLINE } from './taxes-page'
@@ -65,6 +68,7 @@ export function PaymentsPage() {
 export type PaymentSheet =
   | { kind: 'account'; account?: BankAccountView }
   | { kind: 'terminal'; terminal?: PosTerminalView }
+  | { kind: 'drawer'; drawer?: DrawerView }
 
 function HotelPayments({ propertyId }: { propertyId: string }) {
   const online = useOnline()
@@ -76,6 +80,7 @@ function HotelPayments({ propertyId }: { propertyId: string }) {
       client.invalidateQueries({ queryKey: orpc.paymentMethods.key() }),
       client.invalidateQueries({ queryKey: orpc.bankAccounts.key() }),
       client.invalidateQueries({ queryKey: orpc.posTerminals.key() }),
+      client.invalidateQueries({ queryKey: orpc.cash.key() }),
     ])
   const saved = (setup: PaymentSetup) =>
     client.setQueryData(orpc.paymentMethods.get.queryKey({ input: { propertyId } }), setup)
@@ -127,10 +132,24 @@ function HotelPayments({ propertyId }: { propertyId: string }) {
           onAdd={() => setSheet({ kind: 'terminal' })}
         />
       </div>
+      <DrawersCard
+        setup={setup}
+        canWrite={canWrite}
+        onOpen={(drawer) => setSheet({ kind: 'drawer', drawer })}
+        onAdd={() => setSheet({ kind: 'drawer' })}
+      />
       {sheet?.kind === 'account' ? (
         <BankAccountSheet
           setup={setup}
           account={sheet.account}
+          onSaved={refresh}
+          onClose={() => setSheet(undefined)}
+        />
+      ) : null}
+      {sheet?.kind === 'drawer' ? (
+        <DrawerSheet
+          setup={setup}
+          drawer={sheet.drawer}
           onSaved={refresh}
           onClose={() => setSheet(undefined)}
         />

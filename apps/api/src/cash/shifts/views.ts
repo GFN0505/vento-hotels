@@ -6,6 +6,7 @@ import {
   type CountLineView,
   EMPTY_COUNT,
   FOREIGN_CASH_LABELS,
+  FX_CURRENCIES,
   type FxCurrency,
   type NoteCount,
   noteCountSchema,
@@ -72,6 +73,7 @@ function lineLabel(line: LineRow, terminals: Map<string, { label: string }>): st
 
 // Naira first, then foreign cash, POS terminals and transfers, as counted.
 const ORDER = { cash: 0, pos_terminal: 1, bank_transfer: 2 } as const
+const CURRENCY_ORDER: string[] = ['NGN', ...FX_CURRENCIES]
 
 function lineViews(
   rows: LineRow[],
@@ -82,8 +84,7 @@ function lineViews(
     .sort(
       (a, b) =>
         ORDER[a.kind] - ORDER[b.kind] ||
-        Number(b.currency === 'NGN') - Number(a.currency === 'NGN') ||
-        a.currency.localeCompare(b.currency),
+        CURRENCY_ORDER.indexOf(a.currency) - CURRENCY_ORDER.indexOf(b.currency),
     )
     .map((line) => ({
       kind: line.kind,
