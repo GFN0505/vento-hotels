@@ -1,11 +1,17 @@
 // Approvals (spec: docs/specs/stage-1-approvals.md, decision 0027): one member's yes to one exact
 // over-limit action by another member, at one hotel, confirmed with the approver's PIN. Kinds are
 // registered in code: brick 5's over-limit discount on a new reservation; brick 6's penalty waiver
-// and over-limit discount on a changed stay.
+// and over-limit discount on a changed stay; brick 9's cash difference on a cashier shift.
 import { z } from 'zod'
+import { formatMoney } from './money.ts'
 import { formatPercent } from './reservations.ts'
 
-export const APPROVAL_KINDS = ['stay_discount', 'penalty_waiver', 'modify_discount'] as const
+export const APPROVAL_KINDS = [
+  'stay_discount',
+  'penalty_waiver',
+  'modify_discount',
+  'cash_variance',
+] as const
 export type ApprovalKind = (typeof APPROVAL_KINDS)[number]
 export const approvalKindSchema = z.enum(APPROVAL_KINDS)
 
@@ -44,6 +50,7 @@ export const APPROVAL_KIND_LABELS: Record<ApprovalKind, string> = {
   stay_discount: 'Over limit',
   modify_discount: 'Over limit',
   penalty_waiver: 'Waiver',
+  cash_variance: 'Cash difference',
 }
 
 export const APPROVAL_STATUS_LABELS: Record<ApprovalStatus, string> = {
@@ -85,6 +92,8 @@ export function effectiveStatus(
 // "15% discount waiting for you"
 export function approvalWhat(kind: ApprovalKind, value: string): string {
   if (kind === 'penalty_waiver') return 'Penalty waiver'
+  if (kind === 'cash_variance')
+    return `${formatMoney({ amount: value, currency: 'NGN' })} cash difference`
   return `${formatPercent(value)}% discount`
 }
 

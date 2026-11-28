@@ -26,9 +26,18 @@ describe('navigation', () => {
       'Reservations',
       'Tape chart',
       'Front desk',
+      'Cash',
       'Guests & sales',
       'Housekeeping',
     ])
+  })
+
+  it('shows Cash to whoever runs a shift or reads every shift', () => {
+    const cash = (role: Parameters<typeof visibleGroups>[0], can: (p: string) => boolean) =>
+      labels(role, allOn, can).includes('Cash')
+    expect(cash('cashier', (p) => p === 'cashier_shift.operate')).toBe(true)
+    expect(cash('finance', (p) => p === 'leakage.view')).toBe(true)
+    expect(cash('waiter', () => false)).toBe(false)
   })
 
   it('hides modules that are switched off for the group', () => {

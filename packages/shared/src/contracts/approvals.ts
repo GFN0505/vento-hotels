@@ -11,6 +11,7 @@ import {
   approvalStatusSchema,
   CANCEL_REASONS,
 } from '../approvals.ts'
+import { cashReasonSchema, noteCountSchema } from '../cash.ts'
 import { penaltyKindSchema } from '../changes.ts'
 import { calendarDateSchema } from '../dates.ts'
 import { idSchema } from '../ids.ts'
@@ -103,11 +104,48 @@ export const waiverSubjectSchema = z.object({
 })
 export type WaiverSubject = z.infer<typeof waiverSubjectSchema>
 
-export const anySubjectSchema = z.union([approvalSubjectSchema, waiverSubjectSchema])
+// What the approver sees for a cash difference on a cashier shift (brick 9): at the hand-over when
+// a shift opens, or on the count when it closes. Staff names only, never guest data.
+export const cashVarianceSubjectSchema = z.object({
+  stage: z.enum(['handover', 'close']),
+  hotelName: z.string(),
+  drawerName: z.string(),
+  // Null at the hand-over: the shift has no number until it opens.
+  shiftNumber: z.number().int().nullable(),
+  shiftBusinessDate: z.string(),
+  // The total difference in naira, and each line that differs ("Cash ₦12,500.00 over").
+  difference: z.string(),
+  lines: z.array(
+    z.object({ label: z.string(), difference: z.string(), words: z.enum(['short', 'over']) }),
+  ),
+  handover: z
+    .object({ fromName: z.string().nullable(), floatLeft: z.string(), counted: z.string() })
+    .nullable(),
+  reason: z.string(),
+  requesterName: z.string(),
+  requesterRole: z.string(),
+  // Null = no limit; '0.00' without the permission.
+  requesterLimit: z.string().nullable(),
+  deviceName: z.string().nullable(),
+})
+export type CashVarianceSubject = z.infer<typeof cashVarianceSubjectSchema>
+
+export const anySubjectSchema = z.union([
+  approvalSubjectSchema,
+  waiverSubjectSchema,
+  cashVarianceSubjectSchema,
+])
 export type AnyApprovalSubject = z.infer<typeof anySubjectSchema>
 
 export const isWaiverSubject = (subject: AnyApprovalSubject): subject is WaiverSubject =>
   'penalty' in subject
+
+export const isCashSubject = (subject: AnyApprovalSubject): subject is CashVarianceSubject =>
+  'stage' in subject
+
+// A discount, on a new booking or a changed stay.
+export const isDiscountSubject = (subject: AnyApprovalSubject): subject is ApprovalSubject =>
+  !isWaiverSubject(subject) && !isCashSubject(subject)
 
 const person = z.object({ memberId: idSchema, name: z.string() })
 
@@ -171,6 +209,24 @@ export const waiverTargetSchema = z.discriminatedUnion('target', [
 ])
 export type WaiverTarget = z.input<typeof waiverTargetSchema>
 
+// A cash difference: at the hand-over of the shift about to open (the open's own client id), or on
+// a counted shift about to close. The server works out the figures from the drawer or the stored
+// count; the client sends only what was typed.
+export const cashVarianceTargetSchema = z.discriminatedUnion('stage', [
+  z.object({
+    stage: z.literal('handover'),
+    propertyId: idSchema,
+    drawerId: idSchema,
+    // The id the shift will have once open.
+    shiftId: z.uuidv7(),
+    handoverFromShiftId: idSchema.nullable(),
+    count: noteCountSchema,
+    reason: cashReasonSchema,
+  }),
+  z.object({ stage: z.literal('close'), shiftId: idSchema, reason: cashReasonSchema }),
+])
+export type CashVarianceTarget = z.input<typeof cashVarianceTargetSchema>
+
 export const approvalActionSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('stay_discount'),
@@ -187,6 +243,7 @@ export const approvalActionSchema = z.discriminatedUnion('kind', [
     change: changeFieldsSchema.extend({ idempotencyKey: z.uuidv7() }),
   }),
   z.object({ kind: z.literal('penalty_waiver'), waiver: waiverTargetSchema }),
+  z.object({ kind: z.literal('cash_variance'), variance: cashVarianceTargetSchema }),
 ])
 export type ApprovalActionInput = z.input<typeof approvalActionSchema>
 

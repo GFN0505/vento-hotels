@@ -287,6 +287,8 @@ export const posTerminals = pgTable(
       [t.organizationId, t.bankAccountId],
       [bankAccounts.organizationId, bankAccounts.id],
     ),
+    // For the composite keys of the drawers it's at (cashier shifts).
+    unique('pos_terminals_property_id_id_unique').on(t.propertyId, t.id),
     // Unique in the group, archived terminals included.
     uniqueIndex('pos_terminals_terminal_id_unique').on(t.organizationId, t.terminalId),
     check('pos_terminals_terminal_id_format', sql`${t.terminalId} ~ '^[A-Z0-9]{1,20}$'`),

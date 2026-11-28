@@ -29,7 +29,7 @@ Kunle (GM) sets rates once at go-live and changes them a few times a season, on 
 ### Main path
 - Given a hotel with no plans, when the first-rate table creates Best available (and Bed & breakfast), then both have prices including taxes and service charge.
 - Given the plan editor for a new plan, then "Prices include taxes and service charge" is on and More options is closed; given a plan priced before taxes, More options is open.
-- Given `ratePlans.create` without `pricesIncludeTaxes`, then the plan is inclusive; the database default is inclusive too (migration 0023). Existing plans keep their setting.
+- Given `ratePlans.create` without `pricesIncludeTaxes`, then the plan is inclusive; the database default is inclusive too (migration 0024). Existing plans keep their setting.
 - Given an inclusive plan, then its prices are labelled "incl. taxes and service charge" (rates screens, change dates, cell detail, Rooms base rate, tape chart, room move); an exclusive plan's say "excl. …" and carry the Excl. taxes badge (list) or "excl. taxes" (calendar row). Page headers over many plans say "incl. … unless marked excl." when the plans are mixed.
 - Given an inclusive quote, then the booking summary leads with the total and lists Includes: room, each tax line, rounding when not ₦0.00; reservation detail and walk-in lead with the price; exclusive quotes keep room + taxes = total.
 - Given an inclusive plan in the rates screens, then the figure under each price reads "Before taxes" (net plus any rounding); exclusive plans keep "Guest pays".

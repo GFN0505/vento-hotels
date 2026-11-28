@@ -8,6 +8,7 @@ import {
   type ApprovalDetail,
   clockAt,
   firstNameOf,
+  isCashSubject,
   isWaiverSubject,
   PENALTY_KIND_LABELS,
   PIN_LENGTH,
@@ -28,6 +29,9 @@ import { nightsLabel, stayRange } from '../reservations/format'
 import {
   age,
   answerLine,
+  cashLimitLine,
+  cashLinesText,
+  forWhom,
   NEEDS_CONNECTION,
   naira,
   reasonLine,
@@ -67,7 +71,7 @@ export function ApprovalDetailCard({ view }: { view: ApprovalDetail }) {
     }
     try {
       await decline.mutateAsync({ id: view.id, comment: comment.trim() })
-      toast.success(`Declined ${whatOf(s)} for ${s.guestName}`)
+      toast.success(`Declined ${whatOf(s)} for ${forWhom(s)}`)
       void refresh()
     } catch (error) {
       toast.error(problemMessage(error))
@@ -111,7 +115,25 @@ export function ApprovalDetailCard({ view }: { view: ApprovalDetail }) {
               {age(view.requestedAt) === 'just now' ? 'just now' : `${age(view.requestedAt)} ago`}
             </span>
           </Item>
-          {isWaiverSubject(s) ? (
+          {isCashSubject(s) ? (
+            <>
+              <Item label="Shift">
+                {s.shiftNumber === null ? 'Opening' : `Shift ${s.shiftNumber}`} · {s.drawerName}
+              </Item>
+              <Item label="Difference">
+                <span className="num">{cashLinesText(s) || naira(s.difference)}</span>
+              </Item>
+              {s.handover ? (
+                <Item label="Hand-over">
+                  <span className="num">
+                    {s.handover.fromName ? `${s.handover.fromName} left ` : 'Left '}
+                    {naira(s.handover.floatLeft)} · counted {naira(s.handover.counted)}
+                  </span>
+                </Item>
+              ) : null}
+              <Item label="Limit">{cashLimitLine(s)}</Item>
+            </>
+          ) : isWaiverSubject(s) ? (
             <>
               <Item label="Booking">
                 {s.reservationNumber} · {s.guestName} · {s.roomTypeName} ·{' '}
@@ -151,7 +173,7 @@ export function ApprovalDetailCard({ view }: { view: ApprovalDetail }) {
           )}
         </dl>
         <blockquote className="rounded-sm border-l-2 border-am-dot bg-surface-2 px-3 py-2 break-words">
-          “{isWaiverSubject(s) ? s.waiverReason : reasonLine(s)}”
+          “{isCashSubject(s) ? s.reason : isWaiverSubject(s) ? s.waiverReason : reasonLine(s)}”
         </blockquote>
 
         {answerable ? (
@@ -264,7 +286,7 @@ export function ApprovalDetailCard({ view }: { view: ApprovalDetail }) {
         <Dialog
           open
           onClose={() => setPinOpen(false)}
-          title={`Approve ${whatOf(s)} for ${s.guestName}`}
+          title={`Approve ${whatOf(s)} for ${forWhom(s)}`}
           description="Enter your PIN to approve. Typing digits works too."
           className="max-w-[360px]"
         >
@@ -307,7 +329,7 @@ function PinApprove({
         pin,
         ...(comment.trim() ? { comment: comment.trim() } : {}),
       })
-      toast.success(`Approved ${whatOf(view.subject)} for ${view.subject.guestName}`)
+      toast.success(`Approved ${whatOf(view.subject)} for ${forWhom(view.subject)}`)
       onDone()
     } catch (error) {
       const code = errorCode(error)

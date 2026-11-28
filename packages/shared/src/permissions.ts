@@ -45,7 +45,12 @@ export const PERMISSIONS = {
   'room_night.comp': { label: 'Comp room night' },
   'city_ledger.settle': { label: 'Settle to city ledger (within credit limit)' },
   'credit_limit.exceed': { label: "Exceed a corporate account's credit limit" },
-  'cashier_shift.operate': { label: 'Open / close cashier shift' },
+  'cashier_shift.operate': { label: 'Open, count and close own cashier shift' },
+  // Measured on the shift's total difference in naira (cashier shifts spec).
+  'cashier_shift.variance': {
+    label: 'Close a cashier shift with a difference',
+    limit: 'amount_ngn',
+  },
   'rates.edit': { label: 'Edit rates and restrictions' },
   'night_audit.run': { label: 'Run night audit' },
   // Restaurant & bar
@@ -96,6 +101,7 @@ export const PERMISSION_GROUPS: readonly { label: string; permissions: readonly 
       'city_ledger.settle',
       'credit_limit.exceed',
       'cashier_shift.operate',
+      'cashier_shift.variance',
       'rates.edit',
       'night_audit.run',
     ],
@@ -182,6 +188,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'city_ledger.settle': yes,
     'credit_limit.exceed': yes,
     'cashier_shift.operate': yes,
+    'cashier_shift.variance': upTo('100000'),
     'rates.edit': yes,
     'night_audit.run': yes,
     'fx.enter': yes,
@@ -208,6 +215,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'folio.void_own_same_day': yes,
     'city_ledger.settle': yes,
     'cashier_shift.operate': yes,
+    'cashier_shift.variance': upTo('5000'),
     // Only for night-shift front desk; the shift check arrives with rosters.
     'night_audit.run': yes,
   },
@@ -222,6 +230,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'city_ledger.settle': yes,
     'credit_limit.exceed': yes,
     'cashier_shift.operate': yes,
+    'cashier_shift.variance': yes,
     'night_audit.run': yes,
     'payroll.approve': yes,
     'leakage.view': yes,
@@ -231,6 +240,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'pos.void_before_send': yes,
     'pos.discount': upTo('5'),
     'cashier_shift.operate': yes,
+    'cashier_shift.variance': upTo('5000'),
   },
   waiter: {
     'pos.post_to_room': yes,
@@ -243,6 +253,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'pos.discount': upTo('20'),
     'pos.reopen_bill': yes,
     'cashier_shift.operate': yes,
+    'cashier_shift.variance': upTo('20000'),
   },
   // Their own modules' permissions arrive with those modules.
   sales: {},

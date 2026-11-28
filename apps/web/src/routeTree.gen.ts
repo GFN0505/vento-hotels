@@ -19,6 +19,7 @@ import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSectionRouteImport } from './routes/_app/$section'
 import { Route as AppApprovalsRouteImport } from './routes/_app/approvals'
+import { Route as AppCashRouteImport } from './routes/_app/cash'
 import { Route as AppFrontDeskRouteImport } from './routes/_app/front-desk'
 import { Route as AppRatesRouteImport } from './routes/_app/rates'
 import { Route as AppReservationsRouteImport } from './routes/_app/reservations'
@@ -26,6 +27,8 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppTapeChartRouteImport } from './routes/_app/tape-chart'
 import { Route as AppWalkInRouteImport } from './routes/_app/walk-in'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as AppCashIndexRouteImport } from './routes/_app/cash/index'
+import { Route as AppCashShiftsRouteImport } from './routes/_app/cash/shifts'
 import { Route as AppRatesIndexRouteImport } from './routes/_app/rates/index'
 import { Route as AppRatesCalendarRouteImport } from './routes/_app/rates/calendar'
 import { Route as AppRatesRoomsRouteImport } from './routes/_app/rates/rooms'
@@ -93,6 +96,11 @@ const AppApprovalsRoute = AppApprovalsRouteImport.update({
   path: '/approvals',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCashRoute = AppCashRouteImport.update({
+  id: '/cash',
+  path: '/cash',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFrontDeskRoute = AppFrontDeskRouteImport.update({
   id: '/front-desk',
   path: '/front-desk',
@@ -127,6 +135,16 @@ const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppCashIndexRoute = AppCashIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppCashRoute,
+} as any)
+const AppCashShiftsRoute = AppCashShiftsRouteImport.update({
+  id: '/shifts',
+  path: '/shifts',
+  getParentRoute: () => AppCashRoute,
 } as any)
 const AppRatesIndexRoute = AppRatesIndexRouteImport.update({
   id: '/',
@@ -225,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/$section': typeof AppSectionRoute
   '/approvals': typeof AppApprovalsRoute
+  '/cash': typeof AppCashRouteWithChildren
   '/front-desk': typeof AppFrontDeskRoute
   '/rates': typeof AppRatesRouteWithChildren
   '/reservations': typeof AppReservationsRouteWithChildren
@@ -232,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/tape-chart': typeof AppTapeChartRoute
   '/walk-in': typeof AppWalkInRoute
   '/join/$token': typeof JoinTokenRoute
+  '/cash/shifts': typeof AppCashShiftsRoute
   '/rates/calendar': typeof AppRatesCalendarRoute
   '/rates/rooms': typeof AppRatesRoomsRoute
   '/reservations/$reservationId': typeof AppReservationsReservationIdRoute
@@ -243,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/settings/payments': typeof AppSettingsPaymentsRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
   '/settings/taxes': typeof AppSettingsTaxesRoute
+  '/cash/': typeof AppCashIndexRoute
   '/rates/': typeof AppRatesIndexRoute
   '/reservations/': typeof AppReservationsIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
@@ -264,6 +285,7 @@ export interface FileRoutesByTo {
   '/walk-in': typeof AppWalkInRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof AppIndexRoute
+  '/cash/shifts': typeof AppCashShiftsRoute
   '/rates/calendar': typeof AppRatesCalendarRoute
   '/rates/rooms': typeof AppRatesRoomsRoute
   '/reservations/$reservationId': typeof AppReservationsReservationIdRoute
@@ -275,6 +297,7 @@ export interface FileRoutesByTo {
   '/settings/payments': typeof AppSettingsPaymentsRoute
   '/settings/permissions': typeof AppSettingsPermissionsRoute
   '/settings/taxes': typeof AppSettingsTaxesRoute
+  '/cash': typeof AppCashIndexRoute
   '/rates': typeof AppRatesIndexRoute
   '/reservations': typeof AppReservationsIndexRoute
   '/settings': typeof AppSettingsIndexRoute
@@ -293,6 +316,7 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/_app/$section': typeof AppSectionRoute
   '/_app/approvals': typeof AppApprovalsRoute
+  '/_app/cash': typeof AppCashRouteWithChildren
   '/_app/front-desk': typeof AppFrontDeskRoute
   '/_app/rates': typeof AppRatesRouteWithChildren
   '/_app/reservations': typeof AppReservationsRouteWithChildren
@@ -301,6 +325,7 @@ export interface FileRoutesById {
   '/_app/walk-in': typeof AppWalkInRoute
   '/join/$token': typeof JoinTokenRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/cash/shifts': typeof AppCashShiftsRoute
   '/_app/rates/calendar': typeof AppRatesCalendarRoute
   '/_app/rates/rooms': typeof AppRatesRoomsRoute
   '/_app/reservations/$reservationId': typeof AppReservationsReservationIdRoute
@@ -312,6 +337,7 @@ export interface FileRoutesById {
   '/_app/settings/payments': typeof AppSettingsPaymentsRoute
   '/_app/settings/permissions': typeof AppSettingsPermissionsRoute
   '/_app/settings/taxes': typeof AppSettingsTaxesRoute
+  '/_app/cash/': typeof AppCashIndexRoute
   '/_app/rates/': typeof AppRatesIndexRoute
   '/_app/reservations/': typeof AppReservationsIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
@@ -331,6 +357,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/$section'
     | '/approvals'
+    | '/cash'
     | '/front-desk'
     | '/rates'
     | '/reservations'
@@ -338,6 +365,7 @@ export interface FileRouteTypes {
     | '/tape-chart'
     | '/walk-in'
     | '/join/$token'
+    | '/cash/shifts'
     | '/rates/calendar'
     | '/rates/rooms'
     | '/reservations/$reservationId'
@@ -349,6 +377,7 @@ export interface FileRouteTypes {
     | '/settings/payments'
     | '/settings/permissions'
     | '/settings/taxes'
+    | '/cash/'
     | '/rates/'
     | '/reservations/'
     | '/settings/'
@@ -370,6 +399,7 @@ export interface FileRouteTypes {
     | '/walk-in'
     | '/join/$token'
     | '/'
+    | '/cash/shifts'
     | '/rates/calendar'
     | '/rates/rooms'
     | '/reservations/$reservationId'
@@ -381,6 +411,7 @@ export interface FileRouteTypes {
     | '/settings/payments'
     | '/settings/permissions'
     | '/settings/taxes'
+    | '/cash'
     | '/rates'
     | '/reservations'
     | '/settings'
@@ -398,6 +429,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/_app/$section'
     | '/_app/approvals'
+    | '/_app/cash'
     | '/_app/front-desk'
     | '/_app/rates'
     | '/_app/reservations'
@@ -406,6 +438,7 @@ export interface FileRouteTypes {
     | '/_app/walk-in'
     | '/join/$token'
     | '/_app/'
+    | '/_app/cash/shifts'
     | '/_app/rates/calendar'
     | '/_app/rates/rooms'
     | '/_app/reservations/$reservationId'
@@ -417,6 +450,7 @@ export interface FileRouteTypes {
     | '/_app/settings/payments'
     | '/_app/settings/permissions'
     | '/_app/settings/taxes'
+    | '/_app/cash/'
     | '/_app/rates/'
     | '/_app/reservations/'
     | '/_app/settings/'
@@ -508,6 +542,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppApprovalsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/cash': {
+      id: '/_app/cash'
+      path: '/cash'
+      fullPath: '/cash'
+      preLoaderRoute: typeof AppCashRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/front-desk': {
       id: '/_app/front-desk'
       path: '/front-desk'
@@ -556,6 +597,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/join/$token'
       preLoaderRoute: typeof JoinTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/cash/': {
+      id: '/_app/cash/'
+      path: '/'
+      fullPath: '/cash/'
+      preLoaderRoute: typeof AppCashIndexRouteImport
+      parentRoute: typeof AppCashRoute
+    }
+    '/_app/cash/shifts': {
+      id: '/_app/cash/shifts'
+      path: '/shifts'
+      fullPath: '/cash/shifts'
+      preLoaderRoute: typeof AppCashShiftsRouteImport
+      parentRoute: typeof AppCashRoute
     }
     '/_app/rates/': {
       id: '/_app/rates/'
@@ -679,6 +734,19 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppCashRouteChildren {
+  AppCashShiftsRoute: typeof AppCashShiftsRoute
+  AppCashIndexRoute: typeof AppCashIndexRoute
+}
+
+const AppCashRouteChildren: AppCashRouteChildren = {
+  AppCashShiftsRoute: AppCashShiftsRoute,
+  AppCashIndexRoute: AppCashIndexRoute,
+}
+
+const AppCashRouteWithChildren =
+  AppCashRoute._addFileChildren(AppCashRouteChildren)
+
 interface AppRatesRouteChildren {
   AppRatesCalendarRoute: typeof AppRatesCalendarRoute
   AppRatesRoomsRoute: typeof AppRatesRoomsRoute
@@ -746,6 +814,7 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 interface AppRouteChildren {
   AppSectionRoute: typeof AppSectionRoute
   AppApprovalsRoute: typeof AppApprovalsRoute
+  AppCashRoute: typeof AppCashRouteWithChildren
   AppFrontDeskRoute: typeof AppFrontDeskRoute
   AppRatesRoute: typeof AppRatesRouteWithChildren
   AppReservationsRoute: typeof AppReservationsRouteWithChildren
@@ -758,6 +827,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppSectionRoute: AppSectionRoute,
   AppApprovalsRoute: AppApprovalsRoute,
+  AppCashRoute: AppCashRouteWithChildren,
   AppFrontDeskRoute: AppFrontDeskRoute,
   AppRatesRoute: AppRatesRouteWithChildren,
   AppReservationsRoute: AppReservationsRouteWithChildren,

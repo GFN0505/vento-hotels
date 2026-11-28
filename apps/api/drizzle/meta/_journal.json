@@ -166,8 +166,15 @@
     {
       "idx": 23,
       "version": "7",
-      "when": 1795851773295,
-      "tag": "0023_rate_plans_inclusive_default",
+      "when": 1795851647495,
+      "tag": "0023_cashier_shifts",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795856892328,
+      "tag": "0024_rate_plans_inclusive_default",
       "breakpoints": true
     }
   ]

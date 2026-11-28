@@ -4,6 +4,11 @@ import { implement, ORPCError } from '@orpc/server'
 import { contract } from '@vento/shared'
 import * as approvals from './approvals/service.ts'
 import type { Auth } from './auth/auth.ts'
+import * as drawers from './cash/drawers/service.ts'
+import { closeShift } from './cash/shifts/close.ts'
+import { countLines, submitCount } from './cash/shifts/count.ts'
+import { openShift } from './cash/shifts/open.ts'
+import { getShift, listShifts, myShift } from './cash/shifts/read.ts'
 import type { Database } from './db/client.ts'
 import * as devices from './devices/service.ts'
 import { BACKGROUND_PROCEDURES, guardDeviceSession } from './devices/session-guard.ts'
@@ -579,6 +584,50 @@ export const router = base.router({
     restore: inOrganization.posTerminals.restore.handler(({ context, input }) =>
       terminals.restorePosTerminal(context.db, context.access, input),
     ),
+  },
+  cash: {
+    myShift: inOrganization.cash.myShift.handler(({ context, input }) =>
+      myShift(context.db, context.access, input),
+    ),
+    open: inOrganization.cash.open.handler(async ({ context, input }) =>
+      openShift(context.db, context.access, input, {
+        device: await approvals.thisDevice(context.db, context.access, context.headers),
+      }),
+    ),
+    countLines: inOrganization.cash.countLines.handler(({ context, input }) =>
+      countLines(context.db, context.access, input),
+    ),
+    submitCount: inOrganization.cash.submitCount.handler(({ context, input }) =>
+      submitCount(context.db, context.access, input),
+    ),
+    close: inOrganization.cash.close.handler(({ context, input }) =>
+      closeShift(context.db, context.access, input),
+    ),
+    shifts: {
+      list: inOrganization.cash.shifts.list.handler(({ context, input }) =>
+        listShifts(context.db, context.access, input),
+      ),
+      get: inOrganization.cash.shifts.get.handler(({ context, input }) =>
+        getShift(context.db, context.access, input),
+      ),
+    },
+    drawers: {
+      list: inOrganization.cash.drawers.list.handler(({ context, input }) =>
+        drawers.listDrawers(context.db, context.access, input),
+      ),
+      create: inOrganization.cash.drawers.create.handler(({ context, input }) =>
+        drawers.createDrawer(context.db, context.access, input),
+      ),
+      update: inOrganization.cash.drawers.update.handler(({ context, input }) =>
+        drawers.updateDrawer(context.db, context.access, input),
+      ),
+      archive: inOrganization.cash.drawers.archive.handler(({ context, input }) =>
+        drawers.archiveDrawer(context.db, context.access, input),
+      ),
+      restore: inOrganization.cash.drawers.restore.handler(({ context, input }) =>
+        drawers.restoreDrawer(context.db, context.access, input),
+      ),
+    },
   },
   frontDesk: {
     list: inOrganization.frontDesk.list.handler(({ context, input }) =>

@@ -17,9 +17,9 @@
    - *Behind the scenes:* PIN checked against the device's cached salted hash, so sign-in works offline. Audit event `member.signed_in_with_pin` (Chiamaka, PC 1, Kora Victoria Island, business date 25 Nov).
 
 2. **06:55 Open her cashier shift.**
-   - *Does:* ⌘K → "Open shift", counts the float and enters ₦50,000.00.
-   - *Sees:* "Shift open · Float ₦50,000.00 · Chiamaka · PC 1". Before this, Take payment and Check out said "Open a shift to take payments".
-   - *Behind the scenes:* `cashier_shift` created with opening float, device and business date. Audit event `cashier_shift.opened`.
+   - *Does:* opens **Cash**, Desk 1 is picked; counts the float by note (₦1,000 × 30, ₦500 × 30, ₦200 × 20, ₦100 × 10) and presses Open shift.
+   - *Sees:* the hand-over "From Tunde Bello · shift 2 of 24 Nov · ₦50,000.00 · You counted ₦50,000.00 · matches"; then "Cashier shift 1 · 25 Nov 2026 · Open · Float ₦50,000.00".
+   - *Behind the scenes:* Desk 1 locked, one shift per drawer and per person checked; `cashier_shift` with float by note, hand-over, device and business date; audit event `cashier_shift.opened`. Brick 10 adds: before this, Take payment and Check out said "Open a shift to take payments". (⌘K "Open shift" returns with the command palette brick.)
 
 3. **07:05 Read the day.**
    - *Sees:* the tabs Arrivals, Departures and In house with their counts, and "Tonight · 25 Nov — occupied · arriving · vacant · 1 out of order · not in a room yet" (the tape chart's figures). Each arrival shows room readiness (emerald Inspected or Clean, amber Dirty, "Due out · Asante K.", "Not in a room") and the booking's notes. Mr Daniel Mensah · Acme Energy · 502 · amber "Dirty" · "Early arrival 11:30, quiet room".
@@ -101,9 +101,9 @@
     - *Behind the scenes:* routing rule on the stay (`room` → Folio B). Cash deposit posted to Folio A on business date 25 Nov, on her shift. No room charge yet: night audit posts it. Audit events `folio.routing_set`, `payment.taken` (brick 10).
 
 12. **14:45 Close her shift with a blind count.**
-    - *Does:* ⌘K → "Close shift". Counts the drawer and types ₦80,000.00 without seeing what is expected.
-    - *Sees:* after submitting: "Expected ₦80,000.00 · Counted ₦80,000.00 · Variance ₦0.00". Takings by method: cash ₦30,000.00; transfer ₦299,900.00*; POS terminal ₦56,962.50* plus room 304 (a short stay, see `owner-morning.md`); city ledger ₦661,500.00*. She prints the shift report.
-    - *Behind the scenes:* shift closed and locked. Audit event `cashier_shift.closed` with counted, expected and variance. A non-zero variance would need a reason and would appear in the owner's daily report.
+    - *Does:* Cash → Count and close; counts the drawer by note and enters each POS terminal's merchant slips and her confirmed transfers, without seeing what is expected; Submit count, confirm.
+    - *Sees:* only then "Expected ₦80,000.00 · Counted ₦80,000.00 · Balanced" and takings by method; Close shift with ₦50,000.00 float kept and ₦30,000.00 to the safe in bag S-2211. (Figures beyond the float arrive with brick 10's payments; in Stage 1 brick 9 the expected is ₦50,000.00. The printed shift report is brick 15.)
+    - *Behind the scenes:* expected snapshotted at submit, count locked; `cashier_shift.count_submitted`, `cashier_shift.closed` with counted, expected and difference. A difference would need a reason (and Tunde's PIN above ₦5,000.00) and would appear in the owner's daily report.
 
 ## What can go wrong
 - **No shift open:** Take payment and Check out say "Open a shift to take payments", with the button beside it.
@@ -122,7 +122,9 @@
 - **OOO would overbook:** "Executive King would be 1 room short on 26 Nov." before anything changes; nothing is saved.
 - **Room move to a dirty room:** dirty rooms are listed after ready ones with their status; moving to one is allowed.
 - **Guest asks for a better room type while the booked type has rooms:** Room move lists only the booked type; dropping on another type says "A Deluxe King room is free: assign one of those". An upgrade is offered only when the booked type is full; otherwise it's a Modify (a booking change, re-priced).
-- **Blind count mismatch:** variance shown only after submission; a reason is required to close; the count can't be edited afterwards.
+- **Blind count mismatch:** variance shown only after submission; a reason is required to close; the count can't be edited afterwards, and the count can't be reopened.
+- **Hand-over doesn't match:** "From Tunde Bello · ₦50,000.00 · You counted ₦48,000.00 · ₦2,000.00 short"; a reason is required to open, Tunde's PIN above ₦5,000.00.
+- **Drawer busy:** "Desk 1 · Ibrahim Musa's shift" can't be picked; she takes Desk 2.
 
 ## Targets
 - PIN sign-in to arrivals list: under 5 seconds.
@@ -148,6 +150,7 @@
 - Check-in of a Ghanaian guest shows the foreign national fields; the passport number is masked in the UI and never returned in plain text.
 - Routing sends the room charge to the Acme folio and extras to the guest folio; no room charge exists before night audit.
 - Blind count hides the expected amount until submission; a non-zero variance requires a reason.
+- No procedure returns expected figures for an open shift; a submitted count can't change (trigger); one shift not closed per drawer and per person (race); a difference needs a reason, above ₦5,000.00 an approval that Chiamaka can't give herself; foreign cash stores the rate (`apps/api/src/cash/**/*.test.ts`, `apps/web/e2e/cash.spec.ts`).
 - Offline: check-in of an assigned arrival queues and syncs; walk-in is disabled with its reason.
 - Check-in needs the rule set's fields and the ID photo, and refuses a stay not arriving today; a foreign national's passport is never returned in plain text; a dirty room is allowed with the warning; in-house moves keep past nights in the old room and set it dirty; walk-in books and checks in in one transaction and two check-ins into one room fail cleanly; reversal is GM-only, never your own, and an exception (`apps/api/src/reservations/check-in/*.test.ts`, `apps/api/src/guests/registration/*.test.ts`, `apps/web/e2e/front-desk.spec.ts`).
 

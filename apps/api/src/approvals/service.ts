@@ -44,6 +44,8 @@ import {
 } from 'drizzle-orm'
 import type { z } from 'zod'
 import { type AuditEvent, recordAudit } from '../audit/record.ts'
+import { needsApproval } from '../cash/context.ts'
+import { naira, withinLimit } from '../cash/errors.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { approvals } from '../db/schema/approvals.ts'
@@ -88,6 +90,7 @@ import {
   waiverNotNeeded,
   wrongPin,
 } from './errors.ts'
+import { CASH_VARIANCE, evaluateCashVariance } from './kinds/cash-variance.ts'
 import {
   evaluateModifyDiscount,
   evaluateWaiver,
@@ -252,6 +255,18 @@ async function evaluate(
       order: 'limit',
     }
   }
+  if (action.kind === 'cash_variance') {
+    const e = await evaluateCashVariance(db, access, action.variance, context)
+    return {
+      ...e,
+      kind: CASH_VARIANCE.kind,
+      permission: CASH_VARIANCE.permission,
+      valueKind: CASH_VARIANCE.valueKind,
+      draft: null,
+      requesterLimit: e.subject.requesterLimit,
+      order: 'limit',
+    }
+  }
   const e = await evaluateWaiver(db, access, action, context)
   return {
     ...e,
@@ -266,10 +281,18 @@ async function evaluate(
 
 // "15%", or "this waiver": what an approver is asked to approve, as people say it.
 const whatOf = (kind: ApprovalKind, value: string) =>
-  kind === 'penalty_waiver' ? 'this waiver' : `${formatPercent(value)}%`
+  kind === 'penalty_waiver'
+    ? 'this waiver'
+    : kind === 'cash_variance'
+      ? `a ${naira(value)} difference`
+      : `${formatPercent(value)}%`
 
 // Asking only makes sense over the requester's own limit, or without the permission.
 function requireNeeded(access: Access, evaluated: Evaluated) {
+  if (evaluated.kind === 'cash_variance') {
+    if (!needsApproval(access, evaluated.value)) throw withinLimit(evaluated.value)
+    return
+  }
   if (evaluated.kind === 'penalty_waiver') {
     if (can(access, PENALTY_WAIVER.permission)) throw waiverNotNeeded()
     return
@@ -283,7 +306,7 @@ async function requireApprover(
   evaluated: Evaluated,
   approverMemberId: string,
 ): Promise<Candidate> {
-  if (approverMemberId === access.memberId) throw selfApproval()
+  if (approverMemberId === access.memberId) throw selfApproval(evaluated.kind)
   const where = { organizationId: access.organizationId, propertyId: evaluated.hotel.id }
   const found = await candidate(db, where, evaluated.permission, evaluated.value, approverMemberId)
   if (!found) {
@@ -737,7 +760,7 @@ export async function countWaiting(
 function requireAnswerable(row: Row, access: Access, now: Date) {
   if (row.approverMemberId !== access.memberId) {
     // The requester reading their own request can't answer it.
-    if (row.requesterMemberId === access.memberId) throw selfApproval()
+    if (row.requesterMemberId === access.memberId) throw selfApproval(row.kind)
     throw approvalNotFound()
   }
   const status = statusOf(row, now)

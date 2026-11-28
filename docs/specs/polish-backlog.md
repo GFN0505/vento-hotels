@@ -84,3 +84,16 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
   - Reveal and View ID photo have no rate limit; add one, or flag many in a day on the owner's report.
   - A replayed check-in key is answered before the hotel scope check (`replayOf`); check the member's hotels first, as `inChangeTransaction` does.
   - `walk-in-page.tsx` and `registration-form.tsx` weren't covered by the review; review them with the next brick's.
+
+## Cashier shifts (brick 9)
+- `version` in the submit and close inputs isn't checked; check it against the shift or drop it.
+- `sameClose` (a replayed close) compares the float and bag only, not the reason or the approval.
+- Trigger gaps in `vento_cashier_shift_forward`: the hand-over source fields, `terminal_ids`, the business dates and the idempotency keys aren't locked; count lines can still be inserted after a shift leaves `open`.
+- No foreign keys on `cashier_shifts.member_id`, the approval ids and `handover_from_shift_id`.
+- `aria-live` on the `NoteCount` total announces every keystroke; announce on pause or on leaving the row.
+- The Shifts empty state builds its "Open cashier shift" link by hand with `text-white` instead of `Button asChild`.
+- The Cash drawers card's load error has no retry (use `LoadError`).
+- A member with `leakage.view` but not `cashier_shift.operate` lands on "no access" at `/cash`; send them to `/cash/shifts`.
+- A first load of Shifts while offline shows the skeleton forever; show the offline state.
+- A reason chip fills the 5-character minimum with one tap.
+- A shift counted but never closed raises no exception yet (night audit, brick 13).
