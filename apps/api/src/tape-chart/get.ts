@@ -21,6 +21,7 @@ import type { Database } from '../db/client.ts'
 import { guests, reservations, stays } from '../db/schema/reservations.ts'
 import { roomOutOfOrder, rooms, roomTypes } from '../db/schema/rooms.ts'
 import { loadBookingHotel } from '../reservations/context.ts'
+import { segmentsForStays } from '../reservations/in-house.ts'
 import { bookedFor, capacityOf, keyOf, roomsOn } from '../reservations/locks.ts'
 import { type Access, can, requireFeature } from '../tenancy/access.ts'
 import { hotelRooms } from './hotel-rooms.ts'
@@ -85,6 +86,7 @@ export async function getTapeChart(
         adults: stays.adults,
         children: stays.children,
         roomId: stays.roomId,
+        roomFrom: stays.roomFrom,
         version: stays.version,
         status: stays.status,
         depositDue: reservations.depositDue,
@@ -119,6 +121,12 @@ export async function getTapeChart(
       .orderBy(asc(roomOutOfOrder.fromDate)),
   ])
 
+  // The rooms in-house guests used before a move (decision 0030), drawn muted in those rooms.
+  const segments = await segmentsForStays(
+    db,
+    scope,
+    stayRows.filter((stay) => stay.roomFrom !== null).map((stay) => stay.id),
+  )
   const unassigned = new Map<string, number>()
   for (const stay of stayRows) {
     if (stay.roomId) continue
@@ -197,9 +205,16 @@ export async function getTapeChart(
       adults: stay.adults,
       children: stay.children,
       roomId: stay.roomId,
+      roomFrom: stay.roomFrom ?? stay.arrival,
+      segments: segments
+        .filter((segment) => segment.stayId === stay.id)
+        .map((segment) => ({ roomId: segment.roomId, from: segment.fromDate, to: segment.toDate })),
       version: stay.version,
       status: stay.status === 'checked_in' ? ('checked_in' as const) : ('confirmed' as const),
-      movable: stay.status === 'confirmed' && stay.arrival >= hotel.businessDate,
+      movable:
+        stay.status === 'confirmed'
+          ? stay.arrival >= hotel.businessDate
+          : stay.departure > hotel.businessDate,
       depositDue:
         stay.depositDue && stay.depositDueAt
           ? { amount: stay.depositDue, dueAt: stay.depositDueAt.toISOString() }

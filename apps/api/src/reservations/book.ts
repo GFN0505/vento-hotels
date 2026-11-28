@@ -70,7 +70,10 @@ import {
   requireDiscountAllowed,
 } from './pricing.ts'
 
-export type CreateInput = z.output<typeof createReservationSchema>
+// A walk-in (brick 8) books through here with source walk_in, which the desk's own form never sends.
+export type CreateInput = Omit<z.output<typeof createReservationSchema>, 'source'> & {
+  source: z.output<typeof createReservationSchema>['source'] | 'walk_in'
+}
 
 // Internal options (not in the contract): the demo seed books "on earlier dates", and corporate
 // plans are booked by the seed until corporate accounts arrive (brick 12).

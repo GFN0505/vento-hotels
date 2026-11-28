@@ -45,6 +45,8 @@ const stay = (
   adults: 1,
   children: 0,
   roomId,
+  roomFrom: arrival,
+  segments: [],
   version: 1,
   status: 'confirmed' as const,
   movable: true,

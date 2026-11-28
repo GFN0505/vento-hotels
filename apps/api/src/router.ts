@@ -7,13 +7,19 @@ import type { Auth } from './auth/auth.ts'
 import type { Database } from './db/client.ts'
 import * as devices from './devices/service.ts'
 import { BACKGROUND_PROCEDURES, guardDeviceSession } from './devices/session-guard.ts'
+import { printRegistrationCard } from './documents/service.ts'
 import * as bankAccounts from './finance/bank-accounts.ts'
 import * as fx from './finance/fx-rates.ts'
 import * as paymentMethods from './finance/payment-methods.ts'
 import * as terminals from './finance/pos-terminals.ts'
 import * as taxWrites from './finance/tax-writes.ts'
 import * as taxes from './finance/taxes.ts'
+import { frontDeskHotels, frontDeskList } from './front-desk/list.ts'
+import { walkInCheckIn, walkInOptions } from './front-desk/walk-in.ts'
 import * as governance from './governance/service.ts'
+import { uploadIdDocument, viewIdDocument } from './guests/registration/documents.ts'
+import { ruleSetFor } from './guests/registration/rules.ts'
+import * as registrations from './guests/registration/service.ts'
 import { noteOrganization } from './observability/request-context.ts'
 import type { EmailProvider } from './providers/email.ts'
 import type { StorageProvider } from './providers/storage.ts'
@@ -31,6 +37,10 @@ import { cancelReservation, endQuote, markNoShow } from './reservations/change/e
 import { modifyReservation } from './reservations/change/modify.ts'
 import { quoteChange } from './reservations/change/quote-change.ts'
 import { waivePenalty } from './reservations/change/waive.ts'
+import { checkIn } from './reservations/check-in/check-in.ts'
+import { prepareCheckIn } from './reservations/check-in/prepare.ts'
+import { reverseCheckIn, undoCheckIn } from './reservations/check-in/undo.ts'
+import { loadBookingHotel, requireReservationRead } from './reservations/context.ts'
 import { getReservation } from './reservations/detail.ts'
 import { searchGuests } from './reservations/guests.ts'
 import { listReservations } from './reservations/list.ts'
@@ -62,6 +72,10 @@ export type AppDeps = {
   // Object storage for uploads (logos). Unset when the server has no storage settings: uploads
   // answer "not set up" and nothing else changes.
   storage?: StorageProvider | undefined
+  // The private bucket for guest ID photos and scans (decision 0031). Unset: ID photos are off.
+  privateStorage?: StorageProvider | undefined
+  // Signs the registration card's short-lived links (the auth secret, never sent anywhere).
+  cardSecret?: string | undefined
   // The address people open in the browser, for links in emails.
   webOrigin: string
   limiter: RateLimiter
@@ -565,6 +579,76 @@ export const router = base.router({
     restore: inOrganization.posTerminals.restore.handler(({ context, input }) =>
       terminals.restorePosTerminal(context.db, context.access, input),
     ),
+  },
+  frontDesk: {
+    list: inOrganization.frontDesk.list.handler(({ context, input }) =>
+      frontDeskList(context.db, context.access, input),
+    ),
+    hotels: inOrganization.frontDesk.hotels.handler(({ context }) =>
+      frontDeskHotels(context.db, context.access),
+    ),
+  },
+  checkIn: {
+    prepare: inOrganization.checkIn.prepare.handler(({ context, input }) =>
+      prepareCheckIn(context.db, context.access, input),
+    ),
+    checkIn: inOrganization.checkIn.checkIn.handler(({ context, input }) =>
+      checkIn(context, context.access, input),
+    ),
+    undo: inOrganization.checkIn.undo.handler(({ context, input }) =>
+      undoCheckIn(context.db, context.access, input),
+    ),
+    reverse: inOrganization.checkIn.reverse.handler(({ context, input }) =>
+      reverseCheckIn(context.db, context.access, input),
+    ),
+  },
+  walkIn: {
+    options: inOrganization.walkIn.options.handler(({ context, input }) =>
+      walkInOptions(context.db, context.access, input),
+    ),
+    checkIn: inOrganization.walkIn.checkIn.handler(({ context, input }) =>
+      walkInCheckIn(context, context.access, input),
+    ),
+  },
+  registrations: {
+    get: inOrganization.registrations.get.handler(({ context, input }) =>
+      registrations.stayRegistrations(context.db, context.access, input),
+    ),
+    correct: inOrganization.registrations.correct.handler(({ context, input }) =>
+      registrations.correctRegistration(context.db, context.access, input),
+    ),
+    reveal: inOrganization.registrations.reveal.handler(({ context, input }) =>
+      registrations.revealNumber(context.db, context.access, input, context.resHeaders),
+    ),
+    uploadIdDocument: inOrganization.registrations.uploadIdDocument.handler(({ context, input }) =>
+      uploadIdDocument(context, context.access, input),
+    ),
+    viewIdDocument: inOrganization.registrations.viewIdDocument.handler(({ context, input }) =>
+      viewIdDocument(context, context.access, input, context.resHeaders),
+    ),
+    attachIdDocument: inOrganization.registrations.attachIdDocument.handler(({ context, input }) =>
+      registrations.attachIdDocumentLater(context.db, context.access, input),
+    ),
+  },
+  documents: {
+    registrationCard: inOrganization.documents.registrationCard.handler(({ context, input }) =>
+      printRegistrationCard(context, context.access, input),
+    ),
+  },
+  ruleSets: {
+    current: inOrganization.ruleSets.current.handler(async ({ context, input }) => {
+      requireReservationRead(context.access)
+      const hotel = await loadBookingHotel(context.db, context.access, input.propertyId)
+      return ruleSetFor(
+        context.db,
+        {
+          organizationId: context.access.organizationId,
+          propertyId: hotel.id,
+          stateCode: hotel.stateCode,
+        },
+        hotel.businessDate,
+      )
+    }),
   },
   fxRates: {
     summary: inOrganization.fxRates.summary.handler(({ context }) =>

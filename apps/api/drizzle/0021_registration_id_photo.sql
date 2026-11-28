@@ -1,0 +1,1 @@
+ALTER TABLE "guest_registrations" ADD COLUMN "id_document_required" boolean DEFAULT false NOT NULL;

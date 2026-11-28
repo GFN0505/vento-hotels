@@ -28,6 +28,8 @@ export const ROOM_MOVE_ERROR_CODES = [
   'ROOM_WRONG_TYPE',
   'BOOKED_TYPE_FREE', // a move to another type while the booked type has a free room
   'NOT_MOVABLE',
+  'MOVE_REASON_REQUIRED', // an in-house move needs a reason
+  'NO_NIGHT_LEFT', // an in-house guest leaving today
   'ROOM_HAS_BOOKINGS', // room archive or type change with assigned stays
   'ROOM_OUT_OF_ORDER_PERIOD', // room archive or type change with an active out-of-order period
   'OOO_ROOM_HAS_BOOKINGS', // data: { stays }
@@ -125,9 +127,15 @@ export const chartStaySchema = z.object({
   adults: z.number().int(),
   children: z.number().int(),
   roomId: idSchema.nullable(),
+  // The first night in `roomId` (decision 0030): the arrival, or the business date of an in-house
+  // move; the nights before are in `segments`.
+  roomFrom: calendarDateSchema,
+  segments: z.array(
+    z.object({ roomId: idSchema, from: calendarDateSchema, to: calendarDateSchema }),
+  ),
   version: z.number().int(),
   status: z.enum(['confirmed', 'checked_in']),
-  // Confirmed and arriving on or after the business date.
+  // Confirmed and arriving on or after the business date, or in house with a night left.
   movable: z.boolean(),
   depositDue: z.object({ amount: z.string(), dueAt: z.iso.datetime() }).nullable(),
 })

@@ -4,11 +4,12 @@
 // row). Read live for the dialog, and again inside the write under the room's lock and its type's
 // inventory locks.
 import { nightsOf, roomsLeft } from '@vento/shared'
-import { and, asc, eq, gt, inArray, lt, ne } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, lt, ne, sql } from 'drizzle-orm'
 import { guests, stays } from '../../db/schema/reservations.ts'
 import { roomOutOfOrder } from '../../db/schema/rooms.ts'
 import type { Reader } from '../../reservations/context.ts'
 import { type Capacity, capacityOf, roomsOn } from '../../reservations/locks.ts'
+import { roomFromSql } from '../../reservations/room-from.ts'
 
 export type Assessment = {
   blockers: {
@@ -54,7 +55,8 @@ export async function assess(
       and(
         eq(stays.roomId, ask.roomId),
         inArray(stays.status, ['confirmed', 'checked_in']),
-        lt(stays.arrival, ask.to),
+        // From the night the stay is in this room (decision 0030).
+        sql`${roomFromSql}::date < ${ask.to}`,
         gt(stays.departure, ask.from),
       ),
     )

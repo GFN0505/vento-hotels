@@ -4,6 +4,7 @@ import { RPCHandler } from '@orpc/server/fetch'
 import { ResponseHeadersPlugin } from '@orpc/server/plugins'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
+import { registrationCardResponse } from './documents/service.ts'
 import { reportError } from './observability/errors.ts'
 import { requestLog } from './observability/request-log.ts'
 import { type AppDeps, router } from './router.ts'
@@ -40,14 +41,29 @@ export function createApp(deps: AppDeps) {
 
   app.on(['GET', 'POST'], '/api/auth/*', (c) => deps.auth.handler(c.req.raw))
 
-  // No API call needs more than this; bigger bodies are refused before any work is done.
+  // The registration card PDF behind its 5-minute signed link (no session needed: the link is the
+  // permission, bound to the group, hotel and stay).
+  app.get('/api/files/registration-card', (c) =>
+    registrationCardResponse(deps.db, deps.cardSecret, c.req.query('t')),
+  )
+
+  // No API call needs more than this; bigger bodies are refused before any work is done. An ID
+  // photo or scan (5 MB, base64) is the one exception.
+  const ID_UPLOAD = '/rpc/registrations/uploadIdDocument'
   app.use(
-    '/rpc/*',
+    ID_UPLOAD,
     bodyLimit({
-      maxSize: 1024 * 1024,
-      onError: (c) => c.json({ message: 'That request is too large' }, 413),
+      maxSize: 7 * 1024 * 1024 + 64 * 1024,
+      onError: (c) => c.json({ message: 'That file is over 5 MB.' }, 413),
     }),
   )
+  app.use('/rpc/*', async (c, next) => {
+    if (c.req.path === ID_UPLOAD) return next()
+    return bodyLimit({
+      maxSize: 1024 * 1024,
+      onError: (ctx) => ctx.json({ message: 'That request is too large' }, 413),
+    })(c, next)
+  })
   app.use('/rpc/*', async (c, next) => {
     const { matched, response } = await rpc.handle(c.req.raw, {
       prefix: '/rpc',

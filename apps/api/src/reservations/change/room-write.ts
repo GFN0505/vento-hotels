@@ -2,6 +2,9 @@
 // before the inventory rows, checked free for every night of the changed stay, and recorded. A room
 // asked for that isn't free refuses the change; a room kept that isn't free any more is dropped and
 // the stay comes out unassigned (said on reservation.modified, not as its own event).
+
+import { ORPCError } from '@orpc/server'
+import { formatRateDate } from '@vento/shared'
 import type { AuditEvent } from '../../audit/record.ts'
 import { bookedTypeFree, roomRemoved } from '../assign/errors.ts'
 import {
@@ -27,6 +30,13 @@ export type SettledRoom = {
   unassigned: 'modify_type_change' | 'modify_not_free' | 'manual' | null
 }
 
+// "Room 502 is booked from 28 Nov (Kalu E.). Move the stay to a free room first."
+const inHouseRoomBusy = (room: RoomRow, conflict: { date: string; guestShort: string }) =>
+  new ORPCError('CONFLICT', {
+    message: `Room ${room.number} is booked from ${formatRateDate(conflict.date, false)} (${conflict.guestShort}). Move the stay to a free room first.`,
+    data: { code: 'ROOM_TAKEN', roomId: room.id, number: room.number, date: conflict.date },
+  })
+
 export const roomChanges = (stay: StayRow, input: ChangeFields) =>
   input.roomId !== undefined && input.roomId !== stay.roomId
 
@@ -35,6 +45,7 @@ export async function settleRoom(
   scope: Scope,
   stay: StayRow,
   input: ChangeFields,
+  from: string = input.arrival,
 ): Promise<SettledRoom> {
   const before = stay.roomId ? await readRoom(tx, scope, stay.roomId) : null
   const target = targetRoomOf(stay, input)
@@ -47,17 +58,21 @@ export async function settleRoom(
   if (target.asked) requireAskedRoom(room, input)
   // A room of another type (the Room move flow): only when the booked type has none free.
   if (target.asked && room.roomTypeId !== stay.roomTypeId) {
-    if (await bookedTypeHasFreeRoom(tx, stay, input.arrival, input.departure)) {
+    if (await bookedTypeHasFreeRoom(tx, stay, from, input.departure)) {
       throw bookedTypeFree(stay.roomTypeName)
     }
   }
-  const conflict = await roomConflict(tx, room.id, input.arrival, input.departure, {
+  const conflict = await roomConflict(tx, room.id, from, input.departure, {
     stay: stay.id,
   })
   if (!conflict && !room.archived) {
     return { before, after: room, asked: target.asked, unassigned: null }
   }
-  if (target.asked) {
+  // An in-house guest is never left without a room: the change is refused instead.
+  if (target.asked || stay.status === 'checked_in') {
+    if (conflict?.kind === 'stay' && !target.asked) {
+      throw inHouseRoomBusy(room, conflict)
+    }
     if (room.archived) throw roomRemoved(room.number)
     if (conflict) throw conflictError(room, conflict)
   }

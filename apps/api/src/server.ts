@@ -3,7 +3,7 @@ import { serve } from '@hono/node-server'
 import { createApp } from './app.ts'
 import { createAuth } from './auth/auth.ts'
 import { createDatabase } from './db/client.ts'
-import { loadEnv, storageSettings } from './env.ts'
+import { loadEnv, privateStorageSettings, storageSettings } from './env.ts'
 import { type Jobs, QueuedEmailProvider, startJobs } from './jobs/queue.ts'
 import { flushErrorTracking, reportError, startErrorTracking } from './observability/errors.ts'
 import { logger } from './observability/log.ts'
@@ -20,10 +20,15 @@ process.on('unhandledRejection', (error) => reportError(error, 'unhandled'))
 const database = createDatabase(env.DATABASE_URL)
 const s3 = storageSettings(env)
 const storage = s3 ? new S3StorageProvider(s3) : undefined
+const privateS3 = privateStorageSettings(env)
+const privateStorage = privateS3 ? new S3StorageProvider(privateS3) : undefined
 if (!storage) logger.warn('No storage settings (S3_*): uploads are switched off')
 // Locally the bucket is created on first start, with CORS for the web app on any localhost port.
 if (storage && env.DEPLOY_ENV === 'local') {
   await storage.prepareLocalBucket().catch((error: unknown) => reportError(error, 'storage setup'))
+  await privateStorage
+    ?.prepareLocalBucket({ cors: false })
+    .catch((error: unknown) => reportError(error, 'private storage setup'))
 }
 const deliver =
   env.DEPLOY_ENV !== 'local'
@@ -33,7 +38,13 @@ const deliver =
       : new ConsoleEmailProvider()
 // With jobs on, email goes through the queue and is retried if the provider fails.
 const jobs: Jobs | undefined = env.JOBS_ENABLED
-  ? await startJobs({ databaseUrl: env.DATABASE_URL, email: deliver, db: database.db, storage })
+  ? await startJobs({
+      databaseUrl: env.DATABASE_URL,
+      email: deliver,
+      db: database.db,
+      storage,
+      privateStorage,
+    })
   : undefined
 const email = jobs ? new QueuedEmailProvider(jobs.queue) : deliver
 const limiter = new RateLimiter(env.NODE_ENV !== 'test')
@@ -53,6 +64,8 @@ const app = createApp({
   auth,
   email,
   storage,
+  privateStorage,
+  cardSecret: env.BETTER_AUTH_SECRET,
   webOrigin: env.WEB_ORIGIN,
   limiter,
   allFeatures: env.VENTO_ALL_FEATURES,

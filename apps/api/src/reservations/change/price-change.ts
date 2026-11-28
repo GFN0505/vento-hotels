@@ -36,6 +36,7 @@ import { type QuoteReader, quoteStay, requireStayDates } from '../../rates/quote
 import { type Access, can } from '../../tenancy/access.ts'
 import type { BookingHotel } from '../context.ts'
 import { discountProblem } from '../errors.ts'
+import { nightsFrom } from '../in-house.ts'
 import { discountLimitOf } from '../pricing.ts'
 import { planArchivedForNewNights, planDoesntSellType } from './errors.ts'
 import { type Loaded, type NightRow, type StayRow, termsOf } from './load.ts'
@@ -55,6 +56,10 @@ export type ChangedNight = {
 export type PricedChange = {
   stay: StayRow
   input: ChangeFields
+  // The first night the change can touch: the (new) arrival, or the business date for a guest
+  // already in house (their earlier nights keep their room, type and price; decision 0030).
+  from: CalendarDate
+  inHouse: boolean
   roomTypeName: string
   nights: ChangedNight[]
   taxes: NightTaxes[]
@@ -137,12 +142,29 @@ export async function priceChange(
 ): Promise<PricedChange> {
   const stay = loaded.stays.find((s) => s.id === input.stayId)
   if (!stay) throw new ORPCError('NOT_FOUND', { message: "We couldn't find that stay" })
-  requireStayDates(input, hotel)
+  const from = nightsFrom(stay, hotel.businessDate)
+  const inHouse = from !== stay.arrival
+  if (stay.status === 'checked_in' && input.arrival !== stay.arrival) {
+    throw new ORPCError('BAD_REQUEST', {
+      message: "The guest is in house: the arrival can't change. Change the departure instead.",
+      data: { code: 'IN_HOUSE_ARRIVAL' },
+    })
+  }
+  // An in-house stay is priced from the business date; the nights before are kept as they are.
+  const effective = inHouse ? { ...input, arrival: from } : input
+  requireStayDates(effective, hotel)
+  if (inHouse && input.discount.mode === 'set') {
+    throw new ORPCError('BAD_REQUEST', {
+      message: 'A new discount for a guest already in house comes with the folio.',
+      data: { code: 'IN_HOUSE_DISCOUNT' },
+    })
+  }
   const terms = termsOf(stay)
   const stored = loaded.nights.filter((night) => night.stayId === stay.id)
+  const past = stored.filter((night) => night.date < from)
   const classified = classifyNights(
     { roomTypeId: stay.roomTypeId, dates: stored.map((night) => night.date) },
-    input,
+    effective,
   )
   const guestsChanged = input.adults !== stay.adults || input.children !== stay.children
   const fieldsChanged =
@@ -159,7 +181,7 @@ export async function priceChange(
       propertyId: hotel.id,
       roomTypeId: input.roomTypeId,
       ratePlanId: stay.ratePlanId,
-      arrival: input.arrival,
+      arrival: effective.arrival,
       departure: input.departure,
       adults: input.adults,
       children: input.children,
@@ -180,7 +202,16 @@ export async function priceChange(
   }
   const quoted = new Map((quote?.nights ?? []).map((line) => [line.date, line]))
   const byDate = new Map(stored.map((night) => [night.date, night]))
-  const planned = classified.map((night) => {
+  const kept = past.map((old) => ({
+    date: old.date,
+    kept: true,
+    planPrice: old.planPrice,
+    storedSold: old.soldPrice,
+    extraAdult: old.extraAdult,
+    mealAllocation: old.mealAllocation,
+    from: (old.priceFrom === 'date_price' ? 'date' : 'standard') as 'date' | 'standard',
+  }))
+  const remaining = classified.map((night) => {
     const old = byDate.get(night.date)
     const line = quoted.get(night.date)
     if (night.kept && old) {
@@ -205,6 +236,7 @@ export async function priceChange(
       from: line.from,
     }
   })
+  const planned = [...kept, ...remaining]
 
   // The discount on the changed stay.
   const carried = existingPercent(stay, stored)
@@ -385,7 +417,8 @@ export async function priceChange(
   const drop = toAmount(dec(beforeTotals.total).minus(totals.total))
 
   // Restrictions, as at booking: the same break already booked through with a reason is allowed.
-  const breaks = anyNew || fieldsChanged ? (quote?.breaks ?? []) : []
+  // An in-house extension isn't an arrival: closed-to-arrival and minimum stays don't apply to it.
+  const breaks = !inHouse && (anyNew || fieldsChanged) ? (quote?.breaks ?? []) : []
   const override = stay.restrictionOverride as { kind: string; date: string } | null
   const first = breaks[0]
   const breakAlreadyAllowed = Boolean(
@@ -430,6 +463,9 @@ export async function priceChange(
   return {
     stay,
     input,
+    // The changed stay's first night that matters: its (new) arrival, or the business date.
+    from: inHouse ? from : input.arrival,
+    inHouse,
     roomTypeName: quote?.roomTypeName ?? stay.roomTypeName,
     nights,
     taxes,

@@ -145,7 +145,7 @@ export class S3StorageProvider implements StorageProvider {
 
   // Local development only: create the bucket if it's missing and let any localhost web app upload
   // to it. R2's bucket and CORS rules are set up with the servers (docs/ops/deploy.md).
-  async prepareLocalBucket(): Promise<void> {
+  async prepareLocalBucket(options: { cors?: boolean } = {}): Promise<void> {
     const head = await this.#client.fetch(this.#base, { method: 'HEAD' })
     await head.body?.cancel()
     if (head.status === 404) {
@@ -153,6 +153,8 @@ export class S3StorageProvider implements StorageProvider {
       await created.body?.cancel()
       if (!created.ok) throw new Error(`Storage answered ${created.status} creating the bucket`)
     }
+    // The private bucket (guest ID images) is never reached from a browser except by a signed GET.
+    if (options.cors === false) return
     const cors =
       '<CORSConfiguration><CORSRule><AllowedOrigin>http://localhost:*</AllowedOrigin>' +
       '<AllowedMethod>PUT</AllowedMethod><AllowedMethod>GET</AllowedMethod>' +
