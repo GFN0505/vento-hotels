@@ -3,7 +3,7 @@
 // The key is GUEST_DATA_KEY (32 bytes, base64); older keys stay readable from
 // GUEST_DATA_PREVIOUS_KEYS (comma-separated) while rows are re-encrypted. Outside production a
 // development key is derived when none is set, so local and test databases work without one;
-// production refuses to start without it (env.ts).
+// staging and production refuse to start without it (env.ts).
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto'
 
 type Key = { id: string; bytes: Buffer }
@@ -27,10 +27,9 @@ function load() {
         if (process.env.NODE_ENV === 'production') {
           throw new Error('GUEST_DATA_KEY is not set')
         }
-        // Development and tests only: never used where real guests are.
-        const bytes = createHash('sha256')
-          .update(`vento-development-guest-data:${process.env.BETTER_AUTH_SECRET ?? ''}`)
-          .digest()
+        // Development and tests only, never where real guests are: one fixed key, so the demo
+        // seed, the dev API and the browser tests' API all read the same rows.
+        const bytes = createHash('sha256').update('vento-development-guest-data').digest()
         return { id: keyIdOf(bytes), bytes }
       })()
   const previous = (process.env.GUEST_DATA_PREVIOUS_KEYS ?? '')

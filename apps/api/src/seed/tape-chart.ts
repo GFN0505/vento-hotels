@@ -33,6 +33,7 @@ import { bookInTx } from '../reservations/book.ts'
 import { createOutOfOrder } from '../rooms/out-of-order/service.ts'
 import { setRoomStatus } from '../rooms/status/set-status.ts'
 import type { Access } from '../tenancy/access.ts'
+import { checkInNamed, nigerian, type PendingFile, seedIdDocument } from './front-desk.ts'
 
 type Tx = Parameters<Parameters<Database['transaction']>[0]>[0]
 
@@ -41,6 +42,8 @@ export type TapeChartSeedContext = {
   businessDate: string
   hotels: { vi: string; ikeja: string }
   access: { chiamaka: Access; tunde: Access; grace: Access; sade: Access; adaeze: Access }
+  // ID photos to write to the private bucket after the transaction (Mr Kalu's, brick 8).
+  files: PendingFile[]
 }
 
 // Delegates of the Lagos Fintech Summit, who fill Deluxe King for a night.
@@ -178,11 +181,12 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
     on: addDays(D, -3),
     at: '15:05',
   })
+  // Mr Emeka Kalu: in house D−2 → D+2 (brick 8), in 503 until the move on D.
   const kalu = await book({
     code: 'EXK',
     plan: 'BAR',
-    arrival: D,
-    nights: 2,
+    arrival: addDays(D, -2),
+    nights: 4,
     guest: { title: 'Mr', firstName: 'Emeka', lastName: 'Kalu', phone: '+2348031110503' },
     on: addDays(D, -4),
     at: '09:40',
@@ -278,6 +282,8 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
   hold(roomNo(viRooms, '506'), D, addDays(D, 2))
   hold(roomNo(viRooms, '501'), D, addDays(D, 2))
   hold(roomNo(viRooms, '503'), D, addDays(D, 2))
+  // 302 inspected and free tonight and tomorrow for the Okoro family's walk-in (brick 8).
+  hold(roomNo(viRooms, '302'), D, addDays(D, 2))
   hold(roomNo(viRooms, '305'), addDays(D, 6), addDays(D, 8))
   hold(roomNo(viRooms, '404'), ngozi.stay.arrival, ngozi.stay.departure)
   hold(roomNo(viRooms, '402'), shittu.stay.arrival, shittu.stay.departure)
@@ -453,7 +459,30 @@ export async function seedTapeChart(tx: Tx, context: TapeChartSeedContext): Prom
   // is free for all of Mr Eze's nights and Room move offers Executive King as an upgrade.
   await fillDeluxeKing(addDays(D, 4), chidi.stay.id)
 
-  // D, 10:15: Mr Kalu moved 503 → 501 for the AC repair; 10:25: Tunde puts 503 out of order.
+  // Mr Kalu: 503 assigned on D−3, checked in on D−2 at 14:20 by Chiamaka (brick 8).
+  const kaluAssigned = await on(vi, addDays(D, -3), () =>
+    assign(chiamaka, kalu.stay, roomNo(viRooms, '503')),
+  )
+  const kaluIn = await checkInNamed(
+    tx,
+    { propertyId: vi, restoreTo: D },
+    {
+      who: chiamaka,
+      stay: { id: kalu.stay.id, version: kaluAssigned.version },
+      roomId: roomNo(viRooms, '503').id,
+      date: addDays(D, -2),
+      time: '14:20',
+      registration: nigerian({ title: 'Mr', firstName: 'Emeka', lastName: 'Kalu' }, '22233344455', {
+        line: '15 Ogui Road',
+        city: 'Enugu',
+        region: 'Enugu',
+      }),
+      documentId: await seedIdDocument(tx, chiamaka, vi, context.files),
+    },
+  )
+  kaluVersion = kaluIn.version
+  // D, 10:15: Mr Kalu, in house, moved 503 → 501 for the AC repair (nights D−2 and D−1 stay in
+  // 503; 503 turns dirty); 10:25: Tunde puts 503 out of order.
   await on(vi, D, () =>
     assignRoom(tx, chiamaka, {
       idempotencyKey: newId(),

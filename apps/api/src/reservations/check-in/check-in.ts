@@ -145,12 +145,13 @@ export async function checkInStay(
   tx: Tx,
   deps: Pick<CheckInDeps, 'cardSecret'>,
   access: Access,
-  context: { hotel: BookingHotel; loaded: Loaded; stay: StayRow; hash: string },
+  context: { hotel: BookingHotel; loaded: Loaded; stay: StayRow; hash: string; at?: Date },
   input: CoreInput,
 ): Promise<CheckedIn> {
   const { hotel, loaded, stay } = context
   const scope = { organizationId: access.organizationId, propertyId: hotel.id }
-  const now = new Date()
+  // The demo seed checks guests in "at 14:20 two days ago"; everything else is now.
+  const now = context.at ?? new Date()
 
   // Step 3: the assigned room and the chosen one, in id order, checked free under the lock.
   const locked = await lockRoomsForStay(
@@ -394,6 +395,7 @@ async function checkInInTx(
   access: Access,
   input: CheckInFields,
   hash: string,
+  at?: Date,
 ): Promise<CheckedIn> {
   await tx.execute(
     sql`select pg_advisory_xact_lock(hashtextextended(${`check-in:${access.organizationId}:${input.idempotencyKey}`}, 0))`,
@@ -419,7 +421,13 @@ async function checkInInTx(
   await requireVersion(tx, loaded, input.version, stay.version, hotel.timeZone)
   const problem = checkInProblem(stay, loaded.reservation.status, hotel)
   if (problem) throw notCheckable(problem)
-  return checkInStay(tx, deps, access, { hotel, loaded, stay, hash }, { ...input, walkIn: false })
+  return checkInStay(
+    tx,
+    deps,
+    access,
+    { hotel, loaded, stay, hash, ...(at ? { at } : {}) },
+    { ...input, walkIn: false },
+  )
 }
 
 // What makes two sends the same check-in. Typed ID numbers go in masked only: the hash is stored,
@@ -444,16 +452,20 @@ export function checkInHash(
   return requestHashOf(payload)
 }
 
+// `options.at` is the demo seed's: when the check-in happened (never sent by a client).
 export async function checkIn(
   deps: CheckInDeps,
   access: Access,
   input: CheckInInput,
+  options: { at?: Date } = {},
 ): Promise<CheckedIn> {
   requireCheckIn(access)
   const parsed = checkInInputSchema.parse(input)
   const hash = checkInHash(parsed)
   try {
-    return await deps.db.transaction((tx) => checkInInTx(tx, deps, access, parsed, hash))
+    return await deps.db.transaction((tx) =>
+      checkInInTx(tx, deps, access, parsed, hash, options.at),
+    )
   } catch (error) {
     if (
       isUniqueViolation(error) &&

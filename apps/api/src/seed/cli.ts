@@ -23,9 +23,11 @@ async function main() {
   const { db, close } = createDatabase(url, { max: 1 })
   try {
     const storage = await demoStorage()
+    const privateStorage = await demoStorage({ private: true })
     const result = await seedDemo(db, {
       password,
       storage,
+      privateStorage,
       ...(process.env.DEMO_SLUG ? { slug: process.env.DEMO_SLUG } : {}),
       ...(process.env.DEMO_EMAIL_DOMAIN ? { emailDomain: process.env.DEMO_EMAIL_DOMAIN } : {}),
     })
@@ -55,7 +57,10 @@ async function main() {
 
 // The placeholder logo needs storage. Without it (no S3_* settings, or RustFS not running) the
 // demo loads without a logo rather than failing.
-async function demoStorage(): Promise<S3StorageProvider | undefined> {
+// The demo guests' placeholder ID photos go to the private bucket (decision 0031).
+async function demoStorage(
+  options: { private?: boolean } = {},
+): Promise<S3StorageProvider | undefined> {
   const { S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET } = process.env
   if (!S3_ENDPOINT || !S3_ACCESS_KEY_ID || !S3_SECRET_ACCESS_KEY || !S3_BUCKET) return undefined
   const storage = new S3StorageProvider({
@@ -63,11 +68,11 @@ async function demoStorage(): Promise<S3StorageProvider | undefined> {
     region: S3_REGION ?? 'us-east-1',
     accessKeyId: S3_ACCESS_KEY_ID,
     secretAccessKey: S3_SECRET_ACCESS_KEY,
-    bucket: S3_BUCKET,
+    bucket: options.private ? (process.env.S3_PRIVATE_BUCKET ?? `${S3_BUCKET}-private`) : S3_BUCKET,
   })
   const local = (process.env.DEPLOY_ENV ?? 'local') === 'local'
   try {
-    if (local) await storage.prepareLocalBucket()
+    if (local) await storage.prepareLocalBucket(options.private ? { cors: false } : {})
     return storage
   } catch {
     return undefined
