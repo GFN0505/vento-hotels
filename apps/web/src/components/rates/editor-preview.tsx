@@ -8,7 +8,7 @@ import type { RatePlanView, RatesOverview } from '@vento/shared'
 import { CalendarDays } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
-import { formatNaira, PER_NIGHT_EXCL, shortDate } from './format'
+import { basis, formatNaira, shortDate } from './format'
 import { TAXES_FIRST, useGuestPays } from './guest-pays'
 import { GuestPays } from './guest-pays-cell'
 import type { PlanForm } from './plan-form-model'
@@ -75,7 +75,7 @@ export function EditorPreview({ overview, form, parent }: Props) {
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border px-5 py-3.5">
         <h2 className="text-[15px] font-semibold">Preview · {shortDate(date)}</h2>
-        <span className="text-sm text-text-3">{PER_NIGHT_EXCL}</span>
+        <span className="text-sm text-text-3">{`₦ per night ${basis(form.pricesIncludeTaxes)}`}</span>
       </div>
       {!parent ? (
         <p className="px-5 py-4 text-sm text-text-2">
@@ -115,7 +115,6 @@ export function EditorPreview({ overview, form, parent }: Props) {
                   {row.price ? formatNaira(row.price) : '—'}
                   {guest.column && row.price && !row.notPositive ? (
                     <span className="block text-sm font-normal text-text-3">
-                      Guest pays{' '}
                       <GuestPays
                         guest={guest}
                         price={row.price}

@@ -85,7 +85,8 @@ export const ratePlans = pgTable(
     minStay: smallint().notNull().default(1),
     extraAdult: amount(),
     bookableBy: rateBookableByEnum().notNull().default('anyone'),
-    pricesIncludeTaxes: boolean().notNull().default(false),
+    // Inclusive by default (decision 0032): Nigerian hotels quote one all-in price.
+    pricesIncludeTaxes: boolean().notNull().default(true),
     // Every amount on the plan and its dates is in this currency (NGN only in v1).
     currency: currency(),
     sortOrder: integer().notNull().default(0),

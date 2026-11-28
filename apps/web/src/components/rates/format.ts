@@ -1,5 +1,6 @@
 // Words and numbers for rates screens (spec: stage-1-rate-plans, "UI copy"). Money goes through the
-// shared decimal helpers (formatNaira), never a float. Every price shown says it's before taxes.
+// shared decimal helpers (formatNaira), never a float. Every price shown says whether it includes
+// taxes and service charge: all-in by default, before taxes on plans marked so (decision 0032).
 import {
   type CalendarDate,
   type CancellationPolicy,
@@ -11,8 +12,18 @@ import {
   type RateAdjustment,
 } from '@vento/shared'
 
+export const INCL = 'incl. taxes and service charge'
 export const EXCL = 'excl. taxes and service charge'
-export const PER_NIGHT_EXCL = `₦ per night ${EXCL}`
+
+// The plan's basis: "incl. taxes and service charge" or "excl. …".
+export const basis = (inclusive: boolean) => (inclusive ? INCL : EXCL)
+
+// A page header over many plans: all-in unless some plans are marked "excl. taxes".
+export function perNight(plans: { exclusive: number; total: number }): string {
+  if (plans.total > 0 && plans.exclusive === plans.total) return `₦ per night ${EXCL}`
+  if (plans.exclusive > 0) return `₦ per night ${INCL} unless marked excl.`
+  return `₦ per night ${INCL}`
+}
 export const NEEDS_CONNECTION = 'Needs a connection'
 export const CHANGE_DENIED =
   'Only a revenue manager, GM or the owner can change rates. Ask your GM.'

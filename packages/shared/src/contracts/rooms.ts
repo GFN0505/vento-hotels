@@ -68,7 +68,13 @@ export const roomTypeViewSchema = z.object({
   // plan doesn't cover this type ("Not priced", linking to the plan); `baseRate` is null when the
   // hotel has no such plan yet.
   baseRate: z
-    .object({ ratePlanId: idSchema, ratePlanName: z.string(), amount: z.string().nullable() })
+    .object({
+      ratePlanId: idSchema,
+      ratePlanName: z.string(),
+      amount: z.string().nullable(),
+      // Whether the amount is all-in (decision 0032).
+      pricesIncludeTaxes: z.boolean(),
+    })
     .nullable(),
   archivedAt: z.iso.datetime().nullable(),
 })

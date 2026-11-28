@@ -1,8 +1,8 @@
 // Rate plans and rates, per hotel (spec: docs/specs/stage-1-rate-plans.md). Every procedure needs
 // the front_desk feature. Reading needs rates.edit, rooms.setup or reservation.manage (read-only for
 // the last two); every write needs rates.edit. No input carries an organizationId: the API takes
-// it from the session. Prices are whole naira, NGN, excl. taxes and service charge unless the plan
-// says otherwise.
+// it from the session. Prices are whole naira, NGN, incl. taxes and service charge unless the plan
+// says otherwise (decision 0032).
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { calendarDateSchema } from '../dates.ts'
@@ -147,12 +147,17 @@ export const ratesOverviewSchema = z.object({
     }),
   ),
   activePlans: z.number().int(),
+  // Active plans whose prices exclude taxes and service charge (the page header says "unless
+  // marked" when some do).
+  exclusivePlans: z.number().int(),
   archivedPlans: z.number().int(),
   // Active room types on no active plan ("Executive Suite isn't priced on any plan").
   unpricedRoomTypes: z.array(z.object({ id: idSchema, name: z.string() })),
   // The plan behind the Rooms page's Base rate column and "Add to Best available": the first plan
   // in sort order with own prices, open to anyone.
-  basePlan: z.object({ id: idSchema, name: z.string() }).nullable(),
+  basePlan: z
+    .object({ id: idSchema, name: z.string(), pricesIncludeTaxes: z.boolean() })
+    .nullable(),
   // Whether the caller may change rates (rates.edit).
   canEdit: z.boolean(),
 })
@@ -193,7 +198,8 @@ const planFields = z.object({
   minStay: minStaySchema.default(1),
   extraAdult: ratePriceSchema.nullable().default(null),
   bookableBy: bookableBySchema.default('anyone'),
-  pricesIncludeTaxes: z.boolean().default(false),
+  // Inclusive unless the plan says otherwise (decision 0032).
+  pricesIncludeTaxes: z.boolean().default(true),
 })
 type PlanFieldsIn = z.output<typeof planFields>
 

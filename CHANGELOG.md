@@ -3,6 +3,9 @@
 User-visible changes, newest first, written for customers. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follow [Semantic Versioning](https://semver.org/) once the first release ships.
 
 ## [Unreleased]
+### Changed
+- Rate plan prices now include taxes and service charge by default, as most Nigerian hotels quote them: type your all-in price list and that's what guests are quoted and billed. Every price says **incl. taxes and service charge**, and under each price in the rates screens **Before taxes** shows what's left once VAT, consumption tax and service charge are taken out. The booking summary, reservation and walk-in lead with the total and list what it includes. A plan priced before taxes is still one tick away (More options in the plan editor) and is marked **Excl. taxes** everywhere. Plans you already have keep their setting. The demo group's prices are now all-in.
+
 ### Fixed
 - Text and spacing across the app were about a fifth smaller than designed; fields, checkboxes and buttons are now their intended size.
 - Emails now name the product: "Confirm your email for Vento Hotels" and "Reset your Vento Hotels password".

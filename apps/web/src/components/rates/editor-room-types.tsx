@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Field } from '@/components/ui/field'
 import { EditorCard } from './editor-card'
 import { priceProblem } from './first-rate-model'
-import { EXCL } from './format'
+import { basis } from './format'
 import { groupTyped } from './money-input'
 import type { PlanFormState } from './use-plan-form'
 
@@ -24,7 +24,10 @@ export function EditorRoomTypes({ state, roomTypes, parent, readOnly }: Props) {
   const own = form.pricing === 'own'
   const onParent = (id: string) => !parent || parent.roomTypes.some((r) => r.roomTypeId === id)
   return (
-    <EditorCard title="Room types" aside={own ? `Standard prices, ${EXCL}` : undefined}>
+    <EditorCard
+      title="Room types"
+      aside={own ? `Standard prices, ${basis(form.pricesIncludeTaxes)}` : undefined}
+    >
       {problems.roomTypes ? (
         <p role="alert" className="text-sm text-ro">
           {problems.roomTypes}

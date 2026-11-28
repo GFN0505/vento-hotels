@@ -1,5 +1,6 @@
 // "Who can book it" and, behind More options, whether the prices include taxes and service charge
-// (off by default: every price is labelled "excl. taxes and service charge").
+// (on by default, decision 0032: every price is labelled "incl. taxes and service charge"). More
+// options opens by itself on a plan priced before taxes, so the exception is never hidden.
 import { ChevronDown } from 'lucide-react'
 import { useId, useState } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -10,7 +11,7 @@ import type { PlanFormState } from './use-plan-form'
 
 export function EditorAudience({ state, readOnly }: { state: PlanFormState; readOnly: boolean }) {
   const { form } = state
-  const [more, setMore] = useState(form.pricesIncludeTaxes)
+  const [more, setMore] = useState(!form.pricesIncludeTaxes)
   const id = useId()
   return (
     <EditorCard title="Who can book it">
@@ -55,7 +56,8 @@ export function EditorAudience({ state, readOnly }: { state: PlanFormState; read
             <span>
               Prices include taxes and service charge
               <span className="block text-sm text-text-3">
-                Off: VAT, consumption tax and service charge are added on top of these prices.
+                On: the price is what the guest pays, with VAT, consumption tax and service charge
+                inside it. Off: they're added on top.
               </span>
             </span>
           </label>

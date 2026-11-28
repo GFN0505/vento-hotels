@@ -4,7 +4,7 @@ import { BREAKFAST_SUPPLEMENT, dec, type RatesOverview, ratePriceSchema } from '
 import { Check } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import type * as M from './first-rate-model'
-import { EXCL, formatNaira } from './format'
+import { formatNaira, INCL } from './format'
 import type { useGuestPays } from './guest-pays'
 import { GuestPays } from './guest-pays-cell'
 
@@ -24,7 +24,7 @@ export function FirstRateAside({
     'Room only',
     'Free cancellation until 48 hours before arrival, then the first night',
     'Deposit: first night, within 48 hours of booking',
-    `Prices ${EXCL}`,
+    `Prices ${INCL}`,
   ]
   // What Bed & breakfast will cost, from the weekday prices typed so far.
   const withBreakfast = types.flatMap((type) => {
@@ -61,7 +61,6 @@ export function FirstRateAside({
                     <span className="font-medium text-text">{formatNaira(row.price)}</span>
                     {guest.column ? (
                       <span className="text-sm text-text-3">
-                        Guest pays{' '}
                         <GuestPays
                           guest={guest}
                           price={row.price}

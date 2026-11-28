@@ -565,6 +565,7 @@ function RoomLists({
                   room={room}
                   typeName={group.typeName}
                   difference={group.difference}
+                  inclusive={data.stay.pricesIncludeTaxes}
                   showStatus={data.arrivesToday}
                   checked={picked === room.id}
                   onPick={() => onPick(room.id)}
@@ -598,6 +599,7 @@ function RoomChoice({
   room,
   typeName,
   difference,
+  inclusive,
   showStatus,
   checked,
   onPick,
@@ -605,6 +607,8 @@ function RoomChoice({
   room: RoomOption
   typeName: string
   difference: string | null
+  // The plan's basis: the difference is all-in on an inclusive plan (decision 0032).
+  inclusive: boolean
   showStatus: boolean
   checked: boolean
   onPick: () => void
@@ -664,7 +668,7 @@ function RoomChoice({
       <span className="num flex-none text-right text-sm whitespace-nowrap text-text-2">
         {difference === null || dec(difference).isZero()
           ? 'same rate'
-          : `${signed(difference)} a night excl. taxes`}
+          : `${signed(difference)} a night ${inclusive ? 'incl.' : 'excl.'} taxes`}
       </span>
     </label>
   )

@@ -158,7 +158,8 @@ export async function getTapeChart(
       const cap = capacity.get(type.id)
       return {
         ...type,
-        tonightPrice: prices.get(type.id) ?? null,
+        tonightPrice: prices.prices.get(type.id) ?? null,
+        tonightIncludesTaxes: prices.includesTaxes,
         nights: dates.map((date) => {
           const key = keyOf({ roomTypeId: type.id, date })
           const sold = booked.get(key) ?? 0

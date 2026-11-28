@@ -1,11 +1,11 @@
 // The line under the toolbar for the chosen cell, what a front desk agent reads to a caller:
-// "Deluxe King · Bed & breakfast · Sat 5 Dec · ₦183,000 excl. taxes and service charge · min stay 2".
+// "Deluxe King · Bed & breakfast · Sat 5 Dec · ₦183,000 incl. taxes and service charge · min stay 2".
 // With rates.edit, "Change this date" opens Change dates on that night (restrictions included).
 import type { RateCalendar } from '@vento/shared'
 import { CalendarDays, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { type CellRef, cellSummary, editable } from './calendar-model'
-import { EXCL } from './format'
+import { basis } from './format'
 
 type Props = {
   calendar: RateCalendar
@@ -31,7 +31,7 @@ export function CellDetail({ calendar, selected, canEdit, onChangeDate }: Props)
           <div className="num min-w-0 grow">
             <p className="line-clamp-2">
               <span className="font-medium text-text">{cellSummary(type.name, row, cell)}</span>{' '}
-              <span className="text-text-3">{row.pricesIncludeTaxes ? 'incl. taxes' : EXCL}</span>
+              <span className="text-text-3">{basis(row.pricesIncludeTaxes)}</span>
             </p>
             {row.parent || past ? (
               <p className="truncate text-sm text-text-3 max-lg:hidden">

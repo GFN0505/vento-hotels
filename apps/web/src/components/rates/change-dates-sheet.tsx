@@ -8,7 +8,7 @@ import { useDiscardGuard } from '@/components/ui/discard-guard'
 import { Sheet } from '@/components/ui/sheet'
 import { ChangeDatesFields } from './change-dates-fields'
 import * as M from './change-dates-model'
-import { listNames, plural } from './format'
+import { basis, listNames, plural } from './format'
 import type { RateDates } from './use-rate-dates'
 
 type Props = {
@@ -93,7 +93,11 @@ export function ChangeDatesSheet(props: Props) {
         if (!rateDates.pending) guard.close()
       }}
       title={plan ? `Change dates · ${plan.name}` : 'Change dates'}
-      description="Prices are whole naira, excl. taxes and service charge."
+      description={
+        plan
+          ? `Prices are whole naira, ${basis(plan.pricesIncludeTaxes)}.`
+          : 'Prices are whole naira.'
+      }
       footer={
         guard.bar ?? (
           <>

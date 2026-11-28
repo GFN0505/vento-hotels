@@ -32,7 +32,8 @@ export function PlanBadges({
       {plan.bookableBy === 'corporate_only' ? (
         <StatusBadge tone="blue">Corporate only</StatusBadge>
       ) : null}
-      {plan.pricesIncludeTaxes ? <StatusBadge>Incl. taxes</StatusBadge> : null}
+      {/* All-in is the default (decision 0032); a plan priced before taxes is the one marked. */}
+      {plan.pricesIncludeTaxes ? null : <StatusBadge>Excl. taxes</StatusBadge>}
     </>
   )
 }

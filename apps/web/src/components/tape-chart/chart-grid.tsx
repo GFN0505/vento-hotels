@@ -661,7 +661,8 @@ function RowView(p: RowProps) {
           <span>{row.type.name}</span>
           {row.type.tonightPrice ? (
             <span className="num font-medium text-text-3">
-              {formatNaira(row.type.tonightPrice)} excl. taxes
+              {formatNaira(row.type.tonightPrice)}{' '}
+              {row.type.tonightIncludesTaxes ? 'incl.' : 'excl.'} taxes
             </span>
           ) : null}
           {night ? (

@@ -29,6 +29,7 @@ const roomsLeft = (page: Page, words: string) =>
 async function firstRate(page: Page) {
   await page.goto('/rates/plans')
   await expect(page.getByRole('heading', { name: 'Your first rate' })).toBeVisible()
+  await expect(page.getByText(/Per room per night, incl\. taxes and service charge/)).toBeVisible()
   await page.getByLabel('Standard Queen, weekday price').fill('120000')
   await page.getByLabel('Deluxe King, weekday price').fill('150,000')
   await expect(page.getByLabel(/^Also create Bed & breakfast/)).toBeChecked()

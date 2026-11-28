@@ -15,7 +15,7 @@ import {
   seasonByDate,
 } from './calendar-model'
 import { PlanLabel } from './calendar-plan-label'
-import { dayName, formatRateDate } from './format'
+import { dayName, formatRateDate, perNight } from './format'
 import { leftFigure, leftTone, leftWords } from './rooms-left'
 import type { CellEditing } from './use-cell-editing'
 
@@ -75,8 +75,12 @@ export function CalendarGrid(props: Props) {
     >
       <table className="w-full border-collapse text-left">
         <caption className="sr-only">
-          Rooms left and prices per night, excl. taxes and service charge. Arrow keys move between
-          nights and plans.
+          {`Rooms left, and prices in ${perNight({
+            exclusive: calendar.roomTypes
+              .flatMap((t) => t.rows)
+              .filter((row) => !row.pricesIncludeTaxes).length,
+            total: calendar.roomTypes.flatMap((t) => t.rows).length,
+          })}. Arrow keys move between nights and plans.`}
         </caption>
         <thead className="sticky top-0 z-20 bg-surface">
           {bands.some((b) => b.season) ? (

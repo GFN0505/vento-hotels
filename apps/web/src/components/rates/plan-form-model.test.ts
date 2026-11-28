@@ -39,6 +39,11 @@ const bar: RatePlanView = {
 }
 
 describe('plan form', () => {
+  it('starts a new plan all-in and keeps a saved plan’s basis (decision 0032)', () => {
+    expect(formFrom(undefined, TYPES).pricesIncludeTaxes).toBe(true)
+    expect(formFrom({ ...bar, pricesIncludeTaxes: false }, TYPES).pricesIncludeTaxes).toBe(false)
+  })
+
   it('round-trips a plan with its own prices into the same input', () => {
     const input = toInput(formFrom(bar, TYPES), HOTEL, TYPES)
     expect(input.roomTypes).toEqual([

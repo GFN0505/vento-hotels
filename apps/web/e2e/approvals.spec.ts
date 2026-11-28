@@ -84,7 +84,7 @@ test('a manager approves at the desk with his PIN and the booking shows him', as
   await sheet.getByRole('button', { name: 'Ask for approval · 15%' }).click()
   const prompt = page.getByRole('dialog', { name: 'Needs a manager' })
   await expect(prompt.getByText('Discount 15% on Deluxe King · Bed & breakfast')).toBeVisible()
-  await expect(prompt.getByText('₦617,400.00 → ₦524,790.00')).toBeVisible()
+  await expect(prompt.getByText('₦504,000.00 → ₦428,400.00')).toBeVisible()
   const managers = prompt.getByRole('group', { name: 'Approving manager' })
   await expect(managers.getByRole('radio')).toHaveCount(3)
   await expect(managers.getByText(/Chiamaka/)).toHaveCount(0)
@@ -144,7 +144,7 @@ test('a request to the manager’s inbox is approved from his browser and the de
   await expect(panel.getByText('15% discount waiting for you')).toBeVisible()
   await panel.getByRole('link', { name: 'Review' }).click()
   const card = manager.getByRole('article', { name: 'Discount 15% · Sarah Collins' })
-  await expect(card.getByText('₦617,400.00 → ₦524,790.00')).toBeVisible()
+  await expect(card.getByText('₦504,000.00 → ₦428,400.00')).toBeVisible()
   // Decline needs a comment.
   await card.getByRole('button', { name: 'Decline' }).click()
   await expect(card.getByText('Add a comment so Chiamaka knows why.')).toBeVisible()
@@ -164,7 +164,7 @@ test('a request to the manager’s inbox is approved from his browser and the de
   await expect(sheet.getByText(/^Approved by Tunde Bello at \d\d:\d\d$/)).toBeVisible({
     timeout: 10_000,
   })
-  await sheet.getByRole('button', { name: /^Book · ₦524,790\.00/ }).click()
+  await sheet.getByRole('button', { name: /^Book · ₦428,400\.00/ }).click()
   await expect(desk.getByRole('heading', { name: 'Sarah Collins' })).toBeVisible()
   await expect(desk.getByText(/Approved by Tunde Bello/).first()).toBeVisible()
 })

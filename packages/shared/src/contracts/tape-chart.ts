@@ -76,8 +76,10 @@ export const chartRoomTypeSchema = z.object({
   code: z.string(),
   maxAdults: z.number().int(),
   maxChildren: z.number().int(),
-  // Tonight's Best available price excl. taxes, or null when not priced.
+  // Tonight's Best available price, or null when not priced; all-in when the plan's prices include
+  // taxes and service charge (decision 0032).
   tonightPrice: z.string().nullable(),
+  tonightIncludesTaxes: z.boolean(),
   nights: z.array(night),
 })
 export type ChartRoomType = z.infer<typeof chartRoomTypeSchema>
@@ -200,8 +202,10 @@ export const roomOptionsSchema = z.object({
     adults: z.number().int(),
     children: z.number().int(),
     room: z.object({ id: idSchema, number: z.string() }).nullable(),
-    // Sold price of the first night excl. taxes ("Keep ₦168,000.00 a night").
+    // Sold price of the first night, as the plan quotes it ("Keep ₦168,000.00 a night").
     soldPerNight: z.string(),
+    // Whether the plan's prices (and so `soldPerNight` and `difference`) include taxes.
+    pricesIncludeTaxes: z.boolean(),
     nationality: z.string(),
   }),
   // Status badges only matter for an arrival on the business date (or a guest in house).
@@ -217,7 +221,8 @@ export const roomOptionsSchema = z.object({
     z.object({
       roomTypeId: idSchema,
       name: z.string(),
-      // Plan price difference a night excl. taxes against the stay's type (signed, "60000.00").
+      // Plan price difference a night against the stay's type, on the plan's basis (signed,
+      // "60000.00").
       difference: z.string(),
       rooms: z.array(roomOptionSchema),
     }),

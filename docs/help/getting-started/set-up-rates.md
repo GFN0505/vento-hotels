@@ -2,7 +2,9 @@
 
 Rate plans say what each room type costs and on what terms: what's included, the cancellation policy and the deposit. Set them up once at go-live (about 10 minutes for a hotel's usual plans), then change prices for seasons, weekends and events in the Rate calendar. You need to be the owner, the hotel's GM or a revenue manager to change rates. Front desk staff can read them, to quote a guest on the phone.
 
-Every price in Vento is per room per night, in naira, **excl. taxes and service charge**, unless a plan says otherwise. VAT, consumption tax and service charge are added on top when a booking is made.
+Every price in Vento is per room per night, in naira, and **includes taxes and service charge**: type the all-in price your guests already know. Vento works out the VAT, consumption tax and service charge inside it on every bill. With taxes set up, **Before taxes** under each price shows what's left once they're taken out.
+
+If a plan's prices are before taxes, open it, go to **More options** and untick **Prices include taxes and service charge**. That plan is then marked **Excl. taxes** everywhere, and the taxes are added on top when it's booked. Plans you already have keep their setting.
 
 ## Your first rate
 1. On **Home**, click **Set rates** in **Finish setting up**, or go to **Rates & channels** › **Rate plans**. If you see all your hotels, pick the one you're setting up. (Set up your rooms first: rates are set per room type.)

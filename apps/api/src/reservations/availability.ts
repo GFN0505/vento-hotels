@@ -103,9 +103,8 @@ function typeView(
   )
   const soldOut = nights.filter((night) => night.bookable < 1).map((night) => night.date)
   const plans = entry.plans.map((option) => planView(option, rules))
-  const firstPrices = entry.plans.flatMap((option) =>
-    option.nights[0] ? [dec(option.nights[0].price)] : [],
-  )
+  // All-in a night (decision 0032), so plans priced on either basis compare fairly.
+  const firstPrices = plans.map((plan) => dec(plan.perNightIncl))
   const reason = !entry.fits
     ? 'too_many_guests'
     : plans.length === 0

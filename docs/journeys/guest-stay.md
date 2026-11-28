@@ -7,15 +7,15 @@
 - **Stage:** 4 (Distribution & guests), with room service from stage 3.
 - **Screens:** 9 (booking engine), 17 (guest app), 43 (message templates and log), 30 (arrivals), 6 (check-in), 37 (guest requests queue), 11 (POS and kitchen display for room service), 7 (folio and check-out), 31 (modify and cancel dialogs), 21 (A4 invoice), 34 (deposits held), 20 (leakage: refunds).
 
-**Prices.** The demo world fixes Best available (BAR) Deluxe King at ₦150,000 room only, and Bed & breakfast is Best available + ₦18,000, so Deluxe King Bed & breakfast is **₦168,000 per night**, of which ₦18,000 is the meal allocation posted to food at night audit. Tax lines use configuration; for illustration: service charge 10%, VAT 7.5% and Lagos consumption tax 5% on the room rate. Tests must read rates from configuration.
+**Prices.** The demo world fixes Best available (BAR) Deluxe King at ₦150,000 room only, and Bed & breakfast is Best available + ₦18,000, so Deluxe King Bed & breakfast is **₦168,000 per night**, of which ₦18,000 is the meal allocation posted to food at night audit. Prices are all-in: they include taxes and service charge (decision 0032), which are backed out of the price. Tax lines use configuration; for illustration: service charge 10%, VAT 7.5% and Lagos consumption tax 5%, all on the net. Tests must read rates from configuration.
 
 | Per night | Amount |
 |---|---|
-| Deluxe King · Bed & breakfast | ₦168,000.00 |
-| Service charge 10% | ₦16,800.00 |
-| VAT (illustrative 7.5%) | ₦12,600.00 |
-| Lagos consumption tax (illustrative 5%) | ₦8,400.00 |
-| **Total per night** | **₦205,800.00** |
+| **Deluxe King · Bed & breakfast, all-in** | **₦168,000.00** |
+| of which room and breakfast | ₦137,142.86 |
+| of which service charge 10% | ₦13,714.29 |
+| of which VAT (illustrative 7.5%) | ₦10,285.71 |
+| of which Lagos consumption tax (illustrative 5%) | ₦6,857.14 |
 
 Cancellation policy and deposit rule (illustrative, set on the rate plan): deposit of the first night; free cancellation until 48 hours before 14:00 on the arrival day, then the first night is charged.
 
@@ -23,22 +23,22 @@ Cancellation policy and deposit rule (illustrative, set on the rate plan): depos
 
 1. **Search and choose (Wed 25 Nov 2026, 21:10 UK time).**
    - *Does:* opens the Kora Victoria Island booking site from the hotel's Instagram link, picks 9–12 Dec 2026, 1 adult.
-   - *Sees:* "9–12 Dec 2026 · 3 nights". Room types with photos, each from its Non-refundable rate: Standard Queen from ₦108,000, Deluxe King from ₦135,000, Executive King from ₦189,000, Junior Suite from ₦288,000, each "per night + taxes and service charge". Under Deluxe King: Non-refundable ₦135,000 room only, BAR ₦150,000 room only, Bed & breakfast ₦168,000. Each shows the 3-night total with taxes and service charge broken out, and the cancellation policy in one line.
+   - *Sees:* "9–12 Dec 2026 · 3 nights". Room types with photos, each from its Non-refundable rate: Standard Queen from ₦108,000, Deluxe King from ₦135,000, Executive King from ₦189,000, Junior Suite from ₦288,000, each "per night, taxes and service charge included". Under Deluxe King: Non-refundable ₦135,000 room only, BAR ₦150,000 room only, Bed & breakfast ₦168,000. Each shows the 3-night total with the taxes and service charge inside it broken out, and the cancellation policy in one line.
    - *Behind the scenes:* availability and prices come from the same rate and inventory data the front desk and channels use. Nothing is held yet.
    - *Stage 1 note:* until the booking engine (Stage 4), the same booking is taken by phone at the desk (`front-desk-morning.md` step 6a) and the deposit is paid by transfer against the copied confirmation.
 
 2. **Details and deposit by card (21:14).**
-   - *Does:* picks Deluxe King Bed & breakfast, enters name, email, phone (+44 7700 900123), ticks WhatsApp for messages, taps **Pay deposit ₦205,800.00**.
-   - *Sees:* the total: 3 × ₦168,000.00 = ₦504,000.00, service charge ₦50,400.00, VAT ₦37,800.00, consumption tax ₦25,200.00, **total ₦617,400.00**; deposit now ₦205,800.00, balance at the hotel ₦411,600.00. Note: "Charged in naira (NGN). Your bank sets the rate it uses." Then the Paystack checkout, where she enters her card.
+   - *Does:* picks Deluxe King Bed & breakfast, enters name, email, phone (+44 7700 900123), ticks WhatsApp for messages, taps **Pay deposit ₦168,000.00**.
+   - *Sees:* the total: 3 × ₦168,000.00 = **total ₦504,000.00**, which includes room and breakfast ₦411,428.58, service charge ₦41,142.87, VAT ₦30,857.13 and consumption tax ₦20,571.42; deposit now ₦168,000.00, balance at the hotel ₦336,000.00. Note: "Charged in naira (NGN). Your bank sets the rate it uses." Then the Paystack checkout, where she enters her card.
    - *Behind the scenes:* in one locked transaction the reservation is created `tentative` (source `booking_engine`) and one Deluxe King room is taken from inventory for 9, 10 and 11 Dec, for a short hold window. The deposit amount is computed on the server from the rate plan's deposit rule. Card details go only to Paystack; we keep the reference and, if offered, a token. The cancellation policy is stored on the reservation as accepted.
 
 3. **Confirmation on WhatsApp (21:15).**
-   - *Behind the scenes:* we never trust the redirect alone: Verify Transaction confirms status, amount in kobo (20212500), currency NGN and reference; the webhook is idempotent. The reservation becomes `confirmed`, the deposit is recorded against business date 25 Nov 2026 and shows in **Deposits held**. ARI is pushed to channels with one fewer Deluxe King room for those dates.
-   - *Sees:* on screen and on WhatsApp: "Kora Victoria Island: Hello Sarah, your booking is confirmed. Deluxe King room, 9–12 Dec 2026 · 3 nights, breakfast included. Deposit paid ₦205,800.00; balance ₦411,600.00. Manage your booking and check in online: {link}." The same by email. The message is logged against her profile (screen 43).
+   - *Behind the scenes:* we never trust the redirect alone: Verify Transaction confirms status, amount in kobo (16800000), currency NGN and reference; the webhook is idempotent. The reservation becomes `confirmed`, the deposit is recorded against business date 25 Nov 2026 and shows in **Deposits held**. ARI is pushed to channels with one fewer Deluxe King room for those dates.
+   - *Sees:* on screen and on WhatsApp: "Kora Victoria Island: Hello Sarah, your booking is confirmed. Deluxe King room, 9–12 Dec 2026 · 3 nights, breakfast included. Deposit paid ₦168,000.00; balance ₦336,000.00. Manage your booking and check in online: {link}." The same by email. The message is logged against her profile (screen 43).
 
 4. **She extends by a night (Tue 1 Dec, 08:30).**
    - *Does:* opens the guest app from the link, **Change dates**, moves departure to 13 Dec.
-   - *Sees:* "9–13 Dec 2026 · 4 nights. New total ₦823,200.00 (was ₦617,400.00), difference ₦205,800.00. Deposit stays ₦205,800.00." She confirms.
+   - *Sees:* "9–13 Dec 2026 · 4 nights. New total ₦672,000.00 (was ₦504,000.00), difference ₦168,000.00. Deposit stays ₦168,000.00." She confirms.
    - *Behind the scenes:* in one transaction, with the room-type inventory row for 12 Dec locked, the server checks Deluxe King availability for the added night, re-prices the added night at today's rate for 12 Dec, and updates the stay. The original nights keep their booked rates. ARI push. Audit event `reservation.modified` with source `guest_app`. New confirmation on WhatsApp.
 
 5. **Pre-check-in (Mon 7 Dec, 19:00).**
@@ -52,7 +52,7 @@ Cancellation policy and deposit rule (illustrative, set on the rate plan): depos
 
 7. **Express check-in at the desk (14:05).**
    - *Does:* Chiamaka opens her arrival, checks the passport against the uploaded photo, prints the registration card with the foreign national section, Sarah signs it. Key issued.
-   - *Sees (Chiamaka):* everything pre-filled; the deposit already on the reservation; balance due ₦617,400.00 to settle by departure (4 nights ₦823,200.00 − deposit).
+   - *Sees (Chiamaka):* everything pre-filled; the deposit already on the reservation; balance due ₦504,000.00 to settle by departure (4 nights ₦672,000.00 − deposit).
    - *Behind the scenes:* reservation `confirmed → checked_in`; room 404 `occupied`; the deposit moves to her folio as a payment. No further authorisation taken (see Open questions). Audit events for check-in and key issued.
 
 8. **Requests: towels and late check-out (Thu 10 Dec, 08:15).**
@@ -70,7 +70,7 @@ Cancellation policy and deposit rule (illustrative, set on the rate plan): depos
 
 11. **Pays the balance online (Sun 13 Dec, 10:30).**
     - *Does:* **Pay balance**.
-    - *Sees:* "₦641,900.00" (4 nights ₦823,200.00 + room service ₦24,500.00 − deposit ₦205,800.00), and below it "About £329.18 at ₦1,950.00 = £1 (CBN official rate, 13 Dec 2026). You will be charged in naira; your bank's rate may differ." The FX rate here is illustrative.
+    - *Sees:* "₦528,500.00" (4 nights ₦672,000.00 + room service ₦24,500.00 − deposit ₦168,000.00), and below it "About £271.03 at ₦1,950.00 = £1 (CBN official rate, 13 Dec 2026). You will be charged in naira; your bank's rate may differ." The FX rate here is illustrative.
     - *Behind the scenes:* Paystack charges NGN only. On verified success a `card_online` payment posts to her folio, with the FX rate, source and date stored beside the GBP indication. Balance re-checked at posting; any overpayment stays as a credit.
 
 12. **Invoice and departure (14:45).**
@@ -84,7 +84,7 @@ Cancellation policy and deposit rule (illustrative, set on the rate plan): depos
 ### Alternative path: she cancels inside the penalty window
 *Stage 1 note:* until the guest app (Stage 4), the desk cancels by phone with the same rule (`front-desk-morning.md` step 6d).
 Instead of step 4, on **Tue 8 Dec at 10:00** (28 hours before arrival) she taps **Cancel booking** in the guest app.
-- *Sees:* "Free cancellation ended on 7 Dec 2026 at 14:00. If you cancel now, the first night (₦205,800.00) is charged. You paid ₦205,800.00, so no refund is due." She confirms with a reason from a short list.
+- *Sees:* "Free cancellation ended on 7 Dec 2026 at 14:00. If you cancel now, the first night (₦168,000.00) is charged. You paid ₦168,000.00, so no refund is due." She confirms with a reason from a short list.
 - *Behind the scenes:* in one locked transaction the reservation becomes `cancelled` and the Deluxe King room is returned to inventory for 9, 10 and 11 Dec; ARI push. The penalty posts as a charge using the policy stored at booking; refundable = paid − penalty = ₦0.00. Had she paid more (for example a full prepayment), the difference would be refunded through Paystack with our own reference, needing a member with `refund` permission and a reason (see Open questions). The cancellation shows in the no-shows and cancellations report; WhatsApp and email confirm it.
 
 ## What can go wrong

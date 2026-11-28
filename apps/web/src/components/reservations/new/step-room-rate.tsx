@@ -251,7 +251,7 @@ function RoomTypeCard({
           <LeftBadges type={type} />
           {!expanded && type.from && type.sellable ? (
             <span className="num text-sm text-text-3">
-              from <span className="text-text">{naira(type.from)}</span>
+              from <span className="text-text">{naira(type.from)}</span> incl. taxes
             </span>
           ) : null}
         </div>

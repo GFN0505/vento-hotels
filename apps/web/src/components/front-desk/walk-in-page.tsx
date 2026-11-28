@@ -483,7 +483,15 @@ function HotelWalkIn({ hotel }: { hotel: Property }) {
                         <span className="font-medium">{t.name}</span>
                         <span className="text-sm text-text-2">{words}</span>
                       </span>
-                      <span className="num flex-none text-sm">{t.from ? naira(t.from) : '–'}</span>
+                      <span className="num flex-none text-sm">
+                        {t.from ? (
+                          <>
+                            {naira(t.from)} <span className="text-text-3">incl. taxes</span>
+                          </>
+                        ) : (
+                          '–'
+                        )}
+                      </span>
                     </button>
                   </li>
                 )
@@ -554,7 +562,11 @@ function HotelWalkIn({ hotel }: { hotel: Property }) {
                         (p.mealPlan === 'room_only' ? 'Room only' : 'Breakfast included')}
                     </span>
                   </span>
-                  <span className="num text-sm">{naira(p.perNightExcl)}</span>
+                  {/* What the guest hears: the all-in price, whatever the plan's basis (0032). */}
+                  <span className="num flex flex-col items-end text-sm">
+                    {naira(p.perNightIncl)}
+                    <span className="text-xs text-text-3">a night incl. taxes</span>
+                  </span>
                 </label>
               ))}
             </fieldset>
@@ -701,8 +713,18 @@ function HotelWalkIn({ hotel }: { hotel: Property }) {
         <dl className="num flex flex-wrap gap-x-6 gap-y-2">
           {quote.data ? (
             <>
+              {/* All-in plans (the default, decision 0032) lead with the total and show the
+                  taxes inside it; plans priced before taxes add them up to the total. */}
+              {quote.data.terms.pricesIncludeTaxes ? (
+                <div className="flex flex-col">
+                  <dt className="text-xs font-semibold text-text-3 uppercase">Total</dt>
+                  <dd className="text-lg font-semibold">{naira(quote.data.totals.total)}</dd>
+                </div>
+              ) : null}
               <div className="flex flex-col">
-                <dt className="text-xs font-semibold text-text-3 uppercase">Room</dt>
+                <dt className="text-xs font-semibold text-text-3 uppercase">
+                  {quote.data.terms.pricesIncludeTaxes ? 'Includes room' : 'Room'}
+                </dt>
                 <dd>{naira(quote.data.totals.net)}</dd>
               </div>
               {quote.data.totals.lines.map((l) => (
@@ -713,10 +735,18 @@ function HotelWalkIn({ hotel }: { hotel: Property }) {
                   <dd>{naira(l.amount)}</dd>
                 </div>
               ))}
-              <div className="flex flex-col">
-                <dt className="text-xs font-semibold text-text-3 uppercase">Total</dt>
-                <dd className="text-lg font-semibold">{naira(quote.data.totals.total)}</dd>
-              </div>
+              {quote.data.totals.rounding !== '0.00' ? (
+                <div className="flex flex-col">
+                  <dt className="text-xs font-semibold text-text-3 uppercase">Rounding</dt>
+                  <dd>{naira(quote.data.totals.rounding)}</dd>
+                </div>
+              ) : null}
+              {quote.data.terms.pricesIncludeTaxes ? null : (
+                <div className="flex flex-col">
+                  <dt className="text-xs font-semibold text-text-3 uppercase">Total</dt>
+                  <dd className="text-lg font-semibold">{naira(quote.data.totals.total)}</dd>
+                </div>
+              )}
               {quote.data.fx ? (
                 <div className="self-end text-sm text-text-2">{quote.data.fx.text}</div>
               ) : null}

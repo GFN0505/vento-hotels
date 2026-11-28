@@ -94,8 +94,8 @@ export function SummaryAside({ draft, quote, hotel, editable, limits, problems }
           ) : null}
           <span className="text-sm text-text-3">
             {data.terms.pricesIncludeTaxes
-              ? 'Rates include service charge and taxes.'
-              : 'Rates exclude service charge and taxes.'}
+              ? 'Prices include taxes and service charge.'
+              : 'Prices exclude taxes and service charge; they’re added on top.'}
           </span>
         </div>
       )}
@@ -107,7 +107,6 @@ export function SummaryAside({ draft, quote, hotel, editable, limits, problems }
 }
 
 function Lines({ quote }: { quote: StayQuote }) {
-  const net = quote.totals.net
   const roomWords =
     quote.terms.mealPlan === 'room_only'
       ? 'Room'
@@ -134,9 +133,34 @@ function Lines({ quote }: { quote: StayQuote }) {
         </div>
       )}
       <div className="my-1 h-px bg-border" />
-      <div className="flex justify-between gap-2">
+      {quote.terms.pricesIncludeTaxes ? (
+        // All-in (the default, decision 0032): the total leads and the taxes are shown inside it,
+        // never on top.
+        <>
+          <Total amount={quote.totals.total} />
+          <span className="mt-1 text-[11px] font-semibold tracking-[0.05em] text-text-3 uppercase">
+            Includes
+          </span>
+          <Breakdown quote={quote} roomWords={roomWords} />
+        </>
+      ) : (
+        <>
+          <Breakdown quote={quote} roomWords={roomWords} />
+          <Total amount={quote.totals.total} rule />
+        </>
+      )}
+    </div>
+  )
+}
+
+function Breakdown({ quote, roomWords }: { quote: StayQuote; roomWords: string }) {
+  const inside = quote.terms.pricesIncludeTaxes
+  const row = cn('flex justify-between gap-2', inside && 'text-sm text-text-2')
+  return (
+    <>
+      <div className={row}>
         <span>{roomWords}</span>
-        <span>{naira(net)}</span>
+        <span>{naira(quote.totals.net)}</span>
       </div>
       {quote.totals.lines.map((line) => (
         <div key={line.key} className="flex justify-between gap-2 text-sm text-text-2">
@@ -150,10 +174,20 @@ function Lines({ quote }: { quote: StayQuote }) {
           <span>{naira(quote.totals.rounding)}</span>
         </div>
       ) : null}
-      <div className="mt-1 flex items-baseline justify-between gap-2 border-t border-border-strong pt-2">
-        <span className="font-semibold">Total</span>
-        <span className="text-lg font-semibold">{naira(quote.totals.total)}</span>
-      </div>
+    </>
+  )
+}
+
+function Total({ amount, rule = false }: { amount: string; rule?: boolean }) {
+  return (
+    <div
+      className={cn(
+        'flex items-baseline justify-between gap-2',
+        rule && 'mt-1 border-t border-border-strong pt-2',
+      )}
+    >
+      <span className="font-semibold">Total</span>
+      <span className="text-lg font-semibold">{naira(amount)}</span>
     </div>
   )
 }

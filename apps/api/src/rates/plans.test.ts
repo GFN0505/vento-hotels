@@ -60,7 +60,7 @@ describe.skipIf(!url)('rate plans', () => {
       cancellation: TERMS.cancellation,
       deposit: TERMS.deposit,
       bookableBy: 'anyone',
-      pricesIncludeTaxes: false,
+      pricesIncludeTaxes: true, // all-in by default (decision 0032)
       currency: 'NGN',
       followers: [
         { id: bb.id, name: 'Bed & breakfast' },
@@ -545,7 +545,8 @@ describe.skipIf(!url)('rate plans', () => {
     expect(overview.data).toMatchObject({
       property: { businessDate: '2026-11-25', lastRateDate: '2028-11-25', live: false },
       unpricedRoomTypes: [{ id: suite.data.id, name: 'Executive Suite' }],
-      basePlan: { id: bar.id, name: 'Best available' },
+      basePlan: { id: bar.id, name: 'Best available', pricesIncludeTaxes: true },
+      exclusivePlans: 0,
       canEdit: true,
     })
     const types = await t.rpc<Page<RoomTypeView>>(kora.owner.cookie, 'roomTypes/list', {
@@ -556,6 +557,7 @@ describe.skipIf(!url)('rate plans', () => {
       ratePlanId: bar.id,
       ratePlanName: 'Best available',
       amount: '150000.00',
+      pricesIncludeTaxes: true,
     })
     expect(rateOf('EXS')).toMatchObject({ ratePlanId: bar.id, amount: null })
     const home = async () =>
@@ -736,5 +738,42 @@ describe.skipIf(!url)('rate plans', () => {
     expect(history.data.items).toHaveLength(3)
     const frontDesk = await t.rpc(kora.frontDesk.cookie, 'ratePlans/history', { id: bar.id })
     expect(frontDesk.status).toBe(403)
+  })
+
+  // Decision 0032: new plans are all-in unless marked, and a plan priced before taxes keeps it.
+  it('makes new plans include taxes unless told otherwise, and counts the ones that don’t', async () => {
+    const make = (code: string, extra: Record<string, unknown> = {}) =>
+      t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/create', {
+        propertyId: kora.vi.id,
+        name: `Weekend ${code}`,
+        code,
+        pricing: 'own',
+        roomTypes: [{ roomTypeId: kora.types.stq.id, weekday: '99000' }],
+        ...TERMS,
+        ...extra,
+      })
+    const inclusive = await make('WKI')
+    expect(inclusive.data.pricesIncludeTaxes).toBe(true)
+    expect(nrf.pricesIncludeTaxes).toBe(true)
+    const exclusive = await make('WKX', { pricesIncludeTaxes: false })
+    expect(exclusive.data.pricesIncludeTaxes).toBe(false)
+    const overview = await t.rpc<RatesOverview>(kora.gm.cookie, 'ratePlans/overview', {
+      propertyId: kora.vi.id,
+    })
+    expect(overview.data.exclusivePlans).toBe(1)
+    // Saving the exclusive plan's whole form leaves its basis alone.
+    const saved = await t.rpc<RatePlanView>(kora.gm.cookie, 'ratePlans/update', {
+      ...formOf(exclusive.data),
+      name: 'Weekend before taxes',
+    })
+    expect(saved.data.pricesIncludeTaxes).toBe(false)
+    for (const plan of [inclusive.data, saved.data]) {
+      await t.rpc(kora.gm.cookie, 'ratePlans/archive', { id: plan.id })
+    }
+    // Archived plans don't count: the header goes back to plain "incl.".
+    const after = await t.rpc<RatesOverview>(kora.gm.cookie, 'ratePlans/overview', {
+      propertyId: kora.vi.id,
+    })
+    expect(after.data.exclusivePlans).toBe(0)
   })
 })

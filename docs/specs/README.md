@@ -37,3 +37,4 @@ A spec that is dropped is deleted, with the reason in the commit message.
 | [Rate plans and rates (manual)](stage-1-rate-plans.md) | 1 | Reservations & Front Desk | going-live, front-desk-morning, golden thread, guest-stay | approved |
 | [Taxes, service charge, payment methods and FX rates](stage-1-taxes-and-payment-methods.md) | 1 | Finance | going-live, front-desk-morning, night-audit | built |
 | [Availability and new reservations](stage-1-availability-and-reservations.md) | 1 | Reservations & Front Desk | front-desk-morning, guest-stay, night-audit, golden thread | built |
+| [Prices include taxes by default](stage-1-tax-inclusive-default.md) | 1 | Reservations & Front Desk | guest-stay, going-live | built |

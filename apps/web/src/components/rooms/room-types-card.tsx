@@ -29,6 +29,9 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
   const [order, setOrder] = useState<string[]>()
   const [dragging, setDragging] = useState<string>()
   const [expanded, setExpanded] = useState(false)
+  // Every type reads the same base plan; all-in unless that plan is priced before taxes (0032).
+  const baseBasis =
+    types.find((type) => type.baseRate)?.baseRate?.pricesIncludeTaxes === false ? 'excl.' : 'incl.'
   const byId = new Map(types.map((type) => [type.id, type]))
   const ordered = (order ?? types.map((t) => t.id)).flatMap((id) => byId.get(id) ?? [])
 
@@ -99,12 +102,12 @@ export function RoomTypesCard({ propertyId, types, archived, canWrite, onEdit }:
             <th
               scope="col"
               className="px-3 py-2 text-right"
-              title="Best available, weekday, excl. taxes and service charge"
+              title={`Best available, weekday, ${baseBasis} taxes and service charge`}
             >
               Base rate / night
               <span className="block font-normal text-text-3">
-                Best available, weekday<span className="max-xl:hidden">, excl. taxes</span>
-                <span className="sr-only xl:hidden">, excl. taxes and service charge</span>
+                Best available, weekday<span className="max-xl:hidden">, {baseBasis} taxes</span>
+                <span className="sr-only xl:hidden">, {baseBasis} taxes and service charge</span>
               </span>
             </th>
             <th scope="col" className="px-3 py-2">
@@ -246,10 +249,13 @@ function BaseRate({ type }: { type: RoomTypeView }) {
   return (
     <span
       className="num font-medium"
-      title={`${base.ratePlanName}, weekday, excl. taxes and service charge`}
+      title={`${base.ratePlanName}, weekday, ${base.pricesIncludeTaxes ? 'incl.' : 'excl.'} taxes and service charge`}
     >
       {formatNaira(base.amount)}
-      <span className="sr-only"> excl. taxes and service charge</span>
+      <span className="sr-only">
+        {' '}
+        {base.pricesIncludeTaxes ? 'incl.' : 'excl.'} taxes and service charge
+      </span>
     </span>
   )
 }

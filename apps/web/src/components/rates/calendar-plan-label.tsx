@@ -1,5 +1,6 @@
 // A plan's name at the start of its calendar row: derived plans get the link icon and how they
-// follow their parent ("Best available + ₦18,000"); corporate and tax-inclusive plans say so.
+// follow their parent ("Best available + ₦18,000"); corporate plans, and plans priced before taxes
+// (all-in is the default, decision 0032), say so.
 import type { RatePlanView } from '@vento/shared'
 import { Link2 } from 'lucide-react'
 import type { CalendarRow } from './calendar-model'
@@ -14,7 +15,7 @@ export function PlanLabel({ row, plan }: { row: CalendarRow; plan: RatePlanView 
         : `Follows ${row.parent?.name ?? 'its parent'}`
       : 'Own prices',
     row.bookableBy === 'corporate_only' ? 'corporate' : null,
-    row.pricesIncludeTaxes ? 'incl. taxes' : null,
+    row.pricesIncludeTaxes ? null : 'excl. taxes',
   ]
     .filter(Boolean)
     .join(' · ')
