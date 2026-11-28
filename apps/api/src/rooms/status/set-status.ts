@@ -7,6 +7,7 @@
 import { ORPCError } from '@orpc/server'
 import {
   clockAt,
+  newId,
   type RoomStatusResult,
   type SetRoomStatusInput,
   setRoomStatusInputSchema,
@@ -214,4 +215,68 @@ export async function setRoomStatus(
     }
     throw error
   }
+}
+
+// The room status service inside another change's transaction (spec: an in-house move or a
+// reversed check-in leaves the old room dirty). The caller holds the room's lock (step 3). Recorded
+// like a person's change: a receipt, the room's who-and-when, and room.status_changed with the
+// change that caused it as `source`.
+export async function setStatusInTx(
+  tx: Tx,
+  access: Access,
+  change: {
+    propertyId: string
+    businessDate: string
+    roomId: string
+    status: 'clean' | 'dirty'
+    source: 'room_move' | 'check_in_reversed'
+    causedBy: Record<string, unknown>
+  },
+): Promise<void> {
+  const [room] = await tx
+    .select({ number: rooms.number, status: rooms.housekeepingStatus })
+    .from(rooms)
+    .where(and(eq(rooms.id, change.roomId), eq(rooms.organizationId, access.organizationId)))
+  if (!room) return
+  const now = new Date()
+  await tx.insert(roomStatusCommands).values({
+    organizationId: access.organizationId,
+    propertyId: change.propertyId,
+    roomId: change.roomId,
+    idempotencyKey: newId(),
+    status: change.status,
+    occurredAt: now,
+    appliedAt: now,
+    outcome: 'applied',
+    byMemberId: access.memberId,
+    deviceId: access.deviceId,
+  })
+  await tx
+    .update(rooms)
+    .set({
+      housekeepingStatus: change.status,
+      housekeepingStatusAt: now,
+      housekeepingStatusByMemberId: access.memberId,
+      housekeepingStatusByName: access.userName,
+      updatedAt: now,
+    })
+    .where(eq(rooms.id, change.roomId))
+  await recordAudit(tx, access, {
+    action: 'room.status_changed',
+    entityType: 'room',
+    entityId: change.roomId,
+    propertyId: change.propertyId,
+    businessDate: change.businessDate,
+    before: { number: room.number, housekeepingStatus: room.status },
+    after: {
+      number: room.number,
+      housekeepingStatus: change.status,
+      requested: change.status,
+      applied: true,
+      source: change.source,
+      occurredAt: now.toISOString(),
+      syncedAt: null,
+      ...change.causedBy,
+    },
+  })
 }

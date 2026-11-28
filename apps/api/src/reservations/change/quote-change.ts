@@ -52,22 +52,23 @@ async function offeredTypes(
   priced: PricedChange,
 ): Promise<ChangeQuote['roomTypes']> {
   const { input, stay } = priced
-  const lastNight = priced.nights.at(-1)?.date ?? input.arrival
+  const lastNight = priced.nights.at(-1)?.date ?? priced.from
   const types = await typesOnPlan(db, access, {
     propertyId: hotel.id,
     ratePlanId: stay.ratePlanId,
-    from: input.arrival,
+    from: priced.from,
     to: lastNight,
   })
   const scope = { organizationId: access.organizationId, propertyId: hotel.id }
   const ids = types.map((type) => type.id)
   const capacity = await capacityOf(db, scope, ids)
-  const booked = await bookedFor(db, scope, ids, input.arrival, lastNight)
+  const booked = await bookedFor(db, scope, ids, priced.from, lastNight)
   const stayDates = new Set(nightKeysOf(stay).map((key) => key.date))
   return types.map((type) => {
     const cap = capacity.get(type.id)
     let soldOutOn: string | null = null
     for (const night of priced.nights) {
+      if (night.date < priced.from) continue
       if (type.id === stay.roomTypeId && stayDates.has(night.date)) continue
       const room = leftOn(
         cap,
@@ -126,7 +127,7 @@ export async function quoteChange(
   const priced = await priceChange(db, access, hotel, loaded, input, new Date())
   const scope = { organizationId: access.organizationId, propertyId: hotel.id }
   const terms = priced.stay.terms as { planName: string }
-  const room = await quoteRoom(db, scope, priced.stay, input)
+  const room = await quoteRoom(db, scope, priced.stay, input, priced.from)
   const keptFrom =
     input.keepBookedPrice && input.roomTypeId !== priced.stay.roomTypeId
       ? loaded.nights.find((night) => night.stayId === priced.stay.id)

@@ -1,6 +1,7 @@
 // The API's settings, validated once at start. A bad or missing setting stops the server with the
 // setting's name (never its value) instead of failing later on the first request.
 import { z } from 'zod'
+import { devGuestKeyAllowed } from './guests/registration/crypto.ts'
 import { infraEnvSchema, MissingSettingError } from './infra/config.ts'
 import type { S3Settings } from './providers/storage.ts'
 
@@ -28,6 +29,16 @@ const envSchema = infraEnvSchema.extend({
   S3_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
   S3_SECRET_ACCESS_KEY: z.string().trim().min(1).optional(),
   S3_BUCKET: z.string().trim().min(3).optional(),
+  // Guest ID photos and scans (decision 0031): a separate bucket with no public access and no CORS.
+  // Defaults to "<S3_BUCKET>-private".
+  S3_PRIVATE_BUCKET: z.string().trim().min(3).optional(),
+  // Encrypts guest ID, passport and visa numbers (decision 0031): 32 bytes, base64. Required
+  // everywhere unless ALLOW_DEV_GUEST_DATA_KEY=true on a local, non-production server.
+  GUEST_DATA_KEY: z
+    .string()
+    .trim()
+    .refine((value) => Buffer.from(value, 'base64').length === 32, '32 bytes, base64')
+    .optional(),
   // Error tracking (Sentry). Unset means off; logs still record every error.
   SENTRY_DSN: z.url().optional(),
   // debug, info (default), warn or error.
@@ -54,6 +65,10 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
   ) {
     throw new MissingSettingError('VENTO_ALL_FEATURES', 'must be off in production')
   }
+  // The fixed development key only by explicit opt-in, never by a default (crypto.ts).
+  if (!result.data.GUEST_DATA_KEY && !devGuestKeyAllowed(source)) {
+    throw new MissingSettingError('GUEST_DATA_KEY', 'is not set')
+  }
   return result.data
 }
 
@@ -75,4 +90,11 @@ export function storageSettings(env: Env): S3Settings | undefined {
     throw new MissingSettingError(missing, 'is not set (the other storage settings are)')
   }
   return { endpoint: env.S3_ENDPOINT, region: env.S3_REGION, accessKeyId, secretAccessKey, bucket }
+}
+
+// The private bucket for guest ID images: the same credentials, its own bucket.
+export function privateStorageSettings(env: Env): S3Settings | undefined {
+  const settings = storageSettings(env)
+  if (!settings) return undefined
+  return { ...settings, bucket: env.S3_PRIVATE_BUCKET ?? `${settings.bucket}-private` }
 }

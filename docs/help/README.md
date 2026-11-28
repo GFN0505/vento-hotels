@@ -55,5 +55,7 @@ docs/help/
 | [Open your cashier shift](front-desk/open-your-cashier-shift.md) | `front-desk-morning.md` step 2, `night-audit.md` step 1 | written |
 | [Count and close your cashier shift](front-desk/close-your-cashier-shift.md) | `front-desk-morning.md` step 12 | written |
 | [Set up cash drawers](finance/set-up-cash-drawers.md) | `going-live.md` step 4a | written |
+| [Check in a guest](reservations/check-in-a-guest.md) | `front-desk-morning.md` steps 1, 3, 10 and 11 | written |
+| [Do a walk-in](reservations/do-a-walk-in.md) | `front-desk-morning.md` steps 7 and 8 | written |
 
 Status: `todo` · `written` · `published`

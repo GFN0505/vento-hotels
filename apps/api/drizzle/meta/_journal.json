@@ -145,8 +145,29 @@
     {
       "idx": 20,
       "version": "7",
-      "when": 1795848134186,
-      "tag": "0020_cashier_shifts",
+      "when": 1795827447278,
+      "tag": "0020_front_desk",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795827726739,
+      "tag": "0021_registration_id_photo",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795833436884,
+      "tag": "0022_purged_id_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795851647495,
+      "tag": "0023_cashier_shifts",
       "breakpoints": true
     }
   ]

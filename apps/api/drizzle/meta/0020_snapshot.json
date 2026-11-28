@@ -1,5 +1,5 @@
 {
-  "id": "5fe86c5f-4a76-4076-a82a-8a24c34abf69",
+  "id": "689ba09c-12e1-4492-8750-3089b26480ac",
   "prevId": "e25f23e8-79fd-4806-8648-c02af19881c0",
   "version": "7",
   "dialect": "postgresql",
@@ -1176,1002 +1176,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.cash_drawer_terminals": {
-      "name": "cash_drawer_terminals",
-      "schema": "",
-      "columns": {
-        "organization_id": {
-          "name": "organization_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "property_id": {
-          "name": "property_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "drawer_id": {
-          "name": "drawer_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "pos_terminal_id": {
-          "name": "pos_terminal_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "cash_drawer_terminals_organization_id_property_id_index": {
-          "name": "cash_drawer_terminals_organization_id_property_id_index",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "property_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "cash_drawer_terminals_pos_terminal_id_index": {
-          "name": "cash_drawer_terminals_pos_terminal_id_index",
-          "columns": [
-            {
-              "expression": "pos_terminal_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "cash_drawer_terminals_organization_id_organizations_id_fk": {
-          "name": "cash_drawer_terminals_organization_id_organizations_id_fk",
-          "tableFrom": "cash_drawer_terminals",
-          "tableTo": "organizations",
-          "columnsFrom": ["organization_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "cash_drawer_terminals_property_fk": {
-          "name": "cash_drawer_terminals_property_fk",
-          "tableFrom": "cash_drawer_terminals",
-          "tableTo": "properties",
-          "columnsFrom": ["organization_id", "property_id"],
-          "columnsTo": ["organization_id", "id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "cash_drawer_terminals_drawer_fk": {
-          "name": "cash_drawer_terminals_drawer_fk",
-          "tableFrom": "cash_drawer_terminals",
-          "tableTo": "cash_drawers",
-          "columnsFrom": ["property_id", "drawer_id"],
-          "columnsTo": ["property_id", "id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "cash_drawer_terminals_terminal_fk": {
-          "name": "cash_drawer_terminals_terminal_fk",
-          "tableFrom": "cash_drawer_terminals",
-          "tableTo": "pos_terminals",
-          "columnsFrom": ["property_id", "pos_terminal_id"],
-          "columnsTo": ["property_id", "id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "cash_drawer_terminals_drawer_id_pos_terminal_id_pk": {
-          "name": "cash_drawer_terminals_drawer_id_pos_terminal_id_pk",
-          "columns": ["drawer_id", "pos_terminal_id"]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.cash_drawers": {
-      "name": "cash_drawers",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "uuidv7()"
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "property_id": {
-          "name": "property_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "archived_at": {
-          "name": "archived_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "version": {
-          "name": "version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "cash_drawers_organization_id_property_id_index": {
-          "name": "cash_drawers_organization_id_property_id_index",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "property_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "cash_drawers_name_unique": {
-          "name": "cash_drawers_name_unique",
-          "columns": [
-            {
-              "expression": "property_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "lower(\"name\")",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"cash_drawers\".\"archived_at\" is null",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "cash_drawers_organization_id_organizations_id_fk": {
-          "name": "cash_drawers_organization_id_organizations_id_fk",
-          "tableFrom": "cash_drawers",
-          "tableTo": "organizations",
-          "columnsFrom": ["organization_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "cash_drawers_property_fk": {
-          "name": "cash_drawers_property_fk",
-          "tableFrom": "cash_drawers",
-          "tableTo": "properties",
-          "columnsFrom": ["organization_id", "property_id"],
-          "columnsTo": ["organization_id", "id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "cash_drawers_property_id_id_unique": {
-          "name": "cash_drawers_property_id_id_unique",
-          "nullsNotDistinct": false,
-          "columns": ["property_id", "id"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "cash_drawers_name_length": {
-          "name": "cash_drawers_name_length",
-          "value": "char_length(\"cash_drawers\".\"name\") between 1 and 30"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.cashier_shift_count_lines": {
-      "name": "cashier_shift_count_lines",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "uuidv7()"
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "property_id": {
-          "name": "property_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "shift_id": {
-          "name": "shift_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "cash_count_line_kind",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "currency": {
-          "name": "currency",
-          "type": "char(3)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "pos_terminal_id": {
-          "name": "pos_terminal_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "notes": {
-          "name": "notes",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "counted": {
-          "name": "counted",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "expected": {
-          "name": "expected",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "difference": {
-          "name": "difference",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "fx_rate": {
-          "name": "fx_rate",
-          "type": "numeric(14, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "fx_source": {
-          "name": "fx_source",
-          "type": "fx_rate_source",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "fx_rate_date": {
-          "name": "fx_rate_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "counted_ngn": {
-          "name": "counted_ngn",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "expected_ngn": {
-          "name": "expected_ngn",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "difference_ngn": {
-          "name": "difference_ngn",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "cashier_shift_count_lines_organization_id_property_id_index": {
-          "name": "cashier_shift_count_lines_organization_id_property_id_index",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "property_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "cashier_shift_count_lines_pos_terminal_id_index": {
-          "name": "cashier_shift_count_lines_pos_terminal_id_index",
-          "columns": [
-            {
-              "expression": "pos_terminal_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "cashier_shift_count_lines_one_per_line": {
-          "name": "cashier_shift_count_lines_one_per_line",
-          "columns": [
-            {
-              "expression": "shift_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "kind",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "currency",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "coalesce(\"pos_terminal_id\", '00000000-0000-0000-0000-000000000000'::uuid)",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "cashier_shift_count_lines_organization_id_organizations_id_fk": {
-          "name": "cashier_shift_count_lines_organization_id_organizations_id_fk",
-          "tableFrom": "cashier_shift_count_lines",
-          "tableTo": "organizations",
-          "columnsFrom": ["organization_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "cashier_shift_count_lines_property_fk": {
-          "name": "cashier_shift_count_lines_property_fk",
-          "tableFrom": "cashier_shift_count_lines",
-          "tableTo": "properties",
-          "columnsFrom": ["organization_id", "property_id"],
-          "columnsTo": ["organization_id", "id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "cashier_shift_count_lines_shift_fk": {
-          "name": "cashier_shift_count_lines_shift_fk",
-          "tableFrom": "cashier_shift_count_lines",
-          "tableTo": "cashier_shifts",
-          "columnsFrom": ["property_id", "shift_id"],
-          "columnsTo": ["property_id", "id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "cashier_shift_count_lines_currency": {
-          "name": "cashier_shift_count_lines_currency",
-          "value": "\"cashier_shift_count_lines\".\"currency\" in ('NGN','USD','GBP','EUR')"
-        },
-        "cashier_shift_count_lines_terminal": {
-          "name": "cashier_shift_count_lines_terminal",
-          "value": "(\"cashier_shift_count_lines\".\"kind\" = 'pos_terminal') = (\"cashier_shift_count_lines\".\"pos_terminal_id\" is not null)"
-        },
-        "cashier_shift_count_lines_fx": {
-          "name": "cashier_shift_count_lines_fx",
-          "value": "(\"cashier_shift_count_lines\".\"currency\" <> 'NGN' or \"cashier_shift_count_lines\".\"fx_rate\" is null) and (\"cashier_shift_count_lines\".\"fx_rate\" is null) = (\"cashier_shift_count_lines\".\"fx_rate_date\" is null) and (\"cashier_shift_count_lines\".\"fx_rate\" is null) = (\"cashier_shift_count_lines\".\"fx_source\" is null)"
-        },
-        "cashier_shift_count_lines_counted": {
-          "name": "cashier_shift_count_lines_counted",
-          "value": "\"cashier_shift_count_lines\".\"counted\" >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.cashier_shifts": {
-      "name": "cashier_shifts",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "uuidv7()"
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "property_id": {
-          "name": "property_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "drawer_id": {
-          "name": "drawer_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "number": {
-          "name": "number",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "business_date": {
-          "name": "business_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "member_id": {
-          "name": "member_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "member_name": {
-          "name": "member_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "device_id": {
-          "name": "device_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "device_name": {
-          "name": "device_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "cashier_shift_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'open'"
-        },
-        "opened_at": {
-          "name": "opened_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "opening_float": {
-          "name": "opening_float",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "opening_notes": {
-          "name": "opening_notes",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "handover_from_shift_id": {
-          "name": "handover_from_shift_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "handover_from_name": {
-          "name": "handover_from_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "handover_expected": {
-          "name": "handover_expected",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'0.00'"
-        },
-        "handover_difference": {
-          "name": "handover_difference",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'0.00'"
-        },
-        "handover_reason": {
-          "name": "handover_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "handover_approval_id": {
-          "name": "handover_approval_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "terminal_ids": {
-          "name": "terminal_ids",
-          "type": "uuid[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::uuid[]"
-        },
-        "counted_at": {
-          "name": "counted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "counted_business_date": {
-          "name": "counted_business_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cash_counted": {
-          "name": "cash_counted",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "total_difference": {
-          "name": "total_difference",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "closed_at": {
-          "name": "closed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "closed_business_date": {
-          "name": "closed_business_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "close_reason": {
-          "name": "close_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "close_approval_id": {
-          "name": "close_approval_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "float_kept": {
-          "name": "float_kept",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "drop_ngn": {
-          "name": "drop_ngn",
-          "type": "numeric(14, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "drop_bag_number": {
-          "name": "drop_bag_number",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "currency": {
-          "name": "currency",
-          "type": "char(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'NGN'"
-        },
-        "open_idempotency_key": {
-          "name": "open_idempotency_key",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "count_idempotency_key": {
-          "name": "count_idempotency_key",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "close_idempotency_key": {
-          "name": "close_idempotency_key",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "version": {
-          "name": "version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "cashier_shifts_organization_id_property_id_business_date_index": {
-          "name": "cashier_shifts_organization_id_property_id_business_date_index",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "property_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "business_date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "cashier_shifts_organization_id_member_id_index": {
-          "name": "cashier_shifts_organization_id_member_id_index",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "cashier_shifts_drawer_id_opened_at_index": {
-          "name": "cashier_shifts_drawer_id_opened_at_index",
-          "columns": [
-            {
-              "expression": "drawer_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "opened_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "cashier_shifts_device_id_index": {
-          "name": "cashier_shifts_device_id_index",
-          "columns": [
-            {
-              "expression": "device_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "cashier_shifts_one_per_drawer": {
-          "name": "cashier_shifts_one_per_drawer",
-          "columns": [
-            {
-              "expression": "drawer_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"cashier_shifts\".\"status\" <> 'closed'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "cashier_shifts_one_per_member": {
-          "name": "cashier_shifts_one_per_member",
-          "columns": [
-            {
-              "expression": "organization_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"cashier_shifts\".\"status\" <> 'closed'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "cashier_shifts_organization_id_organizations_id_fk": {
-          "name": "cashier_shifts_organization_id_organizations_id_fk",
-          "tableFrom": "cashier_shifts",
-          "tableTo": "organizations",
-          "columnsFrom": ["organization_id"],
-          "columnsTo": ["id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "cashier_shifts_device_id_devices_id_fk": {
-          "name": "cashier_shifts_device_id_devices_id_fk",
-          "tableFrom": "cashier_shifts",
-          "tableTo": "devices",
-          "columnsFrom": ["device_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "cashier_shifts_property_fk": {
-          "name": "cashier_shifts_property_fk",
-          "tableFrom": "cashier_shifts",
-          "tableTo": "properties",
-          "columnsFrom": ["organization_id", "property_id"],
-          "columnsTo": ["organization_id", "id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        },
-        "cashier_shifts_drawer_fk": {
-          "name": "cashier_shifts_drawer_fk",
-          "tableFrom": "cashier_shifts",
-          "tableTo": "cash_drawers",
-          "columnsFrom": ["property_id", "drawer_id"],
-          "columnsTo": ["property_id", "id"],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "cashier_shifts_property_id_id_unique": {
-          "name": "cashier_shifts_property_id_id_unique",
-          "nullsNotDistinct": false,
-          "columns": ["property_id", "id"]
-        },
-        "cashier_shifts_number_unique": {
-          "name": "cashier_shifts_number_unique",
-          "nullsNotDistinct": false,
-          "columns": ["property_id", "business_date", "number"]
-        },
-        "cashier_shifts_open_key_unique": {
-          "name": "cashier_shifts_open_key_unique",
-          "nullsNotDistinct": false,
-          "columns": ["organization_id", "open_idempotency_key"]
-        },
-        "cashier_shifts_count_key_unique": {
-          "name": "cashier_shifts_count_key_unique",
-          "nullsNotDistinct": false,
-          "columns": ["organization_id", "count_idempotency_key"]
-        },
-        "cashier_shifts_close_key_unique": {
-          "name": "cashier_shifts_close_key_unique",
-          "nullsNotDistinct": false,
-          "columns": ["organization_id", "close_idempotency_key"]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "cashier_shifts_number_positive": {
-          "name": "cashier_shifts_number_positive",
-          "value": "\"cashier_shifts\".\"number\" >= 1"
-        },
-        "cashier_shifts_float_non_negative": {
-          "name": "cashier_shifts_float_non_negative",
-          "value": "\"cashier_shifts\".\"opening_float\" >= 0"
-        },
-        "cashier_shifts_handover_reason": {
-          "name": "cashier_shifts_handover_reason",
-          "value": "\"cashier_shifts\".\"handover_difference\" = 0 or \"cashier_shifts\".\"handover_reason\" is not null"
-        },
-        "cashier_shifts_counted_complete": {
-          "name": "cashier_shifts_counted_complete",
-          "value": "\"cashier_shifts\".\"status\" = 'open' or (\"cashier_shifts\".\"counted_at\" is not null and \"cashier_shifts\".\"counted_business_date\" is not null and \"cashier_shifts\".\"cash_counted\" is not null and \"cashier_shifts\".\"total_difference\" is not null)"
-        },
-        "cashier_shifts_closed_complete": {
-          "name": "cashier_shifts_closed_complete",
-          "value": "\"cashier_shifts\".\"status\" <> 'closed' or (\"cashier_shifts\".\"closed_at\" is not null and \"cashier_shifts\".\"closed_business_date\" is not null and \"cashier_shifts\".\"float_kept\" is not null and \"cashier_shifts\".\"drop_ngn\" is not null)"
-        },
-        "cashier_shifts_close_reason": {
-          "name": "cashier_shifts_close_reason",
-          "value": "\"cashier_shifts\".\"status\" <> 'closed' or \"cashier_shifts\".\"total_difference\" = 0 or \"cashier_shifts\".\"close_reason\" is not null"
-        },
-        "cashier_shifts_float_kept": {
-          "name": "cashier_shifts_float_kept",
-          "value": "\"cashier_shifts\".\"float_kept\" is null or (\"cashier_shifts\".\"float_kept\" >= 0 and \"cashier_shifts\".\"float_kept\" <= \"cashier_shifts\".\"cash_counted\")"
-        },
-        "cashier_shifts_bag_number": {
-          "name": "cashier_shifts_bag_number",
-          "value": "\"cashier_shifts\".\"drop_bag_number\" is null or \"cashier_shifts\".\"drop_bag_number\" ~ '^[A-Z0-9-]{1,20}$'"
-        },
-        "cashier_shifts_currency": {
-          "name": "cashier_shifts_currency",
-          "value": "\"cashier_shifts\".\"currency\" = 'NGN'"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.bank_accounts": {
       "name": "bank_accounts",
       "schema": "",
@@ -2884,13 +1888,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "pos_terminals_property_id_id_unique": {
-          "name": "pos_terminals_property_id_id_unique",
-          "nullsNotDistinct": false,
-          "columns": ["property_id", "id"]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
         "pos_terminals_terminal_id_format": {
@@ -3506,6 +2504,1266 @@
         "taxes_name_length": {
           "name": "taxes_name_length",
           "value": "char_length(\"taxes\".\"name\") between 1 and 80"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guest_id_documents": {
+      "name": "guest_id_documents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "property_id": {
+          "name": "property_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "guest_id": {
+          "name": "guest_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "storage_key": {
+          "name": "storage_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_type": {
+          "name": "content_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "byte_size": {
+          "name": "byte_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "id_document_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "source": {
+          "name": "source",
+          "type": "id_document_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id_type": {
+          "name": "id_type",
+          "type": "id_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_expiry": {
+          "name": "id_expiry",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "by_member_id": {
+          "name": "by_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "by_name": {
+          "name": "by_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "device_id": {
+          "name": "device_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attached_at": {
+          "name": "attached_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purged_at": {
+          "name": "purged_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "guest_id_documents_organization_id_guest_id_created_at_index": {
+          "name": "guest_id_documents_organization_id_guest_id_created_at_index",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "guest_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guest_id_documents_status_created_at_index": {
+          "name": "guest_id_documents_status_created_at_index",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guest_id_documents_organization_id_organizations_id_fk": {
+          "name": "guest_id_documents_organization_id_organizations_id_fk",
+          "tableFrom": "guest_id_documents",
+          "tableTo": "organizations",
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guest_id_documents_by_member_id_members_id_fk": {
+          "name": "guest_id_documents_by_member_id_members_id_fk",
+          "tableFrom": "guest_id_documents",
+          "tableTo": "members",
+          "columnsFrom": ["by_member_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guest_id_documents_device_id_devices_id_fk": {
+          "name": "guest_id_documents_device_id_devices_id_fk",
+          "tableFrom": "guest_id_documents",
+          "tableTo": "devices",
+          "columnsFrom": ["device_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "guest_id_documents_property_fk": {
+          "name": "guest_id_documents_property_fk",
+          "tableFrom": "guest_id_documents",
+          "tableTo": "properties",
+          "columnsFrom": ["organization_id", "property_id"],
+          "columnsTo": ["organization_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guest_id_documents_guest_fk": {
+          "name": "guest_id_documents_guest_fk",
+          "tableFrom": "guest_id_documents",
+          "tableTo": "guests",
+          "columnsFrom": ["organization_id", "guest_id"],
+          "columnsTo": ["organization_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "guest_id_documents_storageKey_unique": {
+          "name": "guest_id_documents_storageKey_unique",
+          "nullsNotDistinct": false,
+          "columns": ["storage_key"]
+        },
+        "guest_id_documents_organization_id_id_unique": {
+          "name": "guest_id_documents_organization_id_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["organization_id", "id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "guest_id_documents_size": {
+          "name": "guest_id_documents_size",
+          "value": "\"guest_id_documents\".\"byte_size\" > 0 and \"guest_id_documents\".\"byte_size\" <= 5242880"
+        },
+        "guest_id_documents_attached": {
+          "name": "guest_id_documents_attached",
+          "value": "\"guest_id_documents\".\"status\" = 'pending' or (\"guest_id_documents\".\"guest_id\" is not null and \"guest_id_documents\".\"attached_at\" is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guest_registrations": {
+      "name": "guest_registrations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "property_id": {
+          "name": "property_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stay_id": {
+          "name": "stay_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reservation_id": {
+          "name": "reservation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "guest_id": {
+          "name": "guest_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lead": {
+          "name": "lead",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "card_number": {
+          "name": "card_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nationality": {
+          "name": "nationality",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_of_birth": {
+          "name": "date_of_birth",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_line": {
+          "name": "address_line",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_city": {
+          "name": "address_city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_region": {
+          "name": "address_region",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_country": {
+          "name": "address_country",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purpose": {
+          "name": "purpose",
+          "type": "visit_purpose",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vehicle_plate": {
+          "name": "vehicle_plate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "occupation": {
+          "name": "occupation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_type": {
+          "name": "id_type",
+          "type": "id_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_number_cipher": {
+          "name": "id_number_cipher",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_number_masked": {
+          "name": "id_number_masked",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_country": {
+          "name": "id_country",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_expiry": {
+          "name": "id_expiry",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visa_type": {
+          "name": "visa_type",
+          "type": "visa_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visa_type_text": {
+          "name": "visa_type_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visa_number_cipher": {
+          "name": "visa_number_cipher",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visa_number_masked": {
+          "name": "visa_number_masked",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visa_valid_until": {
+          "name": "visa_valid_until",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "entry_date": {
+          "name": "entry_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "port_of_entry": {
+          "name": "port_of_entry",
+          "type": "port_of_entry",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "port_of_entry_text": {
+          "name": "port_of_entry_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "arriving_from": {
+          "name": "arriving_from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_destination": {
+          "name": "next_destination",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "key_id": {
+          "name": "key_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_document_id": {
+          "name": "id_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rule_set_version": {
+          "name": "rule_set_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reused_from_id": {
+          "name": "reused_from_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "registration_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signature": {
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'paper'"
+        },
+        "business_date": {
+          "name": "business_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "by_member_id": {
+          "name": "by_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "by_name": {
+          "name": "by_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "device_id": {
+          "name": "device_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "guest_registrations_organization_id_guest_id_created_at_index": {
+          "name": "guest_registrations_organization_id_guest_id_created_at_index",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "guest_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guest_registrations_organization_id_property_id_business_date_index": {
+          "name": "guest_registrations_organization_id_property_id_business_date_index",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "property_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "business_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guest_registrations_stay_id_index": {
+          "name": "guest_registrations_stay_id_index",
+          "columns": [
+            {
+              "expression": "stay_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guest_registrations_id_document_id_index": {
+          "name": "guest_registrations_id_document_id_index",
+          "columns": [
+            {
+              "expression": "id_document_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guest_registrations_organization_id_organizations_id_fk": {
+          "name": "guest_registrations_organization_id_organizations_id_fk",
+          "tableFrom": "guest_registrations",
+          "tableTo": "organizations",
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guest_registrations_by_member_id_members_id_fk": {
+          "name": "guest_registrations_by_member_id_members_id_fk",
+          "tableFrom": "guest_registrations",
+          "tableTo": "members",
+          "columnsFrom": ["by_member_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guest_registrations_device_id_devices_id_fk": {
+          "name": "guest_registrations_device_id_devices_id_fk",
+          "tableFrom": "guest_registrations",
+          "tableTo": "devices",
+          "columnsFrom": ["device_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "guest_registrations_property_fk": {
+          "name": "guest_registrations_property_fk",
+          "tableFrom": "guest_registrations",
+          "tableTo": "properties",
+          "columnsFrom": ["organization_id", "property_id"],
+          "columnsTo": ["organization_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guest_registrations_stay_fk": {
+          "name": "guest_registrations_stay_fk",
+          "tableFrom": "guest_registrations",
+          "tableTo": "stays",
+          "columnsFrom": ["property_id", "stay_id"],
+          "columnsTo": ["property_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guest_registrations_reservation_fk": {
+          "name": "guest_registrations_reservation_fk",
+          "tableFrom": "guest_registrations",
+          "tableTo": "reservations",
+          "columnsFrom": ["property_id", "reservation_id"],
+          "columnsTo": ["property_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guest_registrations_guest_fk": {
+          "name": "guest_registrations_guest_fk",
+          "tableFrom": "guest_registrations",
+          "tableTo": "guests",
+          "columnsFrom": ["organization_id", "guest_id"],
+          "columnsTo": ["organization_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "guest_registrations_document_fk": {
+          "name": "guest_registrations_document_fk",
+          "tableFrom": "guest_registrations",
+          "tableTo": "guest_id_documents",
+          "columnsFrom": ["organization_id", "id_document_id"],
+          "columnsTo": ["organization_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "guest_registrations_property_card_unique": {
+          "name": "guest_registrations_property_card_unique",
+          "nullsNotDistinct": false,
+          "columns": ["property_id", "card_number"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "guest_registrations_card": {
+          "name": "guest_registrations_card",
+          "value": "(\"guest_registrations\".\"lead\") = (\"guest_registrations\".\"card_number\" is not null)"
+        },
+        "guest_registrations_id_number": {
+          "name": "guest_registrations_id_number",
+          "value": "(\"guest_registrations\".\"id_number_cipher\" is null) = (\"guest_registrations\".\"id_number_masked\" is null) and (\"guest_registrations\".\"visa_number_cipher\" is null) = (\"guest_registrations\".\"visa_number_masked\" is null)"
+        },
+        "guest_registrations_names": {
+          "name": "guest_registrations_names",
+          "value": "char_length(\"guest_registrations\".\"first_name\") between 1 and 60 and char_length(\"guest_registrations\".\"last_name\") between 1 and 60"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.registration_card_counters": {
+      "name": "registration_card_counters",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "property_id": {
+          "name": "property_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "year": {
+          "name": "year",
+          "type": "char(4)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last": {
+          "name": "last",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "registration_card_counters_organization_id_index": {
+          "name": "registration_card_counters_organization_id_index",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "registration_card_counters_organization_id_organizations_id_fk": {
+          "name": "registration_card_counters_organization_id_organizations_id_fk",
+          "tableFrom": "registration_card_counters",
+          "tableTo": "organizations",
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "registration_card_counters_property_fk": {
+          "name": "registration_card_counters_property_fk",
+          "tableFrom": "registration_card_counters",
+          "tableTo": "properties",
+          "columnsFrom": ["organization_id", "property_id"],
+          "columnsTo": ["organization_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "registration_card_counters_property_year_unique": {
+          "name": "registration_card_counters_property_year_unique",
+          "nullsNotDistinct": false,
+          "columns": ["property_id", "year"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.registration_rule_templates": {
+      "name": "registration_rule_templates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'federal'"
+        },
+        "audience": {
+          "name": "audience",
+          "type": "registration_rule_audience",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field": {
+          "name": "field",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "required": {
+          "name": "required",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "registration_rule_templates_unique": {
+          "name": "registration_rule_templates_unique",
+          "nullsNotDistinct": false,
+          "columns": ["scope", "audience", "field", "effective_from"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.registration_rules": {
+      "name": "registration_rules",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "property_id": {
+          "name": "property_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'federal'"
+        },
+        "audience": {
+          "name": "audience",
+          "type": "registration_rule_audience",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field": {
+          "name": "field",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "required": {
+          "name": "required",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "verified_by": {
+          "name": "verified_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "registration_rules_organization_id_index": {
+          "name": "registration_rules_organization_id_index",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "registration_rules_organization_id_organizations_id_fk": {
+          "name": "registration_rules_organization_id_organizations_id_fk",
+          "tableFrom": "registration_rules",
+          "tableTo": "organizations",
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "registration_rules_property_fk": {
+          "name": "registration_rules_property_fk",
+          "tableFrom": "registration_rules",
+          "tableTo": "properties",
+          "columnsFrom": ["organization_id", "property_id"],
+          "columnsTo": ["organization_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.stay_room_segments": {
+      "name": "stay_room_segments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "property_id": {
+          "name": "property_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stay_id": {
+          "name": "stay_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "room_type_id": {
+          "name": "room_type_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_date": {
+          "name": "from_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "to_date": {
+          "name": "to_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "stay_room_segments_stay_id_index": {
+          "name": "stay_room_segments_stay_id_index",
+          "columns": [
+            {
+              "expression": "stay_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "stay_room_segments_room_id_index": {
+          "name": "stay_room_segments_room_id_index",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "stay_room_segments_organization_id_property_id_from_date_index": {
+          "name": "stay_room_segments_organization_id_property_id_from_date_index",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "property_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "from_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "stay_room_segments_organization_id_organizations_id_fk": {
+          "name": "stay_room_segments_organization_id_organizations_id_fk",
+          "tableFrom": "stay_room_segments",
+          "tableTo": "organizations",
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "stay_room_segments_property_fk": {
+          "name": "stay_room_segments_property_fk",
+          "tableFrom": "stay_room_segments",
+          "tableTo": "properties",
+          "columnsFrom": ["organization_id", "property_id"],
+          "columnsTo": ["organization_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "stay_room_segments_stay_fk": {
+          "name": "stay_room_segments_stay_fk",
+          "tableFrom": "stay_room_segments",
+          "tableTo": "stays",
+          "columnsFrom": ["property_id", "stay_id"],
+          "columnsTo": ["property_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "stay_room_segments_room_fk": {
+          "name": "stay_room_segments_room_fk",
+          "tableFrom": "stay_room_segments",
+          "tableTo": "rooms",
+          "columnsFrom": ["property_id", "room_id"],
+          "columnsTo": ["property_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "stay_room_segments_room_type_fk": {
+          "name": "stay_room_segments_room_type_fk",
+          "tableFrom": "stay_room_segments",
+          "tableTo": "room_types",
+          "columnsFrom": ["property_id", "room_type_id"],
+          "columnsTo": ["property_id", "id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "stay_room_segments_dates": {
+          "name": "stay_room_segments_dates",
+          "value": "\"stay_room_segments\".\"to_date\" > \"stay_room_segments\".\"from_date\""
         }
       },
       "isRLSEnabled": false
@@ -6422,6 +6680,48 @@
           "primaryKey": false,
           "notNull": false
         },
+        "room_from": {
+          "name": "room_from",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "checked_in_at": {
+          "name": "checked_in_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "checked_in_by_member_id": {
+          "name": "checked_in_by_member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "checked_in_by_name": {
+          "name": "checked_in_by_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "checked_in_device_id": {
+          "name": "checked_in_device_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "checked_in_business_date": {
+          "name": "checked_in_business_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "card_printed_at": {
+          "name": "card_printed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "status": {
           "name": "status",
           "type": "stay_status",
@@ -6661,6 +6961,33 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "stays_organization_id_property_id_checked_in_business_date_index": {
+          "name": "stays_organization_id_property_id_checked_in_business_date_index",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "property_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "checked_in_business_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -6671,6 +6998,24 @@
           "columnsFrom": ["organization_id"],
           "columnsTo": ["id"],
           "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "stays_checked_in_by_member_id_members_id_fk": {
+          "name": "stays_checked_in_by_member_id_members_id_fk",
+          "tableFrom": "stays",
+          "tableTo": "members",
+          "columnsFrom": ["checked_in_by_member_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "stays_checked_in_device_id_devices_id_fk": {
+          "name": "stays_checked_in_device_id_devices_id_fk",
+          "tableFrom": "stays",
+          "tableTo": "devices",
+          "columnsFrom": ["checked_in_device_id"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "stays_discount_by_member_id_members_id_fk": {
@@ -6762,6 +7107,14 @@
         "stays_discount_reason": {
           "name": "stays_discount_reason",
           "value": "(\"stays\".\"discount_percent\" is null) = (\"stays\".\"discount_reason\" is null)"
+        },
+        "stays_checked_in": {
+          "name": "stays_checked_in",
+          "value": "\"stays\".\"status\" <> 'checked_in' or (\"stays\".\"room_id\" is not null and \"stays\".\"checked_in_at\" is not null and \"stays\".\"checked_in_by_name\" is not null and \"stays\".\"checked_in_business_date\" is not null)"
+        },
+        "stays_room_from": {
+          "name": "stays_room_from",
+          "value": "\"stays\".\"room_from\" is null or (\"stays\".\"room_from\" >= \"stays\".\"arrival\" and \"stays\".\"room_from\" < \"stays\".\"departure\")"
         }
       },
       "isRLSEnabled": false
@@ -9064,7 +9417,7 @@
     "public.approval_kind": {
       "name": "approval_kind",
       "schema": "public",
-      "values": ["stay_discount", "penalty_waiver", "modify_discount", "cash_variance"]
+      "values": ["stay_discount", "penalty_waiver", "modify_discount"]
     },
     "public.approval_method": {
       "name": "approval_method",
@@ -9080,16 +9433,6 @@
       "name": "approval_value_kind",
       "schema": "public",
       "values": ["percent", "amount_ngn"]
-    },
-    "public.cash_count_line_kind": {
-      "name": "cash_count_line_kind",
-      "schema": "public",
-      "values": ["cash", "pos_terminal", "bank_transfer"]
-    },
-    "public.cashier_shift_status": {
-      "name": "cashier_shift_status",
-      "schema": "public",
-      "values": ["open", "counted", "closed"]
     },
     "public.fx_rate_source": {
       "name": "fx_rate_source",
@@ -9110,6 +9453,62 @@
       "name": "tax_kind",
       "schema": "public",
       "values": ["vat", "state_tax", "service_charge"]
+    },
+    "public.id_document_source": {
+      "name": "id_document_source",
+      "schema": "public",
+      "values": ["camera", "upload", "offline"]
+    },
+    "public.id_document_status": {
+      "name": "id_document_status",
+      "schema": "public",
+      "values": ["pending", "attached", "archived"]
+    },
+    "public.id_type": {
+      "name": "id_type",
+      "schema": "public",
+      "values": ["nin", "passport", "drivers_licence", "voters_card", "ecowas_id"]
+    },
+    "public.port_of_entry": {
+      "name": "port_of_entry",
+      "schema": "public",
+      "values": [
+        "lagos_mmia",
+        "abuja_naia",
+        "port_harcourt_phia",
+        "kano_makia",
+        "enugu",
+        "seme",
+        "other"
+      ]
+    },
+    "public.registration_source": {
+      "name": "registration_source",
+      "schema": "public",
+      "values": ["desk", "walk_in", "offline", "import"]
+    },
+    "public.registration_rule_audience": {
+      "name": "registration_rule_audience",
+      "schema": "public",
+      "values": ["all", "foreign", "ecowas"]
+    },
+    "public.visa_type": {
+      "name": "visa_type",
+      "schema": "public",
+      "values": [
+        "visa_on_arrival",
+        "business",
+        "tourist",
+        "transit",
+        "residence_permit",
+        "other",
+        "not_required"
+      ]
+    },
+    "public.visit_purpose": {
+      "name": "visit_purpose",
+      "schema": "public",
+      "values": ["business", "leisure", "other"]
     },
     "public.cancellation_kind": {
       "name": "cancellation_kind",
@@ -9176,7 +9575,16 @@
     "public.reservation_change_kind": {
       "name": "reservation_change_kind",
       "schema": "public",
-      "values": ["modify", "cancel", "no_show", "waive", "room"]
+      "values": [
+        "modify",
+        "cancel",
+        "no_show",
+        "waive",
+        "room",
+        "check_in",
+        "check_in_undo",
+        "check_in_reverse"
+      ]
     },
     "public.reservation_end_reason": {
       "name": "reservation_end_reason",

@@ -21,6 +21,7 @@ import { planPricesFor } from '../../tape-chart/prices.ts'
 import { type Access, can } from '../../tenancy/access.ts'
 import { loadForChange, requireVersion, termsOf } from '../change/load.ts'
 import { loadBookingHotel } from '../context.ts'
+import { nightsFrom } from '../in-house.ts'
 import { bookedFor, capacityOf, keyOf, leftOn } from '../locks.ts'
 import { discountLimitOf } from '../pricing.ts'
 import { movableProblem, requireRoomMove, stayHotel } from './assign.ts'
@@ -43,11 +44,14 @@ export async function roomOptions(
   if (!stay) throw stayNotFound()
   await requireVersion(db, loaded, parsed.version, stay.version, hotel.timeZone)
   const scope = { organizationId: access.organizationId, propertyId: hotel.id }
-  const dates = nightsOf(stay.arrival, stay.departure)
-  const arrivesToday = stay.arrival === hotel.businessDate
+  // An in-house guest moves from the business date on (decision 0030).
+  const from = nightsFrom(stay, hotel.businessDate)
+  const dates = nightsOf(from, stay.departure)
+  // Ready rooms first for an arrival today and for a guest already in house.
+  const arrivesToday = stay.arrival === hotel.businessDate || stay.status === 'checked_in'
   const [all, busy] = await Promise.all([
     hotelRooms(db, scope),
-    busyRooms(db, hotel.id, stay.arrival, stay.departure, stay.id),
+    busyRooms(db, hotel.id, from, stay.departure, stay.id),
   ])
   const option = (room: (typeof all)[number]): RoomOption => ({
     id: room.id,
@@ -73,8 +77,8 @@ export async function roomOptions(
       : await typesOnPlan(db, access, {
           propertyId: hotel.id,
           ratePlanId: stay.ratePlanId,
-          from: stay.arrival,
-          to: dates.at(-1) ?? stay.arrival,
+          from,
+          to: dates.at(-1) ?? from,
         }).catch(() => [])
   const others = planTypes.filter(
     (type) =>
@@ -85,7 +89,7 @@ export async function roomOptions(
   const ids = others.map((type) => type.id)
   const [capacity, booked, prices] = await Promise.all([
     capacityOf(db, scope, ids),
-    bookedFor(db, scope, ids, stay.arrival, dates.at(-1) ?? stay.arrival),
+    bookedFor(db, scope, ids, from, dates.at(-1) ?? from),
     planPricesFor(db, scope, stay.ratePlanId, [stay.roomTypeId, ...ids], dates),
   ])
   const own = prices.get(stay.roomTypeId)
@@ -110,7 +114,7 @@ export async function roomOptions(
     .sort((a, b) => dec(a.difference).comparedTo(dec(b.difference)))
 
   const room = all.find((r) => r.id === stay.roomId)
-  const firstNight = loaded.nights.find((night) => night.stayId === stay.id)
+  const firstNight = loaded.nights.find((night) => night.stayId === stay.id && night.date >= from)
   return {
     stay: {
       id: stay.id,
@@ -130,6 +134,8 @@ export async function roomOptions(
       nationality: loaded.guest.nationality,
     },
     arrivesToday,
+    inHouse: stay.status === 'checked_in',
+    from,
     sameType,
     otherTypes,
     blocked: movableProblem(loaded, stay, hotel),

@@ -17,3 +17,6 @@ Taking orders, checking guests in and changing room status while offline arrive 
 
 ## Related
 - [Sign in on a shared device](sign-in-on-a-shared-device.md)
+
+## At the front desk
+Arrivals already in a room can still be checked in: type the registration, take the ID photo and check in; it shows **Will sync** until it goes through, and the typed numbers and the photo are kept locked on the computer until then. Walk-ins, picking another room, moving guests, Reveal and printing the card wait for the connection. Today's and tomorrow's lists stay on the front desk computer through its PIN lock, so the next person can work offline too. Signing out fully, or a manager removing the device, deletes the locked numbers and photos: a check-in that hadn't synced yet shows in the sync queue to be done again.

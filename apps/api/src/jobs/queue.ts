@@ -7,6 +7,7 @@ import { PgBoss } from 'pg-boss'
 import { z } from 'zod'
 import { expireApprovals } from '../approvals/expire.ts'
 import type { Database } from '../db/client.ts'
+import { purgePendingIdDocuments } from '../guests/registration/documents.ts'
 import { reportError } from '../observability/errors.ts'
 import { logger } from '../observability/log.ts'
 import type { EmailMessage, EmailProvider } from '../providers/email.ts'
@@ -72,6 +73,8 @@ export async function startJobs(options: {
   // For the daily clean-up of uploads that were never confirmed.
   db?: Database
   storage?: StorageProvider | undefined
+  // For the daily clean-up of ID photos uploaded but never named by a check-in.
+  privateStorage?: StorageProvider | undefined
   // A separate schema lets tests run their own pg-boss without touching anyone else's.
   schema?: string
 }): Promise<Jobs> {
@@ -108,7 +111,7 @@ export async function startJobs(options: {
     lastBeat = Date.now()
   })
   await boss.schedule('system.heartbeat', HEARTBEAT_EVERY)
-  const { db, storage } = options
+  const { db, storage, privateStorage } = options
   if (db) {
     await boss.work('approvals.expire', async () => {
       const expired = await expireApprovals(db)
@@ -119,6 +122,7 @@ export async function startJobs(options: {
   if (db && storage) {
     await boss.work('storage.purgeUnconfirmed', async () => {
       await purgeUnconfirmedUploads(db, storage)
+      if (privateStorage) await purgePendingIdDocuments(db, privateStorage)
     })
     await boss.schedule('storage.purgeUnconfirmed', PURGE_UPLOADS_AT)
   }

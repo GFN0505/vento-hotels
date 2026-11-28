@@ -25,10 +25,11 @@ const TYPES: {
     code: 'STQ',
     name: 'Standard Queen',
     bed: 'queen',
-    sofaBed: false,
+    // A sofa bed, so a family of four fits (the Okoro walk-in, front desk spec "Demo seed").
+    sofaBed: true,
     baseOccupancy: 2,
     maxAdults: 2,
-    maxChildren: 0,
+    maxChildren: 2,
     sizeSqm: '24.0',
     amenities: ['AC', 'Wi-Fi', 'Smart TV', 'Kettle'],
   },

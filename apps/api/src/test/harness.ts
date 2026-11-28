@@ -28,6 +28,7 @@ export function createTestApp(
   const limiter = new RateLimiter(options.rateLimit ?? false)
   // Files live in memory; `storage.put(key, bytes)` stands in for the browser's upload.
   const storage = new MemoryStorageProvider()
+  const privateStorage = new MemoryStorageProvider()
   const auth = createAuth({
     db: database.db,
     settings: {
@@ -45,6 +46,8 @@ export function createTestApp(
     checkHealth: healthy,
     email,
     storage,
+    privateStorage,
+    cardSecret: 'test-only-secret-that-is-at-least-32-characters',
     webOrigin: WEB_ORIGIN,
     limiter,
   })
@@ -133,6 +136,7 @@ export function createTestApp(
     auth,
     email,
     storage,
+    privateStorage,
     db: database.db,
     close: database.close,
     call,

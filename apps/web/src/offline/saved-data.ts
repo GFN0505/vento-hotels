@@ -1,7 +1,8 @@
 // The data people last saw, kept on the device (decision 0009, offline shell): who they are, their
 // group, its hotels and Home's figures. When Vento can't be reached, pages open with this copy and
 // say when it was saved. Only reference data is kept: never guest records or ID numbers. It's all
-// cleared on sign-out and when a shared device is locked.
+// cleared on sign-out; when a shared device is locked, everything but the front desk lists goes
+// (decision 0029: today's and tomorrow's lists stay on the desk PC through PIN locks).
 import { dehydrate, hydrate, type QueryClient } from '@tanstack/react-query'
 import { clearAll, getItem, setItem } from './store'
 
@@ -28,7 +29,15 @@ const KEPT = new Set([
   // The tape chart and day list last loaded (brick 7): readable offline under the banner, with
   // guests' names only (no contact or ID details); cleared on sign-out and device lock.
   'tapeChart.get',
+  // The front desk lists (brick 8): names, booking numbers, rooms, nationality and readiness; no
+  // phone, email, address or ID numbers. Kept through PIN locks (decision 0029), and the rule set
+  // in force, so an assigned arrival can be checked in offline.
+  'frontDesk.list',
+  'ruleSets.current',
 ])
+
+// What survives a PIN lock on a shared device (decision 0029).
+const KEPT_THROUGH_LOCK = new Set(['frontDesk.list', 'ruleSets.current'])
 
 type Saved = { savedAt: number; state: ReturnType<typeof dehydrate> }
 
@@ -99,7 +108,13 @@ export function rememberedSession(): SessionSnapshot | undefined {
 // Announced when someone signs out, for what lives only in memory (the booking sheet's draft).
 export const SIGNED_OUT = 'vento:signed-out'
 
-export async function clearSavedData(client?: QueryClient) {
+// `keepDeskLists`: a shared device's PIN lock keeps the front desk lists (decision 0029). A full
+// sign-out clears everything.
+export async function clearSavedData(
+  client?: QueryClient,
+  options: { keepDeskLists?: boolean } = {},
+) {
+  const saved = options.keepDeskLists ? await getItem<Saved>(KEY) : undefined
   savedAt = undefined
   try {
     localStorage.removeItem(SESSION_KEY)
@@ -108,4 +123,17 @@ export async function clearSavedData(client?: QueryClient) {
   }
   client?.clear()
   await clearAll()
+  if (saved) {
+    const queries = saved.state.queries.filter((query) =>
+      KEPT_THROUGH_LOCK.has(pathOf(query.queryKey)),
+    )
+    if (queries.length) {
+      await setItem(KEY, {
+        savedAt: saved.savedAt,
+        state: { ...saved.state, mutations: [], queries },
+      } satisfies Saved)
+    }
+  }
 }
+
+export const isDeskList = (queryKey: readonly unknown[]) => pathOf(queryKey) === 'frontDesk.list'

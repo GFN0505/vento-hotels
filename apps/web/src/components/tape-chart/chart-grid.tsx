@@ -10,12 +10,22 @@ import {
   type ChartRoom,
   type ChartStay,
   formatNaira,
+  formatRateDate,
   nightsBetween,
   type OutOfOrderView,
   type RoomStatus,
+  rangeLabel,
   type TapeChart,
 } from '@vento/shared'
-import { Accessibility, ChevronDown, ChevronLeft, ChevronRight, Link2, LogIn } from 'lucide-react'
+import {
+  Accessibility,
+  ArrowRightFromLine,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Link2,
+  LogIn,
+} from 'lucide-react'
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
@@ -42,7 +52,9 @@ import {
   periodsByRoom,
   type Row,
   roomFreeFor,
+  type Segment,
   STATUS_WORDS,
+  segmentsByRoom,
   staysByRoom,
   VIRTUAL_FROM,
 } from './chart-model'
@@ -121,6 +133,7 @@ export function ChartGrid(props: Props) {
 
   const byRoom = useMemo(() => staysByRoom(chart), [chart])
   const periods = useMemo(() => periodsByRoom(chart), [chart])
+  const segments = useMemo(() => segmentsByRoom(chart), [chart])
   const offsets = useMemo(() => {
     const list: number[] = []
     let at = 0
@@ -522,6 +535,7 @@ export function ChartGrid(props: Props) {
                     business={business}
                     stays={row.kind === 'room' ? (byRoom.get(row.room.id) ?? []) : []}
                     periods={row.kind === 'room' ? (periods.get(row.room.id) ?? []) : []}
+                    segments={row.kind === 'room' ? (segments.get(row.room.id) ?? []) : []}
                     focused={focus.row === index ? focus.col : null}
                     dragging={drag?.started ? drag : null}
                     target={hover?.index === index ? hover : null}
@@ -625,6 +639,7 @@ type RowProps = Props & {
   business: string
   stays: ChartStay[]
   periods: OutOfOrderView[]
+  segments?: Segment[]
   focused: number | null
   dragging: Drag | null
   target: { tip: string | null; ok: boolean } | null
@@ -754,7 +769,7 @@ function LaneRow(p: RowProps & { row: Extract<Row, { kind: 'unassigned' }> }) {
 // Front office status first (who is in the room tonight), housekeeping second, as hotels say it:
 // "Vacant · Dirty".
 const OCCUPANCY_TONE: Record<Occupancy, string> = {
-  occupied: 'bg-pri text-white',
+  occupied: 'bg-house text-white',
   arriving: 'bg-bl-bg text-bl ring-1 ring-bl-dot/40',
   leaving: 'bg-am-bg text-am ring-1 ring-am-dot/40',
   vacant: 'bg-surface-2 text-text-2 ring-1 ring-border',
@@ -891,6 +906,9 @@ function RoomRow(p: RowProps & { row: Extract<Row, { kind: 'room' }> }) {
             </div>
           )
         })}
+        {(p.segments ?? []).map((segment) => (
+          <SegmentBar key={`${segment.stay.id}-${segment.from}`} {...p} segment={segment} />
+        ))}
         {p.stays.map((stay) => (
           <Bar key={stay.id} {...p} stay={stay} top={6} />
         ))}
@@ -910,9 +928,34 @@ function FocusRing({ col, colW }: { col: number; colW: number }) {
   )
 }
 
+// The nights an in-house guest spent in this room before moving (decision 0030): muted, with a
+// marker where the move happened.
+function SegmentBar(p: RowProps & { segment: Segment }) {
+  const { segment } = p
+  const span = barSpan(segment.from, segment.to, p.from, p.days)
+  if (!span) return null
+  const moved = p.chart.rooms.find((r) => r.id === segment.stay.roomId)?.number
+  const words = `${segment.stay.guestName}, in house, ${rangeLabel(segment.from, segment.to)}${moved ? `, moved to ${moved} on ${formatRateDate(segment.to, false)}` : ''}`
+  return (
+    <span
+      role="img"
+      aria-label={words}
+      title={words}
+      className="absolute top-[6px] z-[1] flex h-8 items-center gap-1 overflow-hidden rounded-[7px] border border-border bg-surface-2 px-[7px] text-[12px] whitespace-nowrap text-text-2"
+      style={{ left: span.start * p.colW + 2, width: span.span * p.colW - 4 }}
+    >
+      <span className="truncate font-medium">{segment.stay.guestShort}</span>
+      {span.clippedEnd ? null : (
+        <ArrowRightFromLine className="ml-auto size-3.5 flex-none" aria-hidden="true" />
+      )}
+    </span>
+  )
+}
+
 function Bar(p: RowProps & { stay: ChartStay; top: number }) {
   const { stay } = p
-  const span = barSpan(stay.arrival, stay.departure, p.from, p.days)
+  // The bar starts where the stay is in this room: its arrival, or an in-house move's date.
+  const span = barSpan(stay.roomId ? stay.roomFrom : stay.arrival, stay.departure, p.from, p.days)
   if (!span) return null
   const typeName = p.chart.roomTypes.find((t) => t.id === stay.roomTypeId)?.name ?? ''
   const room = p.chart.rooms.find((r) => r.id === stay.roomId)
@@ -938,6 +981,7 @@ function Bar(p: RowProps & { stay: ChartStay; top: number }) {
         'group absolute z-[1] flex h-8 items-center gap-1 overflow-hidden rounded-[7px] border px-[7px] text-left text-[12px] font-medium whitespace-nowrap',
         'transition-[box-shadow,opacity] hover:shadow-[0_2px_8px_-2px_color-mix(in_srgb,var(--brand)_40%,transparent)]',
         // Over tonight: solid (the occupied look); later: a tint with a brand edge; before: muted.
+        time === 'in_house' && 'border-house bg-house text-white',
         time === 'tonight' && 'border-pri bg-pri text-white',
         time === 'later' && 'border-pri bg-pri-soft text-pri-ink',
         time === 'past' && 'border-border bg-surface-2 text-text-2',

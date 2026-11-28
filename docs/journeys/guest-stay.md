@@ -92,7 +92,7 @@ Instead of step 4, on **Tue 8 Dec at 10:00** (28 hours before arrival) she taps 
 - **Card declined:** "Your card was declined. Try another card or pay by bank transfer." The hold stays until its window ends.
 - **No Deluxe King room on 12 Dec when she extends:** "Deluxe King is full on 12 Dec 2026." Options shown: a Standard Queen or Executive King for that night at its price, or keep her dates. Nothing is changed until she confirms.
 - **Passport image unreadable or wrong person:** the desk asks for the passport at check-in; pre-check-in is not a substitute for checking ID.
-- **Arrives before the room is ready:** she sees "We'll message you when room 404 is ready" and can leave luggage; the arrival shows "Waiting for room" at the desk.
+- **Arrives before the room is ready:** she sees "We'll message you when room 404 is ready" and can leave luggage; the desk checks her in to the room not ready yet and the stay shows **Waiting for room** until the room is marked clean (built in Stage 1 brick 8; the message and pre-check-in come with Stage 4).
 - **Request not picked up in time:** it turns overdue on the queue and the supervisor is notified.
 - **Online payment fails at check-out:** the folio stays open; she can pay at the desk by card, transfer or POS terminal.
 - **Paystack webhook arrives twice or before the redirect:** unique on reference and event; recorded once.

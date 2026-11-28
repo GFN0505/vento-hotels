@@ -60,6 +60,31 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - `reservations/assign/assign.ts`: the exclusion-violation fallback calls `roomTaken(room, '')` with an empty date ("402 was just taken."); look up the first clashing night instead.
 - Migration 0019's check `rooms_housekeeping_status_stored` has no data guard: fine before any hotel is live (nothing stores `out_of_order` or `out_of_service`), but a deploy onto data that does would fail; add an update or a guard first if that ever changes.
 
+## Front desk, check-in and registration (brick 8)
+- **Someone else is staying** and **Add guest** (other adults in the room) aren't in the sheet or the walk-in page yet; `checkIn.checkIn` already takes a swapped guest and more than one registration.
+- **Correct a registration** while in house: removed from the API until it's built with its screen (combined review). It needs a guard (in house, or checked in today), a reason, and the stored numbers kept for companions and visas so a correction doesn't ask for them again; the reservation shows the registration read-only.
+- A check-in into another room type (when the booked type is full) opens brick 7's Room move dialog first and then checks in, rather than one transaction.
+- The sync queue's check-ins that need attention offer **Discard** only; "Open check-in" and "Apply details" (sending the typed details as a correction) come with the shell-wide queue panel.
+- Take photo uses the device's own camera picker (`<input capture>`); a live webcam preview with getUserMedia could follow if desks prefer it.
+- Home's Arrivals and In house figures stay placeholders until role Homes are built; the Walk-in quick action opens the walk-in page.
+- The phone layout has no bottom navigation bar (the app has none yet); Walk-in sits in the header on phones.
+- The walk-in's discard and hotel-switch guard use the browser's confirm, not the in-app bar.
+- Print list is a browser print layout, not the brick 15 PDF.
+- The seed puts the due-out guest (Mr Kwame Asante) in the room of whichever Deluxe King arrival the packing gives first (e.g. 403), not 405 as in the spec.
+- From the combined review, still to do:
+  - The passport mask isn't fixed-width (its length hints at the number's); use one width per ID type.
+  - `registrations.uploadIdDocument` writes no audit event of its own (the check-in's records the document); add `guest.id_document_uploaded`.
+  - PNG and WebP uploads keep their metadata chunks (only JPEG is stripped on the server; the device re-encodes to JPEG, but a scan uploaded as PNG keeps text chunks).
+  - `storage/jpeg-strip.ts` keeps bytes after the end-of-image marker and keeps ICC (APP2) and Adobe (APP14) segments; drop trailing bytes, keep only what colour needs.
+  - The 7 MB body for the upload route is read before sign-in is checked: check the session (or rate-limit) before parsing the body.
+  - Reprint copy numbers can race when two desks print the same card at once (both read the same next copy); take the counter under its lock for reprints too.
+  - When the photo upload drops mid-check-in, the sheet says the check-in may have saved; it should say the photo didn't upload and nothing was saved.
+  - `components/front-desk/print-list.ts` writes hex colours into the print window (no tokens there); add the comment saying why, or map them from the tokens.
+  - The saved `frontDesk.list` keeps every variant fetched (each tab, search and page); keep only today's and tomorrow's main lists, and say how old the list is when the business date moved on while offline overnight.
+  - Reveal and View ID photo have no rate limit; add one, or flag many in a day on the owner's report.
+  - A replayed check-in key is answered before the hotel scope check (`replayOf`); check the member's hotels first, as `inChangeTransaction` does.
+  - `walk-in-page.tsx` and `registration-form.tsx` weren't covered by the review; review them with the next brick's.
+
 ## Cashier shifts (brick 9)
 - `version` in the submit and close inputs isn't checked; check it against the shift or drop it.
 - `sameClose` (a replayed close) compares the float and bag only, not the reason or the approval.

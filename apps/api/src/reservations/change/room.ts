@@ -47,6 +47,7 @@ export async function quoteRoom(
   scope: { organizationId: string; propertyId: string },
   stay: StayRow,
   input: ChangeFields,
+  from: string = input.arrival,
 ): Promise<{ room: ChangeQuote['room']; roomBefore: ChangeQuote['roomBefore'] }> {
   const before = stay.roomId ? await readRoom(db, scope, stay.roomId) : null
   const roomBefore = before ? { id: before.id, number: before.number } : null
@@ -55,11 +56,12 @@ export async function quoteRoom(
   const room = target.id === before?.id ? before : await readRoom(db, scope, target.id)
   if (target.asked) requireAskedRoom(room, input)
   if (target.asked && room.roomTypeId !== stay.roomTypeId) {
-    if (await bookedTypeHasFreeRoom(db, stay, input.arrival, input.departure)) {
+    if (await bookedTypeHasFreeRoom(db, stay, from, input.departure)) {
       throw bookedTypeFree(stay.roomTypeName)
     }
   }
-  const conflict = await roomConflict(db, room.id, input.arrival, input.departure, {
+  // An in-house guest's room matters from the business date on (decision 0030).
+  const conflict = await roomConflict(db, room.id, from, input.departure, {
     stay: stay.id,
   })
   return {

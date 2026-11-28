@@ -25,6 +25,12 @@ export const PERMISSIONS = {
   'audit.view': { label: 'View the audit log' },
   // Front office
   'reservation.manage': { label: 'Create, modify or cancel a reservation; mark a no-show' },
+  // Works in a PIN session, and offline for arrivals already in a room (front desk spec).
+  'stay.check_in': { label: 'Check in a guest' },
+  'stay.check_in_reverse': { label: 'Reverse a check-in (same business date)' },
+  // Needs a connection and a reason; logged (spec question 4).
+  'guest.id_view': { label: "See a guest's full ID or passport number, or their ID photo" },
+  'guest.id_skip': { label: 'Check in without the required ID photo' },
   'stay.rate_override': { label: 'Rate override / discount on a stay', limit: 'percent' },
   'penalty.waive': { label: 'Waive cancellation / no-show penalty' },
   'room.move': { label: 'Assign or move a room (from the business date on)' },
@@ -78,6 +84,10 @@ export const PERMISSION_GROUPS: readonly { label: string; permissions: readonly 
     label: 'Front office',
     permissions: [
       'reservation.manage',
+      'stay.check_in',
+      'stay.check_in_reverse',
+      'guest.id_view',
+      'guest.id_skip',
       'stay.rate_override',
       'penalty.waive',
       'room.move',
@@ -162,6 +172,10 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
     'property.operating_times': yes,
     'audit.view': yes,
     'reservation.manage': yes,
+    'stay.check_in': yes,
+    'stay.check_in_reverse': yes,
+    'guest.id_view': yes,
+    'guest.id_skip': yes,
     'stay.rate_override': upTo('50'),
     'penalty.waive': yes,
     'room.move': yes,
@@ -194,6 +208,7 @@ export const DEFAULT_MATRIX: Record<MemberRole, RoleDefaults> = {
   },
   front_desk: {
     'reservation.manage': yes,
+    'stay.check_in': yes,
     'stay.rate_override': upTo('10'),
     'room.move': yes,
     'room.status': yes,

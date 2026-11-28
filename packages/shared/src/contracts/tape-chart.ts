@@ -28,6 +28,8 @@ export const ROOM_MOVE_ERROR_CODES = [
   'ROOM_WRONG_TYPE',
   'BOOKED_TYPE_FREE', // a move to another type while the booked type has a free room
   'NOT_MOVABLE',
+  'MOVE_REASON_REQUIRED', // an in-house move needs a reason
+  'NO_NIGHT_LEFT', // an in-house guest leaving today
   'ROOM_HAS_BOOKINGS', // room archive or type change with assigned stays
   'ROOM_OUT_OF_ORDER_PERIOD', // room archive or type change with an active out-of-order period
   'OOO_ROOM_HAS_BOOKINGS', // data: { stays }
@@ -125,9 +127,15 @@ export const chartStaySchema = z.object({
   adults: z.number().int(),
   children: z.number().int(),
   roomId: idSchema.nullable(),
+  // The first night in `roomId` (decision 0030): the arrival, or the business date of an in-house
+  // move; the nights before are in `segments`.
+  roomFrom: calendarDateSchema,
+  segments: z.array(
+    z.object({ roomId: idSchema, from: calendarDateSchema, to: calendarDateSchema }),
+  ),
   version: z.number().int(),
   status: z.enum(['confirmed', 'checked_in']),
-  // Confirmed and arriving on or after the business date.
+  // Confirmed and arriving on or after the business date, or in house with a night left.
   movable: z.boolean(),
   depositDue: z.object({ amount: z.string(), dueAt: z.iso.datetime() }).nullable(),
 })
@@ -196,8 +204,12 @@ export const roomOptionsSchema = z.object({
     soldPerNight: z.string(),
     nationality: z.string(),
   }),
-  // Status badges only matter for an arrival on the business date.
+  // Status badges only matter for an arrival on the business date (or a guest in house).
   arrivesToday: z.boolean(),
+  // In house (brick 8): the move starts on `from` (the business date), a reason is required, and
+  // the old room turns dirty.
+  inHouse: z.boolean(),
+  from: calendarDateSchema,
   // Rooms of the stay's type free every night: ready first, then dirty.
   sameType: z.array(roomOptionSchema),
   // Other types the plan sells and the party fits, cheapest first.

@@ -5,6 +5,7 @@ import { cashContract } from './cash.ts'
 import { changesContract } from './changes.ts'
 import { devicesContract } from './devices.ts'
 import { financeContract } from './finance.ts'
+import { frontDeskContract } from './front-desk.ts'
 import { governanceContract } from './governance.ts'
 import { ratesContract } from './rates.ts'
 import { reservationsContract } from './reservations.ts'
@@ -32,6 +33,7 @@ export const contract = {
   tapeChart: tapeChartContract.tapeChart,
   stays: tapeChartContract.stays,
   ...cashContract,
+  ...frontDeskContract,
 }
 export type Contract = typeof contract
 
@@ -40,6 +42,7 @@ export * from './cash.ts'
 export * from './changes.ts'
 export * from './devices.ts'
 export * from './finance.ts'
+export * from './front-desk.ts'
 export * from './governance.ts'
 export * from './rates.ts'
 export * from './reservations.ts'

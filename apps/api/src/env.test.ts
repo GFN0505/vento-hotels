@@ -5,6 +5,7 @@ const base = {
   DATABASE_URL: 'postgres://u:p@localhost:5433/db',
   S3_ENDPOINT: 'http://localhost:9100',
   BETTER_AUTH_SECRET: 'test-only-secret-that-is-at-least-32-characters',
+  ALLOW_DEV_GUEST_DATA_KEY: 'true',
 }
 
 describe('loadEnv', () => {
@@ -42,5 +43,29 @@ describe('VENTO_ALL_FEATURES', () => {
     expect(() => loadEnv({ ...base, NODE_ENV: 'production', VENTO_ALL_FEATURES: 'true' })).toThrow(
       'VENTO_ALL_FEATURES',
     )
+  })
+})
+
+describe('GUEST_DATA_KEY', () => {
+  const key = Buffer.alloc(32, 7).toString('base64')
+  const { ALLOW_DEV_GUEST_DATA_KEY: _, ...bare } = base
+
+  it('stops the API when unset and the development key was not asked for', () => {
+    expect(() => loadEnv(bare)).toThrow('GUEST_DATA_KEY is not set')
+    expect(() => loadEnv({ ...bare, ALLOW_DEV_GUEST_DATA_KEY: 'false' })).toThrow('GUEST_DATA_KEY')
+  })
+
+  it('allows the development key only on a local, non-production server', () => {
+    expect(() => loadEnv(base)).not.toThrow()
+    expect(() => loadEnv({ ...base, NODE_ENV: 'production' })).toThrow('GUEST_DATA_KEY')
+    expect(() => loadEnv({ ...base, DEPLOY_ENV: 'staging' })).toThrow('GUEST_DATA_KEY')
+    expect(() => loadEnv({ ...base, DEPLOY_ENV: 'production' })).toThrow('GUEST_DATA_KEY')
+  })
+
+  it('starts anywhere with a real key', () => {
+    expect(
+      loadEnv({ ...bare, NODE_ENV: 'production', DEPLOY_ENV: 'production', GUEST_DATA_KEY: key })
+        .GUEST_DATA_KEY,
+    ).toBe(key)
   })
 })

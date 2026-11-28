@@ -36,10 +36,13 @@ Things still undecided stay under *Open questions* in `docs/DOMAIN.md` until the
 | [0021](0021-feature-switches.md) | Modules and features ship behind switches | accepted |
 | [0022](0022-shared-devices-and-pin.md) | Shared devices are registered, and staff sign in on them with a PIN | accepted |
 | [0023](0023-two-step-sign-in.md) | Two-step sign-in with an authenticator app, optional for now | accepted |
-| [0024](0024-offline-shell-first.md) | The offline shell ships in Stage 0; the outbox ships with the first offline command | accepted |
+| [0024](0024-offline-shell-first.md) | The offline shell ships in Stage 0; the outbox ships with the first offline command | accepted (lock rule superseded by 0029) |
 | [0025](0025-jobs-logs-and-error-tracking.md) | Background jobs on pg-boss, structured logs, and error tracking without personal data | accepted |
 | [0026](0026-hosting-on-contabo.md) | Hosting on Contabo servers we run ourselves, with Docker Compose | accepted |
 | [0027](0027-approvals.md) | Approvals are single-use, bound to the exact action, and confirmed by the approver's PIN | accepted |
 | [0028](0028-penalty-waiver-applies-on-approval.md) | A penalty waiver approved in the inbox applies when it is approved | accepted |
+| [0029](0029-front-desk-lists-stay-through-pin-locks.md) | The front desk PC keeps today's and tomorrow's lists through PIN locks | accepted |
+| [0030](0030-room-per-night-segments.md) | A stay keeps its room per night through room segments | accepted |
+| [0031](0031-guest-id-numbers-and-images.md) | Guest ID numbers are encrypted in the database; ID photos live in the private bucket | accepted |
 
 Template: [0000-template.md](0000-template.md)

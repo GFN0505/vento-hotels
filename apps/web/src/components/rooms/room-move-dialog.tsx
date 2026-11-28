@@ -16,6 +16,7 @@ import {
   dec,
   firstNameOf,
   formatMoney,
+  formatRateDate,
   newId,
   nightsBetween,
   ROOM_MOVE_REASON_LABELS,
@@ -207,6 +208,11 @@ export function RoomMoveDialog({
       setFailure('Say why, in a few words.')
       return
     }
+    // In house (brick 8): a move always says why.
+    if (data.inHouse && !reason) {
+      setFailure('Pick why the guest is moving.')
+      return
+    }
     if (overLimit && !approvalId) {
       setPrompt(true)
       return
@@ -264,10 +270,13 @@ export function RoomMoveDialog({
   }, [watched.data])
 
   const stay = data?.stay
-  const nights = stay ? nightsBetween(stay.arrival, stay.departure) : 0
+  const nights = stay ? nightsBetween(data?.inHouse ? data.from : stay.arrival, stay.departure) : 0
   const title = stay ? (stay.room ? `Room move · ${guest}` : `Assign room · ${guest}`) : 'Room move'
+  // In house: "503 Executive King · in house since 23 Nov · 2 nights left (25–27 Nov)".
   const subtitle = stay
-    ? `${stay.room ? `${stay.room.number} ` : ''}${stay.roomTypeName} · ${rangeLabel(stay.arrival, stay.departure, true)} · ${nights === 1 ? '1 night' : `${nights} nights`}`
+    ? data?.inHouse
+      ? `${stay.room ? `${stay.room.number} ` : ''}${stay.roomTypeName} · in house since ${formatRateDate(stay.arrival, false)} · ${nights === 1 ? '1 night' : `${nights} nights`} left (${rangeLabel(data.from, stay.departure)})`
+      : `${stay.room ? `${stay.room.number} ` : ''}${stay.roomTypeName} · ${rangeLabel(stay.arrival, stay.departure, true)} · ${nights === 1 ? '1 night' : `${nights} nights`}`
     : undefined
   const primary = choice
     ? overLimit
@@ -300,7 +309,7 @@ export function RoomMoveDialog({
                     {MOVE_NEEDS_LIVE}
                   </span>
                 ) : null}
-                {stay?.room && !data?.blocked ? (
+                {stay?.room && !data?.blocked && !data?.inHouse ? (
                   <Button
                     variant="ghost"
                     className="mr-auto text-ro"
@@ -454,7 +463,7 @@ export function RoomMoveDialog({
           {data && choice ? (
             <>
               <Pills
-                legend={keep ? 'Reason (required)' : 'Reason (optional)'}
+                legend={keep || data.inHouse ? 'Reason (required)' : 'Reason (optional)'}
                 name="move-reason"
                 options={keep ? REASONS.filter((r) => r.value === 'upgrade') : REASONS}
                 value={reason}

@@ -14,6 +14,8 @@ import { cn } from '@/lib/cn'
 import { CANT_REACH_VENTO } from '@/lib/errors'
 import { initials } from '@/lib/team'
 import { usePageTitle } from '@/lib/title'
+import { forgetSealedData } from '@/offline/outbox'
+import { clearSavedData } from '@/offline/saved-data'
 
 type LockSearch = { signedOut?: string | undefined }
 
@@ -31,6 +33,11 @@ type Person = Ready['people'][number]
 function LockPage() {
   usePageTitle('Sign in on this device')
   const lock = useQuery({ queryKey: ['lock-screen'], queryFn: () => api.devices.lockScreen() })
+  // A removed device keeps nothing, not even the front desk lists (decision 0029).
+  const revoked = lock.data?.status === 'revoked'
+  useEffect(() => {
+    if (revoked) void Promise.all([clearSavedData(), forgetSealedData()])
+  }, [revoked])
 
   const device = lock.data?.status === 'ready' ? lock.data.device : undefined
   return (

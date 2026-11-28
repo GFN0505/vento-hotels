@@ -20,10 +20,12 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSectionRouteImport } from './routes/_app/$section'
 import { Route as AppApprovalsRouteImport } from './routes/_app/approvals'
 import { Route as AppCashRouteImport } from './routes/_app/cash'
+import { Route as AppFrontDeskRouteImport } from './routes/_app/front-desk'
 import { Route as AppRatesRouteImport } from './routes/_app/rates'
 import { Route as AppReservationsRouteImport } from './routes/_app/reservations'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppTapeChartRouteImport } from './routes/_app/tape-chart'
+import { Route as AppWalkInRouteImport } from './routes/_app/walk-in'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as AppCashIndexRouteImport } from './routes/_app/cash/index'
 import { Route as AppCashShiftsRouteImport } from './routes/_app/cash/shifts'
@@ -99,6 +101,11 @@ const AppCashRoute = AppCashRouteImport.update({
   path: '/cash',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFrontDeskRoute = AppFrontDeskRouteImport.update({
+  id: '/front-desk',
+  path: '/front-desk',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRatesRoute = AppRatesRouteImport.update({
   id: '/rates',
   path: '/rates',
@@ -117,6 +124,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppTapeChartRoute = AppTapeChartRouteImport.update({
   id: '/tape-chart',
   path: '/tape-chart',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppWalkInRoute = AppWalkInRouteImport.update({
+  id: '/walk-in',
+  path: '/walk-in',
   getParentRoute: () => AppRoute,
 } as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
@@ -232,10 +244,12 @@ export interface FileRoutesByFullPath {
   '/$section': typeof AppSectionRoute
   '/approvals': typeof AppApprovalsRoute
   '/cash': typeof AppCashRouteWithChildren
+  '/front-desk': typeof AppFrontDeskRoute
   '/rates': typeof AppRatesRouteWithChildren
   '/reservations': typeof AppReservationsRouteWithChildren
   '/settings': typeof AppSettingsRouteWithChildren
   '/tape-chart': typeof AppTapeChartRoute
+  '/walk-in': typeof AppWalkInRoute
   '/join/$token': typeof JoinTokenRoute
   '/cash/shifts': typeof AppCashShiftsRoute
   '/rates/calendar': typeof AppRatesCalendarRoute
@@ -266,7 +280,9 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/$section': typeof AppSectionRoute
   '/approvals': typeof AppApprovalsRoute
+  '/front-desk': typeof AppFrontDeskRoute
   '/tape-chart': typeof AppTapeChartRoute
+  '/walk-in': typeof AppWalkInRoute
   '/join/$token': typeof JoinTokenRoute
   '/': typeof AppIndexRoute
   '/cash/shifts': typeof AppCashShiftsRoute
@@ -301,10 +317,12 @@ export interface FileRoutesById {
   '/_app/$section': typeof AppSectionRoute
   '/_app/approvals': typeof AppApprovalsRoute
   '/_app/cash': typeof AppCashRouteWithChildren
+  '/_app/front-desk': typeof AppFrontDeskRoute
   '/_app/rates': typeof AppRatesRouteWithChildren
   '/_app/reservations': typeof AppReservationsRouteWithChildren
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/tape-chart': typeof AppTapeChartRoute
+  '/_app/walk-in': typeof AppWalkInRoute
   '/join/$token': typeof JoinTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/cash/shifts': typeof AppCashShiftsRoute
@@ -340,10 +358,12 @@ export interface FileRouteTypes {
     | '/$section'
     | '/approvals'
     | '/cash'
+    | '/front-desk'
     | '/rates'
     | '/reservations'
     | '/settings'
     | '/tape-chart'
+    | '/walk-in'
     | '/join/$token'
     | '/cash/shifts'
     | '/rates/calendar'
@@ -374,7 +394,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/$section'
     | '/approvals'
+    | '/front-desk'
     | '/tape-chart'
+    | '/walk-in'
     | '/join/$token'
     | '/'
     | '/cash/shifts'
@@ -408,10 +430,12 @@ export interface FileRouteTypes {
     | '/_app/$section'
     | '/_app/approvals'
     | '/_app/cash'
+    | '/_app/front-desk'
     | '/_app/rates'
     | '/_app/reservations'
     | '/_app/settings'
     | '/_app/tape-chart'
+    | '/_app/walk-in'
     | '/join/$token'
     | '/_app/'
     | '/_app/cash/shifts'
@@ -525,6 +549,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCashRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/front-desk': {
+      id: '/_app/front-desk'
+      path: '/front-desk'
+      fullPath: '/front-desk'
+      preLoaderRoute: typeof AppFrontDeskRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/rates': {
       id: '/_app/rates'
       path: '/rates'
@@ -551,6 +582,13 @@ declare module '@tanstack/react-router' {
       path: '/tape-chart'
       fullPath: '/tape-chart'
       preLoaderRoute: typeof AppTapeChartRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/walk-in': {
+      id: '/_app/walk-in'
+      path: '/walk-in'
+      fullPath: '/walk-in'
+      preLoaderRoute: typeof AppWalkInRouteImport
       parentRoute: typeof AppRoute
     }
     '/join/$token': {
@@ -777,10 +815,12 @@ interface AppRouteChildren {
   AppSectionRoute: typeof AppSectionRoute
   AppApprovalsRoute: typeof AppApprovalsRoute
   AppCashRoute: typeof AppCashRouteWithChildren
+  AppFrontDeskRoute: typeof AppFrontDeskRoute
   AppRatesRoute: typeof AppRatesRouteWithChildren
   AppReservationsRoute: typeof AppReservationsRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppTapeChartRoute: typeof AppTapeChartRoute
+  AppWalkInRoute: typeof AppWalkInRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -788,10 +828,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppSectionRoute: AppSectionRoute,
   AppApprovalsRoute: AppApprovalsRoute,
   AppCashRoute: AppCashRouteWithChildren,
+  AppFrontDeskRoute: AppFrontDeskRoute,
   AppRatesRoute: AppRatesRouteWithChildren,
   AppReservationsRoute: AppReservationsRouteWithChildren,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppTapeChartRoute: AppTapeChartRoute,
+  AppWalkInRoute: AppWalkInRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

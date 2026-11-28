@@ -32,7 +32,12 @@ export function requireAllowed(
   const allowed = allowedActions(r.status, r.arrival, hotel.businessDate)
   if (allowed.blocked === 'ended') throw notChangeable(endedMessage(loaded, hotel.timeZone))
   if (allowed.blocked === 'in_house') {
-    throw notChangeable('This guest is in house. In-house changes come with check-in.')
+    // In house (brick 8): the departure can change (and the room, through Room move); the
+    // booking can't be cancelled or marked no-show: leaving early is a check-out.
+    if (action === 'modify' && r.status === 'checked_in') return
+    throw notChangeable(
+      "This guest is in house, so the booking can't be cancelled or marked no-show. Leaving early is a check-out.",
+    )
   }
   if (action === 'no_show') {
     if (!allowed.noShow) throw notArrivedYet(r.number, r.arrival)

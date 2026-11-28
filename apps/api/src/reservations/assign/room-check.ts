@@ -4,10 +4,11 @@
 // stay-against-out-of-order check (two tables) can't be passed by two of them at once; the
 // exclusion constraints on stays and room_out_of_order are the last line of defence.
 import { shortGuestName } from '@vento/shared'
-import { and, asc, eq, gt, inArray, isNull, lt, ne } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, isNull, lt, ne, sql } from 'drizzle-orm'
 import { guests, stays } from '../../db/schema/reservations.ts'
 import { roomOutOfOrder, rooms, roomTypes } from '../../db/schema/rooms.ts'
 import type { Reader, Tx } from '../context.ts'
+import { roomFromSql } from '../room-from.ts'
 import {
   roomOutOfOrder as outOfOrderError,
   roomNotFound,
@@ -118,6 +119,8 @@ export async function roomConflict(
   const [taken] = await db
     .select({
       id: stays.id,
+      // In this room from (an in-house stay that moved here: the move's business date).
+      from: roomFromSql,
       arrival: stays.arrival,
       departure: stays.departure,
       firstName: guests.firstName,
@@ -129,12 +132,12 @@ export async function roomConflict(
       and(
         eq(stays.roomId, roomId),
         inArray(stays.status, ['confirmed', 'checked_in']),
-        lt(stays.arrival, to),
+        sql`${roomFromSql}::date < ${to}`,
         gt(stays.departure, from),
         except.stay ? ne(stays.id, except.stay) : undefined,
       ),
     )
-    .orderBy(asc(stays.arrival))
+    .orderBy(asc(roomFromSql))
     .limit(1)
   const [period] = await db
     .select({
@@ -154,7 +157,7 @@ export async function roomConflict(
     )
     .orderBy(asc(roomOutOfOrder.fromDate))
     .limit(1)
-  const stayFirst = taken ? (taken.arrival > from ? taken.arrival : from) : null
+  const stayFirst = taken ? (taken.from > from ? taken.from : from) : null
   const periodFirst = period ? (period.from > from ? period.from : from) : null
   if (taken && stayFirst && (!periodFirst || stayFirst <= periodFirst)) {
     return {
@@ -210,7 +213,7 @@ export async function busyRooms(
       and(
         eq(stays.propertyId, propertyId),
         inArray(stays.status, ['confirmed', 'checked_in']),
-        lt(stays.arrival, to),
+        sql`${roomFromSql}::date < ${to}`,
         gt(stays.departure, from),
         ne(stays.id, exceptStay),
       ),

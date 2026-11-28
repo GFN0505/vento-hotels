@@ -449,8 +449,15 @@ export const reservationDetailSchema = z.object({
     blocked: z.enum(['ended', 'arrival_passed', 'not_arrived', 'in_house']).nullable(),
     canManage: z.boolean(),
     canWaive: z.boolean(),
-    // Room move / Assign room (brick 7): room.move and a confirmed stay arriving from today on.
+    // Room move / Assign room (brick 7): room.move and a confirmed stay arriving from today on, or
+    // an in-house stay with a night left (brick 8).
     roomMove: z.boolean(),
+    // Check in (brick 8): stay.check_in, a confirmed stay arriving on the business date; or why not.
+    checkIn: z.boolean(),
+    checkInBlocked: z.string().nullable(),
+    // Reverse check-in: stay.check_in_reverse, checked in on the business date by someone else.
+    reverseCheckIn: z.boolean(),
+    printCard: z.boolean(),
   }),
   stays: z.array(
     z.object({
@@ -480,6 +487,21 @@ export const reservationDetailSchema = z.object({
         .nullable(),
       // The assigned room, or null (Not assigned).
       room: z.object({ id: idSchema, number: z.string() }).nullable(),
+      status: z.enum(['confirmed', 'checked_in', 'checked_out', 'cancelled', 'no_show']),
+      // Checked in (brick 8): when, by whom, on which business date; earlier rooms of an in-house
+      // stay that moved (decision 0030); the ID photo still to add; the card printed.
+      checkIn: z
+        .object({
+          at: z.iso.datetime(),
+          byName: z.string(),
+          businessDate: calendarDateSchema,
+          cardPrinted: z.boolean(),
+          idPhotoMissing: z.boolean(),
+        })
+        .nullable(),
+      earlierRooms: z.array(
+        z.object({ number: z.string(), from: calendarDateSchema, to: calendarDateSchema }),
+      ),
       // Tax lines recomputed with the rules in force on each night; null lines when the hotel's
       // taxes aren't set up any more.
       nights: z.array(quotedNightSchema),

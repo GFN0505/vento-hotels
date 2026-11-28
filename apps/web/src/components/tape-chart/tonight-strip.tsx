@@ -1,6 +1,7 @@
 // The Tonight strip (the owner: "I can't tell which rooms are occupied"): on the business date, how
-// many rooms are occupied, vacant and out of order, and how many bookings over tonight have no room
-// yet. Each figure filters the chart to those rooms; "not in a room yet" opens the Unassigned lanes.
+// many rooms are occupied (a guest checked in), arriving (a booking in the room, not in yet), vacant
+// and out of order, and how many bookings over tonight have no room yet; the front desk lists show
+// the same figures. Each filters the chart to those rooms; "not in a room yet" opens the lanes.
 import { formatRateDate, type TapeChart } from '@vento/shared'
 import { cn } from '@/lib/cn'
 import { type Filters, tonightCounts } from './chart-model'
@@ -14,7 +15,8 @@ type Props = {
 }
 
 const DOT = {
-  occupied: 'bg-pri',
+  occupied: 'bg-house',
+  arriving: 'bg-pri',
   vacant: 'bg-em-dot',
   out_of_order: 'bg-ro-dot',
   unassigned: 'bg-am-dot',
@@ -30,6 +32,7 @@ export function TonightStrip({
   const counts = tonightCounts(chart, date)
   const items = [
     { key: 'occupied' as const, n: counts.occupied, words: 'occupied' },
+    { key: 'arriving' as const, n: counts.arriving, words: 'arriving' },
     { key: 'vacant' as const, n: counts.vacant, words: 'vacant' },
     { key: 'out_of_order' as const, n: counts.outOfOrder, words: 'out of order' },
   ]
