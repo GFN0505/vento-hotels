@@ -70,7 +70,7 @@ describe('rate calendar', () => {
       canEdit: true,
       dates: dates.map((date) => ({ date, weekend: false, past: false })),
       seasons: [{ name: 'Festive season', from: '2026-12-18', to: '2027-01-02' }],
-      roomTypes: [{ id: BAR, name: 'Standard Queen', code: 'STQ', rows: [own] }],
+      roomTypes: [{ id: BAR, name: 'Standard Queen', code: 'STQ', left: [], rows: [own] }],
     }
     const bands = seasonBands(calendar)
     expect(bands.map((b) => [b.season?.name ?? null, b.span])).toEqual([
