@@ -5,6 +5,7 @@ import {
   countTotal,
   differenceWords,
   EMPTY_COUNT,
+  handoverDifference,
   lineDifference,
   nairaAt,
   noteCountSchema,
@@ -42,6 +43,8 @@ describe('cash counts', () => {
     expect(differenceWords('-2500')).toEqual({ amount: '₦2,500.00', words: 'short' })
     expect(differenceWords('12500')).toEqual({ amount: '₦12,500.00', words: 'over' })
     expect(differenceWords('0.00')).toBeNull()
+    expect(handoverDifference('48000', '50000.00')).toBe('-2000.00')
+    expect(handoverDifference('50000', '0.00')).toBe('0.00')
   })
 
   it('converts foreign cash once, half-up, and shows it in its own currency', () => {

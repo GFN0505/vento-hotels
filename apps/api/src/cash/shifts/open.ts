@@ -5,7 +5,14 @@
 // Lock order: the hotel FOR SHARE, the person (one shift at a time across the group), the drawer
 // FOR UPDATE, the approval FOR UPDATE, then the hotel's shift numbers. The partial unique indexes
 // (one shift not closed per drawer and per person) back the checks up.
-import { countTotal, dec, type OpenShiftInput, openShiftInputSchema, toAmount } from '@vento/shared'
+import {
+  countTotal,
+  dec,
+  handoverDifference,
+  type OpenShiftInput,
+  openShiftInputSchema,
+  toAmount,
+} from '@vento/shared'
 import { and, desc, eq, isNull, ne, sql } from 'drizzle-orm'
 import type { z } from 'zod'
 import { markApprovalUsed, type UsedApproval, useApproval } from '../../approvals/use.ts'
@@ -36,7 +43,7 @@ import {
   reasonRequired,
   shiftAlreadyOpen,
 } from '../errors.ts'
-import { CASH_VARIANCE, handoverBinding, handoverDifference } from './variance.ts'
+import { CASH_VARIANCE, handoverBinding } from './variance.ts'
 import { type ShiftRow, toShiftView } from './views.ts'
 
 type ServiceDb = Pick<Database, 'transaction' | 'select' | 'execute'>
@@ -204,7 +211,7 @@ async function openInTx(
   }
   const floatLeft = previous?.floatKept ?? '0.00'
   const counted = countTotal(input.count)
-  const difference = handoverDifference(input.count, floatLeft)
+  const difference = handoverDifference(countTotal(input.count), floatLeft)
   const value = toAmount(dec(difference).abs())
   const reason = input.reason?.trim() || null
   if (!dec(difference).isZero() && !reason) throw reasonRequired()

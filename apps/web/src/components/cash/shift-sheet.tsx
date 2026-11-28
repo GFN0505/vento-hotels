@@ -33,6 +33,12 @@ const EVENT_LABELS: Record<string, string> = {
   'approval.expired': 'Request expired',
 }
 
+// "25 Nov", in the hotel's time zone: a night shift's events cross midnight.
+const dayIn = (at: string, timeZone: string) =>
+  new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone }).format(
+    new Date(at),
+  )
+
 const how = (by: ApprovedBy, tz: string) =>
   `${by.name} · ${by.method === 'pin_here' ? `PIN${by.deviceName ? ` on ${by.deviceName}` : ''}` : 'inbox'} · ${clockAt(by.at, tz)}`
 
@@ -172,7 +178,7 @@ function Detail({
                   {[
                     event.actorName,
                     event.deviceName,
-                    `${dateLabel(event.at.slice(0, 10), false)} ${clockAt(event.at, tz)}`,
+                    `${dayIn(event.at, tz)} ${clockAt(event.at, tz)}`,
                   ]
                     .filter(Boolean)
                     .join(' · ')}

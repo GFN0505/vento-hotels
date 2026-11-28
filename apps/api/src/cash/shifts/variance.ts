@@ -4,14 +4,7 @@
 // - close: the shift, its submitted count (lines and total difference) and the reason.
 // Changing the reason after asking makes a new hash, so the old approval no longer matches.
 import { createHash } from 'node:crypto'
-import {
-  countTotal,
-  dec,
-  differenceWords,
-  NGN_NOTES,
-  type NoteCount,
-  toAmount,
-} from '@vento/shared'
+import { differenceWords, NGN_NOTES, type NoteCount, toAmount } from '@vento/shared'
 
 export const CASH_VARIANCE = {
   kind: 'cash_variance' as const,
@@ -72,13 +65,6 @@ export function closeBinding(b: {
     toAmount(b.totalDifference),
     b.reason.trim(),
   ])
-}
-
-// What the opener counted against what the drawer's last shift kept. Nothing to compare when the
-// last shift left nothing (or there was none): the float is whatever she was given.
-export function handoverDifference(count: NoteCount, floatLeft: string): string {
-  if (dec(floatLeft).isZero()) return '0.00'
-  return toAmount(dec(countTotal(count)).minus(floatLeft))
 }
 
 // "Cash ₦12,500.00 over", one per line that differs (in naira for foreign lines).

@@ -21,7 +21,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { api, orpc } from '@/lib/api'
 import { cn } from '@/lib/cn'
-import { errorCode, problemMessage } from '@/lib/errors'
+import { errorCode, isConnectionProblem, problemMessage } from '@/lib/errors'
 import { useOnline } from '@/offline/connection'
 import { ApprovalLine, CashApprovalPrompt, useCashApproval } from './approval-flow'
 import { amountOf, amountProblem } from './count-model'
@@ -63,7 +63,7 @@ export function CloseStep({
     Partial<Record<'reason' | 'floatKept' | 'bagNumber' | 'form', string>>
   >({})
   const key = useRef(newId())
-  const approval = useCashApproval(reason)
+  const approval = useCashApproval(reason.trim())
 
   const total = shift.totalDifference
   const differs = !dec(total).isZero()
@@ -107,7 +107,9 @@ export function CloseStep({
       await client.invalidateQueries({ queryKey: orpc.cash.key() })
     },
     onError: (error) => {
-      key.current = newId()
+      // A definite answer from the server: the next try is a new request. A dropped connection
+      // keeps the key, so trying again can't close the shift twice.
+      if (!isConnectionProblem(error as { status?: number })) key.current = newId()
       const code = errorCode(error)
       const field =
         code === 'DIFFERENCE_REASON_REQUIRED'

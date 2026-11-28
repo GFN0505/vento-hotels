@@ -674,4 +674,50 @@ describe.skipIf(!url)('cashier shifts', () => {
       .where(eq(cashierShifts.propertyId, k.vi.id))
     expect(row?.value).toBe(6)
   })
+
+  it('checks the limit again at close, and a replayed close returns the same shift', async () => {
+    const mine = await myShift(t, k.halima, k.vi.id)
+    const counted = mine.data.shift
+    if (counted?.status !== 'counted') throw new Error('Halima has no counted shift')
+    const reason = 'US dollars from a walk-in, kept in the drawer'
+    const refused = await close(t, k.halima, counted, {
+      floatKept: '12000',
+      reason,
+      bagNumber: 'S-2301',
+    })
+    expect(refused.data.data?.code).toBe('DIFFERENCE_OVER_LIMIT')
+    // The owner raises cashiers' limit after the count: the close measures against it now.
+    const raised = await rpc(k.owner.cookie, 'permissions/set', {
+      role: 'cashier',
+      permission: 'cashier_shift.variance',
+      allowed: true,
+      limit: '100000',
+      reason: 'Cashiers take foreign cash at the bar',
+    })
+    expect(raised.status).toBe(200)
+    const key = newId()
+    const closed = await close(t, k.halima, counted, {
+      floatKept: '12000',
+      reason,
+      bagNumber: 'S-2301',
+      key,
+    })
+    expect(closed.data).toMatchObject({ status: 'closed', dropBagNumber: 'S-2301' })
+    const again = await close(t, k.halima, counted, {
+      floatKept: '12000',
+      reason,
+      bagNumber: 'S-2301',
+      key,
+    })
+    expect(again.status).toBe(200)
+    expect(again.data).toMatchObject({ id: counted.id, status: 'closed' })
+    expect(await events(counted.id, 'cashier_shift.closed')).toHaveLength(1)
+    const other = await close(t, k.halima, counted, {
+      floatKept: '0',
+      bagNumber: 'S-2301',
+      reason,
+      key,
+    })
+    expect(other.data.data?.code).toBe('IDEMPOTENCY_CONFLICT')
+  })
 })

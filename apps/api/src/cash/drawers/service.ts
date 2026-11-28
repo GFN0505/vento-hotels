@@ -128,7 +128,8 @@ export async function listDrawers(
   query: PageQuery & { propertyId: string; status: 'active' | 'archived' },
 ) {
   requirePaymentsRead(access)
-  const hotel = await cashHotel(db, access, query.propertyId, { write: true })
+  // A read: an archived hotel's drawers stay readable.
+  const hotel = await cashHotel(db, access, query.propertyId)
   const where = and(
     eq(cashDrawers.organizationId, access.organizationId),
     eq(cashDrawers.propertyId, hotel.id),

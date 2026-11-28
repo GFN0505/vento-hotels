@@ -10,6 +10,7 @@ import {
   dec,
   FOREIGN_CASH_LABELS,
   type FxCurrency,
+  handoverDifference,
   roleLabel,
   toAmount,
 } from '@vento/shared'
@@ -32,7 +33,6 @@ import {
   closeBinding,
   differingLines,
   handoverBinding,
-  handoverDifference,
 } from '../../cash/shifts/variance.ts'
 import type { Database } from '../../db/client.ts'
 import { cashDrawers } from '../../db/schema/cash.ts'
@@ -96,7 +96,7 @@ export async function evaluateCashVariance(
       )
     }
     const floatLeft = previous?.floatKept ?? '0.00'
-    const difference = handoverDifference(target.count, floatLeft)
+    const difference = handoverDifference(countTotal(target.count), floatLeft)
     if (dec(difference).isZero()) throw noDifference()
     const reason = target.reason.trim()
     return {

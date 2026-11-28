@@ -128,9 +128,14 @@ export function CountStep({
     },
   })
 
-  // Back online with a count sent just before the connection dropped: ask again, same key.
+  // Back online with a count sent just before the connection dropped: ask again once, same key.
+  // Only on the offline → online change, so a server that keeps failing isn't asked in a loop;
+  // Submit count stays available to try again by hand.
+  const wasOnline = useRef(online)
   useEffect(() => {
-    if (online && waitingToRetry && !submit.isPending) submit.mutate()
+    const cameBack = online && !wasOnline.current
+    wasOnline.current = online
+    if (cameBack && waitingToRetry && !submit.isPending) submit.mutate()
   }, [online, waitingToRetry, submit])
 
   function check(event: FormEvent) {
@@ -298,7 +303,7 @@ export function CountStep({
                 variant="primary"
                 size="lg"
                 className="w-full"
-                disabled={!online || lines.isPending || waitingToRetry}
+                disabled={!online || lines.isPending}
                 loading={submit.isPending}
               >
                 Submit count

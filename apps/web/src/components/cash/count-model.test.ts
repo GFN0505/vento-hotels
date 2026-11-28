@@ -75,6 +75,7 @@ describe('the close panel', () => {
       'Over your ₦5,000.00 limit. A manager can approve it here.',
     )
     expect(overLimit('12500.00', null)).toBe(false)
+    expect(limitLine('100.00', '0.00')).toBe("Any difference needs a manager's approval.")
     const short = [line({ differenceNgn: '-2500.00', difference: '-2500.00' })]
     expect(closeBadge(short)).toEqual({ label: 'Short', tone: 'amber' })
     expect(closeBadge([line({})])).toEqual({ label: 'Balanced', tone: 'emerald' })

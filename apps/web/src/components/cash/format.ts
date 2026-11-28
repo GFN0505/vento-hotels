@@ -35,12 +35,8 @@ export function compareWords(difference: string): { text: string; tone: 'emerald
   return { text: `${words.amount} ${words.words}`, tone: 'rose' }
 }
 
-// The hand-over: what the opener counted against what the last shift kept. Nothing to compare when
-// it left nothing (or there was none).
-export function handoverDifference(counted: string, floatLeft: string): string {
-  if (dec(floatLeft).isZero()) return '0.00'
-  return toAmount(dec(counted).minus(floatLeft))
-}
+// From @vento/shared: the server works the hand-over out the same way.
+export { handoverDifference } from '@vento/shared'
 
 // Above the limit a manager signs: null = any; '0.00' = every difference.
 export function overLimit(value: string, limit: string | null): boolean {
@@ -52,7 +48,7 @@ export function limitLine(value: string, limit: string | null): string {
   if (limit === null) return 'Within your limit'
   if (overLimit(value, limit)) {
     return dec(limit).isZero()
-      ? 'A manager approves any difference for you. A manager can approve it here.'
+      ? "Any difference needs a manager's approval."
       : `Over your ${naira(limit)} limit. A manager can approve it here.`
   }
   return `Within your ${naira(limit)} limit`

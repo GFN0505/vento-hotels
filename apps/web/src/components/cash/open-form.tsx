@@ -90,7 +90,9 @@ export function OpenForm({
   >({})
   // One shift id and key per attempt: a double click or a retry opens the same shift.
   const ids = useRef({ id: newId(), key: newId() })
-  const approval = useCashApproval(reason)
+  const approval = useCashApproval(
+    JSON.stringify([drawer?.id ?? null, toCount(draft), reason.trim()]),
+  )
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000)
@@ -146,6 +148,8 @@ export function OpenForm({
     },
     onError: async (error) => {
       const code = errorCode(error)
+      // An approval that no longer matches (or expired, or was used) can't be sent again.
+      if (code?.startsWith('APPROVAL_')) approval.reset()
       if (code === 'HANDOVER_CHANGED' || code === 'DRAWER_BUSY' || code === 'DRAWER_ARCHIVED') {
         // Someone else moved first: a new attempt, and the hand-over as it is now.
         ids.current = { id: newId(), key: newId() }

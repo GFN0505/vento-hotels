@@ -78,6 +78,14 @@ export function totalDifference(lines: readonly { differenceNgn: string }[]): st
   return toAmount(lines.reduce((sum, line) => sum.plus(dec(line.differenceNgn).abs()), dec('0')))
 }
 
+// The hand-over: what the opener counted against what the drawer's last shift kept (counted −
+// kept). Nothing to compare when it kept nothing, or there was no last shift: the float is
+// whatever she was given. Used live on the open form and again by the server.
+export function handoverDifference(counted: string, floatLeft: string): string {
+  if (dec(floatLeft).isZero()) return '0.00'
+  return toAmount(dec(counted).minus(floatLeft))
+}
+
 // A count as the confirm and the read-only card show it, notes with no count left out.
 export function countRows(count: NoteCount) {
   return NGN_NOTES.map((note) => ({

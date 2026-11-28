@@ -135,9 +135,12 @@ export async function submitCount(
 }
 
 async function submitInTx(tx: Tx, access: Access, input: Input, now: Date): Promise<ShiftRow> {
+  // Lock order: the hotel FOR SHARE (its business date can't roll, nor the hotel be archived,
+  // under the count), then the shift FOR UPDATE, as night audit will take them.
+  const peek = await findShift(tx, access, input.shiftId)
+  const hotel = await cashHotel(tx, access, peek.propertyId, { write: true, hold: true })
   const row = await lockShift(tx, access, input.shiftId)
   requireOwn(access, row)
-  const hotel = await cashHotel(tx, access, row.propertyId, { write: true })
   if (row.countIdempotencyKey === input.idempotencyKey) {
     if (!(await sameCount(tx, row, input))) throw idempotencyConflict()
     return row

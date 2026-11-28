@@ -34,7 +34,7 @@ import {
   shiftClosed,
   shiftNotCounted,
 } from '../errors.ts'
-import { lockShift, requireOwn } from './load.ts'
+import { findShift, lockShift, requireOwn } from './load.ts'
 import { CASH_VARIANCE, closeBinding } from './variance.ts'
 import { type ShiftRow, toShiftView } from './views.ts'
 
@@ -64,9 +64,12 @@ const sameClose = (row: ShiftRow, input: Input) =>
   (row.dropBagNumber ?? null) === (input.bagNumber ?? null)
 
 async function closeInTx(tx: Tx, access: Access, input: Input, now: Date): Promise<ShiftRow> {
+  // Lock order: the hotel FOR SHARE (its business date can't roll, nor the hotel be archived,
+  // under the close), then the shift FOR UPDATE, as night audit will take them.
+  const peek = await findShift(tx, access, input.shiftId)
+  const hotel = await cashHotel(tx, access, peek.propertyId, { write: true, hold: true })
   const row = await lockShift(tx, access, input.shiftId)
   requireOwn(access, row)
-  const hotel = await cashHotel(tx, access, row.propertyId, { write: true })
   if (row.closeIdempotencyKey === input.idempotencyKey) {
     if (!sameClose(row, input)) throw idempotencyConflict()
     return row

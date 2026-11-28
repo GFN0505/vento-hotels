@@ -1,8 +1,8 @@
 // Asking for a cash difference to be approved (brick 5's prompt, kind `cash_variance`): the PIN
 // here on a registered hotel device, which opens or closes the shift at once, or a request to a
 // manager's inbox, which this screen waits on ("Waiting for Tunde Bello · asked 06:46 · expires
-// 07:16"). Changing the reason after asking cancels the request, so the approval always matches
-// what was asked.
+// 07:16"). Changing what was asked (the count, the drawer or the reason) cancels the request, so
+// the approval always matches what will be sent.
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { type ApprovalActionInput, type ApprovalView, firstNameOf } from '@vento/shared'
 import { lazy, Suspense, useEffect, useState } from 'react'
@@ -15,8 +15,9 @@ const ApprovalPrompt = lazy(() =>
   import('@/components/approvals/approval-prompt').then((m) => ({ default: m.ApprovalPrompt })),
 )
 
-export function useCashApproval(reason: string) {
-  const [sent, setSent] = useState<{ view: ApprovalView; reason: string }>()
+// `signature`: everything the approval is bound to, as one string.
+export function useCashApproval(signature: string) {
+  const [sent, setSent] = useState<{ view: ApprovalView; signature: string }>()
   const [asking, setAsking] = useState(false)
   const poll = useQuery({
     ...orpc.approvals.get.queryOptions({ input: { id: sent?.view.id ?? '' } }),
@@ -27,16 +28,16 @@ export function useCashApproval(reason: string) {
   const cancel = useMutation({
     mutationFn: (id: string) => api.approvals.cancel({ id, reason: 'by_requester' }),
   })
-  // The reason changed after asking: the request no longer matches, so it goes.
+  // What was asked changed: the request (or the approval given) no longer matches, so it goes.
   useEffect(() => {
-    if (!sent || sent.reason.trim() === reason.trim()) return
+    if (!sent || sent.signature === signature) return
     const name = firstNameOf(sent.view.approver?.name ?? 'the manager')
     if (view?.status === 'pending') {
       cancel.mutate(sent.view.id)
       toast(`Request to ${name} cancelled`)
     }
     setSent(undefined)
-  }, [reason, sent, view?.status, cancel])
+  }, [signature, sent, view?.status, cancel])
   const approvedId = view?.status === 'approved' && !view.usedAt ? view.id : undefined
   return {
     view,
@@ -45,7 +46,7 @@ export function useCashApproval(reason: string) {
     ask: () => setAsking(true),
     stopAsking: () => setAsking(false),
     sentTo: (approval: ApprovalView) => {
-      setSent({ view: approval, reason })
+      setSent({ view: approval, signature })
       setAsking(false)
       toast.success(`Sent to ${approval.approver?.name ?? 'the manager'}`)
     },
