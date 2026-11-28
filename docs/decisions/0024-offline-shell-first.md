@@ -1,7 +1,7 @@
 # 0024 · The offline shell ships in Stage 0; the outbox ships with the first offline command
 
 - **Date:** 2026-11-26
-- **Status:** accepted
+- **Status:** accepted; the rule that locking a shared device clears everything is superseded by [0029](0029-front-desk-lists-stay-through-pin-locks.md) for the front desk lists
 
 ## Context
 Decision 0009 makes front desk, POS and housekeeping work offline: a service worker keeps the app on the device, reference data is cached, and writes go into an IndexedDB outbox synced with idempotency keys. Stage 0 has no module that writes anything offline yet (setup, team, permissions and two-step are deliberately online-only), so an outbox now would have no commands to carry.
