@@ -280,10 +280,10 @@ for (const theme of ['light', 'dark'] as const) {
         .filter({ visible: true })
         .first()
         .waitFor()
-      // With the Rooms left row (desktop) or each night's "15 left" (phone).
+      // With the Rooms left row (desktop) or each night's rooms left (phone); the demo's numbers vary.
       await page
-        .getByRole('cell', { name: '15 left', exact: true })
-        .or(page.getByText('15 left', { exact: true }))
+        .getByRole('rowheader', { name: 'Rooms left' })
+        .or(page.getByText(/^(\d+ left|Sold out|\d+ more bookings? than rooms)/))
         .filter({ visible: true })
         .first()
         .waitFor()
