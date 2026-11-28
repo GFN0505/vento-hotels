@@ -41,8 +41,8 @@ export type QuickAction = {
   label: string
   icon: LucideIcon
   to: ModulePath
-  // Opens the module's New sheet (New reservation), for members with this permission.
-  sheet?: 'new'
+  // Opens the module's New sheet (New reservation), or the walk-in page (brick 8).
+  sheet?: 'new' | 'walk-in'
   needs?: Permission
 }
 
@@ -65,7 +65,13 @@ const NEW_RESERVATION: QuickAction = {
   sheet: 'new',
   needs: 'reservation.manage',
 }
-const WALK_IN: QuickAction = { label: 'Walk-in', icon: DoorOpen, to: '/front-desk' }
+const WALK_IN: QuickAction = {
+  label: 'Walk-in',
+  icon: DoorOpen,
+  to: '/front-desk',
+  sheet: 'walk-in',
+  needs: 'stay.check_in',
+}
 const TAPE_CHART: QuickAction = { label: 'Tape chart', icon: ChartGantt, to: '/tape-chart' }
 const RESTAURANT: QuickAction = { label: 'Open a bill', icon: UtensilsCrossed, to: '/restaurant' }
 

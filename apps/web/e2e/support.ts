@@ -168,6 +168,7 @@ export function seedDemoGroup(tag: string, password: string): string {
     env: {
       ...process.env,
       NODE_ENV: 'test',
+      ALLOW_DEV_GUEST_DATA_KEY: 'true',
       DATABASE_URL: process.env.TEST_DATABASE_URL,
       DEMO_PASSWORD: password,
       DEMO_SLUG: `kora-${run}`,

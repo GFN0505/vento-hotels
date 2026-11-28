@@ -13,7 +13,7 @@ Calendar date is **Thu 26 Nov 2026**, 00:30. Business date is still **Wed 25 Nov
 
 1. **23:00 Start of shift.**
    - *Does:* signs in on PC 2 and opens his cashier shift with a ₦20,000.00 float.
-   - *Sees:* in-house 86, arrivals still due 2, departures not checked out 1.
+   - *Sees:* in-house 86, arrivals still due 2, departures not checked out 1 (the Front desk lists' In house, Arrivals and Departures, counted from checked-in stays since brick 8).
    - *Behind the scenes:* audit events `member.signed_in`, `cashier_shift.opened`.
 
 2. **00:30 Open the night audit wizard.**

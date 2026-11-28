@@ -68,6 +68,22 @@ describe('default permissions matrix (docs/DOMAIN.md)', () => {
   })
 })
 
+describe('front desk check-in rows (spec: stage-1-front-desk-check-in.md)', () => {
+  it('lets the front desk, GMs and owners check in; only GMs and owners reverse, see IDs or skip the photo', () => {
+    const roles = (permission: Parameters<typeof defaultRule>[1]) =>
+      MEMBER_ROLES.filter((role) => defaultRule(role, permission).allowed).sort()
+    expect(roles('stay.check_in')).toEqual([
+      'front_desk',
+      'general_manager',
+      'group_admin',
+      'owner',
+    ])
+    for (const permission of ['stay.check_in_reverse', 'guest.id_view', 'guest.id_skip'] as const) {
+      expect(roles(permission)).toEqual(['general_manager', 'group_admin', 'owner'])
+    }
+  })
+})
+
 describe('PERMISSION_GROUPS', () => {
   it('lists every permission exactly once', () => {
     const grouped = PERMISSION_GROUPS.flatMap((group) => group.permissions)

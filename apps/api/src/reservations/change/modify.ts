@@ -33,6 +33,7 @@ import {
   stayNights,
   stays,
 } from '../../db/schema/reservations.ts'
+import { setStatusInTx } from '../../rooms/status/set-status.ts'
 import {
   type Access,
   ApprovalRequiredError,
@@ -41,6 +42,7 @@ import {
 } from '../../tenancy/access.ts'
 import type { BookingHotel, Tx } from '../context.ts'
 import { noPermission, restrictionReasonRequired, roomTypeRemoved, soldOut } from '../errors.ts'
+import { keepEarlierNights } from '../in-house.ts'
 import { addBooked, capacityOf, leftOn, lockInventory, type Scope } from '../locks.ts'
 import { discountLimitOf } from '../pricing.ts'
 import { changePriceChanged, modifyDiscountOverLimit, nothingChanged } from './errors.ts'
@@ -66,10 +68,13 @@ function priceChangedMessage(priced: PricedChange) {
   return `The price changed since you opened this: ${plan} is now ${naira(fresh.soldPrice)} a night for ${formatRateDate(fresh.date, false)}. Check the new total with the guest and save again.`
 }
 
-// Locks the old and new nights in one statement and checks each new night can take its room.
+// Locks the old and new nights in one statement and checks each new night can take its room. An
+// in-house stay's nights before the business date are left alone (decision 0030).
 async function moveRooms(tx: Tx, scope: Scope, priced: PricedChange) {
-  const before = nightKeysOf(priced.stay)
-  const after = nightKeysOf(priced.input)
+  const before = nightKeysOf(
+    priced.inHouse ? { ...priced.stay, arrival: priced.from } : priced.stay,
+  )
+  const after = nightKeysOf({ ...priced.input, arrival: priced.from })
   const net = netCounts(before, after)
   const booked = await lockInventory(tx, scope, [...before, ...after])
   const wanted = [...net.entries()].filter(([, n]) => n > 0)
@@ -201,7 +206,7 @@ async function modifyInTx(
   }
 
   // Step 3: the room the stay ends up in (brick 7), checked free under its lock.
-  const room = await settleRoom(tx, scope, priced.stay, input)
+  const room = await settleRoom(tx, scope, priced.stay, input, priced.from)
 
   // Steps 4–5: inventory for the old and new nights, then the approvals in id order.
   const net = await moveRooms(tx, scope, priced)
@@ -246,6 +251,23 @@ async function modifyInTx(
         ? old.restrictionOverride
         : null
   await writeNights(tx, scope, priced)
+  // In house and moving rooms: the nights before stay in the old room, which is now dirty.
+  const movedInHouse =
+    old.status === 'checked_in' && room.before && room.after && room.before.id !== room.after.id
+  const kept =
+    movedInHouse && room.before && room.after
+      ? await keepEarlierNights(tx, scope, old, room.before, room.after, hotel.businessDate)
+      : null
+  if (movedInHouse && room.before) {
+    await setStatusInTx(tx, access, {
+      propertyId: hotel.id,
+      businessDate: hotel.businessDate,
+      roomId: room.before.id,
+      status: 'dirty',
+      source: 'room_move',
+      causedBy: { stayId: old.id, reservationNumber: loaded.reservation.number },
+    })
+  }
   await tx
     .update(stays)
     .set({
@@ -267,6 +289,7 @@ async function modifyInTx(
       discountByName: after?.byName ?? null,
       restrictionOverride,
       roomId: room.after?.id ?? null,
+      ...(kept ? { roomFrom: kept.roomFrom } : {}),
       version: old.version + 1,
       updatedAt: now,
     })

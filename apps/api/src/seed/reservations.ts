@@ -48,11 +48,11 @@ function sequence(seed: number) {
 }
 
 const NAMES: [string, string, string, string][] = [
-  // title, first, last, nationality
+  // title, first, last, nationality (none of brick 8's named in-house guests, so each name is one guest)
   ['Mrs', 'Funmilayo', 'Adebayo', 'NG'],
   ['Mr', 'Chukwuemeka', 'Obi', 'NG'],
   ['Dr', 'Aisha', 'Bello', 'NG'],
-  ['Mr', 'Tobi', 'Ogunleye', 'NG'],
+  ['Mr', 'Rotimi', 'Ogundipe', 'NG'],
   ['Ms', 'Ngozi', 'Eze', 'NG'],
   ['Chief', 'Babatunde', 'Alade', 'NG'],
   ['Mr', 'Ibrahim', 'Sani', 'NG'],
@@ -61,11 +61,11 @@ const NAMES: [string, string, string, string][] = [
   ['Mr', 'Segun', 'Fashola', 'NG'],
   ['Ms', 'Halima', 'Abubakar', 'NG'],
   ['Barr', 'Ifeoma', 'Okeke', 'NG'],
-  ['Mr', 'Kwame', 'Asante', 'GH'],
+  ['Mr', 'Kofi', 'Boateng', 'GH'],
   ['Ms', 'Amara', 'Diallo', 'SN'],
   ['Mr', 'James', 'Whitfield', 'GB'],
-  ['Mrs', 'Claire', 'Dubois', 'FR'],
-  ['Mr', 'Thomas', 'Becker', 'DE'],
+  ['Mrs', 'Camille', 'Laurent', 'FR'],
+  ['Mr', 'Lukas', 'Weber', 'DE'],
   ['Ms', 'Priya', 'Raman', 'IN'],
   ['Mr', 'Michael', 'Carter', 'US'],
   ['Mr', 'Wei', 'Zhang', 'CN'],

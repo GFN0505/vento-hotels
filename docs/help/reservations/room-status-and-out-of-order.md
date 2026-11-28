@@ -22,3 +22,5 @@ Out of order needs a connection.
 
 ## Related
 - [Use the tape chart](use-the-tape-chart.md)
+
+When a guest in house moves rooms, or a check-in is reversed, the room they left is set dirty for you, with the change recorded under your name.

@@ -52,5 +52,7 @@ docs/help/
 | [Mark a no-show](reservations/mark-a-no-show.md) | `night-audit.md` steps 3 and 4 | written |
 | [Use the tape chart](reservations/use-the-tape-chart.md) | `front-desk-morning.md` steps 3a and 6e | written |
 | [Mark a room clean, or put it out of order](reservations/room-status-and-out-of-order.md) | `front-desk-morning.md` steps 6 and 10a | written |
+| [Check in a guest](reservations/check-in-a-guest.md) | `front-desk-morning.md` steps 1, 3, 10 and 11 | written |
+| [Do a walk-in](reservations/do-a-walk-in.md) | `front-desk-morning.md` steps 7 and 8 | written |
 
 Status: `todo` · `written` · `published`

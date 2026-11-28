@@ -46,6 +46,17 @@
   },
   "overrides": [
     {
+      "includes": ["apps/api/**"],
+      "linter": {
+        "domains": { "react": "none" },
+        "rules": {
+          "correctness": {
+            "useHookAtTopLevel": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/*.config.ts", "apps/web/src/routes/**"],
       "linter": {
         "rules": {

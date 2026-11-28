@@ -49,6 +49,7 @@ Each hop lists the module, who acts, the screens, the record created or changed,
 - **Screens:** 30 arrivals, 6 check-in, 21 registration card, 7 folio.
 - **Record:** stay `checked_in`; room 502 `occupied`; guest registration record with the foreign national section (passport `G••••••12`, ECOWAS, arriving from Accra, next destination Accra); key 502 issued. Two folios: **Folio A** (Mr Mensah: extras) with a ₦30,000.00 cash deposit, and **Folio B** (Acme Energy Ltd: room at ₦180,000.00 per night). No room charge yet ([front desk morning](front-desk-morning.md), steps 10–11).
 - **Protected by:** *Scoping:* Chiamaka sees only Kora Victoria Island; one guest profile is shared across the group. *Business date:* the deposit posts on 25 Nov, on her open cashier shift. *Audit event:* `guest.registration_captured`, `stay.checked_in`, `folio.routing_set`, `payment.taken`, `key.issued`. The passport number is encrypted at rest and masked in the UI (NDPA 2023).
+- **Stage 1 note:** registration, the passport photo and check-in are built in Stage 1 brick 8 (the passport photographed with the desk camera, no MRZ reading, no key record); folios, routing and the deposit come with bricks 10 and 12.
 
 ### 5. Dinner at Calabash posted to room (25 Nov, 19:40–21:20)
 - **Module:** 4 Restaurant & Bar POS.

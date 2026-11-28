@@ -26,9 +26,11 @@ import { guests, reservations, stayNights, stays } from '../db/schema/reservatio
 import { rooms, roomTypes } from '../db/schema/rooms.ts'
 import { methodSettings } from '../finance/payment-methods.ts'
 import { rulesByNight } from '../finance/taxes.ts'
+import { registrationsOf } from '../guests/registration/capture.ts'
 import { type Access, can } from '../tenancy/access.ts'
 import { hotelNotFound } from '../tenancy/errors.ts'
 import { penaltiesOf } from './change/views.ts'
+import { checkInProblem } from './check-in/rules.ts'
 import {
   type BookingHotel,
   type Reader,
@@ -36,6 +38,7 @@ import {
   requireReservationRead,
 } from './context.ts'
 import { reservationNotFound } from './errors.ts'
+import { segmentsForStays } from './in-house.ts'
 
 type StoredTerms = StayTerms & { penaltyAmount: string }
 
@@ -359,6 +362,33 @@ export async function getReservation(
     hotel,
     nightRows.map((night) => night.date),
   )
+  // In-house stays (brick 8): earlier rooms after a move, and an ID photo still to add.
+  const stayIds = stayRows.map((row) => row.stay.id)
+  const segments = await segmentsForStays(
+    db,
+    { organizationId: access.organizationId, propertyId: hotel.id },
+    stayIds,
+  )
+  const segmentRooms = new Map(
+    segments.length
+      ? (
+          await db
+            .select({ id: rooms.id, number: rooms.number })
+            .from(rooms)
+            .where(
+              inArray(
+                rooms.id,
+                segments.map((segment) => segment.roomId),
+              ),
+            )
+        ).map((room) => [room.id, room.number])
+      : [],
+  )
+  const photoMissing = new Set(
+    (await registrationsOf(db, access, stayIds))
+      .filter(({ row }) => row.lead && row.idDocumentRequired && !row.idDocumentId)
+      .map(({ row }) => row.stayId),
+  )
   const empty: TaxRuleInForce[] = []
   const staysView = stayRows.map(({ stay, roomTypeName, roomNumber }) => {
     const terms = stay.terms as StoredTerms
@@ -407,6 +437,24 @@ export async function getReservation(
         reason: string
       } | null,
       room: stay.roomId && roomNumber ? { id: stay.roomId, number: roomNumber } : null,
+      status: stay.status,
+      checkIn:
+        stay.status === 'checked_in' && stay.checkedInAt
+          ? {
+              at: stay.checkedInAt.toISOString(),
+              byName: stay.checkedInByName ?? '',
+              businessDate: stay.checkedInBusinessDate ?? stay.arrival,
+              cardPrinted: stay.cardPrintedAt !== null,
+              idPhotoMissing: photoMissing.has(stay.id),
+            }
+          : null,
+      earlierRooms: segments
+        .filter((segment) => segment.stayId === stay.id)
+        .map((segment) => ({
+          number: segmentRooms.get(segment.roomId) ?? '',
+          from: segment.fromDate,
+          to: segment.toDate,
+        })),
       nights: nights.map((night, index) => {
         const tax = taxes[index]
         return {
@@ -426,6 +474,12 @@ export async function getReservation(
   })
   const allowed = allowedActions(reservation.status, reservation.arrival, hotel.businessDate)
   const manage = can(access, 'reservation.manage') && !hotel.archived
+  // Check in, reverse and print act on the first stay (one stay per reservation in Stage 1 screens).
+  const firstStay = stayRows[0]?.stay
+  const checkInWhy = firstStay
+    ? checkInProblem(firstStay, reservation.status, hotel)
+    : { code: 'NONE', message: 'No stay to check in.' }
+  const checkInAllowed = can(access, 'stay.check_in') && !hotel.archived
   return {
     id: reservation.id,
     number: reservation.number,
@@ -456,8 +510,18 @@ export async function getReservation(
       roomMove:
         can(access, 'room.move') &&
         !hotel.archived &&
-        reservation.status === 'confirmed' &&
-        reservation.arrival >= hotel.businessDate,
+        ((reservation.status === 'confirmed' && reservation.arrival >= hotel.businessDate) ||
+          (reservation.status === 'checked_in' && reservation.departure > hotel.businessDate)),
+      checkIn: checkInAllowed && checkInWhy === null,
+      checkInBlocked:
+        firstStay?.status === 'confirmed' && checkInAllowed ? (checkInWhy?.message ?? null) : null,
+      reverseCheckIn:
+        can(access, 'stay.check_in_reverse') &&
+        !hotel.archived &&
+        firstStay?.status === 'checked_in' &&
+        firstStay.checkedInBusinessDate === hotel.businessDate &&
+        firstStay.checkedInByMemberId !== access.memberId,
+      printCard: checkInAllowed && firstStay?.status === 'checked_in',
     },
     source: reservation.source,
     guarantee: reservation.guarantee,

@@ -1,7 +1,9 @@
 // The demo seed loads a working group: people can sign in and see exactly what their role allows.
 import type {
   AuditEventView,
+  CheckInPrepare,
   Entity,
+  FrontDeskList,
   FxSummary,
   HomeSummary,
   MemberView,
@@ -25,6 +27,26 @@ import { LIVE_DAYS_AGO, seedDemo } from './demo.ts'
 
 const url = process.env.TEST_DATABASE_URL
 const PASSWORD = 'Demo-pass-42!'
+
+// What a returning guest's earlier registration may show another hotel's desk (prepare.ts).
+const REUSED_KEYS = [
+  'addressCity',
+  'addressCountry',
+  'addressLine',
+  'addressRegion',
+  'dateOfBirth',
+  'hotelName',
+  'id',
+  'idCountry',
+  'idExpiry',
+  'idNumberMasked',
+  'idType',
+  'occupation',
+  'purpose',
+  'reusableDocument',
+  'title',
+  'vehiclePlate',
+]
 
 describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
   const t = createTestApp(url ?? '')
@@ -59,7 +81,7 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
     const first = await seedDemo(t.db, options)
     expect(first.status).toBe('seeded')
     if (first.status !== 'seeded') return
-    expect(first.people).toHaveLength(11)
+    expect(first.people).toHaveLength(12)
     expect(first.people[0]).toMatchObject({ name: 'Adaeze Okafor', role: 'owner' })
 
     const again = await seedDemo(t.db, options)
@@ -78,7 +100,7 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
     const team = await t.rpc<{ items: MemberView[]; total: number }>(cookie, 'members/list', {
       pageSize: 100,
     })
-    expect(team.data.total).toBe(11)
+    expect(team.data.total).toBe(12)
     expect(team.data.items.every((m) => m.hasPin)).toBe(true)
   })
 
@@ -168,10 +190,10 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
       )
     }
     // Two people see every hotel (owner and finance); nine more work at Victoria Island, Sade also
-    // at Ikeja GRA. Ngozi's invite is for Abuja.
+    // at Ikeja GRA, and Ifeoma at Ikeja GRA only. Ngozi's invite is for Abuja.
     expect(await byName(await signInAs(`adaeze@${options.emailDomain}`))).toEqual({
       'Kora Victoria Island': { people: 11, devices: 3, rooms: 120, ratesSet: true, invites: 0 },
-      'Kora Ikeja GRA': { people: 3, devices: 1, rooms: 86, ratesSet: true, invites: 0 },
+      'Kora Ikeja GRA': { people: 4, devices: 1, rooms: 86, ratesSet: true, invites: 0 },
       'Kora Abuja': { people: 2, devices: 0, rooms: 104, ratesSet: true, invites: 1 },
       'Kora Port Harcourt': { people: 2, devices: 0, rooms: 72, ratesSet: true, invites: 0 },
     })
@@ -209,7 +231,7 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
     const hotels = await t.rpc<{ items: Property[] }>(cookie, 'properties/list', {})
     expect(hotels.data.items.map((h) => h.name)).toEqual(['Kora Ikeja GRA', 'Kora Victoria Island'])
     const home = await t.rpc<HomeSummary>(cookie, 'organization/home', {})
-    expect(home.data.byHotel.map((row) => row.people).sort((a, b) => a - b)).toEqual([3, 11])
+    expect(home.data.byHotel.map((row) => row.people).sort((a, b) => a - b)).toEqual([4, 11])
   })
 
   it('sets up Kora Victoria Island’s rooms exactly as the designs show', async () => {
@@ -338,9 +360,10 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
       arrival: today,
       source: 'email',
     })
-    // 26 from bricks 4 and 6, and Mrs Okafor, Mrs Adebayo and Mr Kalu from brick 7.
+    // 26 from bricks 4 and 6, and Mrs Okafor and Mrs Adebayo from brick 7 (Mr Kalu has been in
+    // house since D−2, brick 8).
     expect((await list({ propertyId: vi, arrivalFrom: today, arrivalTo: today })).data.total).toBe(
-      29,
+      28,
     )
     expect((await list({ propertyId: vi })).data.total).toBeGreaterThanOrEqual(140)
     const ikeja = (await list({ propertyId: hotel('Kora Ikeja GRA') })).data.total
@@ -582,13 +605,15 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
     // No room holds two stays on a night, and no stay sits in a room out of order.
     const doubled = await t.db.execute(sql`
       select a.id from stays a join stays b on a.room_id = b.room_id and a.id < b.id
-        and a.arrival < b.departure and b.arrival < a.departure
+        and coalesce(a.room_from, a.arrival) < b.departure
+        and coalesce(b.room_from, b.arrival) < a.departure
       where a.organization_id = ${orgId} and a.status in ('confirmed', 'checked_in')
         and b.status in ('confirmed', 'checked_in')`)
     expect(doubled.rows).toEqual([])
     const inOoo = await t.db.execute(sql`
       select s.id from stays s join room_out_of_order o on o.room_id = s.room_id
-        and o.status = 'active' and s.arrival < o.back_in_service and o.from_date < s.departure
+        and o.status = 'active' and coalesce(s.room_from, s.arrival) < o.back_in_service
+        and o.from_date < s.departure
       where s.organization_id = ${orgId} and s.status in ('confirmed', 'checked_in')`)
     expect(inOoo.rows).toEqual([])
     const drift = await t.db.execute(sql`
@@ -618,5 +643,127 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
       'Chiamaka Eze',
       'Grace Akpan',
     ])
+  })
+
+  it('puts guests in house, checked in through the service, with registrations encrypted and masked', async () => {
+    const [org] = await t.db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.slug, options.slug))
+    const orgId = org?.id ?? ''
+    const today = calendarDateIn('Africa/Lagos')
+    const cookie = await signInAs(`chiamaka@kora-${run}.example`)
+    const hotels = await t.rpc<{ items: Property[] }>(cookie, 'properties/list', {})
+    const vi = hotels.data.items.find((h) => h.name === 'Kora Victoria Island')?.id ?? ''
+    const house = await t.rpc<FrontDeskList>(cookie, 'frontDesk/list', {
+      propertyId: vi,
+      tab: 'in_house',
+    })
+    expect(house.status).toBe(200)
+    const names = house.data.items.map((row) => row.guestName)
+    expect(names).toEqual(
+      expect.arrayContaining(['Emeka Kalu', 'Claire Dubois', 'Kwame Asante', 'Tobi Ogunleye']),
+    )
+    expect(house.data.counts.inHouse).toBeGreaterThanOrEqual(20)
+    const departures = await t.rpc<FrontDeskList>(cookie, 'frontDesk/list', {
+      propertyId: vi,
+      tab: 'departures',
+    })
+    expect(departures.data.items.map((row) => row.guestName)).toContain('Kwame Asante')
+    // An arrival waits for Mr Asante's room ("Due out"), and one is in a dirty room.
+    const arrivals = await t.rpc<FrontDeskList>(cookie, 'frontDesk/list', {
+      propertyId: vi,
+      tab: 'arrivals',
+    })
+    expect(arrivals.data.items.some((row) => row.readiness === 'due_out')).toBe(true)
+    expect(arrivals.data.items.some((row) => row.readiness === 'dirty')).toBe(true)
+    expect(arrivals.data.counts.checkedInToday).toBeGreaterThanOrEqual(3)
+    expect(house.data.items.some((row) => row.waitingForRoom)).toBe(true)
+    expect(house.data.items.filter((row) => row.idPhotoMissing)).toHaveLength(1)
+    // Tonight adds up: occupied + arriving + not in a room yet = the stays booked over tonight.
+    const tonight = house.data.tonight
+    const booked = await t.db.execute<{ n: number }>(sql`
+      select count(*)::int as n from stays
+      where property_id = ${vi} and status in ('confirmed', 'checked_in')
+        and arrival <= ${today} and departure > ${today}`)
+    expect(tonight.occupied + tonight.arriving + tonight.unassigned).toBe(booked.rows[0]?.n)
+
+    // Mr Kalu: 503 on the nights before the move, 501 from today.
+    const kalu = house.data.items.find((row) => row.guestName === 'Emeka Kalu')
+    expect(kalu?.room?.number).toBe('501')
+    const segments = await t.db.execute<{ number: string; from_date: string; to_date: string }>(sql`
+      select r.number, g.from_date::text, g.to_date::text from stay_room_segments g
+      join rooms r on r.id = g.room_id where g.stay_id = ${kalu?.stayId ?? ''}`)
+    expect(segments.rows).toEqual([
+      { number: '503', from_date: addDays(today, -2), to_date: today },
+    ])
+
+    // No checked-in stay without a room; ID numbers are ciphertext; no full number in any event.
+    const roomless = await t.db.execute(sql`
+      select id from stays where organization_id = ${orgId} and status = 'checked_in' and room_id is null`)
+    expect(roomless.rows).toEqual([])
+    const registrations = await t.db.execute<{
+      cipher: string | null
+      masked: string | null
+      nationality: string
+      occupation: string | null
+      next_destination: string | null
+      visa_type: string | null
+    }>(sql`
+      select id_number_cipher as cipher, id_number_masked as masked, nationality, occupation,
+        next_destination, visa_type from guest_registrations where organization_id = ${orgId}`)
+    expect(registrations.rows.length).toBeGreaterThan(20)
+    for (const row of registrations.rows) {
+      expect(row.cipher).toMatch(/^v1\./)
+      expect(row.masked).toMatch(/•/)
+      if (row.nationality !== 'NG') {
+        expect(row.occupation).toBeTruthy()
+        expect(row.next_destination).toBeTruthy()
+        expect(row.visa_type).toBeTruthy()
+      }
+    }
+    const leaks = await t.db.execute(sql`
+      select id from audit_events where organization_id = ${orgId}
+        and (after::text like '%19FR48213%' or after::text like '%22233344455%')`)
+    expect(leaks.rows).toEqual([])
+    // Mrs Dubois' passport was revealed by Tunde; Femi Ogunleye's check-in was reversed.
+    const reveals = await t.db.execute<{ actor_name: string; reason: string }>(sql`
+      select actor_name, reason from audit_events
+      where organization_id = ${orgId} and action = 'guest.id_revealed'`)
+    expect(reveals.rows).toEqual([
+      { actor_name: 'Tunde Bello', reason: 'Immigration officer at the desk' },
+    ])
+    const reversed = await t.db.execute<{ actor_name: string; exception: string }>(sql`
+      select actor_name, after->>'exception' as exception from audit_events
+      where organization_id = ${orgId} and action = 'stay.check_in_reversed'`)
+    expect(reversed.rows).toEqual([{ actor_name: 'Tunde Bello', exception: 'check_in_reversed' }])
+    // Mrs Okafor is a returning guest: her October registration is offered at check-in.
+    const ngozi = arrivals.data.items.find((row) => row.guestName === 'Ngozi Okafor')
+    const prepared = await t.rpc<CheckInPrepare>(cookie, 'checkIn/prepare', {
+      stayId: ngozi?.stayId,
+    })
+    expect(prepared.data.previous?.idNumberMasked).toBe('••••••6612')
+    expect(prepared.data.previous?.hotelName).toBe('Kora Ikeja GRA')
+    expect(prepared.data.previous?.reusableDocument).not.toBeNull()
+    // Chiamaka works only at Victoria Island: the Ikeja stay's own details never reach her.
+    expect(Object.keys(prepared.data.previous ?? {}).sort()).toEqual(REUSED_KEYS)
+    // The Okoro family fits a Standard Queen with its sofa bed, and 302 is free tonight.
+    const stq = await t.db.execute<{ max_adults: number; max_children: number }>(sql`
+      select max_adults, max_children from room_types where property_id = ${vi} and code = 'STQ'`)
+    expect(stq.rows[0]).toEqual({ max_adults: 2, max_children: 2 })
+    const r302 = await t.db.execute(sql`
+      select s.id from stays s join rooms r on r.id = s.room_id
+      where r.property_id = ${vi} and r.number = '302' and s.status in ('confirmed', 'checked_in')
+        and s.arrival < ${addDays(today, 2)} and s.departure > ${today}`)
+    expect(r302.rows).toEqual([])
+    // Kora Ikeja GRA: Ifeoma's house and Mr Becker.
+    const ifeoma = await signInAs(`ifeoma@kora-${run}.example`)
+    const theirs = await t.rpc<{ items: Property[] }>(ifeoma, 'properties/list', {})
+    const ikeja = theirs.data.items.find((h) => h.name === 'Kora Ikeja GRA')?.id ?? ''
+    const ikejaHouse = await t.rpc<FrontDeskList>(ifeoma, 'frontDesk/list', {
+      propertyId: ikeja,
+      tab: 'in_house',
+    })
+    expect(ikejaHouse.data.items.map((row) => row.guestName)).toContain('Thomas Becker')
   })
 })

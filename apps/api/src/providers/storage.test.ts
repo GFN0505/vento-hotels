@@ -35,6 +35,13 @@ describe.skipIf(!configured)('S3 storage', () => {
     expect(read).toMatchObject({ status: 'found', size: png.length })
     const download = await fetch(await storage.signedDownload(key, 60))
     expect(new Uint8Array(await download.arrayBuffer())).toEqual(png)
+    // The link can fix what storage answers with, whatever the object was stored as.
+    const fixed = await fetch(
+      await storage.signedDownload(key, 60, { contentType: 'image/jpeg', disposition: 'inline' }),
+    )
+    expect(fixed.headers.get('content-type')).toBe('image/jpeg')
+    expect(fixed.headers.get('content-disposition')).toBe('inline')
+    await fixed.body?.cancel()
     await storage.delete(key)
     expect(await storage.read(key, 1000)).toEqual({ status: 'missing' })
   })

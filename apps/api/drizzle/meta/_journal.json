@@ -141,6 +141,27 @@
       "when": 1795807927258,
       "tag": "0019_tape_chart",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795827447278,
+      "tag": "0020_front_desk",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795827726739,
+      "tag": "0021_registration_id_photo",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795833436884,
+      "tag": "0022_purged_id_documents",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,8 @@
 // devices at Kora Victoria Island and Kora Ikeja GRA (none at Abuja or Port Harcourt, for the empty
 // state); taxes, payment methods, bank accounts, POS terminals and 30 days of FX rates; about 430
 // reservations at Kora Victoria Island and 20 at Kora Ikeja GRA; rooms assigned for the coming week,
-// room statuses and rooms out of order (brick 7); a pending
+// room statuses and rooms out of order (brick 7); guests in house with registrations and ID photos,
+// a reversed check-in and the early check-ins of the day (brick 8); a pending
 // invite; and one permission change with its reason. Used for local development, browser tests and sales demos. Everything here is
 // made up.
 import { createHash, randomBytes } from 'node:crypto'
@@ -28,6 +29,7 @@ import type { StorageProvider } from '../providers/storage.ts'
 import { seedApprovals } from './approvals.ts'
 import { seedChanges } from './changes.ts'
 import { seedFinance } from './finance.ts'
+import { type PendingFile, seedFrontDesk, writeIdPhotos } from './front-desk.ts'
 import { seedLogo } from './logo.ts'
 import { seedRates } from './rates.ts'
 import { accessFor, seedReservations } from './reservations.ts'
@@ -137,6 +139,8 @@ const PEOPLE: {
     hotels: ['vi', 'ikeja'],
     pin: '6294',
   },
+  // Front desk at Kora Ikeja GRA, on FD-IKJ-01 (brick 8), so check-in can be tried at a second hotel.
+  { name: 'Ifeoma Nnadi', email: 'ifeoma', role: 'front_desk', hotels: ['ikeja'], pin: '4826' },
 ]
 
 const DEVICES: { name: string; kind: DeviceKind; hotel: HotelKey }[] = [
@@ -150,6 +154,9 @@ export type SeedOptions = {
   password: string
   // Where the placeholder logo goes. Without storage the demo has no logo, and nothing else changes.
   storage?: StorageProvider | undefined
+  // The private bucket for the demo guests' placeholder ID photos (brick 8). Without it the photos'
+  // rows exist but their files don't.
+  privateStorage?: StorageProvider | undefined
   // Tests use their own slug and email domain so they never collide with a seeded dev database.
   slug?: string
   emailDomain?: string
@@ -427,7 +434,9 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
     })
 
     // Rooms in use: assignments, room statuses and out of order (stage-1-tape-chart.md).
+    const files: PendingFile[] = []
     const onTheChart = await seedTapeChart(tx, {
+      files,
       organizationId,
       businessDate,
       hotels: booking.hotels,
@@ -440,16 +449,32 @@ export async function seedDemo(db: Database, options: SeedOptions): Promise<Seed
       },
     })
 
+    // The house: in-house guests, check-ins, a reversal and registrations (stage-1-front-desk-check-in.md).
+    const atTheDesk = await seedFrontDesk(tx, {
+      organizationId,
+      businessDate,
+      hotels: booking.hotels,
+      access: {
+        chiamaka: await accessFor(tx, booking, who('chiamaka')),
+        ibrahim: await accessFor(tx, booking, who('ibrahim')),
+        tunde: await accessFor(tx, booking, who('tunde')),
+        ifeoma: await accessFor(tx, booking, who('ifeoma')),
+      },
+    })
+    files.push(...atTheDesk.files)
+
     return {
       status: 'seeded' as const,
       organizationId,
       viId: hotelIds.vi,
       ownerMemberId: owner.memberId,
       people: seeded.map(({ name, email, role, pin }) => ({ name, email, role, pin })),
-      tryToday: [...tryToday, ...onTheChart],
+      tryToday: [...tryToday, ...onTheChart, ...atTheDesk.tryToday],
+      files,
     }
   })
   // After the group is saved: storage is outside the database, so it's never written mid-transaction.
+  await writeIdPhotos(options.privateStorage, result.files)
   if (options.storage) {
     await seedLogo(db, options.storage, {
       organizationId: result.organizationId,

@@ -1,5 +1,6 @@
 // A bar's card (spec: "Click on a bar opens a small card"): guest, reservation number, type, plan,
-// dates, room and deposit due, with Open reservation, Room move (M) and Modify (E).
+// dates, room and deposit due, with Open reservation, Check in (C) for today's arrivals, Room move
+// (M), Modify (E) and Print registration card for a guest in house (brick 8).
 import { Link } from '@tanstack/react-router'
 import {
   type ChartStay,
@@ -8,8 +9,12 @@ import {
   rangeLabel,
   type TapeChart,
 } from '@vento/shared'
-import { ArrowLeftRight, ExternalLink, Pencil } from 'lucide-react'
+import { ArrowLeftRight, ExternalLink, LogIn, Pencil, Printer } from 'lucide-react'
+import { toast } from 'sonner'
+import { printPdf } from '@/components/front-desk/print-card'
 import { Button } from '@/components/ui/button'
+import { api } from '@/lib/api'
+import { problemMessage } from '@/lib/errors'
 import { type Anchor, Popover } from './popover'
 
 type Props = {
@@ -20,9 +25,20 @@ type Props = {
   onClose: () => void
   onMove: () => void
   onModify: () => void
+  // Opens the check-in sheet (today's arrivals, for those who check guests in).
+  onCheckIn?: (() => void) | undefined
 }
 
-export function StayCard({ chart, stay, anchor, online, onClose, onMove, onModify }: Props) {
+export function StayCard({
+  chart,
+  stay,
+  anchor,
+  online,
+  onClose,
+  onMove,
+  onModify,
+  onCheckIn,
+}: Props) {
   const type = chart.roomTypes.find((t) => t.id === stay.roomTypeId)
   const room = chart.rooms.find((r) => r.id === stay.roomId)
   const nights = nightsBetween(stay.arrival, stay.departure)
@@ -44,7 +60,10 @@ export function StayCard({ chart, stay, anchor, online, onClose, onMove, onModif
             Deposit due {formatMoney({ amount: stay.depositDue.amount, currency: 'NGN' })}
           </span>
         ) : null}
-        {!stay.movable && stay.arrival < chart.hotel.businessDate ? (
+        {stay.status === 'checked_in' ? (
+          <span className="text-sm font-medium text-text-2">In house</span>
+        ) : null}
+        {!stay.movable && stay.arrival < chart.hotel.businessDate && stay.status === 'confirmed' ? (
           <span className="text-sm text-text-3">Arrival has passed: mark it as a no-show.</span>
         ) : null}
       </div>
@@ -60,6 +79,33 @@ export function StayCard({ chart, stay, anchor, online, onClose, onMove, onModif
             <ExternalLink className="size-4" aria-hidden="true" />
             Open reservation
           </Link>
+        ) : null}
+        {onCheckIn && stay.status === 'confirmed' && stay.arrival === chart.hotel.businessDate ? (
+          <Button
+            variant="primary"
+            className="max-lg:h-11"
+            disabled={!online && !stay.roomId}
+            onClick={onCheckIn}
+          >
+            <LogIn className="size-4" aria-hidden="true" />
+            Check in
+            <kbd className="ml-1 hidden rounded-[4px] bg-white/20 px-1.5 text-xs lg:inline">C</kbd>
+          </Button>
+        ) : null}
+        {onCheckIn && stay.status === 'checked_in' ? (
+          <Button
+            className="max-lg:h-11"
+            disabled={!online}
+            onClick={() =>
+              void api.documents
+                .registrationCard({ stayId: stay.id })
+                .then((card) => printPdf(card.url))
+                .catch((error: unknown) => toast.error(problemMessage(error)))
+            }
+          >
+            <Printer className="size-4" aria-hidden="true" />
+            Print registration card
+          </Button>
         ) : null}
         {canMove ? (
           <Button className="max-lg:h-11" disabled={!online} onClick={onMove}>

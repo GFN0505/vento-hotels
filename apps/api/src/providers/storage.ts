@@ -17,8 +17,13 @@ export interface StorageProvider {
     key: string,
     file: { contentType: string; size: number; expiresInSeconds: number },
   ): Promise<SignedUpload>
-  // A GET URL for showing a file, for `expiresInSeconds`.
-  signedDownload(key: string, expiresInSeconds: number): Promise<string>
+  // A GET URL for showing a file, for `expiresInSeconds`. `response` fixes the type and disposition
+  // storage answers with (part of the signature), whatever the object's own metadata says.
+  signedDownload(
+    key: string,
+    expiresInSeconds: number,
+    response?: DownloadResponse,
+  ): Promise<string>
   // The whole object, refusing anything larger than `maxBytes` without reading it.
   read(key: string, maxBytes: number): Promise<StoredObject>
   delete(key: string): Promise<void>
@@ -27,6 +32,13 @@ export interface StorageProvider {
   // Server-side writes (the demo seed's logo; later, generated PDFs).
   put(key: string, bytes: Uint8Array, contentType: string): Promise<void>
 }
+
+export type DownloadResponse = { contentType: string; disposition: 'inline' | 'attachment' }
+
+const responseQuery = (response?: DownloadResponse) =>
+  response
+    ? `&response-content-type=${encodeURIComponent(response.contentType)}&response-content-disposition=${response.disposition}`
+    : ''
 
 export type S3Settings = {
   endpoint: string
@@ -80,11 +92,18 @@ export class S3StorageProvider implements StorageProvider {
     return { url: signed.url, headers }
   }
 
-  async signedDownload(key: string, expiresInSeconds: number): Promise<string> {
-    const signed = await this.#client.sign(this.#url(key, expiresInSeconds), {
-      method: 'GET',
-      aws: { signQuery: true },
-    })
+  async signedDownload(
+    key: string,
+    expiresInSeconds: number,
+    response?: DownloadResponse,
+  ): Promise<string> {
+    const signed = await this.#client.sign(
+      this.#url(key, expiresInSeconds) + responseQuery(response),
+      {
+        method: 'GET',
+        aws: { signQuery: true },
+      },
+    )
     return signed.url
   }
 
@@ -145,7 +164,7 @@ export class S3StorageProvider implements StorageProvider {
 
   // Local development only: create the bucket if it's missing and let any localhost web app upload
   // to it. R2's bucket and CORS rules are set up with the servers (docs/ops/deploy.md).
-  async prepareLocalBucket(): Promise<void> {
+  async prepareLocalBucket(options: { cors?: boolean } = {}): Promise<void> {
     const head = await this.#client.fetch(this.#base, { method: 'HEAD' })
     await head.body?.cancel()
     if (head.status === 404) {
@@ -153,6 +172,8 @@ export class S3StorageProvider implements StorageProvider {
       await created.body?.cancel()
       if (!created.ok) throw new Error(`Storage answered ${created.status} creating the bucket`)
     }
+    // The private bucket (guest ID images) is never reached from a browser except by a signed GET.
+    if (options.cors === false) return
     const cors =
       '<CORSConfiguration><CORSRule><AllowedOrigin>http://localhost:*</AllowedOrigin>' +
       '<AllowedMethod>PUT</AllowedMethod><AllowedMethod>GET</AllowedMethod>' +
@@ -188,8 +209,12 @@ export class MemoryStorageProvider implements StorageProvider {
     }
   }
 
-  async signedDownload(key: string, expiresInSeconds: number): Promise<string> {
-    return `memory://files/${key}?expires=${expiresInSeconds}`
+  async signedDownload(
+    key: string,
+    expiresInSeconds: number,
+    response?: DownloadResponse,
+  ): Promise<string> {
+    return `memory://files/${key}?expires=${expiresInSeconds}${responseQuery(response)}`
   }
 
   async read(key: string, maxBytes: number): Promise<StoredObject> {

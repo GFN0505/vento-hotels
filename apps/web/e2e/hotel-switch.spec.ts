@@ -35,7 +35,7 @@ test('members follow the switch: everyone, then the people who work at Kora Abuj
   await signInAs(page, 'adaeze')
   await page.goto('/settings/members')
   await expect(eyebrow(page, 'All hotels')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'People 11' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'People 12' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Invited 1' })).toBeVisible()
   await expect(page).toHaveTitle('Members and roles · All hotels · Vento Hotels')
 
@@ -172,7 +172,7 @@ test('a link that names a hotel opens on it, then leaves the address bar', async
   await expect(hotelSwitch(page).locator('option:checked')).toHaveText('Kora Abuja')
 
   await page.goto('/settings/members?hotel=all')
-  await expect(page.getByRole('heading', { name: 'People 11' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'People 12' })).toBeVisible()
   await expect(page).toHaveURL(/\/settings\/members$/)
 
   // An unknown hotel: one neutral message, and the page stays on what was chosen.
@@ -197,7 +197,7 @@ test('a link that names a hotel opens on it, then leaves the address bar', async
   await choose(page, 'Kora Ikeja GRA')
   await page.locator('dt:text-is("People") + dd').getByRole('link').click()
   await expect(page).toHaveURL(/\/settings\/members$/)
-  await expect(page.getByRole('heading', { name: 'People 3' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'People 4' })).toBeVisible()
 })
 
 test('Sade, on two of four hotels, switches between them and has no All hotels', async ({

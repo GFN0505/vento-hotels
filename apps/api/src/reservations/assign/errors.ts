@@ -97,6 +97,9 @@ export const roomWrongType = (number: string, typeName: string) =>
   )
 
 export const notMovable = (message: string) => make('CONFLICT', 'NOT_MOVABLE', message)
+export const noNightLeft = (message: string) => make('CONFLICT', 'NO_NIGHT_LEFT', message)
+export const moveReasonRequired = () =>
+  make('BAD_REQUEST', 'MOVE_REASON_REQUIRED', 'Pick why the guest is moving.')
 
 // A move to another type while the booked type still has a room: "A Deluxe King room is free for
 // these nights. Assign one of those: other room types are for when Deluxe King is full."

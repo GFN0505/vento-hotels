@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { afterAnswer, failureOf, nextToSend, type Queued } from './outbox-rules'
+import { afterAnswer, failureOf, forgetSealed, nextToSend, type Queued } from './outbox-rules'
 
 const command = (key: string, memberId: string): Queued => ({
   kind: 'rooms.setStatus',
@@ -12,6 +12,28 @@ const command = (key: string, memberId: string): Queued => ({
     roomId: key,
     status: 'dirty',
     occurredAt: '2026-11-25T10:00:00.000Z',
+  },
+})
+
+const checkIn = (key: string, state: Queued['state'] = 'waiting'): Queued => ({
+  kind: 'stays.checkIn',
+  state,
+  memberId: 'chiamaka',
+  label: `Daniel Mensah checked in to 502`,
+  guestName: 'Daniel Mensah',
+  roomNumber: '502',
+  sealed: 'iv.sealed-id-numbers-and-photo',
+  input: {
+    idempotencyKey: key,
+    stayId: 's',
+    version: 1,
+    roomId: 'r',
+    printCard: false,
+    occurredAt: '2026-11-25T10:00:00.000Z',
+    businessDate: '2026-11-25',
+    durationSeconds: 90,
+    source: 'offline',
+    propertyId: 'p',
   },
 })
 
@@ -36,5 +58,24 @@ describe('outbox', () => {
     expect(failureOf({ code: 'UNAUTHORIZED' }, false)).toBe('signed_out')
     expect(failureOf({ status: 0 }, true)).toBe('offline')
     expect(failureOf({ status: 409, code: 'CONFLICT' }, false)).toBe('refused')
+  })
+
+  it('blanks a check-in’s sealed ID numbers and photo once it needs attention', () => {
+    const kept = afterAnswer([checkIn('a'), checkIn('b')], 'a', {
+      outcome: 'attention',
+      message: 'Room taken.',
+    })
+    expect(kept[0]).toMatchObject({ state: 'attention', sealed: '', message: 'Room taken.' })
+    expect(kept[1]).toMatchObject({ state: 'waiting', sealed: 'iv.sealed-id-numbers-and-photo' })
+  })
+
+  it('forgets every sealed check-in on revoke or sign-out, keeping each for a person to read', () => {
+    const list = [command('a', 'grace'), checkIn('b'), checkIn('c', 'attention')]
+    const after = forgetSealed(list)
+    expect(after[0]).toEqual(list[0])
+    expect(after[1]).toMatchObject({ state: 'attention', sealed: '' })
+    expect(after[1]?.message).toContain("Daniel Mensah's check-in to 502 didn't sync")
+    expect(after[2]).toMatchObject({ state: 'attention', sealed: '' })
+    expect(nextToSend(after, 'chiamaka')).toBeUndefined()
   })
 })

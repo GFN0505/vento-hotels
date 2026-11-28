@@ -78,6 +78,10 @@ export const reservationChangeKindEnum = pgEnum('reservation_change_kind', [
   'waive',
   // Assign, move or unassign a room within the stay's type (brick 7).
   'room',
+  // Check in, its Undo and a GM's reversal (brick 8).
+  'check_in',
+  'check_in_undo',
+  'check_in_reverse',
 ])
 export const penaltyKindEnum = pgEnum('penalty_kind', [
   'late_cancellation',
@@ -253,8 +257,20 @@ export const stays = pgTable(
     adults: smallint().notNull(),
     children: smallint().notNull().default(0),
     // The assigned room (brick 7), or null: unassigned. A room holds at most one confirmed or
-    // checked-in stay a night (exclusion constraint, migration 0019).
+    // checked-in stay a night (exclusion constraint, migration 0019, from `roomFrom` since 0020).
     roomId: uuid(),
+    // The first night in `roomId` (decision 0030): null means from arrival; an in-house move sets
+    // it to the business date and keeps the nights before as a stay_room_segments row.
+    roomFrom: calendarDate(),
+    // Checked in (brick 8): when, by whom, on which device and business date. Cleared by Undo or
+    // a reversal (the audit events keep them).
+    checkedInAt: timestamptz(),
+    checkedInByMemberId: uuid().references(() => members.id, { onDelete: 'restrict' }),
+    checkedInByName: text(),
+    checkedInDeviceId: uuid().references(() => devices.id, { onDelete: 'set null' }),
+    checkedInBusinessDate: calendarDate(),
+    // When the registration card was first printed (null: "Print card" on the In house row).
+    cardPrintedAt: timestamptz(),
     status: stayStatusEnum().notNull(),
     quoteHash: text().notNull(),
     // The plan's terms as sold (name, code, meal plan and allocation, cancellation, deposit rule,
@@ -323,6 +339,16 @@ export const stays = pgTable(
       'stays_discount_reason',
       sql`(${t.discountPercent} is null) = (${t.discountReason} is null)`,
     ),
+    // A checked-in stay always has a room and who checked it in.
+    check(
+      'stays_checked_in',
+      sql`${t.status} <> 'checked_in' or (${t.roomId} is not null and ${t.checkedInAt} is not null and ${t.checkedInByName} is not null and ${t.checkedInBusinessDate} is not null)`,
+    ),
+    check(
+      'stays_room_from',
+      sql`${t.roomFrom} is null or (${t.roomFrom} >= ${t.arrival} and ${t.roomFrom} < ${t.departure})`,
+    ),
+    index().on(t.organizationId, t.propertyId, t.checkedInBusinessDate),
   ],
 )
 

@@ -2,6 +2,7 @@
 export * from './approvals.ts'
 export * from './auth.ts'
 export * from './finance.ts'
+export * from './front-desk.ts'
 export * from './governance.ts'
 export * from './rates.ts'
 export * from './reservations.ts'

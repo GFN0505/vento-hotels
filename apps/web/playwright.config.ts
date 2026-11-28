@@ -49,6 +49,8 @@ export default defineConfig({
         EMAIL_OUTBOX_DIR: OUTBOX,
         // Browser tests cover unreleased modules too (decision 0021).
         VENTO_ALL_FEATURES: 'true',
+        // The fixed development key for guest ID numbers, shared with the seed (crypto.ts).
+        ALLOW_DEV_GUEST_DATA_KEY: 'true',
       },
     },
     {

@@ -5,7 +5,7 @@
   "description": "Hono + oRPC API",
   "type": "module",
   "scripts": {
-    "dev": "node --watch --env-file-if-exists=../../.env src/server.ts",
+    "dev": "ALLOW_DEV_GUEST_DATA_KEY=true node --watch --env-file-if-exists=../../.env src/server.ts",
     "start": "node src/server.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
@@ -15,11 +15,13 @@
     "db:migrate:test": "node --env-file-if-exists=../../.env src/db/migrate.ts --test",
     "db:studio": "drizzle-kit studio --port 4984",
     "features": "node --env-file-if-exists=../../.env src/features/cli.ts",
-    "db:seed": "node --env-file-if-exists=../../.env src/seed/cli.ts"
+    "db:seed": "ALLOW_DEV_GUEST_DATA_KEY=true node --env-file-if-exists=../../.env src/seed/cli.ts"
   },
   "dependencies": {
+    "@fontsource/inter": "5.3.0",
     "@hono/node-server": "2.1.6",
     "@orpc/server": "1.16.2",
+    "@react-pdf/renderer": "4.9.0",
     "@sentry/node": "11.14.0",
     "@vento/shared": "workspace:*",
     "aws4fetch": "1.0.20",
@@ -29,10 +31,12 @@
     "pg": "8.23.1",
     "pg-boss": "12.38.2",
     "pino": "10.4.0",
+    "react": "19.3.1",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
     "drizzle-kit": "0.31.11"
   }
 }

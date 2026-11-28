@@ -50,6 +50,8 @@ jobs:
       S3_ACCESS_KEY_ID: vento-hotels-local
       S3_SECRET_ACCESS_KEY: vento-hotels-local-secret
       S3_BUCKET: vento-hotels-local
+      # Test databases only: the fixed development key for guest ID numbers (crypto.ts).
+      ALLOW_DEV_GUEST_DATA_KEY: "true"
     steps:
       - uses: actions/checkout@v5
 
@@ -133,6 +135,8 @@ jobs:
       S3_ACCESS_KEY_ID: vento-hotels-local
       S3_SECRET_ACCESS_KEY: vento-hotels-local-secret
       S3_BUCKET: vento-hotels-local
+      # Test databases only: the fixed development key for guest ID numbers (crypto.ts).
+      ALLOW_DEV_GUEST_DATA_KEY: "true"
     steps:
       - uses: actions/checkout@v5
 

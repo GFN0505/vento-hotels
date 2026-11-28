@@ -26,6 +26,8 @@ export const BACKGROUND_PROCEDURES: ReadonlySet<string> = new Set([
   'approvals.get',
   'approvals.count',
   'tapeChart.get',
+  // The front desk lists refresh every 30 seconds while open (brick 8).
+  'frontDesk.list',
 ])
 
 export async function guardDeviceSession(

@@ -106,6 +106,8 @@ export const MODULES: readonly NavGroup[] = [
         icon: BedDouble,
         feature: 'front_desk',
         roles: FRONT_DESK_TEAM,
+        // Reservation readers (RESERVATION_READERS), written out so the menu loads without it.
+        needs: ['reservation.manage', 'night_audit.run', 'leakage.view'],
         stage: 1,
         about: "Today's arrivals and departures, check-in, walk-ins, folios and cashier shifts.",
       },
