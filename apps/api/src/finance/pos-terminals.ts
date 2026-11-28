@@ -12,6 +12,7 @@ import {
 } from '@vento/shared'
 import { and, asc, count, eq, isNotNull, isNull, ne, sql } from 'drizzle-orm'
 import { recordAudit } from '../audit/record.ts'
+import { removeTerminalFromDrawers } from '../cash/drawers/service.ts'
 import type { Database } from '../db/client.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { bankAccounts, posTerminals } from '../db/schema/finance.ts'
@@ -289,6 +290,8 @@ async function setArchived(
       .update(posTerminals)
       .set({ archivedAt: archive ? sql`now()` : null, version: terminal.version + 1 })
       .where(eq(posTerminals.id, terminal.id))
+    // An archived terminal sits at no drawer (cashier shifts spec); open shifts keep their lines.
+    if (archive) await removeTerminalFromDrawers(tx, terminal.id)
     await recordAudit(tx, access, {
       action: archive ? 'pos_terminal.archived' : 'pos_terminal.restored',
       entityType: 'pos_terminal',

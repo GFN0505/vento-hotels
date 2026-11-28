@@ -7,6 +7,8 @@ import type {
   FxSummary,
   HomeSummary,
   MemberView,
+  MyShift,
+  Page,
   Property,
   RateCalendar,
   RatePlanView,
@@ -14,6 +16,8 @@ import type {
   RoomOptions,
   RoomTypeView,
   RoomView,
+  ShiftDetail,
+  ShiftRow,
   TapeChart,
   TaxSetup,
 } from '@vento/shared'
@@ -765,5 +769,89 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
       tab: 'in_house',
     })
     expect(ikejaHouse.data.items.map((row) => row.guestName)).toContain('Thomas Becker')
+  })
+
+  it("leaves Chiamaka's shift open on Desk 1 with no figures, Desk 2 free, and the three differences", async () => {
+    const [org] = await t.db
+      .select({ id: organizations.id })
+      .from(organizations)
+      .where(eq(organizations.slug, options.slug))
+    const orgId = org?.id ?? ''
+    const cookie = await signInAs(`chiamaka@kora-${run}.example`)
+    const hotels = await t.rpc<{ items: Property[] }>(cookie, 'properties/list', {})
+    const vi = hotels.data.items.find((h) => h.name === 'Kora Victoria Island')?.id ?? ''
+    const mine = await t.rpc<MyShift>(cookie, 'cash/myShift', { propertyId: vi })
+    expect(mine.data.shift).toMatchObject({
+      status: 'open',
+      number: 1,
+      openingFloat: '50000.00',
+      drawer: { name: 'Desk 1' },
+      handover: {
+        floatLeft: '50000.00',
+        difference: '0.00',
+        fromShift: { number: 2, memberName: 'Tunde Bello' },
+      },
+    })
+    const blind = /"(expected|counted|lines|totalDifference|cashCounted)"\s*:\s*(?!null)/
+    expect(JSON.stringify(mine.data)).not.toMatch(blind)
+    expect(
+      mine.data.drawers.map((d) => [
+        d.name,
+        d.busy?.memberName ?? null,
+        d.lastClose?.floatKept ?? null,
+      ]),
+    ).toEqual([
+      ['Desk 1', 'Chiamaka Eze', '50000.00'],
+      ['Desk 2', null, '20000.00'],
+    ])
+    const tunde = await signInAs(`tunde@kora-${run}.example`)
+    const open = await t.rpc<ShiftDetail>(tunde, 'cash/shifts/get', { id: mine.data.shift?.id })
+    expect(JSON.stringify(open.data)).not.toMatch(blind)
+    const list = await t.rpc<Page<ShiftRow>>(tunde, 'cash/shifts/list', { propertyId: vi })
+    expect(
+      list.data.items.map((row) => [
+        row.number,
+        row.drawerName,
+        row.memberName,
+        row.status,
+        row.totalDifference,
+        row.handoverDifference,
+        row.approvedBy,
+      ]),
+    ).toEqual([
+      [1, 'Desk 1', 'Chiamaka Eze', 'open', null, '0.00', null],
+      [3, 'Desk 2', 'Ibrahim Musa', 'closed', '12500.00', '0.00', 'Tunde Bello'],
+      [2, 'Desk 1', 'Tunde Bello', 'closed', '0.00', '2500.00', null],
+      [1, 'Desk 1', 'Chiamaka Eze', 'closed', '2500.00', '0.00', null],
+    ])
+    const exceptions = await t.db.execute<{
+      action: string
+      stage: string
+      actor: string
+      reason: string
+    }>(sql`
+      select action, after->>'stage' as stage, actor_name as actor, reason from audit_events
+      where organization_id = ${orgId} and after->>'exception' = 'cash_variance'
+        and after->>'liveProperty' = 'true'
+      order by created_at, id`)
+    expect(exceptions.rows.map((row) => [row.action, row.stage, row.actor])).toEqual([
+      ['cashier_shift.closed', 'close', 'Chiamaka Eze'],
+      ['cashier_shift.opened', 'handover', 'Tunde Bello'],
+      ['cashier_shift.closed', 'close', 'Ibrahim Musa'],
+    ])
+    const night = list.data.items[1]
+    const detail = await t.rpc<ShiftDetail>(tunde, 'cash/shifts/get', { id: night?.id })
+    expect(detail.data.shift).toMatchObject({
+      status: 'closed',
+      floatKept: '20000.00',
+      dropNgn: '12500.00',
+      dropBagNumber: 'S-2210',
+      closeApproval: { name: 'Tunde Bello', method: 'inbox' },
+    })
+    await expect(
+      t.db.execute(
+        sql`update cashier_shift_count_lines set counted = 0 where organization_id = ${orgId}`,
+      ),
+    ).rejects.toMatchObject({ cause: { code: '23001' } })
   })
 })

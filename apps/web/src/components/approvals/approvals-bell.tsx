@@ -4,7 +4,12 @@
 // requests of today with Continue booking. Approvals only in this brick: no read/unread state.
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { type ApprovalView, isWaiverSubject, PENALTY_KIND_LABELS } from '@vento/shared'
+import {
+  type ApprovalView,
+  isCashSubject,
+  isWaiverSubject,
+  PENALTY_KIND_LABELS,
+} from '@vento/shared'
 import { Bell } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useProperty } from '@/components/shell/property-context'
@@ -13,7 +18,7 @@ import { cn } from '@/lib/cn'
 import { useMe } from '@/lib/me'
 import { keepWithinHotel, scopeName, scopePropertyId } from '@/lib/scope'
 import { useOnline } from '@/offline/connection'
-import { age, yourRequestLine } from './format'
+import { age, naira, yourRequestLine } from './format'
 
 const BELL_POLL_MS = 30_000
 
@@ -173,15 +178,21 @@ function BellPanel({
                 <span aria-hidden="true" className="mt-1.5 size-2 flex-none rounded-full bg-pri" />
                 <div className="flex min-w-0 grow flex-col gap-0.5">
                   <span className="font-medium">
-                    {isWaiverSubject(view.subject)
-                      ? 'Penalty waiver waiting for you'
-                      : `${view.subject.percent}% discount waiting for you`}
+                    {isCashSubject(view.subject)
+                      ? `${naira(view.subject.difference)} cash difference waiting for you`
+                      : isWaiverSubject(view.subject)
+                        ? 'Penalty waiver waiting for you'
+                        : `${view.subject.percent}% discount waiting for you`}
                   </span>
                   <span className="num truncate text-sm text-text-2">
                     {view.requester.name} ·{' '}
-                    {isWaiverSubject(view.subject)
-                      ? `${PENALTY_KIND_LABELS[view.subject.penalty.kind]} · ${view.subject.reservationNumber}`
-                      : view.subject.guestName}{' '}
+                    {isCashSubject(view.subject)
+                      ? view.subject.shiftNumber === null
+                        ? view.subject.drawerName
+                        : `Shift ${view.subject.shiftNumber}`
+                      : isWaiverSubject(view.subject)
+                        ? `${PENALTY_KIND_LABELS[view.subject.penalty.kind]} · ${view.subject.reservationNumber}`
+                        : view.subject.guestName}{' '}
                     · {age(view.requestedAt)}
                   </span>
                   <Link

@@ -513,6 +513,77 @@ for (const theme of ['light', 'dark'] as const) {
       await expectAccessible(page)
     })
 
+    test('cash: the open form with a hand-over difference, My shift, the blind count, the submit confirm, the submitted step, Shifts, a shift sheet and the Cash drawers card have no accessibility problems', async ({
+      page,
+      browser,
+    }, testInfo) => {
+      test.setTimeout(150_000)
+      const domain = seedDemoGroup(`a11y-cash-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
+      // Tunde has no shift: the open form, Desk 1 busy with Chiamaka's shift, Desk 2 free.
+      await signIn(page, `tunde@${domain}`, 'Demo-pass-42!')
+      await page.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.goto('/cash')
+      await page.getByRole('heading', { name: 'Open cashier shift' }).waitFor()
+      await expectAccessible(page)
+      await page.getByLabel('Notes of ₦1,000').fill('12')
+      await page.getByLabel('Reason for the difference').waitFor()
+      await expectAccessible(page)
+      await page.goto('/cash/shifts')
+      await page.getByRole('heading', { name: 'Shifts', exact: true }).waitFor()
+      await expectAccessible(page)
+      await page
+        .getByRole('button', { name: /^Shift 3 · / })
+        .first()
+        .click()
+      await page.getByText('To the safe · bag S-2210').waitFor()
+      await expectAccessible(page)
+      await page.keyboard.press('Escape')
+      // Chiamaka's open shift, counted blind and submitted.
+      const context = await browser.newContext()
+      const desk = await context.newPage()
+      await signIn(desk, `chiamaka@${domain}`, 'Demo-pass-42!')
+      await desk.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(desk)
+      await desk.goto('/cash')
+      await desk.getByRole('button', { name: 'Count and close' }).waitFor()
+      await expectAccessible(desk)
+      await desk.getByRole('button', { name: 'Count and close' }).click()
+      await desk.getByLabel('Notes of ₦1,000').fill('47')
+      await desk.getByLabel(/^POS terminal · Moniepoint · Desk 1/).fill('0')
+      await desk.getByLabel('Bank transfers').fill('0')
+      await expectAccessible(desk)
+      await desk.getByRole('button', { name: 'Submit count' }).click()
+      await desk.getByRole('dialog', { name: 'Submit your count?' }).waitFor()
+      await expectAccessible(desk)
+      await desk
+        .getByRole('dialog', { name: 'Submit your count?' })
+        .getByRole('button', { name: 'Submit count' })
+        .click()
+      await desk.getByText('Cash ₦3,000.00 short').waitFor()
+      await expectAccessible(desk)
+      await context.close()
+      // Kunle: Settings › Payments with the Cash drawers card.
+      const finance = await browser.newContext()
+      const kunle = await finance.newPage()
+      await signIn(kunle, `kunle@${domain}`, 'Demo-pass-42!')
+      await kunle.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(kunle)
+      await kunle.goto('/settings/payments')
+      await kunle
+        .getByRole('heading', {
+          name: /^(Cash drawers|Payments are set per hotel\. Pick a hotel\.)$/,
+        })
+        .first()
+        .waitFor()
+      const pick = kunle.getByRole('button', { name: /^Kora Victoria Island/ })
+      if (await pick.isVisible()) await pick.click()
+      await kunle.getByRole('heading', { name: 'Cash drawers' }).waitFor()
+      await kunle.getByText(/^Shift 1 open · Chiamaka Eze$/).waitFor()
+      await expectAccessible(kunle)
+      await finance.close()
+    })
+
     test('front desk: the lists (each tab), the shortcuts, the check-in sheet (Verify ID, the foreign national section, Room), the walk-in page, an in-house Room move and the Reveal dialog have no accessibility problems', async ({
       page,
       isMobile,

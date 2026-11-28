@@ -8,6 +8,8 @@ import {
   type ApprovalView,
   type Approver,
   firstNameOf,
+  isCashSubject,
+  isDiscountSubject,
   isWaiverSubject,
   newId,
   PIN_LENGTH,
@@ -24,7 +26,12 @@ import { errorCode, problemMessage } from '@/lib/errors'
 import { initials } from '@/lib/team'
 import { useOnline } from '@/offline/connection'
 import {
+  cashFigures,
+  cashLimitLine,
+  cashMeta,
+  cashTitle,
   NEEDS_CONNECTION,
+  nobodyCashLine,
   nobodyLine,
   nobodyWaiverLine,
   promptMeta,
@@ -134,13 +141,19 @@ export function ApprovalPrompt({
 
   const subject = data?.subject
   const waiver = subject && isWaiverSubject(subject) ? subject : undefined
-  const discount = subject && !isWaiverSubject(subject) ? subject : undefined
+  const cash = subject && isCashSubject(subject) ? subject : undefined
+  const discount = subject && isDiscountSubject(subject) ? subject : undefined
   const first = subject ? firstNameOf(subject.requesterName) : ''
   const inboxLabel = approver
     ? (inboxWords?.(firstNameOf(approver.name)) ?? `Send to ${firstNameOf(approver.name)}'s inbox`)
     : 'Send to an inbox'
   const primary =
-    approveLabel ?? (waiver ? 'Approve waiver' : `Approve ${discount?.percent ?? ''}% and book`)
+    approveLabel ??
+    (waiver
+      ? 'Approve waiver'
+      : cash
+        ? 'Approve difference'
+        : `Approve ${discount?.percent ?? ''}% and book`)
 
   return (
     <Dialog
@@ -150,9 +163,11 @@ export function ApprovalPrompt({
       description={
         waiver
           ? waiverTitle(waiver)
-          : discount
-            ? promptTitle(discount)
-            : 'Checking who can approve…'
+          : cash
+            ? cashTitle(cash)
+            : discount
+              ? promptTitle(discount)
+              : 'Checking who can approve…'
       }
       className="max-w-[860px]"
       footer={
@@ -195,32 +210,45 @@ export function ApprovalPrompt({
             <p className="num text-sm text-text-2">
               {waiver
                 ? waiverMeta(waiver, askedAt.current, timeZone)
-                : discount
-                  ? promptMeta(discount, askedAt.current, timeZone)
-                  : ''}
+                : cash
+                  ? `${cashMeta(cash)} · ${cashLimitLine(cash)}`
+                  : discount
+                    ? promptMeta(discount, askedAt.current, timeZone)
+                    : ''}
             </p>
             <dl className="num flex flex-col gap-1.5 rounded-sm bg-surface-2 p-3.5 ring-1 ring-border">
-              {(waiver ? waiverFigures(waiver) : discount ? subjectFigures(discount) : []).map(
-                (figure) => (
-                  <div
-                    key={figure.label}
-                    className={cn(
-                      'flex flex-wrap justify-between gap-x-3',
-                      figure.strong && 'border-t border-border pt-1.5 font-semibold',
-                    )}
-                  >
-                    <dt className={figure.strong ? undefined : 'text-text-2'}>{figure.label}</dt>
-                    <dd className="break-words">{figure.value}</dd>
-                  </div>
-                ),
-              )}
+              {(waiver
+                ? waiverFigures(waiver)
+                : cash
+                  ? cashFigures(cash)
+                  : discount
+                    ? subjectFigures(discount)
+                    : []
+              ).map((figure) => (
+                <div
+                  key={figure.label}
+                  className={cn(
+                    'flex flex-wrap justify-between gap-x-3',
+                    figure.strong && 'border-t border-border pt-1.5 font-semibold',
+                  )}
+                >
+                  <dt className={figure.strong ? undefined : 'text-text-2'}>{figure.label}</dt>
+                  <dd className="break-words">{figure.value}</dd>
+                </div>
+              ))}
             </dl>
             <div className="flex flex-col gap-1">
               <span className="text-sm font-medium text-text-2">
                 {waiver ? 'Reason for waiving' : `Reason from ${first}`}
               </span>
               <p className="break-words rounded-sm border border-input bg-surface px-3 py-2.5">
-                {waiver ? waiver.waiverReason : discount ? reasonLine(discount) : ''}
+                {waiver
+                  ? waiver.waiverReason
+                  : cash
+                    ? cash.reason
+                    : discount
+                      ? reasonLine(discount)
+                      : ''}
               </p>
             </div>
             {data.approvers.length === 0 ? (
@@ -229,7 +257,13 @@ export function ApprovalPrompt({
                 className="flex flex-col gap-1 rounded-sm bg-am-bg px-3 py-2 text-am"
               >
                 <span>
-                  {waiver ? nobodyWaiverLine(waiver) : discount ? nobodyLine(discount) : ''}
+                  {waiver
+                    ? nobodyWaiverLine(waiver)
+                    : cash
+                      ? `${nobodyCashLine(cash)} Ask finance or the owner.`
+                      : discount
+                        ? nobodyLine(discount)
+                        : ''}
                 </span>
                 {withoutPinLine(data.withoutPin) ? (
                   <span className="text-sm">{withoutPinLine(data.withoutPin)}</span>
@@ -298,7 +332,9 @@ export function ApprovalPrompt({
               <p className="text-center text-sm text-text-2">
                 {waiver
                   ? 'Save it without waiving. A manager can waive it later from the Penalty card.'
-                  : 'Change the discount on Room & rate, or ask the owner to raise a limit.'}
+                  : cash
+                    ? 'The shift stays as it is. Ask finance or the owner to approve it.'
+                    : 'Change the discount on Room & rate, or ask the owner to raise a limit.'}
               </p>
             ) : data.canApproveHere ? (
               <>

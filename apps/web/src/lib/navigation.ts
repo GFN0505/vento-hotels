@@ -18,6 +18,7 @@ import {
   Tag,
   Users,
   UtensilsCrossed,
+  Wallet,
   Wrench,
 } from 'lucide-react'
 
@@ -25,6 +26,7 @@ export type ModulePath =
   | '/reservations'
   | '/tape-chart'
   | '/front-desk'
+  | '/cash'
   | '/guests'
   | '/rates'
   | '/housekeeping'
@@ -110,6 +112,18 @@ export const MODULES: readonly NavGroup[] = [
         needs: ['reservation.manage', 'night_audit.run', 'leakage.view'],
         stage: 1,
         about: "Today's arrivals and departures, check-in, walk-ins, folios and cashier shifts.",
+      },
+      {
+        to: '/cash',
+        tagline: 'Cashier shifts: float, blind count, close',
+        label: 'Cash',
+        icon: Wallet,
+        feature: 'front_desk',
+        roles: [...FRONT_DESK_TEAM, 'cashier', 'fnb_manager', 'finance'],
+        // Running a shift, or reading every shift of a hotel (managers and finance).
+        needs: ['cashier_shift.operate', 'leakage.view'],
+        stage: 1,
+        about: 'Open a cashier shift with a counted float, count blind and close it.',
       },
       {
         to: '/guests',

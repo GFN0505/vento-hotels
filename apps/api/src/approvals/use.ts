@@ -129,8 +129,9 @@ export async function markApprovalUsed(
   id: string,
   used: {
     stayId?: string
-    // A changed stay (brick 6: 'reservation_change') or a waived penalty ('penalty').
-    entity?: { type: 'stay' | 'reservation_change' | 'penalty'; id: string }
+    // A changed stay (brick 6: 'reservation_change'), a waived penalty ('penalty') or a cashier
+    // shift's difference (brick 9: 'cashier_shift').
+    entity?: { type: 'stay' | 'reservation_change' | 'penalty' | 'cashier_shift'; id: string }
     reference?: string
     at: Date
   },

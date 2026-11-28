@@ -160,7 +160,8 @@ export function draftFromRequest(detail: ApprovalDetail, scopeKey: string): Draf
   const stay = booking?.stays[0]
   if (!booking || !stay) return undefined
   const guest = booking.guest
-  const [firstName = '', ...rest] = detail.subject.guestName.split(' ')
+  const guestName = 'guestName' in detail.subject ? detail.subject.guestName : ''
+  const [firstName = '', ...rest] = guestName.split(' ')
   const discount = stay.discount
   return {
     key: booking.idempotencyKey,
