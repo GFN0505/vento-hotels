@@ -59,3 +59,5 @@ export const getOutboxItem = <T>(key: string) =>
   run<T>('readonly', (store) => store.get(key), OUTBOX)
 export const setOutboxItem = (key: string, value: unknown) =>
   run('readwrite', (store) => store.put(value, key), OUTBOX)
+export const deleteOutboxItem = (key: string) =>
+  run('readwrite', (store) => store.delete(key), OUTBOX)

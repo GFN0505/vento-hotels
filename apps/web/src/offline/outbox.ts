@@ -17,11 +17,12 @@ import {
   type CheckInCommand,
   type Command,
   failureOf,
+  forgetSealed,
   nextToSend,
   type Queued,
   type RoomStatusCommand,
 } from './outbox-rules'
-import { unseal } from './sealed'
+import { forgetSealKey, unseal } from './sealed'
 import { getOutboxItem, setOutboxItem } from './store'
 
 export type { CheckInCommand, Command, Queued, RoomStatusCommand }
@@ -125,6 +126,16 @@ export async function enqueue(command: Command) {
   await load()
   items = [...items, { ...command, state: 'waiting' }]
   await save()
+  emit()
+}
+
+// Device revoked or a full sign-out (decision 0029): queued check-ins lose their ID numbers and
+// photo, and the key that sealed them is deleted.
+export async function forgetSealedData() {
+  await load()
+  items = forgetSealed(items)
+  await save()
+  await forgetSealKey()
   emit()
 }
 

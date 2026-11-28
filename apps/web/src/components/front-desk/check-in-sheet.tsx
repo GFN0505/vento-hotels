@@ -328,6 +328,15 @@ export function CheckInSheet({
 
   async function queueOffline(registrations: ReturnType<typeof toInput>[], occurredAt: string) {
     if (!roomId || !roomLine) return
+    // A queued command is sent only by the person who made it (outbox.ts): without knowing who that
+    // is, it could never be sent.
+    const memberId = me.data?.member.id
+    if (!memberId) {
+      setFailure(
+        "Vento can't tell who is signed in on this device. Check in when you're back online.",
+      )
+      return
+    }
     const sealed = await seal({
       registrations,
       idDocument:
@@ -361,7 +370,7 @@ export function CheckInSheet({
         propertyId: target.propertyId,
       },
       sealed,
-      memberId: me.data?.member.id ?? '',
+      memberId,
       label: `${name} checked in to ${roomLine.number}`,
       guestName: name,
       roomNumber: roomLine.number,
@@ -559,7 +568,7 @@ export function CheckInSheet({
               <>
                 {data?.previous ? (
                   <p className="text-sm text-text-2">
-                    From the stay on {dateOnly(data.previous.arrival)} at {data.previous.hotelName}.
+                    From an earlier stay at {data.previous.hotelName}.
                   </p>
                 ) : null}
                 <RegistrationFields
@@ -570,7 +579,7 @@ export function CheckInSheet({
                   showErrors={submitted}
                   reusedFrom={
                     data?.previous
-                      ? `From the stay on ${dateOnly(data.previous.arrival)} at ${data.previous.hotelName}`
+                      ? `From an earlier stay at ${data.previous.hotelName}`
                       : undefined
                   }
                 />

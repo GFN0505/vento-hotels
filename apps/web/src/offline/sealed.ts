@@ -2,7 +2,7 @@
 // typed ID and visa numbers and the ID photo. Sealed with AES-GCM under a key made on this device,
 // kept in IndexedDB as a non-extractable CryptoKey (it can be used here, never read out), and
 // deleted with the command once it is answered and dismissed.
-import { getOutboxItem, setOutboxItem } from './store'
+import { deleteOutboxItem, getOutboxItem, setOutboxItem } from './store'
 
 const KEY = 'seal-key'
 
@@ -44,3 +44,6 @@ export async function unseal<T>(sealed: string): Promise<T> {
   )
   return JSON.parse(new TextDecoder().decode(plain)) as T
 }
+
+// Device revoked or a full sign-out: nothing sealed can be opened again (outbox.ts forgetSealedData).
+export const forgetSealKey = () => deleteOutboxItem(KEY)

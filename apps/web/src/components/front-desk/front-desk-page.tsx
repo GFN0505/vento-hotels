@@ -28,7 +28,16 @@ import {
   Search,
   SearchX,
 } from 'lucide-react'
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  lazy,
+  type ReactNode,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { RoomMoveDialog } from '@/components/rooms/room-move-dialog'
 import { PickHotel } from '@/components/shell/pick-hotel'
 import { useProperty } from '@/components/shell/property-context'
@@ -356,11 +365,8 @@ function HotelFrontDesk({ hotel }: { hotel: Property }) {
                 </kbd>
               </Link>
             ) : (
-              <Button
-                variant="primary"
-                disabled
-                title="Walk-ins need a connection to check live availability."
-              >
+              // The reason is the line under the header, visible to everyone (walk-in-why).
+              <Button variant="primary" disabled aria-describedby="walk-in-why">
                 <DoorOpen className="size-4" aria-hidden="true" />
                 Walk-in
               </Button>
@@ -376,7 +382,7 @@ function HotelFrontDesk({ hotel }: { hotel: Property }) {
       <DeskOffline savedAt={list.dataUpdatedAt} />
       {header}
       {!online && canWalkIn ? (
-        <p className="text-sm text-text-3">
+        <p id="walk-in-why" className="text-sm text-text-3">
           Walk-ins need a connection to check live availability.
         </p>
       ) : null}
@@ -816,26 +822,51 @@ function Flags({ row, pending }: { row: FrontDeskRow; pending: boolean }) {
   )
 }
 
+// A disabled action says why in words people can see and screen readers hear (UX-STANDARD).
+function WithReason({
+  id,
+  reason,
+  children,
+}: {
+  id: string
+  reason?: string | undefined
+  children: ReactNode
+}) {
+  if (!reason) return children
+  return (
+    <span className="flex flex-col items-start gap-1">
+      {children}
+      <span id={id} className="max-w-48 text-xs text-text-3">
+        {reason}
+      </span>
+    </span>
+  )
+}
+
 function RowAction({ row, props }: { row: FrontDeskRow; props: BodyProps }) {
   const pending = props.pending.has(row.stayId)
   if (props.tab === 'arrivals' && row.status === 'confirmed' && !pending) {
     const needsRoom = !row.room || row.readiness === 'out_of_order'
     const offlineBlocked = !props.online && !row.room
+    const reason =
+      row.checkInBlocked ?? (offlineBlocked ? 'Picking a room needs a connection.' : undefined)
     return (
-      <Button
-        size="sm"
-        variant={needsRoom ? 'default' : 'primary'}
-        className="max-lg:h-11"
-        disabled={Boolean(row.checkInBlocked) || offlineBlocked}
-        title={
-          row.checkInBlocked ?? (offlineBlocked ? 'Picking a room needs a connection.' : undefined)
-        }
-        aria-label={`Check in ${row.guestName}`}
-        aria-keyshortcuts="C"
-        onClick={() => props.onCheckIn(row, row.readiness === 'out_of_order' ? 'room' : undefined)}
-      >
-        {row.readiness === 'out_of_order' ? 'Pick another room' : 'Check in'}
-      </Button>
+      <WithReason id={`check-in-why-${row.stayId}`} reason={reason}>
+        <Button
+          size="sm"
+          variant={needsRoom ? 'default' : 'primary'}
+          className="max-lg:h-11"
+          disabled={Boolean(reason)}
+          aria-describedby={reason ? `check-in-why-${row.stayId}` : undefined}
+          aria-label={`Check in ${row.guestName}`}
+          aria-keyshortcuts="C"
+          onClick={() =>
+            props.onCheckIn(row, row.readiness === 'out_of_order' ? 'room' : undefined)
+          }
+        >
+          {row.readiness === 'out_of_order' ? 'Pick another room' : 'Check in'}
+        </Button>
+      </WithReason>
     )
   }
   if (
@@ -844,18 +875,21 @@ function RowAction({ row, props }: { row: FrontDeskRow; props: BodyProps }) {
     row.night &&
     row.departure > props.data.hotel.businessDate
   ) {
+    const reason = props.online ? undefined : 'Moving rooms needs a connection.'
     return (
-      <Button
-        size="sm"
-        className="max-lg:h-11"
-        disabled={!props.online}
-        title={props.online ? undefined : 'Moving rooms needs a connection.'}
-        aria-label={`Room move ${row.guestName}`}
-        onClick={() => props.onMove(row)}
-      >
-        <ArrowLeftRight className="size-3.5" aria-hidden="true" />
-        Room move
-      </Button>
+      <WithReason id={`move-why-${row.stayId}`} reason={reason}>
+        <Button
+          size="sm"
+          className="max-lg:h-11"
+          disabled={Boolean(reason)}
+          aria-describedby={reason ? `move-why-${row.stayId}` : undefined}
+          aria-label={`Room move ${row.guestName}`}
+          onClick={() => props.onMove(row)}
+        >
+          <ArrowLeftRight className="size-3.5" aria-hidden="true" />
+          Room move
+        </Button>
+      </WithReason>
     )
   }
   return (

@@ -10,6 +10,7 @@ import { authClient } from '@/lib/auth'
 import { lockDevice } from '@/lib/device-session'
 import { useMe } from '@/lib/me'
 import { useMediaQuery } from '@/lib/media'
+import { forgetSealedData } from '@/offline/outbox'
 import { clearSavedData, SIGNED_OUT } from '@/offline/saved-data'
 import { PreviewRoleDialog } from './preview-role-dialog'
 import { SetPinDialog } from './set-pin-dialog'
@@ -72,6 +73,7 @@ export function AccountMenu({ name, email, onSharedDevice, businessDate }: Accou
     if (onSharedDevice) return lockDevice()
     await authClient.signOut()
     await clearSavedData(queryClient)
+    await forgetSealedData()
     // An unfinished booking holds guest details: it goes with the person (booking-draft.ts).
     window.dispatchEvent(new Event(SIGNED_OUT))
     await navigate({ to: '/sign-in' })

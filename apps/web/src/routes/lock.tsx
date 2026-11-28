@@ -14,6 +14,7 @@ import { cn } from '@/lib/cn'
 import { CANT_REACH_VENTO } from '@/lib/errors'
 import { initials } from '@/lib/team'
 import { usePageTitle } from '@/lib/title'
+import { forgetSealedData } from '@/offline/outbox'
 import { clearSavedData } from '@/offline/saved-data'
 
 type LockSearch = { signedOut?: string | undefined }
@@ -35,7 +36,7 @@ function LockPage() {
   // A removed device keeps nothing, not even the front desk lists (decision 0029).
   const revoked = lock.data?.status === 'revoked'
   useEffect(() => {
-    if (revoked) void clearSavedData()
+    if (revoked) void Promise.all([clearSavedData(), forgetSealedData()])
   }, [revoked])
 
   const device = lock.data?.status === 'ready' ? lock.data.device : undefined

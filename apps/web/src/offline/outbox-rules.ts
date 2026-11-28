@@ -46,8 +46,30 @@ export function afterAnswer(
   if (answer.outcome === 'applied') return list.filter((item) => item.input.idempotencyKey !== key)
   return list.map((item) =>
     item.input.idempotencyKey === key
-      ? { ...item, state: 'attention' as const, message: answer.message }
+      ? // A check-in that won't be sent again keeps no ID numbers or photo on the device.
+        { ...withoutSecrets(item), state: 'attention' as const, message: answer.message }
       : item,
+  )
+}
+
+const withoutSecrets = (item: Queued): Queued =>
+  item.kind === 'stays.checkIn' ? { ...item, sealed: '' } : item
+
+// When the device is removed or the person fully signs out (decision 0029), the sealed ID numbers
+// and photos go with the key that opens them: a check-in still waiting can't be sent any more, so it
+// stays for a person to read and do again, never silently dropped. Room status changes are kept.
+export function forgetSealed(list: readonly Queued[]): Queued[] {
+  return list.map((item) =>
+    item.kind !== 'stays.checkIn'
+      ? item
+      : {
+          ...withoutSecrets(item),
+          state: 'attention' as const,
+          message:
+            item.state === 'waiting' || !item.message
+              ? `${item.guestName}'s check-in to ${item.roomNumber} didn't sync before signing out. Check them in again.`
+              : item.message,
+        },
   )
 }
 
