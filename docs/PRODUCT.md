@@ -40,6 +40,8 @@ Property setup (room types, rooms, floors, amenities), reservations (individual 
 ### 2. Booking Engine & Channel Manager
 A fast, mobile-first direct booking site per property (and a group site), Paystack card and transfer payment, promo codes. Two-way sync of availability, rates and reservations with OTAs (Booking.com, Expedia, Airbnb, Hotels.ng and similar) through one channel-manager provider, rate parity view, OTA commission tracking.
 *Lean choices:* we connect through one certified channel-manager provider rather than building direct connections to each OTA.
+**Bookings from chats (owner, 2026-11-28).** Guests who message the hotel on WhatsApp or Instagram can book there: one **guest inbox** gathers WhatsApp and Instagram conversations for the hotel, and a **booking assistant** (an AI agent) answers them in the hotel's voice. It answers common questions (prices, check-in time, directions, parking, what's included) from the hotel's own setup, checks live availability and the plan's price, and sends a short booking and payment link, so the booking is made by the booking engine through the same booking service and locks as the desk and lands on the tape chart like any other. Staff see every conversation and take over with one tap; the assistant hands over by itself for discounts, complaints, groups, anything it isn't sure of, and whenever the guest asks for a person. It never gives a discount, never takes card details in the chat, and says it is an assistant. Each booking records its channel (WhatsApp, Instagram), so the owner's daily report shows bookings and revenue by channel.
+*Lean choices:* the assistant books only through the booking link (no booking inside the chat in v1); one WhatsApp Business provider and Meta's Instagram messaging; Facebook Messenger and other chat apps wait until a pilot asks.
 
 ### 3. Guests & Sales
 Guest profiles shared across the group (stay history, preferences, notes, blacklist), corporate accounts with negotiated rates and credit limits, travel agents, group blocks with pick-up and release dates, events and conference bookings (halls, packages, banquet event orders), guest messages over WhatsApp, SMS and email (confirmation, pre-arrival, post-stay review request).
@@ -93,6 +95,8 @@ Our own subscription billing of customers (plans by property and rooms, trial, i
 
 ## How modules connect
 ```
+WhatsApp / Instagram chats ──▶ booking assistant (sends a booking link)
+        ▼
 Booking engine / OTA / phone ──▶ Reservation ──▶ Check-in ──▶ Folio ◀── POS charges, minibar, laundry, events
         ▲                             │               │          │
   Rates & availability          Guest profile   Room status   Settlement ──▶ Cash / bank / POS / city ledger
@@ -119,7 +123,7 @@ All ten modules are in v1, built in stages. Each stage ends usable by a real pil
 | **1. Front office** | Room types and rooms, rate plans (manual), reservations, tape chart, check-in/out, walk-in, folios, payments, cashier shifts, corporate accounts with credit limits and settle-to-company (city ledger balances and statements), night audit, guest register, core reports, owner's daily report, data import | run the front desk without its old PMS |
 | **2. Housekeeping & maintenance** | Room status board, attendant app, inspections, discrepancy check, work orders, OOO, power and diesel log | run rooms and catch sleepers/skippers |
 | **3. Restaurant & bar** | Outlets, menus, POS offline, kitchen tickets, post to room, voids/comps controls | run F&B and charge rooms |
-| **4. Distribution & guests** | Booking engine, channel manager, restrictions, guest profiles, corporates, group blocks, events, guest messages, guest app | sell direct and on OTAs, manage corporates |
+| **4. Distribution & guests** | Booking engine, channel manager, restrictions, guest profiles, corporates, group blocks, events, guest messages, guest inbox for WhatsApp and Instagram with the booking assistant, guest app | sell direct, on OTAs and in WhatsApp and Instagram chats, manage corporates |
 | **5. Back office** | City ledger invoicing, ageing and collections, ledger per entity, reconciliation, taxes, inventory and procurement, recipes, HR and payroll | close the books and pay staff |
 | **6. Group & analytics** | Group dashboards, KPIs, budgets, board pack, subscription billing, support console | run the whole group from one screen |
 
