@@ -3,7 +3,8 @@
 // and registrations (they're true); a walk-in's booking is then cancelled (reason Duplicate, no
 // penalty). Reverse is a GM's, later the same business date, never their own: the stay goes back to
 // confirmed, the room is set dirty, and it is an exception for the owner's report. Lock order: the
-// key lock, the hotel FOR SHARE (2), the reservation FOR UPDATE (2b), the room FOR UPDATE (3).
+// key lock, the hotel's rates shared (1, so a walk-in's cancel can run in the same transaction),
+// the hotel FOR SHARE (2), the reservation FOR UPDATE (2b), the room FOR UPDATE (3).
 import {
   newId,
   REVERSE_REASON_LABELS,
@@ -16,6 +17,7 @@ import { recordAudit } from '../../audit/record.ts'
 import type { Database } from '../../db/client.ts'
 import { reservationChanges, reservations, stays } from '../../db/schema/reservations.ts'
 import { REVERSE_ONLY } from '../../guests/registration/messages.ts'
+import { lockHotelRatesShared } from '../../rates/context.ts'
 import { setStatusInTx } from '../../rooms/status/set-status.ts'
 import { type Access, can, requireFeature } from '../../tenancy/access.ts'
 import { stayHotel } from '../assign/assign.ts'
@@ -36,7 +38,14 @@ import {
 } from './errors.ts'
 import { UNDO_WINDOW_MS } from './rules.ts'
 
-type Undone = { stayId: string; reservationId: string; guestName: string; version: number }
+type Undone = {
+  stayId: string
+  reservationId: string
+  guestName: string
+  version: number
+  // A walk-in's Undo: whether its booking was cancelled with it (false: still open, say so).
+  bookingCancelled?: boolean
+}
 type UndoInput = z.output<typeof undoCheckInInputSchema>
 type ReverseInput = z.output<typeof reverseCheckInInputSchema>
 
@@ -73,6 +82,7 @@ async function backToConfirmed(
   const replayed = await replay(tx, access, input.idempotencyKey, hash, kind)
   if (replayed) return { result: replayed, replayed: true }
   const where = await stayHotel(tx, access, input.stayId)
+  await lockHotelRatesShared(tx, where.propertyId)
   const hotel = await holdBookingHotel(tx, access, where.propertyId)
   const loaded = await loadForChange(tx, access, where.reservationId, true)
   const stay = loaded.stays.find((s) => s.id === input.stayId)
@@ -114,12 +124,16 @@ async function backToConfirmed(
     .set({ status: 'confirmed', updatedAt: now })
     .where(eq(reservations.id, loaded.reservation.id))
   const walkIn = loaded.reservation.source === 'walk_in'
+  // A walk-in made by mistake: its booking goes too (brick 6's cancel, no penalty: no guarantee),
+  // after the audit below, in this transaction.
+  const cancelBooking = mode === 'undo' && walkIn && can(access, 'reservation.manage')
   const result = {
     stayId: stay.id,
     reservationId: loaded.reservation.id,
     guestName,
     version,
     walkIn,
+    ...(walkIn && mode === 'undo' ? { bookingCancelled: cancelBooking } : {}),
   }
   await tx.insert(reservationChanges).values({
     ...scope,
@@ -161,6 +175,15 @@ async function backToConfirmed(
       before: { status: 'checked_in' },
       after: { ...checkedIn, walkIn },
     })
+    if (cancelBooking) {
+      await cancelReservation(tx, access, {
+        idempotencyKey: newId(),
+        reservationId: loaded.reservation.id,
+        version: versionOf(loaded) + 1,
+        reason: 'duplicate',
+        note: 'Walk-in undone at the desk',
+      })
+    }
   } else {
     const reverse = input as ReverseInput
     const words =
@@ -191,28 +214,19 @@ async function backToConfirmed(
       })
     }
   }
-  return { result, replayed: false, reservationVersion: versionOf(loaded) + 1 }
+  return { result, replayed: false }
 }
 
 export async function undoCheckIn(db: Database, access: Access, input: UndoInput): Promise<Undone> {
   requireCheckIn(access)
   const done = await db.transaction((tx) => backToConfirmed(tx, access, input, 'undo'))
   const result = done.result as Undone & { walkIn?: boolean }
-  // A walk-in made by mistake: its booking goes too (brick 6's cancel, no penalty: no guarantee).
-  if (result.walkIn && !done.replayed && can(access, 'reservation.manage')) {
-    await cancelReservation(db, access, {
-      idempotencyKey: newId(),
-      reservationId: result.reservationId,
-      version: done.reservationVersion ?? 1,
-      reason: 'duplicate',
-      note: 'Walk-in undone at the desk',
-    }).catch(() => undefined)
-  }
   return {
     stayId: result.stayId,
     reservationId: result.reservationId,
     guestName: result.guestName,
     version: result.version,
+    ...(result.bookingCancelled === undefined ? {} : { bookingCancelled: result.bookingCancelled }),
   }
 }
 

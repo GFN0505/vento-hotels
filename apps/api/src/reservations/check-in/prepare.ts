@@ -12,9 +12,8 @@ import {
 import { and, desc, eq, sql } from 'drizzle-orm'
 import type { Database } from '../../db/client.ts'
 import { guestRegistrations } from '../../db/schema/front-desk.ts'
-import { guests, stays } from '../../db/schema/reservations.ts'
+import { guests } from '../../db/schema/reservations.ts'
 import { properties } from '../../db/schema/tenancy.ts'
-import { toRegistrationView } from '../../guests/registration/capture.ts'
 import { reusableDocument } from '../../guests/registration/documents.ts'
 import { fieldLists, ruleSetFor } from '../../guests/registration/rules.ts'
 import { hotelRooms } from '../../tape-chart/hotel-rooms.ts'
@@ -28,7 +27,7 @@ import { requireCheckIn } from './check-in.ts'
 import { checkInProblem } from './rules.ts'
 
 // The guest's latest registration in the group, for a returning guest, with an ID document that can
-// be reused.
+// be reused. It may be from a hotel this member can't see: only the reused fields leave the server.
 export async function previousRegistration(
   db: Reader,
   access: Access,
@@ -36,14 +35,9 @@ export async function previousRegistration(
   businessDate: string,
 ): Promise<CheckInPrepare['previous']> {
   const [earlier] = await db
-    .select({
-      registration: guestRegistrations,
-      hotelName: properties.name,
-      arrival: stays.arrival,
-    })
+    .select({ registration: guestRegistrations, hotelName: properties.name })
     .from(guestRegistrations)
     .innerJoin(properties, eq(properties.id, guestRegistrations.propertyId))
-    .innerJoin(stays, eq(stays.id, guestRegistrations.stayId))
     .where(
       and(
         eq(guestRegistrations.organizationId, access.organizationId),
@@ -55,10 +49,23 @@ export async function previousRegistration(
     .limit(1)
   if (!earlier) return null
   const document = await reusableDocument(db, access, guestId, businessDate)
+  const r = earlier.registration
   return {
-    ...toRegistrationView(earlier.registration, null),
+    id: r.id,
+    title: r.title,
+    dateOfBirth: r.dateOfBirth,
+    addressLine: r.addressLine,
+    addressCity: r.addressCity,
+    addressRegion: r.addressRegion,
+    addressCountry: r.addressCountry,
+    purpose: r.purpose,
+    vehiclePlate: r.vehiclePlate,
+    occupation: r.occupation,
+    idType: r.idType,
+    idNumberMasked: r.idNumberMasked,
+    idCountry: r.idCountry,
+    idExpiry: r.idExpiry,
     hotelName: earlier.hotelName,
-    arrival: earlier.arrival,
     reusableDocument: document
       ? {
           id: document.id,

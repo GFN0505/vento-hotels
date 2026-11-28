@@ -8,6 +8,9 @@ try {
   // No .env: tests that need services are skipped.
 }
 
+// Tests use the fixed development key for guest ID numbers (crypto.ts), unless one is given.
+process.env.ALLOW_DEV_GUEST_DATA_KEY ??= 'true'
+
 export default defineConfig({
   test: {
     globalSetup: ['./vitest.global-setup.ts'],

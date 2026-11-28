@@ -1,6 +1,7 @@
 // The API's settings, validated once at start. A bad or missing setting stops the server with the
 // setting's name (never its value) instead of failing later on the first request.
 import { z } from 'zod'
+import { devGuestKeyAllowed } from './guests/registration/crypto.ts'
 import { infraEnvSchema, MissingSettingError } from './infra/config.ts'
 import type { S3Settings } from './providers/storage.ts'
 
@@ -31,8 +32,8 @@ const envSchema = infraEnvSchema.extend({
   // Guest ID photos and scans (decision 0031): a separate bucket with no public access and no CORS.
   // Defaults to "<S3_BUCKET>-private".
   S3_PRIVATE_BUCKET: z.string().trim().min(3).optional(),
-  // Encrypts guest ID, passport and visa numbers (decision 0031): 32 bytes, base64. Required in
-  // production; locally a development key is derived when it's unset.
+  // Encrypts guest ID, passport and visa numbers (decision 0031): 32 bytes, base64. Required
+  // everywhere unless ALLOW_DEV_GUEST_DATA_KEY=true on a local, non-production server.
   GUEST_DATA_KEY: z
     .string()
     .trim()
@@ -64,10 +65,8 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
   ) {
     throw new MissingSettingError('VENTO_ALL_FEATURES', 'must be off in production')
   }
-  if (
-    (result.data.NODE_ENV === 'production' || result.data.DEPLOY_ENV !== 'local') &&
-    !result.data.GUEST_DATA_KEY
-  ) {
+  // The fixed development key only by explicit opt-in, never by a default (crypto.ts).
+  if (!result.data.GUEST_DATA_KEY && !devGuestKeyAllowed(source)) {
     throw new MissingSettingError('GUEST_DATA_KEY', 'is not set')
   }
   return result.data

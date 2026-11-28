@@ -9,7 +9,6 @@ import {
   type CheckedIn,
   type CheckInInput,
   checkInInputSchema,
-  maskIdNumber,
   type RegistrationValues,
 } from '@vento/shared'
 import { and, eq, sql } from 'drizzle-orm'
@@ -21,6 +20,7 @@ import { reservationChanges, reservations, stays } from '../../db/schema/reserva
 import { devices } from '../../db/schema/tenancy.ts'
 import { cardLink } from '../../documents/card-link.ts'
 import { captureRegistrations } from '../../guests/registration/capture.ts'
+import { idFingerprint } from '../../guests/registration/crypto.ts'
 import { CHECK_IN_ONLY } from '../../guests/registration/messages.ts'
 import { ruleSetFor } from '../../guests/registration/rules.ts'
 import { type Access, can, requireFeature } from '../../tenancy/access.ts'
@@ -430,8 +430,9 @@ async function checkInInTx(
   )
 }
 
-// What makes two sends the same check-in. Typed ID numbers go in masked only: the hash is stored,
-// and a full number must never be recoverable from it (decision 0031).
+// What makes two sends the same check-in. Typed ID numbers go in as keyed fingerprints: the whole
+// number counts (two numbers with the same mask differ), and the stored hash can never be matched
+// against guessed numbers without the key (decision 0031).
 export function checkInHash(
   input: Pick<CheckInFields, 'idempotencyKey' | 'registrations'> & Record<string, unknown>,
 ) {
@@ -441,12 +442,8 @@ export function checkInHash(
     durationSeconds: undefined,
     registrations: input.registrations.map((registration) => ({
       ...registration,
-      idNumber: registration.idNumber
-        ? maskIdNumber(registration.idType ?? 'passport', registration.idNumber)
-        : undefined,
-      visaNumber: registration.visaNumber
-        ? maskIdNumber('visa', registration.visaNumber)
-        : undefined,
+      idNumber: registration.idNumber ? idFingerprint(registration.idNumber) : undefined,
+      visaNumber: registration.visaNumber ? idFingerprint(registration.visaNumber) : undefined,
     })),
   }
   return requestHashOf(payload)

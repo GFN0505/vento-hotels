@@ -310,9 +310,14 @@ function HotelWalkIn({ hotel }: { hotel: Property }) {
           onClick: () => {
             void api.checkIn
               .undo({ idempotencyKey: newId(), stayId: done.stayId, version: done.version })
-              .then(() => {
-                toast.success('Check-in undone')
+              .then((undone) => {
+                if (undone.bookingCancelled === false) {
+                  toast.warning(
+                    `Check-in undone. ${undone.guestName}'s booking is still open: cancel it from the reservation.`,
+                  )
+                } else toast.success('Walk-in undone and its booking cancelled')
                 void queryClient.invalidateQueries({ queryKey: orpc.frontDesk.key() })
+                void queryClient.invalidateQueries({ queryKey: orpc.tapeChart.key() })
               })
               .catch((error: unknown) => toast.error(problemMessage(error)))
           },

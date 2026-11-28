@@ -23,6 +23,7 @@ import { auditEvents } from '../../db/schema/governance.ts'
 import { stays } from '../../db/schema/reservations.ts'
 import { rooms } from '../../db/schema/rooms.ts'
 import { setHotel } from '../../finance/testing.ts'
+import { purgePendingIdDocuments } from '../../guests/registration/documents.ts'
 import { assign, roomsOf, setStatus } from '../../tape-chart/testing.ts'
 import { createTestApp } from '../../test/harness.ts'
 import { bookStay, detailOf, fieldsOf, modify, rpc } from '../change/testing.ts'
@@ -386,6 +387,10 @@ describe.skipIf(!url)('check-in', () => {
       expect(prepared.data.previous?.idNumberMasked).toBe('••••••8901')
       expect(prepared.data.previous?.reusableDocument?.id).toBe(photo.data.id)
       expect(JSON.stringify(prepared.data)).not.toContain(NIN)
+      // Only the reused fields: never the earlier stay's card number, dates or who registered it.
+      for (const key of ['cardNumber', 'businessDate', 'byName', 'arrival', 'createdAt']) {
+        expect(prepared.data.previous).not.toHaveProperty(key)
+      }
       const previousId = prepared.data.previous?.id
       const reused = await checkIn(t, k.frontDesk.cookie, second.stay, room(dlk, 2).id, {
         businessDate,
@@ -493,6 +498,46 @@ describe.skipIf(!url)('check-in', () => {
       expect(stored).toBeDefined()
       expect(Buffer.from(stored ?? []).toString('latin1')).not.toContain('Exif')
       expect(idPhoto().length).toBeGreaterThan(10)
+    })
+
+    it('purges an upload no check-in named within a day: archived, its file gone, never attached after', async () => {
+      await freshDay()
+      const data = idPhoto()
+      const left = await upload(t, k.frontDesk.cookie, k.vi.id, data)
+      expect(left.status).toBe(200)
+      const dayAgo = new Date(Date.now() - 25 * 60 * 60 * 1000)
+      await t.db
+        .update(guestIdDocuments)
+        .set({ createdAt: dayAgo })
+        .where(eq(guestIdDocuments.id, left.data.id))
+      const [before] = await t.db
+        .select()
+        .from(guestIdDocuments)
+        .where(eq(guestIdDocuments.id, left.data.id))
+      expect(await purgePendingIdDocuments(t.db, t.privateStorage)).toBeGreaterThanOrEqual(1)
+      const [after] = await t.db
+        .select()
+        .from(guestIdDocuments)
+        .where(eq(guestIdDocuments.id, left.data.id))
+      expect(after).toMatchObject({ status: 'archived' })
+      expect(after?.purgedAt).not.toBeNull()
+      expect(after?.archivedAt).not.toBeNull()
+      expect(t.privateStorage.files.has(before?.storageKey ?? '')).toBe(false)
+      // The same upload sent again can't bring it back, and a check-in can't name it.
+      const resent = await rpc(t, k.frontDesk.cookie, 'registrations/uploadIdDocument', {
+        documentId: left.data.id,
+        propertyId: k.vi.id,
+        contentType: 'image/png',
+        data,
+      })
+      expect(resent.data.data?.code).toBe('ID_DOCUMENT_NOT_FOUND')
+      const b = await arrival(1)
+      const named = await checkIn(t, k.frontDesk.cookie, b.stay, room(dlk, 0).id, {
+        businessDate,
+        registrations: [nigerian()],
+        idDocument: { kind: 'uploaded', documentId: left.data.id },
+      })
+      expect(named.data.data?.code).toBe('ID_DOCUMENT_NOT_FOUND')
     })
   })
 
@@ -629,12 +674,12 @@ describe.skipIf(!url)('check-in', () => {
         printCard: false,
         durationSeconds: 52,
       }
-      const done = await rpc<{ reservationId: string; room: { number: string } }>(
-        t,
-        k.frontDesk.cookie,
-        'walkIn/checkIn',
-        input,
-      )
+      const done = await rpc<{
+        reservationId: string
+        stayId: string
+        version: number
+        room: { number: string }
+      }>(t, k.frontDesk.cookie, 'walkIn/checkIn', input)
       expect(done.status).toBe(200)
       expect(done.data.room.number).toBe(room(stq, 1).number)
       const again = await rpc<{ reservationId: string }>(
@@ -660,6 +705,28 @@ describe.skipIf(!url)('check-in', () => {
         },
       })
       expect(later.status).toBeGreaterThanOrEqual(400)
+      // Undo takes the booking with it, in the same transaction: nothing left open.
+      const undone = await rpc<{ bookingCancelled?: boolean }>(
+        t,
+        k.frontDesk.cookie,
+        'checkIn/undo',
+        {
+          idempotencyKey: newId(),
+          stayId: done.data.stayId,
+          version: done.data.version,
+        },
+      )
+      expect(undone.status).toBe(200)
+      expect(undone.data.bookingCancelled).toBe(true)
+      const after = await detailOf(t, k.frontDesk.cookie, done.data.reservationId)
+      expect(after).toMatchObject({ source: 'walk_in', status: 'cancelled' })
+      const [cancelled] = await auditFor(
+        t,
+        k.orgId,
+        'stay.check_in_undone',
+        done.data.reservationId,
+      )
+      expect(cancelled?.after).toMatchObject({ walkIn: true })
     })
   })
 

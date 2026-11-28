@@ -188,7 +188,8 @@ export const guestIdDocuments = pgTable(
     check('guest_id_documents_size', sql`${t.byteSize} > 0 and ${t.byteSize} <= 5242880`),
     check(
       'guest_id_documents_attached',
-      sql`${t.status} = 'pending' or (${t.guestId} is not null and ${t.attachedAt} is not null)`,
+      // Pending, purged (archived without a guest), or a guest's.
+      sql`${t.status} = 'pending' or ${t.purgedAt} is not null or (${t.guestId} is not null and ${t.attachedAt} is not null)`,
     ),
   ],
 )

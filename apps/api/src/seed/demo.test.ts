@@ -28,6 +28,26 @@ import { LIVE_DAYS_AGO, seedDemo } from './demo.ts'
 const url = process.env.TEST_DATABASE_URL
 const PASSWORD = 'Demo-pass-42!'
 
+// What a returning guest's earlier registration may show another hotel's desk (prepare.ts).
+const REUSED_KEYS = [
+  'addressCity',
+  'addressCountry',
+  'addressLine',
+  'addressRegion',
+  'dateOfBirth',
+  'hotelName',
+  'id',
+  'idCountry',
+  'idExpiry',
+  'idNumberMasked',
+  'idType',
+  'occupation',
+  'purpose',
+  'reusableDocument',
+  'title',
+  'vehiclePlate',
+]
+
 describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
   const t = createTestApp(url ?? '')
   afterAll(() => t.close())
@@ -725,6 +745,8 @@ describe.skipIf(!url)('demo seed', { timeout: 60_000 }, () => {
     expect(prepared.data.previous?.idNumberMasked).toBe('••••••6612')
     expect(prepared.data.previous?.hotelName).toBe('Kora Ikeja GRA')
     expect(prepared.data.previous?.reusableDocument).not.toBeNull()
+    // Chiamaka works only at Victoria Island: the Ikeja stay's own details never reach her.
+    expect(Object.keys(prepared.data.previous ?? {}).sort()).toEqual(REUSED_KEYS)
     // The Okoro family fits a Standard Queen with its sofa bed, and 302 is free tonight.
     const stq = await t.db.execute<{ max_adults: number; max_children: number }>(sql`
       select max_adults, max_children from room_types where property_id = ${vi} and code = 'STQ'`)

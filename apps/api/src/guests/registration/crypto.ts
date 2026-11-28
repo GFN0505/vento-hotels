@@ -1,10 +1,11 @@
 // ID, passport and visa numbers are encrypted before they reach the database (decision 0031):
 // AES-256-GCM with a fresh IV each time, stored as `v1.<key id>.<iv>.<tag>.<ciphertext>` (base64url).
 // The key is GUEST_DATA_KEY (32 bytes, base64); older keys stay readable from
-// GUEST_DATA_PREVIOUS_KEYS (comma-separated) while rows are re-encrypted. Outside production a
-// development key is derived when none is set, so local and test databases work without one;
-// staging and production refuse to start without it (env.ts).
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto'
+// GUEST_DATA_PREVIOUS_KEYS (comma-separated) while rows are re-encrypted. A fixed development key
+// is used only when asked for (ALLOW_DEV_GUEST_DATA_KEY=true, which the dev, seed, test and
+// browser-test scripts set) on a local, non-production server; anywhere else a missing key stops
+// the API at start (env.ts reads the same rule) and here.
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto'
 
 type Key = { id: string; bytes: Buffer }
 
@@ -16,6 +17,15 @@ function parseKey(base64: string): Key {
   return { id: keyIdOf(bytes), bytes }
 }
 
+// One rule for env.ts and for this module: the development key never where real guests can be.
+export function devGuestKeyAllowed(source: Record<string, string | undefined>): boolean {
+  return (
+    source.ALLOW_DEV_GUEST_DATA_KEY === 'true' &&
+    source.NODE_ENV !== 'production' &&
+    (source.DEPLOY_ENV ?? 'local') === 'local'
+  )
+}
+
 let keys: { current: Key; all: Map<string, Key> } | undefined
 
 function load() {
@@ -24,9 +34,7 @@ function load() {
   const current = given
     ? parseKey(given)
     : (() => {
-        if (process.env.NODE_ENV === 'production') {
-          throw new Error('GUEST_DATA_KEY is not set')
-        }
+        if (!devGuestKeyAllowed(process.env)) throw new Error('GUEST_DATA_KEY is not set')
         // Development and tests only, never where real guests are: one fixed key, so the demo
         // seed, the dev API and the browser tests' API all read the same rows.
         const bytes = createHash('sha256').update('vento-development-guest-data').digest()
@@ -70,6 +78,17 @@ export function decryptId(stored: string): string {
     decipher.update(Buffer.from(body, 'base64url')),
     decipher.final(),
   ]).toString('utf8')
+}
+
+// A keyed fingerprint of a number, for telling two sends of the same check-in apart (the stored
+// request hash): the full number counts, yet nothing in the database can be tried against a list of
+// likely numbers without the key. A separate key derived from the current one, never used to encrypt.
+export function idFingerprint(plain: string): string {
+  const derived = createHash('sha256')
+    .update('vento-id-fingerprint')
+    .update(load().current.bytes)
+    .digest()
+  return createHmac('sha256', derived).update(plain).digest('base64url')
 }
 
 // For tests: forget the loaded keys so a changed environment is read again.

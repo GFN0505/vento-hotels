@@ -108,6 +108,8 @@ export async function uploadIdDocument(
       ),
     )
   if (existing) {
+    // Purged after a day unattached: the file is gone, so the resend can't name it.
+    if (existing.purgedAt) throw documentNotFound()
     if (existing.sha256 !== sha256 || existing.propertyId !== hotel.id) {
       throw problem('IDEMPOTENCY_CONFLICT', 'This ID photo was already saved.', 'CONFLICT')
     }
@@ -188,6 +190,7 @@ export async function attachDocument(
         eq(guestIdDocuments.organizationId, access.organizationId),
         eq(guestIdDocuments.id, ask.documentId),
         isNull(guestIdDocuments.archivedAt),
+        isNull(guestIdDocuments.purgedAt),
       ),
     )
     .for('update')
@@ -249,7 +252,12 @@ export async function viewIdDocument(
     .from(guestIdDocuments)
     .where(eq(guestIdDocuments.id, registration.documentId))
   if (!document) throw documentNotFound()
-  const url = await storage.signedDownload(document.storageKey, ID_DOCUMENT_LINK_SECONDS)
+  // Storage answers with the type the bytes were checked as (a JPEG or a PDF, never anything a
+  // browser would run), shown inline: a PDF opens in its own tab, never framed in the app.
+  const url = await storage.signedDownload(document.storageKey, ID_DOCUMENT_LINK_SECONDS, {
+    contentType: document.contentType,
+    disposition: 'inline',
+  })
   await recordAudit(deps.db, access, {
     action: 'guest.id_document_viewed',
     entityType: 'reservation',
@@ -272,7 +280,8 @@ export async function viewIdDocument(
   }
 }
 
-// Daily: uploads no check-in named within a day are deleted (the file; the row is marked purged).
+// Daily: uploads no check-in named within a day are deleted (the file; the row is marked purged and
+// archived, so nothing can attach it after).
 export async function purgePendingIdDocuments(
   db: Database,
   storage: StorageProvider,
@@ -291,20 +300,23 @@ export async function purgePendingIdDocuments(
     )
     .orderBy(asc(guestIdDocuments.createdAt))
     .limit(500)
-  for (const document of stale) {
-    await storage.delete(document.storageKey)
-  }
-  if (stale.length) {
-    await db
-      .update(guestIdDocuments)
-      .set({ purgedAt: now })
-      .where(
+  if (!stale.length) return 0
+  // Archived first, only while still pending: a check-in attaching one meanwhile keeps it (it
+  // locks the row), and nothing can attach one whose file is being deleted.
+  const purged = await db
+    .update(guestIdDocuments)
+    .set({ status: 'archived', purgedAt: now, archivedAt: now, updatedAt: now })
+    .where(
+      and(
         inArray(
           guestIdDocuments.id,
           stale.map((d) => d.id),
         ),
-      )
-    logger.info({ count: stale.length }, 'Unattached ID photos deleted')
-  }
-  return stale.length
+        eq(guestIdDocuments.status, 'pending'),
+      ),
+    )
+    .returning({ storageKey: guestIdDocuments.storageKey })
+  for (const document of purged) await storage.delete(document.storageKey)
+  if (purged.length) logger.info({ count: purged.length }, 'Unattached ID photos deleted')
+  return purged.length
 }

@@ -614,9 +614,6 @@ export const router = base.router({
     get: inOrganization.registrations.get.handler(({ context, input }) =>
       registrations.stayRegistrations(context.db, context.access, input),
     ),
-    correct: inOrganization.registrations.correct.handler(({ context, input }) =>
-      registrations.correctRegistration(context.db, context.access, input),
-    ),
     reveal: inOrganization.registrations.reveal.handler(({ context, input }) =>
       registrations.revealNumber(context.db, context.access, input, context.resHeaders),
     ),

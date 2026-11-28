@@ -178,15 +178,33 @@ export const CHECK_IN_SOURCES = ['arrivals', 'reservation', 'tape_chart', 'offli
 export type CheckInSource = (typeof CHECK_IN_SOURCES)[number]
 
 // What the sheet needs (masked numbers only).
-export const previousRegistrationSchema = registrationViewSchema.extend({
-  hotelName: z.string(),
-  // The stay's arrival the registration is from ("From her stay on 14 Oct 2026").
-  arrival: calendarDateSchema,
-  // An ID document that can be reused (same guest, ID not expired), or null.
-  reusableDocument: z
-    .object({ id: idSchema, capturedAt: z.iso.datetime(), contentType: z.string() })
-    .nullable(),
-})
+// A returning guest's earlier registration, possibly at another hotel of the group (spec: "Property
+// scoping"): only the fields the new registration reuses, the number masked, the hotel named, and
+// never that stay's details (its card number, dates or who checked it in).
+export const previousRegistrationSchema = registrationViewSchema
+  .pick({
+    id: true,
+    title: true,
+    dateOfBirth: true,
+    addressLine: true,
+    addressCity: true,
+    addressRegion: true,
+    addressCountry: true,
+    purpose: true,
+    vehiclePlate: true,
+    occupation: true,
+    idType: true,
+    idNumberMasked: true,
+    idCountry: true,
+    idExpiry: true,
+  })
+  .extend({
+    hotelName: z.string(),
+    // An ID document that can be reused (same guest, ID not expired), or null.
+    reusableDocument: z
+      .object({ id: idSchema, capturedAt: z.iso.datetime(), contentType: z.string() })
+      .nullable(),
+  })
 export type PreviousRegistration = z.infer<typeof previousRegistrationSchema>
 
 const fieldSet = z.object({
@@ -357,6 +375,8 @@ export const checkInUndoneSchema = z.object({
   reservationId: idSchema,
   guestName: z.string(),
   version: z.number().int(),
+  // A walk-in's Undo cancels its booking in the same transaction; false when this person can't.
+  bookingCancelled: z.boolean().optional(),
 })
 
 // --- Walk-in -------------------------------------------------------------------------------------
@@ -437,12 +457,6 @@ export const viewIdDocumentInputSchema = z.object({
   reason: z.string().trim().min(3, 'Say why, in a few words').max(200),
 })
 
-export const correctRegistrationInputSchema = z.object({
-  idempotencyKey: z.uuidv7(),
-  registrationId: idSchema,
-  values: registrationInputSchema,
-})
-
 export const attachIdDocumentInputSchema = z.object({
   registrationId: idSchema,
   documentId: idSchema,
@@ -451,7 +465,7 @@ export const attachIdDocumentInputSchema = z.object({
 export const stayRegistrationsSchema = z.object({
   stayId: idSchema,
   registrations: z.array(registrationViewSchema),
-  can: z.object({ correct: z.boolean(), viewId: z.boolean(), print: z.boolean() }),
+  can: z.object({ addPhoto: z.boolean(), viewId: z.boolean(), print: z.boolean() }),
 })
 export type StayRegistrations = z.infer<typeof stayRegistrationsSchema>
 
@@ -472,7 +486,6 @@ export const frontDeskContract = {
   },
   registrations: {
     get: oc.input(z.object({ stayId: idSchema })).output(stayRegistrationsSchema),
-    correct: oc.input(correctRegistrationInputSchema).output(registrationViewSchema),
     reveal: oc.input(revealInputSchema).output(revealedSchema),
     uploadIdDocument: oc.input(uploadIdDocumentInputSchema).output(idDocumentSchema),
     viewIdDocument: oc

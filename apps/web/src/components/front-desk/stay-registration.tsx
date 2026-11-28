@@ -15,7 +15,7 @@ import {
   VISA_TYPE_LABELS,
 } from '@vento/shared'
 import { demonymOf } from '@vento/shared/countries'
-import { Eye, IdCard, Printer, ShieldAlert } from 'lucide-react'
+import { Eye, FileText, IdCard, Printer, ShieldAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Pills, TextArea } from '@/components/reservations/change-parts'
@@ -73,16 +73,23 @@ export function StayRegistration({
           ) : null}
         </h2>
         {data.can.print ? (
-          <Button
-            className="max-lg:h-11"
-            loading={printing}
-            disabled={!online}
-            title={online ? undefined : "Print available when you're back online."}
-            onClick={() => void print()}
-          >
-            <Printer className="size-4" aria-hidden="true" />
-            Print registration card
-          </Button>
+          <span className="flex flex-col items-end gap-1">
+            <Button
+              className="max-lg:h-11"
+              loading={printing}
+              disabled={!online}
+              aria-describedby={online ? undefined : 'print-card-why'}
+              onClick={() => void print()}
+            >
+              <Printer className="size-4" aria-hidden="true" />
+              Print registration card
+            </Button>
+            {online ? null : (
+              <span id="print-card-why" className="text-xs text-text-3">
+                Print available when you're back online.
+              </span>
+            )}
+          </span>
         ) : null}
       </div>
       <ul className="divide-y divide-border">
@@ -137,7 +144,7 @@ export function StayRegistration({
                     </Button>
                   ) : null}
                 </div>
-              ) : photoMissing && data.can.correct ? (
+              ) : photoMissing && data.can.addPhoto ? (
                 <div className="flex flex-wrap items-center gap-2 text-sm text-ro">
                   ID photo to add
                   <Button
@@ -353,11 +360,16 @@ function ViewPhotoDialog({
     >
       {link ? (
         link.contentType === 'application/pdf' ? (
-          <iframe
-            title="ID scan"
-            src={link.url}
-            className="h-[60vh] w-full rounded-md border border-border"
-          />
+          // Never framed in the app: the scan opens in its own tab, from storage, as a PDF only.
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-11 items-center gap-2 rounded-sm border border-border-strong bg-surface px-3 font-medium hover:bg-surface-2"
+          >
+            <FileText className="size-4" aria-hidden="true" />
+            Open the ID scan (PDF)
+          </a>
         ) : (
           <img
             src={link.url}

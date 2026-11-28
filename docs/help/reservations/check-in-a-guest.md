@@ -20,7 +20,7 @@ A returning guest with a room ready usually takes two clicks: **Check in**, then
 - The guest is on **In house**, with the night of their stay ("Night 2 of 3").
 - **Print registration card** on the reservation prints it again (a reprint says "REPRINT · copy 2").
 - A check-in made by mistake, after Undo has gone: a GM opens the reservation, **More → Reverse check-in**, and gives a reason. It's in the owner's report the next day. Nobody reverses their own check-in.
-- ID and passport numbers are shown masked. A GM or the owner can **Reveal** one for 30 seconds, or **View ID photo**, with a reason; it's recorded with their name.
+- ID and passport numbers are shown masked. A GM or the owner can **Reveal** one for 30 seconds, or **View ID photo**, with a reason; it's recorded with their name. A scan saved as a PDF opens in its own tab for 60 seconds.
 
 ## Offline
 An arrival already in a room can be checked in with the internet down: type every required field, take the photo, and **Check in to 502**. It shows **Will sync** and goes through when you're back. Picking another room, walk-ins, Reveal and printing need a connection. The lists stay on the front desk computer when it locks, so the next person can carry on.
