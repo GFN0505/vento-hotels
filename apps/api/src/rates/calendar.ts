@@ -1,9 +1,11 @@
 // The rate calendar (the Rates tab of #8): nights from a date, rows grouped by room type, one row
 // per active plan selling it, each cell priced through the shared maths. Derived rows are computed
-// from their parent, never stored, and follow its restrictions.
+// from their parent, never stored, and follow its restrictions. Each room type also carries its
+// rooms left per night, read without locks the way the tape chart reads them.
 import type { CalendarDate, RateCalendar } from '@vento/shared'
 import { addDays, isWeekendNight, lastRateDate, nightOf } from '@vento/shared'
 import type { Database } from '../db/client.ts'
+import { bookedFor, capacityOf, keyOf, roomsOn } from '../reservations/locks.ts'
 import { type Access, can } from '../tenancy/access.ts'
 import { isLive, loadRatesProperty, requireRatesRead } from './context.ts'
 import { roomTypeNotFound, tooFarAhead } from './errors.ts'
@@ -62,6 +64,11 @@ export async function rateCalendar(
     ? allTypes.filter((type) => type.id === input.roomTypeId)
     : allTypes
   if (input.roomTypeId && types.length === 0) throw roomTypeNotFound()
+  const typeIds = types.map((type) => type.id)
+  const [capacity, booked] = await Promise.all([
+    capacityOf(db, scope, typeIds),
+    bookedFor(db, scope, typeIds, from, to),
+  ])
   const plans = pricing.plans.filter(
     (plan) => input.includeCorporate || plan.bookableBy === 'anyone',
   )
@@ -71,6 +78,15 @@ export async function rateCalendar(
     id: type.id,
     name: type.name,
     code: type.code,
+    left: dates.map((date) => {
+      const cap = capacity.get(type.id)
+      const sellable = roomsOn(cap, date)
+      return {
+        date,
+        left: sellable - (booked.get(keyOf({ roomTypeId: type.id, date })) ?? 0),
+        outOfOrder: (cap?.rooms ?? 0) - sellable,
+      }
+    }),
     rows: plans.flatMap((plan) => {
       const source = sourceFor(plan, type.id, pricing)
       if (!source) return []

@@ -1,11 +1,13 @@
 // The rate calendar below md (spec: "one room type at a time, a list of dates with each plan's
-// price and tags"): one card per night, Fri and Sat and seasons marked, every plan's price in it.
+// price and tags"): one card per night, Fri and Sat and seasons marked, the type's rooms left in the
+// heading, every plan's price in it.
 import type { RateCalendar, RatePlanView } from '@vento/shared'
 import { cn } from '@/lib/cn'
 import { CalendarCellView } from './calendar-cell'
 import { bandLabel, type CellRef, seasonBands, seasonByDate } from './calendar-model'
 import { PlanLabel } from './calendar-plan-label'
 import { shortDate } from './format'
+import { leftTone, leftWords } from './rooms-left'
 import type { CellEditing } from './use-cell-editing'
 
 type Props = {
@@ -28,6 +30,7 @@ export function CalendarPhone({ calendar, plans, canEdit, selected, editing, onS
     <ol className="flex flex-col gap-3" aria-label={`${type.name}, night by night`}>
       {calendar.dates.map((d, c) => {
         const season = seasons.get(d.date)
+        const left = type.left[c]
         return (
           <li
             key={d.date}
@@ -47,6 +50,17 @@ export function CalendarPhone({ calendar, plans, canEdit, selected, editing, onS
                 <span className="text-sm font-medium text-pri-ink">Business date</span>
               ) : null}
               {d.weekend ? <span className="text-sm font-normal text-text-2">Weekend</span> : null}
+              {left ? (
+                <span
+                  className={cn(
+                    'num text-sm',
+                    leftTone(left.left),
+                    left.left > 2 ? 'font-normal' : 'font-semibold',
+                  )}
+                >
+                  {leftWords(left)}
+                </span>
+              ) : null}
               {season ? (
                 <span className="ml-auto rounded-[4px] bg-pri-soft px-2 py-0.5 text-xs font-semibold text-pri-ink">
                   {bandLabel(season)}

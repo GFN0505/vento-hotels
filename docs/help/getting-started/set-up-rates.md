@@ -28,12 +28,14 @@ Use **Duplicate** to start a new plan from an existing one. **Who can book it: C
 ## Change prices for dates
 Go to **Rate calendar**. It shows 14 nights from today's business date (choose 30 nights if you like), with each room type's plans underneath. Friday and Saturday are tinted, and tonight's column says **Tonight**. A season sits above its dates with its range and min stay ("Festive season · 18 Dec–2 Jan · min 2"); click it to change those dates. On phones and tablets, **Key** explains the marks. Derived plans are greyed with a link icon: change their parent instead.
 
+Under each room type's name, **Rooms left** shows how many rooms of that type are still free on each night: the same number as the tape chart's Available row and New reservation. A room out of order and every booked night count against it. 0 (sold out) is red and 1 or 2 are amber; a night with more bookings than rooms shows −1 in red. Hover over a red or amber number to read it in words ("Sold out, 1 out of order"). Front desk staff see it too, so "Any Deluxe Kings on Friday?" is one look. You can't change rooms left here: take rooms off sale with out of order on the tape chart.
+
 - **One night:** click the price, type the new one and press Enter. A toast confirms it with **Undo**.
 - **A range:** click **Change dates**. Choose the plan, room types, dates and days of the week, then **New prices** (one per room type) or **Back to standard price**. Add a **Season name** such as Festive season if you like, and set **Min stay**, **Closed to arrival** or **Closed** (each stays as it is unless you choose On or Off). The sheet says how many dates change and which plans follow. Click **Apply**, and **Undo** in the toast if it wasn't right.
 
 With the keyboard, Tab into the calendar and use the arrow keys to move between nights and plans; press Enter or start typing to change a price. Click any price to see it in words, ready to read to a caller: "Deluxe King · Bed & breakfast · Sat 5 Dec · ₦183,000 · min stay 2".
 
-On a phone, the calendar shows one room type at a time, night by night. Pick the room type at the top; **Change dates** sits beside it. Tap a price to change it.
+On a phone, the calendar shows one room type at a time, night by night, with its rooms left in each night's heading ("4 left"). Pick the room type at the top; **Change dates** sits beside it. Tap a price to change it.
 
 Dates before the business date can't change. Bookings already made keep the price they were sold at.
 
@@ -44,7 +46,7 @@ Once your hotel is live, lowering tonight's price (on any plan, or by changing a
 Open the plan and click **Archive plan**. It stops being offered for new bookings; bookings already made keep their price and terms. Find it under **Archived** on the Rate plans page, with **Restore**. A plan that others follow can't be archived until they're archived or follow another plan. A plan never used on a booking can be deleted for good from Archived.
 
 ## Offline
-Changing rates needs a connection, so every device gets the same prices. Offline, Rate plans and the Rate calendar show what was saved on your device, read-only, and the buttons say **Needs a connection**.
+Changing rates needs a connection, so every device gets the same prices. Offline, Rate plans and the Rate calendar show what was saved on your device, read-only, and the buttons say **Needs a connection**. Rooms left are as they were when the calendar was last updated, so check again once you're back online before promising the last room.
 
 ## Related
 - [Set up your rooms](set-up-rooms.md)

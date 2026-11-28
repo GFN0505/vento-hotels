@@ -1,7 +1,8 @@
 // Rates & channels › Rate calendar (design #8, Rates tab; spec stage-1-rate-plans): 14 or 30 nights
 // from the business date, one row per plan under each room type; own-price cells edit inline, ranges
-// through Change dates. Phones show one room type, night by night. Read-only offline and for the
-// front desk; the next pages are fetched ahead so they open offline too.
+// through Change dates, rooms left per night above each type's plans. Phones show one room type,
+// night by night. Read-only offline and for the front desk; the next pages are fetched ahead so
+// they open offline too.
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { addDays, type Property, type RatePlanView } from '@vento/shared'
 import { CalendarRange } from 'lucide-react'
@@ -143,7 +144,7 @@ function HotelCalendar({ hotel, search, onSearch }: Props & { hotel: Property })
         }
       />
       {o.canEdit ? null : <p className="-mt-2 text-text-2">{CHANGE_DENIED_SHORT}</p>}
-      <RatesOffline updatedAt={calendar.dataUpdatedAt} />
+      <RatesOffline updatedAt={calendar.dataUpdatedAt} roomsLeft />
       <CalendarToolbar
         overview={o}
         search={search}

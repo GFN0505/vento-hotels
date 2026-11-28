@@ -60,7 +60,8 @@ apps/
                              schedule, cancel, verify), payment methods, bank accounts (guest transfer account and
                              the owners' email), POS terminals, FX rates (Stage 1 brick 3)
       rates/                 rate plans and rates per property (Stage 1 brick 2): plan reads and writes,
-                             the first-rate table, the rate calendar, Change dates with Undo, the
+                             the first-rate table, the rate calendar (with rooms left per night from
+                             reservations/locks.ts, brick 9b), Change dates with Undo, the
                              "₦0 or less" and "lowered tonight" guards (guards.ts), quoteStay and
                              listBookablePlans for bookings (quote.ts), the Rooms base rate and Home's
                              "Set rates" step (base-rate.ts)

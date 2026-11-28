@@ -349,6 +349,13 @@ export const calendarRowSchema = z.object({
   cells: z.array(calendarCellSchema),
 })
 
+export const calendarLeftSchema = z.object({
+  date: calendarDateSchema,
+  left: z.number().int(),
+  outOfOrder: z.number().int().min(0),
+})
+export type CalendarLeft = z.infer<typeof calendarLeftSchema>
+
 export const rateCalendarSchema = z.object({
   propertyId: idSchema,
   propertyName: z.string(),
@@ -366,6 +373,9 @@ export const rateCalendarSchema = z.object({
       id: idSchema,
       name: z.string(),
       code: z.string(),
+      // Rooms left per night (brick 9b): sellable rooms (active, less out of order) less rooms
+      // booked, the tape chart's Available figure. Below 0 when the night is overbooked.
+      left: z.array(calendarLeftSchema),
       rows: z.array(calendarRowSchema),
     }),
   ),

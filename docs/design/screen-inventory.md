@@ -53,7 +53,7 @@ Covered by round 4 of the design prompt (screens 24–29).
 ## 2. Booking engine & channel manager
 | Screen | Status | Stage | Notes |
 |---|---|---|---|
-| Rates and restrictions grid, channel status | designed #8 · **Rates tab built (Stage 1 brick 2) as the Rate calendar** | 4 | Rates tab built in Stage 1 brick 2 without Rooms left (brick 4), Channels and Parity (Stage 4): 14 or 30 nights, inline cell edit, Change dates sheet, season bands, MIN / CTA / Closed tags, one room type at a time on phones |
+| Rates and restrictions grid, channel status | designed #8 · **Rates tab built (Stage 1 brick 2) as the Rate calendar, Rooms left added (brick 9b)** | 4 | Rates tab built in Stage 1 brick 2; Rooms left per type per night in brick 9b (read-only, the tape chart's Available figure, 0 red and 1–2 amber); Channels and Parity in Stage 4: 14 or 30 nights, inline cell edit, Change dates sheet, season bands, MIN / CTA / Closed tags, one room type at a time on phones |
 | Booking engine (public) | designed #9 | 4 | |
 | Booking engine settings | pattern | 4 | Photos, descriptions, policies, payment options, colours |
 | Promo codes | pattern | 4 | |
