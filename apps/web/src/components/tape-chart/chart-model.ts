@@ -26,8 +26,8 @@ export const VIRTUAL_FROM = 150
 export type Filters = {
   typeId?: string | undefined
   floor?: number | undefined
-  // The Tonight strip's toggles: only rooms occupied, vacant or out of order tonight.
-  tonight?: 'occupied' | 'vacant' | 'out_of_order' | undefined
+  // The Tonight strip's toggles: only rooms occupied, arriving, vacant or out of order tonight.
+  tonight?: 'occupied' | 'arriving' | 'vacant' | 'out_of_order' | undefined
   unassigned?: boolean
 }
 
@@ -126,6 +126,21 @@ export function staysByRoom(chart: TapeChart): Map<string, ChartStay[]> {
   return map
 }
 
+// The nights in-house guests spent in a room before moving (decision 0030), drawn muted there.
+export type Segment = { stay: ChartStay; from: string; to: string }
+export function segmentsByRoom(chart: TapeChart): Map<string, Segment[]> {
+  const map = new Map<string, Segment[]>()
+  for (const stay of chart.stays) {
+    for (const segment of stay.segments) {
+      map.set(segment.roomId, [
+        ...(map.get(segment.roomId) ?? []),
+        { stay, from: segment.from, to: segment.to },
+      ])
+    }
+  }
+  return map
+}
+
 export function periodsByRoom(chart: TapeChart): Map<string, OutOfOrderView[]> {
   const map = new Map<string, OutOfOrderView[]>()
   for (const period of chart.outOfOrder) {
@@ -213,9 +228,10 @@ export function barText(stay: ChartStay, width: number): { name: string; sub: st
 
 // --- Tonight: who is in each room on the business date -------------------------------------------
 
-// The front office word for a room on the business date: a stay over tonight that arrives today is
-// Arriving, one already here is Occupied; a stay leaving today (with nobody arriving) is Leaving;
-// else Vacant, or Out of order. Check-in is brick 8, so "occupied" means a stay booked over tonight.
+// The front office word for a room on the business date (brick 8): Occupied = a checked-in stay
+// over tonight; Arriving = a confirmed stay in the room arriving today (or due, not yet in);
+// Leaving = a checked-in stay departing today (with nobody arriving); else Vacant, or Out of order.
+// On a later night, a booked stay over it reads Occupied.
 export type Occupancy = 'occupied' | 'arriving' | 'leaving' | 'vacant' | 'out_of_order'
 
 export function occupancyOf(
@@ -228,19 +244,23 @@ export function occupancyOf(
   )
   if (off) return 'out_of_order'
   const mine = chart.stays.filter((s) => s.roomId === room.id)
-  if (mine.some((s) => s.arrival === date)) return 'arriving'
-  if (mine.some((s) => s.arrival < date && date < s.departure)) return 'occupied'
-  if (mine.some((s) => s.departure === date)) return 'leaving'
+  const tonight = date === chart.hotel.businessDate
+  if (mine.some((s) => s.status === 'confirmed' && s.arrival === date)) return 'arriving'
+  if (mine.some((s) => s.status === 'checked_in' && s.roomFrom <= date && date < s.departure)) {
+    return 'occupied'
+  }
+  if (mine.some((s) => s.status === 'confirmed' && s.arrival < date && date < s.departure)) {
+    return tonight ? 'arriving' : 'occupied'
+  }
+  if (mine.some((s) => s.departure === date && s.roomFrom < date)) return 'leaving'
   return 'vacant'
 }
 
-// For the counts and filters: arriving rooms are occupied tonight, leaving ones vacant.
-export const tonightGroup = (occupancy: Occupancy): 'occupied' | 'vacant' | 'out_of_order' =>
-  occupancy === 'arriving' || occupancy === 'occupied'
-    ? 'occupied'
-    : occupancy === 'out_of_order'
-      ? 'out_of_order'
-      : 'vacant'
+// For the counts and filters: leaving rooms are vacant tonight.
+export const tonightGroup = (
+  occupancy: Occupancy,
+): 'occupied' | 'arriving' | 'vacant' | 'out_of_order' =>
+  occupancy === 'leaving' ? 'vacant' : occupancy
 
 export const OCCUPANCY_WORDS: Record<Occupancy, string> = {
   occupied: 'Occupied',
@@ -253,10 +273,11 @@ export const OCCUPANCY_WORDS: Record<Occupancy, string> = {
 // The Tonight strip: rooms occupied, vacant and out of order on the business date, and bookings over
 // tonight with no room yet.
 export function tonightCounts(chart: TapeChart, date = chart.hotel.businessDate) {
-  const counts = { occupied: 0, vacant: 0, outOfOrder: 0, unassigned: 0 }
+  const counts = { occupied: 0, arriving: 0, vacant: 0, outOfOrder: 0, unassigned: 0 }
   for (const room of chart.rooms) {
     const group = tonightGroup(occupancyOf(chart, room, date))
     if (group === 'occupied') counts.occupied++
+    else if (group === 'arriving') counts.arriving++
     else if (group === 'out_of_order') counts.outOfOrder++
     else counts.vacant++
   }
@@ -267,8 +288,9 @@ export function tonightCounts(chart: TapeChart, date = chart.hotel.businessDate)
 }
 
 // Where a bar sits in time against the business date.
-export function barTime(stay: Pick<ChartStay, 'arrival' | 'departure'>, date: string) {
+export function barTime(stay: Pick<ChartStay, 'arrival' | 'departure' | 'status'>, date: string) {
   if (stay.departure <= date) return 'past' as const
+  if (stay.status === 'checked_in') return 'in_house' as const
   if (stay.arrival <= date) return 'tonight' as const
   return 'later' as const
 }
@@ -278,6 +300,7 @@ export function barLabel(stay: ChartStay, typeName: string, roomNumber: string |
   const nights = nightsBetween(stay.arrival, stay.departure)
   return [
     stay.guestName,
+    ...(stay.status === 'checked_in' ? ['in house'] : []),
     typeName,
     rangeLabel(stay.arrival, stay.departure, true),
     nights === 1 ? '1 night' : `${nights} nights`,

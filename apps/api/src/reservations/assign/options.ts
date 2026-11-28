@@ -114,7 +114,7 @@ export async function roomOptions(
     .sort((a, b) => dec(a.difference).comparedTo(dec(b.difference)))
 
   const room = all.find((r) => r.id === stay.roomId)
-  const firstNight = loaded.nights.find((night) => night.stayId === stay.id)
+  const firstNight = loaded.nights.find((night) => night.stayId === stay.id && night.date >= from)
   return {
     stay: {
       id: stay.id,
@@ -134,6 +134,8 @@ export async function roomOptions(
       nationality: loaded.guest.nationality,
     },
     arrivesToday,
+    inHouse: stay.status === 'checked_in',
+    from,
     sameType,
     otherTypes,
     blocked: movableProblem(loaded, stay, hotel),

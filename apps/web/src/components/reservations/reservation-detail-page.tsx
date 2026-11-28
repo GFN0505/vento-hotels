@@ -1,7 +1,8 @@
 // One reservation (design #5 ReservationDetail, ReservationMobile): who, the stay, what was sold
 // night by night with tax lines in force on each night, the deposit and cancellation terms, and what
 // happened. Actions: Modify (M), Cancel, More → Mark no-show (brick 6), Copy confirmation (or Copy
-// cancellation once ended) and Audit trail. Room move and check-in come with their bricks.
+// cancellation once ended) and Audit trail; Room move (brick 7); Check in, the registration with
+// Reveal and View ID photo, Print registration card and More → Reverse check-in (brick 8).
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import {
@@ -18,12 +19,15 @@ import {
   Ban,
   ClipboardCopy,
   History,
+  LogIn,
   MoreHorizontal,
   Pencil,
 } from 'lucide-react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { AuditSheet } from '@/components/audit/audit-sheet'
+import { CheckInSheet } from '@/components/front-desk/check-in-sheet'
+import { ReverseDialog, StayRegistration } from '@/components/front-desk/stay-registration'
 import { Message } from '@/components/rooms/message'
 import { RoomMoveDialog } from '@/components/rooms/room-move-dialog'
 import { FormSkeleton } from '@/components/settings/load-states'
@@ -63,7 +67,7 @@ import { ReservationsOffline } from './offline-note'
 import { PenaltyCard } from './penalty-card'
 import { useCountries } from './use-countries'
 
-type Open = 'modify' | 'cancel' | 'no_show' | 'room' | null
+type Open = 'modify' | 'cancel' | 'no_show' | 'room' | 'check_in' | 'reverse' | null
 
 export function ReservationDetailPage({ id }: { id: string }) {
   // While a waiver is waiting for a manager, the answer shows within seconds.
@@ -129,6 +133,13 @@ export function ReservationDetailPage({ id }: { id: string }) {
               asBooked={Boolean(data.end)}
             />
           ))}
+          {data.stays[0] && data.stays[0].status !== 'confirmed' ? (
+            <StayRegistration
+              stayId={data.stays[0].id}
+              propertyId={data.property.id}
+              photoMissing={Boolean(data.stays[0].checkIn?.idPhotoMissing)}
+            />
+          ) : null}
           <div className="grid gap-4 lg:grid-cols-2">
             <GuestCard data={data} />
             {data.end ? <PenaltyCard detail={data} /> : <DepositCard data={data} />}
@@ -143,6 +154,25 @@ export function ReservationDetailPage({ id }: { id: string }) {
           stayId={data.stays[0].id}
           version={data.stays[0].version}
           timeZone={data.property.timeZone}
+          onClose={() => setOpen(null)}
+        />
+      ) : null}
+      {open === 'check_in' && data.stays[0] ? (
+        <CheckInSheet
+          target={{
+            stayId: data.stays[0].id,
+            propertyId: data.property.id,
+            businessDate: data.property.businessDate,
+          }}
+          onClose={() => setOpen(null)}
+        />
+      ) : null}
+      {open === 'reverse' && data.stays[0] ? (
+        <ReverseDialog
+          stayId={data.stays[0].id}
+          version={data.stays[0].version}
+          guestName={`${data.guest.firstName} ${data.guest.lastName}`}
+          roomNumber={data.stays[0].room?.number ?? ''}
           onClose={() => setOpen(null)}
         />
       ) : null}
@@ -282,6 +312,12 @@ function Header({
                 {stay.room ? 'Room move' : 'Assign room'}
               </Button>
             ) : null}
+            {data.actions.checkIn ? (
+              <Button variant="primary" className="max-lg:h-11" onClick={() => onOpen('check_in')}>
+                <LogIn className="size-4" aria-hidden="true" />
+                Check in
+              </Button>
+            ) : null}
             {data.actions.modify ? (
               <Button className="max-lg:h-11" disabled={!online} onClick={() => onOpen('modify')}>
                 <Pencil className="size-4" aria-hidden="true" />
@@ -290,19 +326,25 @@ function Header({
               </Button>
             ) : null}
             <Button
-              variant={data.actions.modify ? 'default' : 'primary'}
+              variant={data.actions.modify || data.actions.checkIn ? 'default' : 'primary'}
               className="max-lg:h-11"
               onClick={copy}
             >
               <ClipboardCopy className="size-4" aria-hidden="true" />
               {ended ? 'Copy cancellation' : 'Copy confirmation'}
             </Button>
-            {data.actions.noShow ? (
-              <MoreMenu disabled={!online} onNoShow={() => onOpen('no_show')} />
+            {data.actions.noShow || data.actions.reverseCheckIn ? (
+              <MoreMenu
+                disabled={!online}
+                onNoShow={data.actions.noShow ? () => onOpen('no_show') : undefined}
+                onReverse={data.actions.reverseCheckIn ? () => onOpen('reverse') : undefined}
+              />
             ) : null}
           </div>
           {!online && (data.actions.modify || data.actions.cancel || data.actions.noShow) ? (
             <span className="text-sm text-text-3">{NEEDS_CONNECTION}</span>
+          ) : data.actions.checkInBlocked ? (
+            <span className="text-sm text-text-3">{data.actions.checkInBlocked}</span>
           ) : note ? (
             <span className="text-sm text-text-3">{note}</span>
           ) : null}
@@ -327,6 +369,10 @@ function Header({
           </Summary>
           <Summary label="Room" value={stay.room ? `Room ${stay.room.number}` : 'Not assigned'}>
             {stay.roomTypeName}
+            {stay.earlierRooms.length
+              ? ` · before: ${stay.earlierRooms.map((r) => `${r.number} (${stayRange(r.from, r.to)})`).join(', ')}`
+              : ''}
+            {stay.checkIn ? ` · checked in by ${stay.checkIn.byName}` : ''}
           </Summary>
           <Summary label="Rate" value={rate?.value ?? ''}>
             {stay.terms.planName} · {mealLabel(stay.terms).toLowerCase()}
@@ -646,7 +692,15 @@ function blockedNote(data: ReservationDetail): string | null {
 }
 
 // More: Mark no-show (design header ⋯ "More: no-show, duplicate, print"; only no-show is built).
-function MoreMenu({ disabled, onNoShow }: { disabled: boolean; onNoShow: () => void }) {
+function MoreMenu({
+  disabled,
+  onNoShow,
+  onReverse,
+}: {
+  disabled: boolean
+  onNoShow: (() => void) | undefined
+  onReverse: (() => void) | undefined
+}) {
   const [open, setOpen] = useState(false)
   const menu = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -666,7 +720,7 @@ function MoreMenu({ disabled, onNoShow }: { disabled: boolean; onNoShow: () => v
     <div ref={menu} className="relative">
       <Button
         size="icon"
-        aria-label="More: no-show"
+        aria-label={onReverse ? 'More: reverse check-in' : 'More: no-show'}
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((value) => !value)}
@@ -678,18 +732,34 @@ function MoreMenu({ disabled, onNoShow }: { disabled: boolean; onNoShow: () => v
           role="menu"
           className="absolute right-0 z-30 mt-1 w-52 overflow-hidden rounded-md border border-border bg-surface py-1 shadow-[var(--shadow-lg)]"
         >
-          <button
-            type="button"
-            role="menuitem"
-            disabled={disabled}
-            className="flex h-11 w-full items-center px-3 text-left font-medium hover:bg-surface-2 disabled:opacity-45"
-            onClick={() => {
-              setOpen(false)
-              onNoShow()
-            }}
-          >
-            Mark no-show
-          </button>
+          {onNoShow ? (
+            <button
+              type="button"
+              role="menuitem"
+              disabled={disabled}
+              className="flex h-11 w-full items-center px-3 text-left font-medium hover:bg-surface-2 disabled:opacity-45"
+              onClick={() => {
+                setOpen(false)
+                onNoShow()
+              }}
+            >
+              Mark no-show
+            </button>
+          ) : null}
+          {onReverse ? (
+            <button
+              type="button"
+              role="menuitem"
+              disabled={disabled}
+              className="flex h-11 w-full items-center px-3 text-left font-medium text-ro hover:bg-surface-2 disabled:opacity-45"
+              onClick={() => {
+                setOpen(false)
+                onReverse()
+              }}
+            >
+              Reverse check-in
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

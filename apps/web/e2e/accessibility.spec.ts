@@ -250,7 +250,7 @@ for (const theme of ['light', 'dark'] as const) {
         await page.getByLabel('Hotel', { exact: true }).selectOption({ label: hotel })
         await page.goto('/settings/members')
         await page
-          .getByRole('heading', { name: hotel === 'All hotels' ? 'People 11' : 'People 2' })
+          .getByRole('heading', { name: hotel === 'All hotels' ? 'People 12' : 'People 2' })
           .waitFor()
         await expectAccessible(page)
         await page.goto('/settings/devices')
@@ -510,6 +510,69 @@ for (const theme of ['light', 'dark'] as const) {
       await page.getByRole('button', { name: 'Put out of order' }).click()
       const ooo = page.getByRole('dialog', { name: 'Put 501 out of order' })
       await ooo.getByText(/Move the booking first\.$/).waitFor()
+      await expectAccessible(page)
+    })
+
+    test('front desk: the lists (each tab), the shortcuts, the check-in sheet (Verify ID, the foreign national section, Room), the walk-in page, an in-house Room move and the Reveal dialog have no accessibility problems', async ({
+      page,
+      isMobile,
+    }, testInfo) => {
+      test.setTimeout(150_000)
+      const domain = seedDemoGroup(`a11y-desk-${theme}-${testInfo.project.name}`, 'Demo-pass-42!')
+      await page.addInitScript(() => localStorage.setItem('vento.printCard', 'off'))
+      await signIn(page, `tunde@${domain}`, 'Demo-pass-42!')
+      await page.getByRole('heading', { name: /^Good/ }).waitFor()
+      if (theme === 'dark') await switchToDarkMode(page)
+      await page.goto('/front-desk')
+      await page.getByRole('region', { name: 'Tonight' }).waitFor()
+      await expectAccessible(page)
+      for (const tab of [/^Departures/, /^In house/]) {
+        await page.getByRole('tab', { name: tab }).click()
+        await page.getByRole('heading', { name: tab }).waitFor()
+        await expectAccessible(page)
+      }
+      if (!isMobile) {
+        await page.keyboard.press('?')
+        await page.getByRole('dialog', { name: 'Keyboard shortcuts' }).waitFor()
+        await expectAccessible(page)
+        await page.keyboard.press('Escape')
+        // An in-house Room move: the reason is required.
+        await page.getByRole('button', { name: 'Room move Claire Dubois' }).click()
+        const move = page.getByRole('dialog', { name: 'Room move · Claire Dubois' })
+        await move.getByRole('radio', { name: /^401 Deluxe King/ }).check()
+        await move.getByText('Reason (required)').waitFor()
+        await expectAccessible(page)
+        await page.keyboard.press('Escape')
+      }
+      await page.getByRole('tab', { name: /^Arrivals/ }).click()
+      await page.getByRole('button', { name: 'Check in Daniel Mensah' }).click()
+      const sheet = page.getByRole('dialog', { name: 'Check in · Daniel Mensah' })
+      await sheet.getByRole('button', { name: 'Take photo' }).waitFor()
+      await expectAccessible(page)
+      await sheet.getByRole('button', { name: 'Registration', exact: true }).click()
+      await sheet.getByRole('heading', { name: 'Foreign national registration' }).waitFor()
+      await expectAccessible(page)
+      await sheet.getByRole('button', { name: 'Room', exact: true }).click()
+      await sheet
+        .getByText(/is dirty/)
+        .first()
+        .waitFor()
+      await expectAccessible(page)
+      await sheet.getByRole('button', { name: 'Close' }).click()
+      await page.goto('/walk-in')
+      await page.getByRole('heading', { name: 'Walk-in', level: 1 }).waitFor()
+      await page.getByRole('button', { name: /^Standard Queen/ }).click()
+      await page.getByText('Room', { exact: true }).first().waitFor()
+      await expectAccessible(page)
+      // Reveal on Mrs Dubois' registration.
+      await page.goto('/front-desk')
+      await page.getByRole('tab', { name: /^In house/ }).click()
+      await page.getByPlaceholder('Find guest, room, booking').fill('Dubois')
+      await page.getByRole('link', { name: 'Claire Dubois', exact: true }).click()
+      await page.getByRole('heading', { name: /^Registration/ }).waitFor()
+      await expectAccessible(page)
+      await page.getByRole('button', { name: 'Reveal' }).first().click()
+      await page.getByRole('dialog', { name: 'Reveal passport number?' }).waitFor()
       await expectAccessible(page)
     })
 

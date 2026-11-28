@@ -7,8 +7,9 @@ import { authClient } from './auth'
 
 export async function lockDevice(firstName?: string) {
   await authClient.signOut()
-  // The next person must not open the app as this one, even offline.
-  await clearSavedData()
+  // The next person must not open the app as this one, even offline. The front desk lists stay on
+  // the desk PC (decision 0029).
+  await clearSavedData(undefined, { keepDeskLists: true })
   // A full page load, so nothing from this person stays in memory for the next one.
   window.location.assign(firstName ? `/lock?signedOut=${encodeURIComponent(firstName)}` : '/lock')
 }

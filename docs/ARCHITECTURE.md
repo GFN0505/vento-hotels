@@ -104,10 +104,14 @@ apps/
       offline/               connection state, saved data in IndexedDB, update prompt (brick 16); the outbox
                              (outbox.ts, its own IndexedDB database) with its first command, Mark clean /
                              dirty (Stage 1 brick 7)
+      components/front-desk/ the Front desk lists, the check-in sheet, the walk-in page, the registration
+                             form and model shared by both, the ID photo (prepared on the device:
+                             downscaled, no metadata), the registration on a reservation (Reveal, View
+                             ID photo, Add ID photo, Reverse check-in), Print list and the card's print (brick 8)
       components/tape-chart/ the tape chart grid, bar card, room menu, extend popover, phone day list (brick 7);
                              components/rooms/ room-move-dialog.tsx and out-of-order-dialog.tsx
     sw/                      the service worker and the build step that emits /sw.js   (brick 16)
-    e2e/                     Playwright, desktop + phone: onboarding, team, devices, shell, two-step, home, offline, accessibility (bricks 7–16)
+    e2e/                     Playwright, desktop + phone: onboarding, team, devices, shell, two-step, home, offline, accessibility (bricks 7–16); tape chart, front desk with fixtures/id-card.png (Stage 1)
 packages/
   shared/                    the single source of API types
     src/
@@ -167,6 +171,7 @@ New modules from Stage 1 add their own folder in `apps/api/src/` (service, route
 *Built in brick 16: the shell. Built in Stage 1 brick 7: the outbox, with its first command (Mark clean / Mark dirty, decision 0024).*
 - **Built (brick 7):** `offline/outbox.ts` keeps commands in their own IndexedDB database (`vento-outbox`), so signing out or locking a shared device never drops one. A command carries the device's key and time and the member who made it, and is sent only while that member is signed in, oldest first, when Vento can be reached again; the server stores the key (`room_status_commands`) and applies it once. Room status is last-writer-wins by device time: an older change comes back `superseded`, stays in the queue's "needs a look" list with the server's sentence, and is kept in history. The tape chart (`tapeChart.get`) is kept with the saved data so it opens read-only offline. Everything else on the chart is disabled offline with its reason.
 - **Built:** the service worker keeps the built app on the device (pages network-first, built files cache-first, never API calls). Before the first render, `offline/saved-data.ts` restores the reference data last seen from IndexedDB (an allow-list of queries), and `lib/session.ts` falls back to the remembered person when Vento can't be reached. `offline/connection.ts` treats a request that never reached Vento as offline; the shell shows `OfflineBanner`. Sign-out and device lock clear it all.
+- **Built (brick 8):** the outbox's second command, `stays.checkIn`: an arrival already in a room checked in offline from the cached Front desk list and the cached rule set. The registrations, the ID choice and the ID photo travel sealed (`offline/sealed.ts`: AES-GCM under a non-extractable key made on the device and kept in the outbox database); on sync the photo is uploaded first (idempotent by its id), then the check-in with its key; a refusal is listed in the server's words ("Daniel Mensah's check-in to 502 couldn't sync: …") until discarded. `frontDesk.list` and `ruleSets.current` are saved and, on a shared device's PIN lock, kept (`clearSavedData(…, { keepDeskLists: true })`, decision 0029); a full sign-out, a revoked device (the lock screen) and a newer business date remove them.
 - Front desk, POS and housekeeping run from a cached app shell and local data in IndexedDB.
 - Each change offline becomes a **command** in an outbox with a client UUID v7 and an idempotency key, the device id and the time it happened.
 - When the connection returns, commands are sent in order through the same middleware chain as any request. The server stores the idempotency key, so a resent command is applied once.

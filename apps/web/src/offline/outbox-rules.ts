@@ -1,5 +1,5 @@
 // The outbox's rules, kept apart so they're tested without a browser (outbox.ts).
-import type { SetRoomStatusInput } from '@vento/shared'
+import type { CheckInInput, SetRoomStatusInput } from '@vento/shared'
 
 export type RoomStatusCommand = {
   kind: 'rooms.setStatus'
@@ -9,8 +9,27 @@ export type RoomStatusCommand = {
   label: string
 }
 
+// An offline check-in of an arrival already in a room (brick 8, decision 0009's allow-list). The
+// registrations, the ID photo and the ID choice travel sealed (sealed.ts); the rest is plain.
+export type CheckInCommand = {
+  kind: 'stays.checkIn'
+  input: Omit<CheckInInput, 'registrations' | 'idDocument'> & {
+    idempotencyKey: string
+    occurredAt: string
+    propertyId: string
+  }
+  sealed: string
+  memberId: string
+  // "Daniel Mensah checked in to 502"
+  label: string
+  guestName: string
+  roomNumber: string
+}
+
+export type Command = RoomStatusCommand | CheckInCommand
+
 // Waiting to send, or sent and answered with something a person should read.
-export type Queued = RoomStatusCommand & { state: 'waiting' | 'attention'; message?: string }
+export type Queued = Command & { state: 'waiting' | 'attention'; message?: string }
 
 // The next command this person can send: the oldest of theirs still waiting.
 export function nextToSend(list: readonly Queued[], memberId: string | undefined) {

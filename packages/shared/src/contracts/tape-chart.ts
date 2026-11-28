@@ -204,8 +204,12 @@ export const roomOptionsSchema = z.object({
     soldPerNight: z.string(),
     nationality: z.string(),
   }),
-  // Status badges only matter for an arrival on the business date.
+  // Status badges only matter for an arrival on the business date (or a guest in house).
   arrivesToday: z.boolean(),
+  // In house (brick 8): the move starts on `from` (the business date), a reason is required, and
+  // the old room turns dirty.
+  inHouse: z.boolean(),
+  from: calendarDateSchema,
   // Rooms of the stay's type free every night: ready first, then dirty.
   sameType: z.array(roomOptionSchema),
   // Other types the plan sells and the party fits, cheapest first.

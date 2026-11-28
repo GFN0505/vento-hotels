@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { CheckInSheet } from '@/components/front-desk/check-in-sheet'
 import { OutOfOrderDialog } from '@/components/rooms/out-of-order-dialog'
 import { RoomHistory } from '@/components/rooms/room-history'
 import { RoomMoveDialog } from '@/components/rooms/room-move-dialog'
@@ -133,6 +134,7 @@ type Open =
   | { kind: 'ooo'; room: ChartRoom; mode: 'create' | 'change' | 'end'; period?: OutOfOrderView }
   | { kind: 'history'; room: ChartRoom }
   | { kind: 'book'; room?: ChartRoom; date?: string }
+  | { kind: 'check-in'; stay: ChartStay }
   | null
 
 function HotelTapeChart({ hotel, memberId }: { hotel: Property; memberId: string | undefined }) {
@@ -163,13 +165,17 @@ function HotelTapeChart({ hotel, memberId }: { hotel: Property; memberId: string
   const overlay = useMemo<StatusOverlay>(() => {
     const map: StatusOverlay = new Map()
     for (const item of outbox) {
+      if (item.kind !== 'rooms.setStatus') continue
       if (item.state !== 'waiting' || item.input.propertyId !== hotel.id) continue
       map.set(item.input.roomId, { status: item.input.status as RoomStatus, pending: true })
     }
     return map
   }, [outbox, hotel.id])
   const attention = outbox.filter(
-    (item) => item.state === 'attention' && item.input.propertyId === hotel.id,
+    (item) =>
+      item.kind === 'rooms.setStatus' &&
+      item.state === 'attention' &&
+      item.input.propertyId === hotel.id,
   )
 
   const setRangeKept = (next: ChartRange) => {
@@ -419,7 +425,8 @@ function HotelTapeChart({ hotel, memberId }: { hotel: Property; memberId: string
               onCell={(room, date) => setOpen({ kind: 'book', room, date })}
               onToggleLane={toggleLane}
               onDropRoom={(stay, room) =>
-                room.roomTypeId === stay.roomTypeId
+                // An in-house guest's move always asks why (brick 8): the dialog, with that room.
+                room.roomTypeId === stay.roomTypeId && stay.status !== 'checked_in'
                   ? void actions.assign(stay, room.id, { source: 'chart_drag' })
                   : moveStay(stay, room.id)
               }
@@ -449,6 +456,21 @@ function HotelTapeChart({ hotel, memberId }: { hotel: Property; memberId: string
           onClose={close}
           onMove={() => moveStay(open.stay)}
           onModify={() => setOpen({ kind: 'modify', reservationId: open.stay.reservationId })}
+          onCheckIn={
+            me.can('stay.check_in')
+              ? () => setOpen({ kind: 'check-in', stay: open.stay })
+              : undefined
+          }
+        />
+      ) : null}
+      {open?.kind === 'check-in' ? (
+        <CheckInSheet
+          target={{
+            stayId: open.stay.id,
+            propertyId: hotel.id,
+            businessDate: data.hotel.businessDate,
+          }}
+          onClose={close}
         />
       ) : null}
       {open?.kind === 'room' ? (
@@ -657,8 +679,15 @@ function Toolbar({
       </div>
       <div className="flex flex-wrap items-center gap-3 text-sm text-text-2">
         <span className="inline-flex items-center gap-1.5">
+          <i
+            aria-hidden="true"
+            className="h-2.5 w-3.5 rounded-[3px] border border-house bg-house"
+          />
+          In house
+        </span>
+        <span className="inline-flex items-center gap-1.5">
           <i aria-hidden="true" className="h-2.5 w-3.5 rounded-[3px] border border-pri bg-pri" />
-          Occupied tonight
+          Booked tonight
         </span>
         <span className="inline-flex items-center gap-1.5">
           <i

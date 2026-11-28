@@ -10,6 +10,7 @@ import {
   laneStays,
   occupancyOf,
   roomFreeFor,
+  segmentsByRoom,
   tonightCounts,
 } from './chart-model'
 
@@ -164,22 +165,68 @@ describe('chart model', () => {
     expect(occupancyOf(chart, r1, '2026-11-28')).toBe('leaving')
     expect(occupancyOf(chart, r1, '2026-11-29')).toBe('vacant')
     expect(occupancyOf(chart, r2)).toBe('out_of_order')
-    expect(tonightCounts(chart)).toEqual({ occupied: 1, vacant: 0, outOfOrder: 1, unassigned: 1 })
+    expect(tonightCounts(chart)).toEqual({
+      occupied: 0,
+      arriving: 1,
+      vacant: 0,
+      outOfOrder: 1,
+      unassigned: 1,
+    })
     expect(tonightCounts(chart, '2026-11-28')).toEqual({
       occupied: 0,
+      arriving: 0,
       vacant: 2,
       outOfOrder: 0,
       unassigned: 0,
     })
-    const { rows } = buildRows(chart, { tonight: 'occupied' }, new Set())
+    const { rows } = buildRows(chart, { tonight: 'arriving' }, new Set())
     expect(
       rows.filter((r) => r.kind === 'room').map((r) => (r.kind === 'room' ? r.room.number : '')),
     ).toEqual(['502'])
-    expect(barTime({ arrival: '2026-11-25', departure: '2026-11-28' }, '2026-11-25')).toBe(
-      'tonight',
-    )
-    expect(barTime({ arrival: '2026-11-26', departure: '2026-11-28' }, '2026-11-25')).toBe('later')
-    expect(barTime({ arrival: '2026-11-23', departure: '2026-11-25' }, '2026-11-25')).toBe('past')
+    const confirmed = { status: 'confirmed' as const }
+    expect(
+      barTime({ arrival: '2026-11-25', departure: '2026-11-28', ...confirmed }, '2026-11-25'),
+    ).toBe('tonight')
+    expect(
+      barTime({ arrival: '2026-11-26', departure: '2026-11-28', ...confirmed }, '2026-11-25'),
+    ).toBe('later')
+    expect(
+      barTime({ arrival: '2026-11-23', departure: '2026-11-25', ...confirmed }, '2026-11-25'),
+    ).toBe('past')
+    expect(
+      barTime(
+        { arrival: '2026-11-23', departure: '2026-11-27', status: 'checked_in' },
+        '2026-11-25',
+      ),
+    ).toBe('in_house')
+  })
+
+  it('reads a checked-in stay as Occupied, and keeps a moved guest’s earlier nights in the old room', () => {
+    const [mensah, adebayo] = chart.stays
+    if (!mensah || !adebayo) throw new Error('no stays')
+    const moved = {
+      ...chart,
+      stays: [
+        {
+          ...mensah,
+          status: 'checked_in' as const,
+          arrival: '2026-11-23',
+          roomFrom: '2026-11-25',
+          segments: [{ roomId: 'r2', from: '2026-11-23', to: '2026-11-25' }],
+        },
+        adebayo,
+      ],
+      outOfOrder: [],
+    }
+    expect(occupancyOf(moved, room('r1', '502'))).toBe('occupied')
+    // 503 was left on 25 Nov: not "leaving" (nobody checks out of it).
+    expect(occupancyOf(moved, room('r2', '503'))).toBe('vacant')
+    expect(
+      segmentsByRoom(moved)
+        .get('r2')
+        ?.map((s) => [s.from, s.to]),
+    ).toEqual([['2026-11-23', '2026-11-25']])
+    expect(tonightCounts(moved).occupied).toBe(1)
   })
 
   it('groups the phone day list by type with what is on each room', () => {

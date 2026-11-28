@@ -59,3 +59,15 @@ Polish-level review findings, batched for one "polish pass" brick near the end o
 - The sync queue's "needs a look" list shows only on the tape chart; a shell-wide queue panel comes with the next offline module (check-in, POS).
 - `reservations/assign/assign.ts`: the exclusion-violation fallback calls `roomTaken(room, '')` with an empty date ("402 was just taken."); look up the first clashing night instead.
 - Migration 0019's check `rooms_housekeeping_status_stored` has no data guard: fine before any hotel is live (nothing stores `out_of_order` or `out_of_service`), but a deploy onto data that does would fail; add an update or a guard first if that ever changes.
+
+## Front desk, check-in and registration (brick 8)
+- **Someone else is staying** and **Add guest** (other adults in the room) aren't in the sheet or the walk-in page yet; `checkIn.checkIn` already takes a swapped guest and more than one registration.
+- Registration corrections while in house (`registrations.correct`) have no screen yet; the reservation shows the registration read-only.
+- A check-in into another room type (when the booked type is full) opens brick 7's Room move dialog first and then checks in, rather than one transaction.
+- The sync queue's check-ins that need attention offer **Discard** only; "Open check-in" and "Apply details" (sending the typed details as a correction) come with the shell-wide queue panel.
+- Take photo uses the device's own camera picker (`<input capture>`); a live webcam preview with getUserMedia could follow if desks prefer it.
+- Home's Arrivals and In house figures stay placeholders until role Homes are built; the Walk-in quick action opens the walk-in page.
+- The phone layout has no bottom navigation bar (the app has none yet); Walk-in sits in the header on phones.
+- The walk-in's discard and hotel-switch guard use the browser's confirm, not the in-app bar.
+- Print list is a browser print layout, not the brick 15 PDF.
+- The seed puts the due-out guest (Mr Kwame Asante) in the room of whichever Deluxe King arrival the packing gives first (e.g. 403), not 405 as in the spec.
