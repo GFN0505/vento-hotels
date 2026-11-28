@@ -141,6 +141,13 @@
       "when": 1795807927258,
       "tag": "0019_tape_chart",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795848134186,
+      "tag": "0020_cashier_shifts",
+      "breakpoints": true
     }
   ]
 }

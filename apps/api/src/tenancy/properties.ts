@@ -16,6 +16,7 @@ import {
 } from '@vento/shared'
 import { and, eq, ne, sql } from 'drizzle-orm'
 import { recordAudit } from '../audit/record.ts'
+import { createFirstDrawer } from '../cash/drawers/service.ts'
 import { isUniqueViolation } from '../db/errors.ts'
 import { reservations } from '../db/schema/reservations.ts'
 import { entities, memberProperties, properties } from '../db/schema/tenancy.ts'
@@ -190,6 +191,8 @@ export async function createProperty(
           liveProperty: false,
         },
       })
+      // Every hotel has a cash drawer from the start (cashier shifts spec).
+      await createFirstDrawer(tx, access, { id, businessDate })
       // Someone limited to some hotels gets the one they add, so nobody adds a hotel they can't see.
       if (!access.allProperties) {
         await tx.insert(memberProperties).values({

@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   age,
   answerLine,
+  cashLimitLine,
+  cashMeta,
+  cashTitle,
   nobodyLine,
   promptMeta,
   promptTitle,
@@ -10,6 +13,7 @@ import {
   rowTitle,
   statusBadge,
   subjectFigures,
+  withArticle,
   withoutPinLine,
   yourRequestLine,
 } from './format'
@@ -103,5 +107,35 @@ describe('inbox rows and Review', () => {
     expect(yourRequestLine({ ...VIEW, status: 'approved' })).toBe(
       'Tunde approved 15% for Sarah Collins',
     )
+  })
+})
+
+describe('cash differences', () => {
+  const subject = {
+    stage: 'close' as const,
+    hotelName: 'Kora Victoria Island',
+    drawerName: 'Desk 2',
+    shiftNumber: 3,
+    shiftBusinessDate: '2026-11-24',
+    difference: '12500.00',
+    lines: [{ label: 'Cash', difference: '12500.00', words: 'over' as const }],
+    handover: null,
+    reason: 'Late check-out fee',
+    requesterName: 'Ibrahim Musa',
+    requesterRole: 'front desk',
+    requesterLimit: '5000.00',
+    deviceName: null,
+  }
+
+  it('asks as the spec words it, with the right article', () => {
+    expect(cashTitle(subject)).toBe('Approve a ₦12,500.00 difference on shift 3?')
+    expect(
+      cashTitle({ ...subject, stage: 'handover', shiftNumber: null, difference: '8000.00' }),
+    ).toBe('Approve an ₦8,000.00 hand-over difference on Desk 2?')
+    expect(withArticle('18000.00')).toBe('an ₦18,000.00')
+    expect(withArticle('180000.00')).toBe('a ₦180,000.00')
+    expect(cashMeta(subject)).toBe('Desk 2 · Ibrahim Musa · Cash ₦12,500.00 over')
+    expect(cashLimitLine(subject)).toBe("Ibrahim's limit is ₦5,000.00.")
+    expect(rowTitle({ subject })).toBe('₦12,500.00 cash difference · Ibrahim Musa · Shift 3')
   })
 })

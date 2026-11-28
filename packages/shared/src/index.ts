@@ -1,4 +1,5 @@
 export * from './approvals.ts'
+export * from './cash.ts'
 export * from './changes.ts'
 export * from './company-ids.ts'
 export * from './contracts/index.ts'

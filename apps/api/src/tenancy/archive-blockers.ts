@@ -3,7 +3,8 @@
 // - brick 4: upcoming reservations that aren't cancelled (in-house guests come with check-in, brick 8);
 // - bricks 9–10: folios with a balance, open cashier shifts;
 // - Stage 3: open POS checks.
-import { and, count, eq, gt, inArray } from 'drizzle-orm'
+import { and, count, eq, gt, inArray, ne } from 'drizzle-orm'
+import { cashierShifts } from '../db/schema/cash.ts'
 import { reservations } from '../db/schema/reservations.ts'
 import type { Reader } from './property-views.ts'
 
@@ -35,6 +36,19 @@ export async function archiveBlockers(
       code: 'UPCOMING_RESERVATIONS',
       count: value,
       label: value === 1 ? '1 upcoming reservation' : `${value} upcoming reservations`,
+    })
+  }
+  // Brick 9: a shift not closed still has money in its drawer.
+  const [shifts] = await db
+    .select({ value: count() })
+    .from(cashierShifts)
+    .where(and(eq(cashierShifts.propertyId, property.id), ne(cashierShifts.status, 'closed')))
+  const open = shifts?.value ?? 0
+  if (open > 0) {
+    blockers.push({
+      code: 'OPEN_SHIFTS',
+      count: open,
+      label: open === 1 ? '1 cashier shift open' : `${open} cashier shifts open`,
     })
   }
   return blockers

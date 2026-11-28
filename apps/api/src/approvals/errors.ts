@@ -13,8 +13,14 @@ const make = (
 export const approvalNotFound = () =>
   new ORPCError('NOT_FOUND', { message: "We couldn't find that request" })
 
-export const selfApproval = () =>
-  make('FORBIDDEN', 'SELF_APPROVAL', "You can't approve your own discount. Ask another manager.")
+export const selfApproval = (kind?: string) =>
+  make(
+    'FORBIDDEN',
+    'SELF_APPROVAL',
+    kind === 'cash_variance'
+      ? "You can't approve your own difference. Ask another manager."
+      : "You can't approve your own discount. Ask another manager.",
+  )
 
 // `what` as people say it: "15%", or "this waiver".
 export const approverNotEligible = (name: string, what: string, hotel: string) =>

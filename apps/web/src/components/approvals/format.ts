@@ -6,12 +6,14 @@ import {
   type ApprovalStatus,
   type ApprovalSubject,
   type ApprovalView,
+  type CashVarianceSubject,
   clockAt,
   DISCOUNT_REASON_LABELS,
   dec,
   firstNameOf,
   formatMoney,
   formatPercent,
+  isCashSubject,
   isWaiverSubject,
   PENALTY_KIND_LABELS,
   toAmount,
@@ -72,22 +74,99 @@ export function withoutPinLine(names: string[]): string | undefined {
   return `Approvers need a PIN. ${who} set one yet.`
 }
 
-// What is asked, as the toasts and lines say it: "15%", or "the waiver".
+// What is asked, as the toasts and lines say it: "15%", "the waiver", or "₦12,500.00".
 export const whatOf = (subject: AnyApprovalSubject) =>
-  isWaiverSubject(subject) ? 'the waiver' : `${subject.percent}%`
+  isCashSubject(subject)
+    ? naira(subject.difference)
+    : isWaiverSubject(subject)
+      ? 'the waiver'
+      : `${subject.percent}%`
+
+// Who or what it's for: the guest, or the cashier's shift ("Ibrahim Musa · Shift 3").
+export function forWhom(subject: AnyApprovalSubject): string {
+  if (!isCashSubject(subject)) return subject.guestName
+  return subject.shiftNumber === null
+    ? `${subject.requesterName} · ${subject.drawerName}`
+    : `${subject.requesterName} · Shift ${subject.shiftNumber}`
+}
+
+// "a ₦12,500.00", "an ₦8,000.00" (eight, eleven and eighteen start with a vowel sound).
+export function withArticle(amount: string): string {
+  const shown = naira(amount)
+  const lead = toAmount(amount).split('.')[0] ?? ''
+  const group = lead.length % 3 === 0 ? lead.slice(0, 3) : lead.slice(0, lead.length % 3)
+  const vowel = lead.startsWith('8') || group === '11' || group === '18'
+  return `${vowel ? 'an' : 'a'} ${shown}`
+}
+
+// "Approve a ₦12,500.00 difference on shift 3?" / "Approve an ₦8,000.00 hand-over difference on
+// Desk 2?"
+export const cashTitle = (subject: CashVarianceSubject) =>
+  subject.stage === 'handover' || subject.shiftNumber === null
+    ? `Approve ${withArticle(subject.difference)} hand-over difference on ${subject.drawerName}?`
+    : `Approve ${withArticle(subject.difference)} difference on shift ${subject.shiftNumber}?`
+
+// "Cash ₦12,500.00 over · POS ₦2,500.00 short"
+export const cashLinesText = (subject: CashVarianceSubject) =>
+  subject.lines
+    .map((line) => `${line.label} ${naira(dec(line.difference).abs().toFixed(2))} ${line.words}`)
+    .join(' · ')
+
+// "Desk 2 · Ibrahim Musa · Cash ₦12,500.00 over"
+export const cashMeta = (subject: CashVarianceSubject) =>
+  [subject.drawerName, subject.requesterName, cashLinesText(subject)].filter(Boolean).join(' · ')
+
+// "Ibrahim's limit is ₦5,000.00."
+export function cashLimitLine(subject: CashVarianceSubject): string {
+  const first = firstNameOf(subject.requesterName)
+  if (subject.requesterLimit === null) return `${first} has no limit.`
+  if (dec(subject.requesterLimit).isZero()) return `${first} can't close with a difference.`
+  return `${first}'s limit is ${naira(subject.requesterLimit)}.`
+}
+
+// The prompt's figures for a cash difference.
+export function cashFigures(subject: CashVarianceSubject) {
+  const rows: { label: string; value: string; strong?: boolean }[] = []
+  if (subject.handover) {
+    rows.push(
+      {
+        label: subject.handover.fromName ? `Left by ${subject.handover.fromName}` : 'Float left',
+        value: naira(subject.handover.floatLeft),
+      },
+      { label: 'Counted at opening', value: naira(subject.handover.counted) },
+    )
+  } else {
+    for (const line of subject.lines) {
+      rows.push({
+        label: line.label,
+        value: `${naira(dec(line.difference).abs().toFixed(2))} ${line.words}`,
+      })
+    }
+  }
+  rows.push({ label: 'Difference to approve', value: naira(subject.difference), strong: true })
+  return rows
+}
+
+// "Nobody at Kora Victoria Island can approve ₦250,000.00 right now."
+export const nobodyCashLine = (subject: CashVarianceSubject) =>
+  `Nobody at ${subject.hotelName} can approve ${naira(subject.difference)} right now.`
 
 // Inbox rows: "Over limit · Kora Victoria Island", "Discount 15% · Sarah Collins", "− ₦75,600.00";
 // a waiver: "Waiver · Kora Victoria Island", "Waive ₦183,750.00 · VI-2611-0405", "₦183,750.00".
 export const rowLabel = (view: Pick<ApprovalView, 'kind' | 'subject'>) =>
   `${APPROVAL_KIND_LABELS[view.kind]} · ${view.subject.hotelName}`
 export const rowTitle = (view: Pick<ApprovalView, 'subject'>) =>
-  isWaiverSubject(view.subject)
-    ? `Waive ${naira(view.subject.penalty.amount)} · ${view.subject.reservationNumber}`
-    : `Discount ${view.subject.percent}% · ${view.subject.guestName}`
+  isCashSubject(view.subject)
+    ? `${naira(view.subject.difference)} cash difference · ${forWhom(view.subject)}`
+    : isWaiverSubject(view.subject)
+      ? `Waive ${naira(view.subject.penalty.amount)} · ${view.subject.reservationNumber}`
+      : `Discount ${view.subject.percent}% · ${view.subject.guestName}`
 export const rowAmount = (view: Pick<ApprovalView, 'subject'>) =>
-  isWaiverSubject(view.subject)
-    ? naira(view.subject.penalty.amount)
-    : `− ${naira(view.subject.discountTotal)}`
+  isCashSubject(view.subject)
+    ? naira(view.subject.difference)
+    : isWaiverSubject(view.subject)
+      ? naira(view.subject.penalty.amount)
+      : `− ${naira(view.subject.discountTotal)}`
 
 // "Waive penalty ₦257,250.00 on VI-2611-0447 · Kelechi Obi"
 export const waiverTitle = (subject: WaiverSubject) =>
@@ -172,7 +251,7 @@ export function answerLine(
 // The bell's "Your requests" line: "Tunde approved 15% for Sarah Collins".
 export function yourRequestLine(view: Pick<ApprovalView, 'status' | 'approver' | 'subject'>) {
   const first = firstNameOf(view.approver?.name ?? 'The manager')
-  const what = `${whatOf(view.subject)} for ${view.subject.guestName}`
+  const what = `${whatOf(view.subject)} for ${forWhom(view.subject)}`
   switch (view.status) {
     case 'pending':
       return `Waiting for ${view.approver?.name ?? 'a manager'} · ${what}`

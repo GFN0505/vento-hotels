@@ -1,6 +1,7 @@
 // Drizzle tables, one file per module, re-exported here. Build new tables with ../columns.ts.
 export * from './approvals.ts'
 export * from './auth.ts'
+export * from './cash.ts'
 export * from './finance.ts'
 export * from './governance.ts'
 export * from './rates.ts'

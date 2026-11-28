@@ -23,6 +23,7 @@ export const approvalKindEnum = pgEnum('approval_kind', [
   'stay_discount',
   'penalty_waiver',
   'modify_discount',
+  'cash_variance',
 ])
 export const approvalStatusEnum = pgEnum('approval_status', [
   'pending',
